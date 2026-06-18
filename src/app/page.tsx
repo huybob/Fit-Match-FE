@@ -1,5 +1,5 @@
-import { LandingPage } from "@/modules/landing/components/landing-page";
+import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
 
 export default function Home() {
-  return <LandingPage />;
+  return <GymWorkspacePage />;
 }
