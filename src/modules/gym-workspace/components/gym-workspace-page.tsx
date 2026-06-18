@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   Activity,
@@ -31,6 +32,13 @@ import { Card } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn.util";
 
 type Language = "vi" | "en";
+export type WorkspaceSection =
+  | "overview"
+  | "schedule"
+  | "trainers"
+  | "members"
+  | "check-in"
+  | "revenue";
 
 const copy = {
   vi: {
@@ -249,28 +257,40 @@ const metricIcons = [CalendarCheck, Dumbbell, QrCode, CreditCard];
 const metricTones = ["emerald", "zinc", "orange", "red"] as const;
 const navIcons = [LayoutDashboard, CalendarClock, UserCheck, UsersRound, QrCode, LineChart];
 const navBadges = ["Live", "128", "18", "27", "342", "+14%"];
+const navRoutes: Record<WorkspaceSection, string> = {
+  overview: "/",
+  schedule: "/schedule",
+  trainers: "/trainers",
+  members: "/members",
+  "check-in": "/check-in",
+  revenue: "/revenue",
+};
+const navSections: WorkspaceSection[] = [
+  "overview",
+  "schedule",
+  "trainers",
+  "members",
+  "check-in",
+  "revenue",
+];
 
-export function GymWorkspacePage() {
+export function GymWorkspacePage({
+  activeSection = "overview",
+}: {
+  activeSection?: WorkspaceSection;
+}) {
   const [language, setLanguage] = useState<Language>("vi");
   const t = copy[language];
 
   return (
     <main className="min-h-screen bg-zinc-100 text-zinc-950">
       <div className="flex min-h-screen">
-        <Sidebar t={t} />
+        <Sidebar activeSection={activeSection} t={t} />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopBar t={t} language={language} onLanguageChange={setLanguage} />
           <div className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
             <WorkspaceHeader t={t} />
-            <MetricGrid t={t} />
-            <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-              <TodaySchedule t={t} />
-              <BookingPanel t={t} />
-            </div>
-            <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-              <TrainerRoster t={t} />
-              <MemberAndCheckin t={t} />
-            </div>
+            <WorkspaceContent activeSection={activeSection} t={t} />
           </div>
         </div>
       </div>
@@ -280,14 +300,21 @@ export function GymWorkspacePage() {
 
 type Copy = typeof copy.vi;
 
-function Sidebar({ t }: { t: Copy }) {
+function Sidebar({
+  activeSection,
+  t,
+}: {
+  activeSection: WorkspaceSection;
+  t: Copy;
+}) {
   const navItems = useMemo(
     () =>
       t.nav.map((label, index) => ({
         label,
         badge: navBadges[index],
         Icon: navIcons[index],
-        active: index === 0,
+        href: navRoutes[navSections[index]],
+        section: navSections[index],
       })),
     [t.nav],
   );
@@ -305,12 +332,14 @@ function Sidebar({ t }: { t: Copy }) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map(({ label, badge, Icon, active }) => (
-          <button
+        {navItems.map(({ label, badge, Icon, href, section }) => (
+          <Link
             key={label}
+            href={href}
             className={cn(
               "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950",
-              active && "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
+              activeSection === section &&
+                "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
             )}
           >
             <Icon className="size-4" />
@@ -318,12 +347,14 @@ function Sidebar({ t }: { t: Copy }) {
             <span
               className={cn(
                 "rounded-full px-2 py-0.5 text-[11px] font-bold",
-                active ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-600",
+                activeSection === section
+                  ? "bg-white/15 text-white"
+                  : "bg-zinc-100 text-zinc-600",
               )}
             >
               {badge}
             </span>
-          </button>
+          </Link>
         ))}
 
         <div className="pt-5">
@@ -499,6 +530,68 @@ function TopBar({
         </div>
       </div>
     </header>
+  );
+}
+
+function WorkspaceContent({
+  activeSection,
+  t,
+}: {
+  activeSection: WorkspaceSection;
+  t: Copy;
+}) {
+  if (activeSection === "schedule") {
+    return (
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+        <TodaySchedule t={t} />
+        <BookingPanel t={t} />
+      </div>
+    );
+  }
+
+  if (activeSection === "trainers") {
+    return (
+      <div className="grid gap-5 xl:grid-cols-[1fr_0.8fr]">
+        <TrainerRoster t={t} />
+        <BookingPanel t={t} />
+      </div>
+    );
+  }
+
+  if (activeSection === "members") {
+    return <MemberAndCheckin t={t} />;
+  }
+
+  if (activeSection === "check-in") {
+    return (
+      <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+        <CheckInConsole t={t} />
+        <MemberAndCheckin t={t} />
+      </div>
+    );
+  }
+
+  if (activeSection === "revenue") {
+    return (
+      <>
+        <MetricGrid t={t} />
+        <RevenueOverview t={t} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <MetricGrid t={t} />
+      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+        <TodaySchedule t={t} />
+        <BookingPanel t={t} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+        <TrainerRoster t={t} />
+        <MemberAndCheckin t={t} />
+      </div>
+    </>
   );
 }
 
@@ -818,6 +911,116 @@ function MemberAndCheckin({ t }: { t: Copy }) {
           </div>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function CheckInConsole({ t }: { t: Copy }) {
+  return (
+    <Card className="p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-zinc-500">QR Check-in</p>
+          <h2 className="mt-1 text-xl font-bold">{t.queueTitle}</h2>
+        </div>
+        <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+          {t.realtime}
+        </Badge>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-[180px_1fr]">
+        <div className="flex aspect-square items-center justify-center rounded-lg bg-zinc-950 p-6">
+          <div className="grid size-32 grid-cols-6 gap-1.5 rounded-md bg-white p-3">
+            {Array.from({ length: 36 }).map((_, index) => (
+              <span
+                key={index}
+                className={cn(
+                  "rounded-[2px] bg-zinc-950",
+                  [2, 5, 7, 11, 18, 19, 24, 31].includes(index) &&
+                    "bg-emerald-500",
+                  [3, 14, 21, 28, 34].includes(index) && "bg-white",
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {t.checkIns.map(([name, time, gate]) => (
+            <div
+              key={name}
+              className="flex items-center justify-between rounded-md border border-zinc-200 bg-white p-4"
+            >
+              <div>
+                <p className="font-bold text-zinc-950">{name}</p>
+                <p className="mt-1 text-sm text-zinc-500">{gate}</p>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">
+                {time}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function RevenueOverview({ t }: { t: Copy }) {
+  const revenueRows = [
+    ["Membership", "1.42 tỷ", "+18%"],
+    ["PT packages", "680tr", "+24%"],
+    ["Class booking", "210tr", "+11%"],
+    ["Retail", "86tr", "+7%"],
+  ];
+
+  return (
+    <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold text-zinc-500">Revenue</p>
+            <h2 className="mt-1 text-xl font-bold">Monthly performance</h2>
+          </div>
+          <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+            +21.8%
+          </Badge>
+        </div>
+
+        <div className="mt-6 flex h-72 items-end gap-3">
+          {[52, 64, 58, 72, 68, 81, 88, 76, 92, 86, 94, 98].map(
+            (height, index) => (
+              <div
+                key={`${height}-${index}`}
+                className="flex flex-1 items-end rounded-md bg-zinc-100"
+              >
+                <div
+                  className="w-full rounded-md bg-emerald-500"
+                  style={{ height: `${height}%` }}
+                />
+              </div>
+            ),
+          )}
+        </div>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <div className="border-b border-zinc-200 p-5">
+          <p className="text-sm font-semibold text-zinc-500">{t.sidebarSection}</p>
+          <h2 className="mt-1 text-xl font-bold">Revenue streams</h2>
+        </div>
+        <div className="divide-y divide-zinc-100">
+          {revenueRows.map(([name, amount, growth]) => (
+            <div key={name} className="flex items-center justify-between p-5">
+              <div>
+                <p className="font-bold text-zinc-950">{name}</p>
+                <p className="mt-1 text-sm text-zinc-500">{growth}</p>
+              </div>
+              <p className="text-lg font-bold text-zinc-950">{amount}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
