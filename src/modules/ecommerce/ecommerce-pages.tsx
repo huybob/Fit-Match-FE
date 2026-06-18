@@ -73,8 +73,8 @@ export function HomePage() {
       >
         <div className="grid gap-4 md:grid-cols-3">
           {serviceCards.map(({ title, Icon, description }) => (
-            <Card key={title} className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
-              <Icon className="size-8 text-emerald-500" />
+            <Card key={title} className="fit-card p-6">
+              <Icon className="size-8 text-[#ff6b22]" />
               <h3 className="mt-5 text-lg font-bold">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-zinc-500">{description}</p>
             </Card>
@@ -90,7 +90,7 @@ export function HomePage() {
       <Section eyebrow={t("home.reviews")} title="Trusted by busy professionals">
         <div className="grid gap-4 md:grid-cols-3">
           {["Great PT matching", "Booking is so fast", "Checkout feels premium"].map((review) => (
-            <Card key={review} className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+            <Card key={review} className="fit-card p-6">
               <div className="flex gap-1 text-orange-500">
                 {Array.from({ length: 5 }).map((_, index) => (
                   <Star key={index} className="size-4 fill-current" />
@@ -111,37 +111,37 @@ function Hero() {
   const { t } = useTranslation();
 
   return (
-    <section className="overflow-hidden border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <section className="overflow-hidden border-b border-[#dedfce] bg-[#10130f] text-white dark:border-white/10">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-24">
         <div>
-          <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+          <Badge className="border-[#a3ff12]/40 bg-[#a3ff12]/10 text-[#a3ff12]">
             Gym / Fitness / Personal Trainer
           </Badge>
           <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight sm:text-6xl">
             {t("home.heroTitle")}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-300">
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#d8dcc6]">
             {t("home.heroDesc")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-6 text-sm font-black text-zinc-950 hover:bg-emerald-400" href={appRoutes.booking}>
+            <Link className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-black" href={appRoutes.booking}>
               {t("home.cta")}
               <ArrowRight className="size-4" />
             </Link>
-            <Link className="inline-flex h-12 items-center justify-center rounded-md border border-zinc-300 px-6 text-sm font-bold hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900" href={appRoutes.packages}>
+            <Link className="inline-flex h-12 items-center justify-center rounded-md border border-white/20 px-6 text-sm font-bold text-white hover:bg-white/10" href={appRoutes.packages}>
               {t("home.secondary")}
             </Link>
           </div>
         </div>
-        <Card className="p-5 shadow-2xl shadow-zinc-950/10 dark:border-zinc-800 dark:bg-zinc-900">
+        <Card className="border-white/10 bg-white/10 p-5 text-white shadow-2xl shadow-black/30 backdrop-blur">
           <div className="grid gap-4">
             {bookings.map((booking) => (
-              <div key={booking.id} className="rounded-lg border border-zinc-100 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <div key={booking.id} className="rounded-lg border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center justify-between">
                   <p className="font-bold">{booking.type}</p>
                   <StatusBadge status={booking.status} />
                 </div>
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-2 text-sm text-[#d8dcc6]">
                   {booking.trainerName} · {booking.date} · {booking.time}
                 </p>
               </div>
@@ -180,12 +180,12 @@ export function PackageDetailPage({ id }: { id: string }) {
     <SiteLayout>
       <PageShell title={item.name} description={item.description}>
         <div className="grid gap-6 lg:grid-cols-[1fr_0.45fr]">
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <h2 className="text-2xl font-black">{t("packages.detail")}</h2>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {item.features.map((feature) => (
-                <div key={feature} className="flex items-center gap-3 rounded-md bg-zinc-50 p-4 dark:bg-zinc-950">
-                  <Check className="size-4 text-emerald-500" />
+                <div key={feature} className="flex items-center gap-3 rounded-md bg-[#f1f2e8] p-4 dark:bg-black/20">
+                  <Check className="size-4 text-[#ff6b22]" />
                   <span className="text-sm font-bold">{feature}</span>
                 </div>
               ))}
@@ -223,7 +223,7 @@ export function TrainerDetailPage({ id }: { id: string }) {
       <PageShell title={trainer.name} description={trainer.bio}>
         <div className="grid gap-6 lg:grid-cols-[0.7fr_1fr]">
           <TrainerCard trainer={trainer} />
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <h2 className="text-xl font-black">{t("trainers.available")}</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {trainer.availableSlots.map((slot) => (
@@ -244,7 +244,7 @@ export function BookingPage() {
   return (
     <SiteLayout>
       <PageShell title={t("booking.title")} description="Choose trainer, date, time, session type and customer information.">
-        <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <Card className="fit-card p-6">
           <BookingForm />
         </Card>
       </PageShell>
@@ -266,7 +266,7 @@ export function CartPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_0.4fr]">
             <div className="space-y-3">
               {items.map((item) => (
-                <Card key={item.id} className="flex items-center justify-between gap-4 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <Card key={item.id} className="fit-card flex items-center justify-between gap-4 p-4">
                   <div>
                     <p className="font-black">{item.name}</p>
                     <p className="text-sm text-zinc-500">{formatCurrency(item.price)}</p>
@@ -297,7 +297,7 @@ export function CheckoutPage() {
     <SiteLayout>
       <PageShell title={t("checkout.checkoutTitle")}>
         <div className="grid gap-6 lg:grid-cols-[1fr_0.45fr]">
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <CheckoutForm />
           </Card>
           <CheckoutSummary total={gymPackages[1].price} />
@@ -312,10 +312,10 @@ export function CheckoutSuccessPage() {
   return (
     <SiteLayout>
       <PageShell title={t("checkout.successTitle")}>
-        <Card className="p-10 text-center dark:border-zinc-800 dark:bg-zinc-900">
-          <PackageCheck className="mx-auto size-14 text-emerald-500" />
+        <Card className="fit-card p-10 text-center">
+          <PackageCheck className="mx-auto size-14 text-[#a3ff12]" />
           <p className="mt-5 text-xl font-black">{t("checkout.success")}</p>
-          <Link className="mt-6 inline-flex h-11 items-center justify-center rounded-md bg-zinc-950 px-5 text-sm font-bold text-white dark:bg-white dark:text-zinc-950" href="/profile/bookings">
+          <Link className="fit-cta mt-6 inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-bold" href="/profile/bookings">
             {t("booking.history")}
           </Link>
         </Card>
@@ -330,10 +330,10 @@ export function ProfilePage() {
     <SiteLayout>
       <PageShell title={t("profile.title")}>
         <div className="grid gap-6 lg:grid-cols-[0.7fr_1fr]">
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <ProfileForm />
           </Card>
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <h2 className="text-xl font-black">{t("profile.activePackages")}</h2>
             <PackageGrid packages={gymPackages.slice(0, 2)} compact />
           </Card>
@@ -361,16 +361,16 @@ export function AdminDashboardPage() {
       <PageShell title={t("admin.title")}>
         <div className="grid gap-4 md:grid-cols-4">
           {adminStats.map(([label, value, growth]) => (
-            <Card key={label} className="p-5 dark:border-zinc-800 dark:bg-zinc-900">
+            <Card key={label} className="fit-card p-5">
               <p className="text-sm font-bold text-zinc-500">{label}</p>
               <p className="mt-2 text-3xl font-black">{value}</p>
-              <p className="mt-2 text-sm font-bold text-emerald-500">{growth}</p>
+              <p className="mt-2 text-sm font-bold text-[#ff6b22]">{growth}</p>
             </Card>
           ))}
         </div>
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <BookingTable />
-          <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <Card className="fit-card p-6">
             <h2 className="text-xl font-black">{t("admin.createPackage")}</h2>
             <div className="mt-5">
               <AdminPackageForm />
@@ -387,7 +387,7 @@ export function AdminPackagesPage() {
   return (
     <SiteLayout>
       <PageShell title={t("admin.packages")}>
-        <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <Card className="fit-card p-6">
           <AdminPackageForm />
         </Card>
         <div className="mt-6">
@@ -411,7 +411,7 @@ export function AdminTrainersPage() {
   return (
     <SiteLayout>
       <PageShell title={t("admin.trainers")}>
-        <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <Card className="fit-card p-6">
           <AdminTrainerForm />
         </Card>
         <div className="mt-6">
@@ -456,9 +456,9 @@ function PackageCard({ item }: { item: GymPackage }) {
   const { toast } = useToast();
 
   return (
-    <Card className="relative p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      {item.popular && <Badge className="absolute right-5 top-5 border-emerald-200 bg-emerald-50 text-emerald-700">Popular</Badge>}
-      <Dumbbell className="size-8 text-emerald-500" />
+    <Card className="fit-card relative p-6">
+      {item.popular && <Badge className="absolute right-5 top-5 border-[#a3ff12]/50 bg-[#a3ff12]/20 text-[#4d7600] dark:text-[#a3ff12]">Popular</Badge>}
+      <Dumbbell className="size-8 text-[#ff6b22]" />
       <h3 className="mt-5 text-xl font-black">{item.name}</h3>
       <p className="mt-2 text-sm leading-6 text-zinc-500">{item.description}</p>
       <p className="mt-5 text-3xl font-black">{formatCurrency(item.price)}</p>
@@ -468,7 +468,7 @@ function PackageCard({ item }: { item: GymPackage }) {
         </Link>
         <Button
           onClick={() => toast({ type: "success", title: t("packages.added"), description: item.name })}
-          className="h-10 flex-1 bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
+          className="fit-cta h-10 flex-1"
         >
           {t("common.addToCart")}
         </Button>
@@ -492,8 +492,8 @@ function TrainerCard({ trainer }: { trainer: Trainer }) {
   const { toast } = useToast();
 
   return (
-    <Card className="p-6 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex size-16 items-center justify-center rounded-lg bg-zinc-950 text-xl font-black text-white dark:bg-white dark:text-zinc-950">
+    <Card className="fit-card p-6">
+      <div className="flex size-16 items-center justify-center rounded-lg bg-[#10130f] text-xl font-black text-[#a3ff12] dark:bg-[#a3ff12] dark:text-[#10130f]">
         {trainer.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}
       </div>
       <h3 className="mt-5 text-xl font-black">{trainer.name}</h3>
@@ -508,7 +508,7 @@ function TrainerCard({ trainer }: { trainer: Trainer }) {
           {t("common.viewDetails")}
         </Link>
         <Button
-          className="h-10 flex-1 bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
+          className="fit-cta h-10 flex-1"
           onClick={() => toast({ type: "success", title: t("trainers.booked"), description: trainer.name })}
         >
           {t("common.bookNow")}
@@ -551,7 +551,7 @@ function Section({
 }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <p className="text-sm font-black uppercase text-emerald-600">{eyebrow}</p>
+      <p className="text-sm font-black uppercase text-[#ff6b22]">{eyebrow}</p>
       <h2 className="mt-2 text-3xl font-black tracking-tight">{title}</h2>
       {description && <p className="mt-3 max-w-3xl text-zinc-500">{description}</p>}
       <div className="mt-8">{children}</div>
@@ -571,7 +571,7 @@ function FilterBar({
   const { t } = useTranslation();
 
   return (
-    <Card className="mb-6 flex flex-col gap-3 p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row sm:items-center">
+    <Card className="fit-card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
       <div className="flex items-center gap-2 text-sm font-black">
         <Filter className="size-4" />
         {t("packages.filter")}
@@ -623,10 +623,10 @@ function CheckoutSummary({ total }: { total: number }) {
   const { t } = useTranslation();
 
   return (
-    <Card className="h-fit p-6 dark:border-zinc-800 dark:bg-zinc-900">
+    <Card className="fit-card h-fit p-6">
       <p className="text-sm font-bold text-zinc-500">{t("common.checkout")}</p>
       <p className="mt-3 text-3xl font-black">{formatCurrency(total)}</p>
-      <Link className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-md bg-emerald-500 text-sm font-black text-zinc-950 hover:bg-emerald-400" href={appRoutes.checkout}>
+      <Link className="fit-cta mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-black" href={appRoutes.checkout}>
         {t("common.checkout")}
       </Link>
     </Card>
