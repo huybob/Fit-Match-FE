@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { FieldError } from "react-hook-form";
 import { cn } from "@/shared/utils/cn.util";
 
 export function FieldShell({
@@ -10,7 +9,7 @@ export function FieldShell({
   children,
 }: {
   label: string;
-  error?: FieldError;
+  error?: { message?: string };
   children: ReactNode;
 }) {
   return (

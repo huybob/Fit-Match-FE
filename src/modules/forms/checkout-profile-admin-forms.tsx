@@ -72,7 +72,7 @@ export function ProfileForm() {
 export function AdminPackageForm() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof adminPackageSchema>>({
+  const form = useForm<z.input<typeof adminPackageSchema>>({
     resolver: zodResolver(adminPackageSchema),
     defaultValues: { name: "", price: 1000000, duration: "1 month", type: "membership" },
   });
@@ -103,7 +103,7 @@ export function AdminPackageForm() {
 export function AdminTrainerForm() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof adminTrainerSchema>>({
+  const form = useForm<z.input<typeof adminTrainerSchema>>({
     resolver: zodResolver(adminTrainerSchema),
     defaultValues: { name: "", specialty: "", experience: 3, price: 400000 },
   });
