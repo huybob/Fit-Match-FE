@@ -24,7 +24,6 @@ const navItems = [
   ["common.packages", appRoutes.packages],
   ["common.trainers", appRoutes.trainers],
   ["common.booking", appRoutes.booking],
-  ["common.admin", appRoutes.admin],
 ] as const;
 
 export function SiteLayout({ children }: { children: ReactNode }) {
