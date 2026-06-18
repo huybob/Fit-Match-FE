@@ -1,0 +1,112 @@
+{
+  "common": {
+    "brand": "FitMatch",
+    "home": "Home",
+    "packages": "Packages",
+    "trainers": "Trainers",
+    "booking": "Booking",
+    "cart": "Cart",
+    "profile": "Profile",
+    "admin": "Admin",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "checkout": "Checkout",
+    "viewDetails": "View details",
+    "bookNow": "Book now",
+    "addToCart": "Add to cart",
+    "save": "Save changes",
+    "delete": "Delete",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "language": "Language",
+    "theme": "Theme",
+    "success": "Success",
+    "error": "Something went wrong",
+    "warning": "Warning"
+  },
+  "home": {
+    "heroTitle": "Book Gym & PT sessions in minutes",
+    "heroDesc": "Browse gym packages, choose the right personal trainer, and manage your fitness schedule in one modern website.",
+    "cta": "Start booking",
+    "secondary": "View packages",
+    "servicesTitle": "Complete fitness services",
+    "featuredPackages": "Featured packages",
+    "featuredTrainers": "Featured trainers",
+    "reviews": "Customer reviews",
+    "faq": "FAQ"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Full name",
+    "phone": "Phone number",
+    "forgot": "Forgot password?",
+    "loginTitle": "Login to your account",
+    "registerTitle": "Create a new account",
+    "forgotTitle": "Recover password",
+    "loginSuccess": "Logged in successfully",
+    "registerSuccess": "Registered successfully",
+    "forgotSuccess": "Password recovery instructions sent"
+  },
+  "packages": {
+    "title": "Gym packages",
+    "detail": "Package detail",
+    "filter": "Filters",
+    "price": "Price",
+    "duration": "Duration",
+    "type": "Package type",
+    "selected": "Package selected",
+    "added": "Package added to cart"
+  },
+  "trainers": {
+    "title": "Personal trainers",
+    "detail": "Trainer profile",
+    "specialty": "Specialty",
+    "gender": "Gender",
+    "experience": "Experience",
+    "price": "Price/session",
+    "available": "Available slots",
+    "booked": "Trainer selected for booking"
+  },
+  "booking": {
+    "title": "Book a training session",
+    "trainer": "Trainer",
+    "date": "Training date",
+    "time": "Time slot",
+    "type": "Session type",
+    "customer": "Customer information",
+    "success": "Booking created successfully",
+    "cancelled": "Booking cancelled",
+    "history": "Booked sessions",
+    "status": "Status"
+  },
+  "checkout": {
+    "cartTitle": "Shopping cart",
+    "checkoutTitle": "Checkout",
+    "payment": "Payment method",
+    "success": "Payment completed",
+    "empty": "Your cart is empty",
+    "successTitle": "Purchase completed"
+  },
+  "profile": {
+    "title": "User profile",
+    "updateSuccess": "Profile updated successfully",
+    "bookings": "Booking history",
+    "activePackages": "Active packages",
+    "changePassword": "Change password"
+  },
+  "admin": {
+    "title": "Admin dashboard",
+    "packages": "Manage packages",
+    "trainers": "Manage trainers",
+    "bookings": "Manage bookings",
+    "users": "Manage users",
+    "createPackage": "Create package",
+    "createTrainer": "Create trainer",
+    "saved": "Mock data saved",
+    "deleted": "Mock data deleted"
+  }
+}
