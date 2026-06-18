@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Activity,
   Bell,
@@ -41,6 +41,31 @@ const copy = {
       "Lịch tập, check-in và booking được cập nhật liên tục giữa lễ tân, PT và quản lý.",
     search: "Tìm hội viên, PT, mã booking...",
     branch: "Chi nhánh Quận 1",
+    branches: [
+      "Chi nhánh Quận 1",
+      "Chi nhánh Thảo Điền",
+      "Chi nhánh Phú Nhuận",
+      "Chi nhánh Cầu Giấy",
+    ],
+    sidebarSection: "Dữ liệu nhanh",
+    sidebarStats: [
+      ["Sức chứa hiện tại", "74%", "342/460 check-in"],
+      ["Slot PT còn trống", "18", "Trong ngày hôm nay"],
+      ["Booking chờ duyệt", "12", "Cần xử lý trước 17:00"],
+    ],
+    notificationsTitle: "Thông báo",
+    notifications: [
+      ["Lớp HIIT 18:30 đã full", "2 phút trước"],
+      ["8 hội viên sắp hết hạn gói", "15 phút trước"],
+      ["PT Ngọc Anh đổi lịch 16:30", "32 phút trước"],
+    ],
+    settingsTitle: "Cài đặt nhanh",
+    settings: [
+      "Phân quyền nhân sự",
+      "Cấu hình QR check-in",
+      "Đồng bộ Google Calendar",
+      "Thiết lập hoa hồng PT",
+    ],
     createBooking: "Tạo booking",
     date: "Hôm nay · Thứ năm, 18/06/2026",
     tasksCount: "4 việc cần xử lý",
@@ -121,6 +146,31 @@ const copy = {
       "Schedules, check-ins, and bookings stay synchronized across front desk, trainers, and managers.",
     search: "Search members, trainers, booking codes...",
     branch: "District 1 Branch",
+    branches: [
+      "District 1 Branch",
+      "Thao Dien Branch",
+      "Phu Nhuan Branch",
+      "Cau Giay Branch",
+    ],
+    sidebarSection: "Quick data",
+    sidebarStats: [
+      ["Current capacity", "74%", "342/460 checked in"],
+      ["Open PT slots", "18", "Today"],
+      ["Pending bookings", "12", "Handle before 17:00"],
+    ],
+    notificationsTitle: "Notifications",
+    notifications: [
+      ["HIIT 18:30 is fully booked", "2 minutes ago"],
+      ["8 members have expiring packages", "15 minutes ago"],
+      ["Trainer Ngoc Anh moved the 16:30 slot", "32 minutes ago"],
+    ],
+    settingsTitle: "Quick settings",
+    settings: [
+      "Staff permissions",
+      "QR check-in configuration",
+      "Google Calendar sync",
+      "Trainer commission rules",
+    ],
     createBooking: "Create booking",
     date: "Today · Thursday, 18/06/2026",
     tasksCount: "4 tasks to handle",
@@ -198,6 +248,7 @@ const copy = {
 const metricIcons = [CalendarCheck, Dumbbell, QrCode, CreditCard];
 const metricTones = ["emerald", "zinc", "orange", "red"] as const;
 const navIcons = [LayoutDashboard, CalendarClock, UserCheck, UsersRound, QrCode, LineChart];
+const navBadges = ["Live", "128", "18", "27", "342", "+14%"];
 
 export function GymWorkspacePage() {
   const [language, setLanguage] = useState<Language>("vi");
@@ -230,6 +281,17 @@ export function GymWorkspacePage() {
 type Copy = typeof copy.vi;
 
 function Sidebar({ t }: { t: Copy }) {
+  const navItems = useMemo(
+    () =>
+      t.nav.map((label, index) => ({
+        label,
+        badge: navBadges[index],
+        Icon: navIcons[index],
+        active: index === 0,
+      })),
+    [t.nav],
+  );
+
   return (
     <aside className="hidden w-72 shrink-0 border-r border-zinc-200 bg-white lg:flex lg:flex-col">
       <div className="flex h-16 items-center gap-3 border-b border-zinc-200 px-5">
@@ -243,22 +305,46 @@ function Sidebar({ t }: { t: Copy }) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
-        {t.nav.map((label, index) => {
-          const Icon = navIcons[index];
-
-          return (
-            <button
-              key={label}
+        {navItems.map(({ label, badge, Icon, active }) => (
+          <button
+            key={label}
+            className={cn(
+              "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950",
+              active && "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
+            )}
+          >
+            <Icon className="size-4" />
+            <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+            <span
               className={cn(
-                "flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950",
-                index === 0 && "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
+                "rounded-full px-2 py-0.5 text-[11px] font-bold",
+                active ? "bg-white/15 text-white" : "bg-zinc-100 text-zinc-600",
               )}
             >
-              <Icon className="size-4" />
-              {label}
-            </button>
-          );
-        })}
+              {badge}
+            </span>
+          </button>
+        ))}
+
+        <div className="pt-5">
+          <p className="px-3 text-xs font-bold uppercase text-zinc-400">
+            {t.sidebarSection}
+          </p>
+          <div className="mt-3 space-y-2">
+            {t.sidebarStats.map(([label, value, helper]) => (
+              <div
+                key={label}
+                className="rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold text-zinc-500">{label}</p>
+                  <p className="text-sm font-bold text-zinc-950">{value}</p>
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">{helper}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </nav>
 
       <div className="border-t border-zinc-200 p-4">
@@ -283,6 +369,10 @@ function TopBar({
   language: Language;
   onLanguageChange: (language: Language) => void;
 }) {
+  const [selectedBranchIndex, setSelectedBranchIndex] = useState(0);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
@@ -319,17 +409,89 @@ function TopBar({
               </button>
             ))}
           </div>
-          <Button className="hidden h-10 bg-white px-3 text-zinc-700 shadow-none ring-1 ring-zinc-200 hover:bg-zinc-50 sm:inline-flex">
-            <Filter className="size-4" />
-            {t.branch}
-            <ChevronDown className="size-4" />
-          </Button>
-          <Button className="size-10 bg-white p-0 text-zinc-700 shadow-none ring-1 ring-zinc-200 hover:bg-zinc-50">
-            <Bell className="size-4" />
-          </Button>
-          <Button className="size-10 bg-white p-0 text-zinc-700 shadow-none ring-1 ring-zinc-200 hover:bg-zinc-50">
-            <Settings className="size-4" />
-          </Button>
+
+          <label className="relative hidden h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 sm:flex">
+            <Filter className="size-4 text-zinc-500" />
+            <select
+              aria-label={t.branch}
+              value={selectedBranchIndex}
+              onChange={(event) => setSelectedBranchIndex(Number(event.target.value))}
+              className="max-w-44 appearance-none bg-transparent pr-6 outline-none"
+            >
+              {t.branches.map((branch, index) => (
+                <option key={branch} value={index}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 size-4 text-zinc-400" />
+          </label>
+
+          <div className="relative">
+            <Button
+              className="relative size-10 bg-white p-0 text-zinc-700 shadow-none ring-1 ring-zinc-200 hover:bg-zinc-50"
+              onClick={() => {
+                setIsNotificationsOpen((value) => !value);
+                setIsSettingsOpen(false);
+              }}
+              aria-label={t.notificationsTitle}
+            >
+              <Bell className="size-4" />
+              <span className="absolute right-2 top-2 size-2 rounded-full bg-orange-500" />
+            </Button>
+
+            {isNotificationsOpen && (
+              <div className="absolute right-0 top-12 z-50 w-80 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl shadow-zinc-950/10">
+                <p className="px-2 pb-2 text-sm font-bold text-zinc-950">
+                  {t.notificationsTitle}
+                </p>
+                <div className="space-y-1">
+                  {t.notifications.map(([title, time]) => (
+                    <button
+                      key={title}
+                      className="w-full rounded-md p-2 text-left transition hover:bg-zinc-50"
+                    >
+                      <p className="text-sm font-semibold text-zinc-800">{title}</p>
+                      <p className="mt-1 text-xs text-zinc-500">{time}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <Button
+              className="size-10 bg-white p-0 text-zinc-700 shadow-none ring-1 ring-zinc-200 hover:bg-zinc-50"
+              onClick={() => {
+                setIsSettingsOpen((value) => !value);
+                setIsNotificationsOpen(false);
+              }}
+              aria-label={t.settingsTitle}
+            >
+              <Settings className="size-4" />
+            </Button>
+
+            {isSettingsOpen && (
+              <div className="absolute right-0 top-12 z-50 w-72 rounded-lg border border-zinc-200 bg-white p-3 shadow-xl shadow-zinc-950/10">
+                <p className="px-2 pb-2 text-sm font-bold text-zinc-950">
+                  {t.settingsTitle}
+                </p>
+                <div className="space-y-1">
+                  {t.settings.map((setting) => (
+                    <button
+                      key={setting}
+                      className="flex w-full items-center justify-between rounded-md p-2 text-left text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                    >
+                      {setting}
+                      <ChevronDown className="-rotate-90 size-4 text-zinc-400" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button className="h-10 bg-emerald-500 px-4 font-bold text-zinc-950 hover:bg-emerald-400">
             <Plus className="size-4" />
             <span className="hidden sm:inline">{t.createBooking}</span>
