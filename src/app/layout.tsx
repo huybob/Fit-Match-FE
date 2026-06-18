@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "FitMatch OS - Workspace quản lý phòng gym",
+    default: "FitMatch - Gym & PT Booking",
     template: "%s | FitMatch",
   },
   description:
-    "Workspace vận hành phòng gym để check lịch, quản lý PT, hội viên, QR check-in và booking lịch tập.",
+    "Modern ecommerce interface for gym packages, personal trainers, booking, checkout and member profile.",
   keywords: [
     "quản lý phòng gym",
     "phần mềm fitness",
