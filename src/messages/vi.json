@@ -1,0 +1,112 @@
+{
+  "common": {
+    "brand": "FitMatch",
+    "home": "Trang chủ",
+    "packages": "Gói tập",
+    "trainers": "Huấn luyện viên",
+    "booking": "Đặt lịch",
+    "cart": "Giỏ hàng",
+    "profile": "Hồ sơ",
+    "admin": "Admin",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất",
+    "checkout": "Thanh toán",
+    "viewDetails": "Xem chi tiết",
+    "bookNow": "Đặt lịch ngay",
+    "addToCart": "Thêm vào giỏ",
+    "save": "Lưu thay đổi",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "cancel": "Hủy",
+    "confirm": "Xác nhận",
+    "loading": "Đang xử lý...",
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "success": "Thành công",
+    "error": "Có lỗi xảy ra",
+    "warning": "Cảnh báo"
+  },
+  "home": {
+    "heroTitle": "Đặt lịch Gym & PT dễ dàng trong vài phút",
+    "heroDesc": "Khám phá gói tập, chọn huấn luyện viên phù hợp và quản lý lịch tập của bạn trên một website hiện đại.",
+    "cta": "Bắt đầu đặt lịch",
+    "secondary": "Xem gói tập",
+    "servicesTitle": "Dịch vụ fitness toàn diện",
+    "featuredPackages": "Gói tập nổi bật",
+    "featuredTrainers": "PT nổi bật",
+    "reviews": "Khách hàng nói gì",
+    "faq": "Câu hỏi thường gặp"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "name": "Họ và tên",
+    "phone": "Số điện thoại",
+    "forgot": "Quên mật khẩu?",
+    "loginTitle": "Đăng nhập tài khoản",
+    "registerTitle": "Tạo tài khoản mới",
+    "forgotTitle": "Khôi phục mật khẩu",
+    "loginSuccess": "Đăng nhập thành công",
+    "registerSuccess": "Đăng ký thành công",
+    "forgotSuccess": "Đã gửi hướng dẫn khôi phục mật khẩu"
+  },
+  "packages": {
+    "title": "Danh sách gói tập",
+    "detail": "Chi tiết gói tập",
+    "filter": "Bộ lọc",
+    "price": "Giá",
+    "duration": "Thời gian",
+    "type": "Loại gói",
+    "selected": "Đã chọn gói tập",
+    "added": "Đã thêm gói vào giỏ"
+  },
+  "trainers": {
+    "title": "Danh sách huấn luyện viên",
+    "detail": "Hồ sơ huấn luyện viên",
+    "specialty": "Chuyên môn",
+    "gender": "Giới tính",
+    "experience": "Kinh nghiệm",
+    "price": "Giá/buổi",
+    "available": "Lịch trống",
+    "booked": "Đã chọn PT để đặt lịch"
+  },
+  "booking": {
+    "title": "Đặt lịch tập",
+    "trainer": "Huấn luyện viên",
+    "date": "Ngày tập",
+    "time": "Khung giờ",
+    "type": "Loại buổi tập",
+    "customer": "Thông tin người đặt",
+    "success": "Đặt lịch thành công",
+    "cancelled": "Đã hủy lịch",
+    "history": "Lịch đã đặt",
+    "status": "Trạng thái"
+  },
+  "checkout": {
+    "cartTitle": "Giỏ hàng",
+    "checkoutTitle": "Thanh toán",
+    "payment": "Phương thức thanh toán",
+    "success": "Thanh toán thành công",
+    "empty": "Giỏ hàng đang trống",
+    "successTitle": "Đặt mua thành công"
+  },
+  "profile": {
+    "title": "Hồ sơ cá nhân",
+    "updateSuccess": "Cập nhật hồ sơ thành công",
+    "bookings": "Lịch sử booking",
+    "activePackages": "Gói tập đang sử dụng",
+    "changePassword": "Đổi mật khẩu"
+  },
+  "admin": {
+    "title": "Admin dashboard",
+    "packages": "Quản lý gói tập",
+    "trainers": "Quản lý PT",
+    "bookings": "Quản lý booking",
+    "users": "Quản lý người dùng",
+    "createPackage": "Thêm gói tập",
+    "createTrainer": "Thêm PT",
+    "saved": "Đã lưu dữ liệu mock",
+    "deleted": "Đã xóa dữ liệu mock"
+  }
+}
