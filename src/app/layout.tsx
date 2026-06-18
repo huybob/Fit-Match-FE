@@ -15,11 +15,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "FitMatch - Quản lý phòng Gym & Fitness toàn diện",
+    default: "FitMatch OS - Workspace quản lý phòng gym",
     template: "%s | FitMatch",
   },
   description:
-    "Nền tảng quản lý phòng gym, fitness, personal trainer, hội viên, gói tập và booking lịch tập toàn diện.",
+    "Workspace vận hành phòng gym để check lịch, quản lý PT, hội viên, QR check-in và booking lịch tập.",
   keywords: [
     "quản lý phòng gym",
     "phần mềm fitness",
@@ -29,9 +29,9 @@ export const metadata: Metadata = {
     "QR check-in",
   ],
   openGraph: {
-    title: "FitMatch - Quản lý phòng Gym & Fitness toàn diện",
+    title: "FitMatch OS - Workspace quản lý phòng gym",
     description:
-      "Quản lý hội viên, PT, lịch tập, gói tập và booking chỉ trên một nền tảng.",
+      "Check lịch, quản lý PT, hội viên, QR check-in và booking lịch tập trong một workspace.",
     type: "website",
     locale: "vi_VN",
   },
