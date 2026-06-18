@@ -1,5 +1,5 @@
-import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
+import { HomePage } from "@/modules/ecommerce/ecommerce-pages";
 
 export default function Home() {
-  return <GymWorkspacePage />;
+  return <HomePage />;
 }

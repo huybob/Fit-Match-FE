@@ -1,5 +1,5 @@
-import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
+import { TrainersPage as TrainersScreen } from "@/modules/ecommerce/ecommerce-pages";
 
-export default function TrainersPage() {
-  return <GymWorkspacePage activeSection="trainers" />;
+export default function TrainersRoute() {
+  return <TrainersScreen />;
 }
