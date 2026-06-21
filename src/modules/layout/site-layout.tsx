@@ -100,7 +100,12 @@ function SiteHeader() {
             <ShoppingCart className="size-4" />
           </Link>
 
-          {status === "authenticated" && user ? (
+          {status === "idle" || status === "loading" ? (
+            <div
+              aria-label={t("common.loading")}
+              className="h-10 w-32 animate-pulse rounded-md bg-[#dedfce] dark:bg-white/10"
+            />
+          ) : status === "authenticated" && user ? (
             <div className="relative">
               <Button
                 type="button"
@@ -161,9 +166,38 @@ function SiteHeader() {
                 {t(key)}
               </Link>
             ))}
-            <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={status === "authenticated" ? appRoutes.profile : appRoutes.login}>
-              {status === "authenticated" ? t("common.profile") : t("common.login")}
-            </Link>
+            {status === "idle" || status === "loading" ? (
+              <div className="h-10 animate-pulse rounded-md bg-[#dedfce] dark:bg-white/10" />
+            ) : status === "authenticated" && user ? (
+              <div className="border-t border-[#dedfce] pt-2 dark:border-white/10">
+                <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-[#858a78]">
+                  {user.username}
+                </p>
+                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
+                  {t("common.profile")}
+                </Link>
+                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/change-password">
+                  {t("profile.changePassword")}
+                </Link>
+                <button
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                  onClick={() => void handleLogout()}
+                  type="button"
+                >
+                  <LogOut className="size-4" />
+                  {t("common.logout")}
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 border-t border-[#dedfce] pt-3 dark:border-white/10">
+                <Link className="rounded-md px-3 py-2 text-center text-sm font-semibold" href={appRoutes.login}>
+                  {t("common.login")}
+                </Link>
+                <Link className="rounded-md bg-[#ff6b22] px-3 py-2 text-center text-sm font-bold text-white" href={appRoutes.register}>
+                  {t("common.register")}
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
