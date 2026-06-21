@@ -1,11 +1,14 @@
 export interface PaginationParams {
   page: number;
-  limit: number;
+  size: number;
+  sort?: string[];
 }
 
 export interface PaginatedResult<TItem> {
-  items: TItem[];
-  total: number;
+  content: TItem[];
   page: number;
-  limit: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }
