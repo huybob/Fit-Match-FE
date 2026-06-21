@@ -39,10 +39,18 @@
     "faq": "FAQ"
   },
   "auth": {
+    "username": "Username",
     "email": "Email",
     "password": "Password",
     "name": "Full name",
     "phone": "Phone number",
+    "role": "Account type",
+    "customer": "Customer",
+    "trainer": "Personal trainer",
+    "gymOperator": "Gym operator",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "passwordChanged": "Password changed successfully",
     "forgot": "Forgot password?",
     "loginTitle": "Login to your account",
     "registerTitle": "Create a new account",

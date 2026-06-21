@@ -4,7 +4,7 @@ import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 import { CheckCircle2, Info, Loader2, TriangleAlert, X, XCircle } from "lucide-react";
 import { cn } from "@/shared/utils/cn.util";
 
-type ToastType = "success" | "error" | "warning" | "loading";
+type ToastType = "success" | "error" | "warning" | "info" | "loading";
 
 type Toast = {
   id: number;
@@ -80,6 +80,7 @@ function ToastIcon({ type }: { type: ToastType }) {
     type === "success" && "text-emerald-500",
     type === "error" && "text-red-500",
     type === "warning" && "text-orange-500",
+    type === "info" && "text-blue-500",
     type === "loading" && "animate-spin text-zinc-500",
   );
 
