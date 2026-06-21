@@ -1,5 +1,5 @@
 import { SessionUser } from "./session";
 
-export function hasPermission(user: SessionUser | null, permission: string) {
-  return Boolean(user?.roles.includes(permission));
+export function hasPermission(user: SessionUser | null, roles: SessionUser["role"][]) {
+  return Boolean(user?.role && roles.includes(user.role));
 }
