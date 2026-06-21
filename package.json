@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "api:generate": "openapi-typescript http://localhost:8080/v3/api-docs -o src/services/generated/api-contracts.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -33,6 +34,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^15.5.19",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
