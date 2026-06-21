@@ -1,5 +1,5 @@
-import { TrainersPage as TrainersScreen } from "@/modules/ecommerce/ecommerce-pages";
+import { TrainersDirectoryPage } from "@/modules/trainer/components/trainer-public-pages";
 
 export default function TrainersRoute() {
-  return <TrainersScreen />;
+  return <TrainersDirectoryPage />;
 }

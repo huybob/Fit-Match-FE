@@ -18,6 +18,7 @@ import { appRoutes } from "@/constants/ecommerce.constant";
 import { useLocale } from "@/lib/i18n-provider";
 import { useThemeMode } from "@/lib/theme-provider";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn.util";
 
@@ -121,6 +122,11 @@ function SiteHeader() {
                   <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={appRoutes.profile}>
                     {t("common.profile")}
                   </Link>
+                  {getHomeRouteForRole(user.role) !== appRoutes.profile && (
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={getHomeRouteForRole(user.role)}>
+                      Workspace
+                    </Link>
+                  )}
                   <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/change-password">
                     {t("profile.changePassword")}
                   </Link>
@@ -176,6 +182,11 @@ function SiteHeader() {
                 <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
                   {t("common.profile")}
                 </Link>
+                {getHomeRouteForRole(user.role) !== appRoutes.profile && (
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={getHomeRouteForRole(user.role)}>
+                    Workspace
+                  </Link>
+                )}
                 <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/change-password">
                   {t("profile.changePassword")}
                 </Link>
