@@ -1,17 +1,28 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email is invalid"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const registerSchema = loginSchema.extend({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().min(8, "Phone is required"),
+  username: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(50, "Username must not exceed 50 characters")
+    .regex(/^[a-zA-Z0-9._-]+$/, "Username contains invalid characters"),
+  email: z.string().email("Email is invalid"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100),
+  phone: z.union([
+    z.literal(""),
+    z.string().regex(/^[0-9+\-() ]{7,20}$/, "Phone number is invalid"),
+  ]),
+  role: z.enum(["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"]),
 });
 
-export const forgotPasswordSchema = z.object({
-  email: z.string().email("Email is invalid"),
+export const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters").max(100),
 });
 
 export const bookingSchema = z.object({

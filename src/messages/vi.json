@@ -39,6 +39,14 @@
     "faq": "Câu hỏi thường gặp"
   },
   "auth": {
+    "username": "Tên đăng nhập",
+    "role": "Loại tài khoản",
+    "customer": "Khách hàng",
+    "trainer": "Huấn luyện viên",
+    "gymOperator": "Đơn vị phòng gym",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "passwordChanged": "Đổi mật khẩu thành công",
     "email": "Email",
     "password": "Mật khẩu",
     "name": "Họ và tên",

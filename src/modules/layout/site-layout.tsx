@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
   Dumbbell,
+  LogOut,
   Menu,
   Moon,
   ShoppingCart,
@@ -16,6 +17,7 @@ import {
 import { appRoutes } from "@/constants/ecommerce.constant";
 import { useLocale } from "@/lib/i18n-provider";
 import { useThemeMode } from "@/lib/theme-provider";
+import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn.util";
 
@@ -42,6 +44,12 @@ function SiteHeader() {
   const [isUserOpen, setIsUserOpen] = useState(false);
   const { locale, changeLanguage } = useLocale();
   const { theme, toggleTheme } = useThemeMode();
+  const { user, status, logout } = useAuthStore();
+
+  async function handleLogout() {
+    await logout();
+    setIsUserOpen(false);
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#dedfce] bg-[#f7f7ef]/88 backdrop-blur-xl dark:border-white/10 dark:bg-[#080a07]/88">
@@ -92,30 +100,42 @@ function SiteHeader() {
             <ShoppingCart className="size-4" />
           </Link>
 
-          <div className="relative">
-            <Button
-              type="button"
-              onClick={() => setIsUserOpen((value) => !value)}
-              className="h-10 bg-[#ff6b22] px-3 text-white hover:bg-[#ff7f3f] dark:bg-[#ff6b22] dark:text-white"
-            >
-              <UserCircle className="size-4" />
-              Demo User
-              <ChevronDown className="size-4" />
-            </Button>
-            {isUserOpen && (
-              <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#dedfce] bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
-                <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={appRoutes.profile}>
-                  {t("common.profile")}
-                </Link>
-                <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/bookings">
-                  {t("booking.history")}
-                </Link>
-                <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={appRoutes.login}>
-                  {t("common.login")}
-                </Link>
-              </div>
-            )}
-          </div>
+          {status === "authenticated" && user ? (
+            <div className="relative">
+              <Button
+                type="button"
+                onClick={() => setIsUserOpen((value) => !value)}
+                className="h-10 bg-[#ff6b22] px-3 text-white hover:bg-[#ff7f3f] dark:bg-[#ff6b22] dark:text-white"
+              >
+                <UserCircle className="size-4" />
+                {user.username}
+                <ChevronDown className="size-4" />
+              </Button>
+              {isUserOpen && (
+                <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#dedfce] bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={appRoutes.profile}>
+                    {t("common.profile")}
+                  </Link>
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/change-password">
+                    {t("profile.changePassword")}
+                  </Link>
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                    onClick={() => void handleLogout()}
+                    type="button"
+                  >
+                    <LogOut className="size-4" />
+                    {t("common.logout")}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link className="px-3 text-sm font-bold" href={appRoutes.login}>{t("common.login")}</Link>
+              <Link className="rounded-md bg-[#ff6b22] px-4 py-2 text-sm font-bold text-white" href={appRoutes.register}>{t("common.register")}</Link>
+            </>
+          )}
         </div>
 
         <Button
@@ -141,6 +161,9 @@ function SiteHeader() {
                 {t(key)}
               </Link>
             ))}
+            <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={status === "authenticated" ? appRoutes.profile : appRoutes.login}>
+              {status === "authenticated" ? t("common.profile") : t("common.login")}
+            </Link>
           </div>
         </div>
       )}
