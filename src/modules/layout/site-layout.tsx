@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -48,6 +49,9 @@ function SiteHeader() {
   const { locale, changeLanguage } = useLocale();
   const { theme, toggleTheme } = useThemeMode();
   const { user, status, logout } = useAuthStore();
+  const pathname = usePathname();
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 
   async function handleLogout() {
     await logout();
@@ -55,10 +59,10 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#dedfce] bg-[#f7f7ef]/88 backdrop-blur-xl dark:border-white/10 dark:bg-[#080a07]/88">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-[#dedfce]/80 bg-[#f7f7ef]/88 shadow-[0_6px_24px_rgba(16,19,15,0.04)] backdrop-blur-xl dark:border-white/10 dark:bg-[#080a07]/88">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-md bg-[#a3ff12] text-[#10130f] shadow-lg shadow-lime-500/20">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-[#a3ff12] text-[#10130f] shadow-lg shadow-lime-500/20">
             <Dumbbell className="size-5" />
           </span>
           <span className="text-lg font-black tracking-tight">
@@ -71,7 +75,12 @@ function SiteHeader() {
             <Link
               key={href}
               href={href}
-              className="text-sm font-bold text-[#505647] transition hover:text-[#10130f] dark:text-[#c9ccb8] dark:hover:text-white"
+              className={cn(
+                "relative rounded-lg px-1 py-2 text-sm font-bold transition hover:text-[#10130f] dark:hover:text-white",
+                isActive(href)
+                  ? "text-[#10130f] after:absolute after:inset-x-1 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-[#ff6b22] dark:text-white"
+                  : "text-[#505647] dark:text-[#c9ccb8]",
+              )}
             >
               {t(key)}
             </Link>
