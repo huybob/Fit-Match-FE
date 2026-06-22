@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell, inputClassName } from "@/modules/forms/form-controls";
@@ -81,22 +82,29 @@ function Header({
     </div>
   );
 }
-function fail(toast: ReturnType<typeof useToast>["toast"], error: unknown) {
+function fail(
+  toast: ReturnType<typeof useToast>["toast"],
+  error: unknown,
+  title: string,
+) {
   toast({
     type: "error",
-    title: "Request failed",
+    title,
     description: toErrorMessage(error),
   });
 }
 function timeText(value?: string | { hour?: number; minute?: number }) {
   if (typeof value === "string") return value.slice(0, 5);
-  return value ? `${String(value.hour ?? 0).padStart(2, "0")}:${String(value.minute ?? 0).padStart(2, "0")}` : "";
+  return value
+    ? `${String(value.hour ?? 0).padStart(2, "0")}:${String(value.minute ?? 0).padStart(2, "0")}`
+    : "";
 }
 function localTime(value: string) {
   return `${value}:00`;
 }
 
 export function TrainerProfilePage() {
+  const { t } = useTranslation();
   const query = useGetMyTrainerProfile();
   const update = useUpdateTrainerProfile();
   const upload = useUploadTrainerAvatar();
@@ -123,15 +131,15 @@ export function TrainerProfilePage() {
   if (query.isError)
     return (
       <EmptyState
-        title="Unable to load profile"
+        title={t("trainerModule.loadProfileError")}
         description={toErrorMessage(query.error)}
       />
     );
   return (
     <>
       <Header
-        title="Trainer profile"
-        description="Public biography, experience and pricing from /api/pt/profile/me."
+        title={t("trainerModule.profileTitle")}
+        description={t("trainerModule.profileDescription")}
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <form
@@ -139,13 +147,19 @@ export function TrainerProfilePage() {
           onSubmit={form.handleSubmit(async (values) => {
             try {
               await update.mutateAsync(values);
-              toast({ type: "success", title: "Profile updated" });
+              toast({
+                type: "success",
+                title: t("trainerModule.profileUpdated"),
+              });
             } catch (error) {
-              fail(toast, error);
+              fail(toast, error, t("common.requestFailed"));
             }
           })}
         >
-          <FieldShell label="Biography" error={form.formState.errors.bio}>
+          <FieldShell
+            label={t("trainerModule.biography")}
+            error={form.formState.errors.bio}
+          >
             <textarea
               className={`${inputClassName} h-32 py-3`}
               {...form.register("bio")}
@@ -153,33 +167,33 @@ export function TrainerProfilePage() {
           </FieldShell>
           <div className="grid gap-4 sm:grid-cols-3">
             <FieldShell
-              label="Experience years"
+              label={t("trainerModule.experienceYears")}
               error={form.formState.errors.experienceYears}
             >
               <input
                 className={inputClassName}
                 type="number"
-                  {...form.register("experienceYears", { valueAsNumber: true })}
+                {...form.register("experienceYears", { valueAsNumber: true })}
               />
             </FieldShell>
             <FieldShell
-              label="Price/hour"
+              label={t("trainerModule.priceHour")}
               error={form.formState.errors.pricePerHour}
             >
               <input
                 className={inputClassName}
                 type="number"
-                  {...form.register("pricePerHour", { valueAsNumber: true })}
+                {...form.register("pricePerHour", { valueAsNumber: true })}
               />
             </FieldShell>
             <FieldShell
-              label="Price/session"
+              label={t("trainerModule.priceSession")}
               error={form.formState.errors.pricePerSession}
             >
               <input
                 className={inputClassName}
                 type="number"
-                  {...form.register("pricePerSession", { valueAsNumber: true })}
+                {...form.register("pricePerSession", { valueAsNumber: true })}
               />
             </FieldShell>
           </div>
@@ -202,9 +216,12 @@ export function TrainerProfilePage() {
                 if (!file) return;
                 try {
                   await upload.mutateAsync(file);
-                  toast({ type: "success", title: "Avatar uploaded" });
+                  toast({
+                    type: "success",
+                    title: t("trainerModule.avatarUploaded"),
+                  });
                 } catch (error) {
-                  fail(toast, error);
+                  fail(toast, error, t("common.requestFailed"));
                 }
               }}
             />
@@ -216,6 +233,7 @@ export function TrainerProfilePage() {
 }
 
 export function TrainerServicesPage() {
+  const { t } = useTranslation();
   const query = useGetTrainerServices();
   const create = useCreateTrainerService();
   const update = useUpdateTrainerService();
@@ -245,8 +263,8 @@ export function TrainerServicesPage() {
   return (
     <>
       <Header
-        title="Services"
-        description="Create, edit, activate and remove bookable PT services."
+        title={t("trainerModule.services")}
+        description={t("trainerModule.servicesDescription")}
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
@@ -320,11 +338,15 @@ export function TrainerServicesPage() {
               }
               toast({
                 type: "success",
-                title: editing ? "Service updated" : "Service created",
+                title: t(
+                  editing
+                    ? "trainerModule.serviceUpdated"
+                    : "trainerModule.serviceCreated",
+                ),
               });
               setOpen(false);
             } catch (error) {
-              fail(toast, error);
+              fail(toast, error, t("common.requestFailed"));
             }
           })}
         >
@@ -345,7 +367,7 @@ export function TrainerServicesPage() {
               <input
                 className={inputClassName}
                 type="number"
-                  {...form.register("price", { valueAsNumber: true })}
+                {...form.register("price", { valueAsNumber: true })}
               />
             </FieldShell>
             <FieldShell
@@ -355,7 +377,7 @@ export function TrainerServicesPage() {
               <input
                 className={inputClassName}
                 type="number"
-                  {...form.register("durationMinutes", { valueAsNumber: true })}
+                {...form.register("durationMinutes", { valueAsNumber: true })}
               />
             </FieldShell>
           </div>
@@ -367,6 +389,7 @@ export function TrainerServicesPage() {
 }
 
 export function TrainerAvailabilityPage() {
+  const { t } = useTranslation();
   const query = useGetTrainerAvailability();
   const create = useCreateTrainerAvailability();
   const update = useUpdateTrainerAvailability();
@@ -406,8 +429,8 @@ export function TrainerAvailabilityPage() {
   return (
     <>
       <Header
-        title="Availability"
-        description="Recurring and effective-date working slots."
+        title={t("trainerModule.availability")}
+        description={t("trainerModule.availabilityDescription")}
       />
       <form
         className="mb-6 grid gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-5"
@@ -427,11 +450,15 @@ export function TrainerAvailabilityPage() {
             }
             toast({
               type: "success",
-              title: editing ? "Availability updated" : "Availability created",
+              title: t(
+                editing
+                  ? "trainerModule.availabilityUpdated"
+                  : "trainerModule.availabilityCreated",
+              ),
             });
             edit();
           } catch (error) {
-            fail(toast, error);
+            fail(toast, error, t("common.requestFailed"));
           }
         })}
       >
@@ -505,6 +532,7 @@ export function TrainerAvailabilityPage() {
 }
 
 export function TrainerCertificatesPage() {
+  const { t } = useTranslation();
   const query = useGetTrainerCertificates();
   const create = useCreateTrainerCertificate();
   const update = useUpdateTrainerCertificate();
@@ -535,8 +563,8 @@ export function TrainerCertificatesPage() {
   return (
     <>
       <Header
-        title="Certificates"
-        description="Credentials with optional supporting files."
+        title={t("trainerModule.certificates")}
+        description={t("trainerModule.certificatesDescription")}
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
@@ -599,11 +627,15 @@ export function TrainerCertificatesPage() {
               }
               toast({
                 type: "success",
-                title: editing ? "Certificate updated" : "Certificate created",
+                title: t(
+                  editing
+                    ? "trainerModule.certificateUpdated"
+                    : "trainerModule.certificateCreated",
+                ),
               });
               setOpen(false);
             } catch (error) {
-              fail(toast, error);
+              fail(toast, error, t("common.requestFailed"));
             }
           })}
         >
@@ -646,6 +678,7 @@ export function TrainerCertificatesPage() {
 }
 
 export function TrainerPartnershipsPage() {
+  const { t } = useTranslation();
   const query = useGetTrainerPartnerships();
   const request = useRequestTrainerPartnership();
   const end = useEndTrainerPartnership();
@@ -657,8 +690,8 @@ export function TrainerPartnershipsPage() {
   return (
     <>
       <Header
-        title="Gym partnerships"
-        description="Request and manage partnerships with real gym IDs."
+        title={t("trainerModule.partnerships")}
+        description={t("trainerModule.partnershipsDescription")}
       />
       <form
         className="mb-6 grid gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-[180px_1fr_auto]"
@@ -666,9 +699,12 @@ export function TrainerPartnershipsPage() {
           try {
             await request.mutateAsync(values);
             form.reset();
-            toast({ type: "success", title: "Partnership requested" });
+            toast({
+              type: "success",
+              title: t("trainerModule.partnershipRequested"),
+            });
           } catch (error) {
-            fail(toast, error);
+            fail(toast, error, t("common.requestFailed"));
           }
         })}
       >

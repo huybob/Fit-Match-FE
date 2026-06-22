@@ -3,6 +3,7 @@
 import { Award, CalendarDays, Search, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import {
   useGetPublicTrainer,
@@ -16,15 +17,6 @@ import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { inputClassName } from "@/modules/forms/form-controls";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
-const days = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
 const currency = new Intl.NumberFormat("vi-VN", {
   style: "currency",
   currency: "VND",
@@ -39,6 +31,7 @@ function timeLabel(value?: string | { hour?: number; minute?: number }) {
 export function TrainersDirectoryPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
+  const { t } = useTranslation();
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -50,34 +43,32 @@ export function TrainersDirectoryPage() {
     <SiteLayout>
       <main className="mx-auto max-w-4xl px-4 py-12">
         <p className="text-sm font-black uppercase tracking-widest text-orange-600">
-          Personal trainers
+          {t("trainerModule.directoryEyebrow")}
         </p>
         <h1 className="mt-3 text-4xl font-black">
-          Find a trainer by FitMatch user ID
+          {t("trainerModule.directoryTitle")}
         </h1>
         <p className="mt-4 max-w-2xl text-zinc-600 dark:text-zinc-300">
-          The backend currently exposes trainer detail, services, certificates
-          and availability, but no public trainer-list endpoint. This lookup
-          uses the real public profile API without placeholder data.
+          {t("trainerModule.directoryDescription")}
         </p>
         <form
           className="mt-8 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row"
           onSubmit={submit}
         >
           <input
-            aria-label="Trainer user ID"
+            aria-label={t("trainerModule.userId")}
             className={inputClassName}
             inputMode="numeric"
             min="1"
             onChange={(event) => setUserId(event.target.value)}
-            placeholder="Trainer user ID"
+            placeholder={t("trainerModule.userId")}
             required
             type="number"
             value={userId}
           />
           <Button className="shrink-0" type="submit">
             <Search className="size-4" />
-            View trainer
+            {t("trainerModule.viewTrainer")}
           </Button>
         </form>
       </main>
@@ -86,6 +77,7 @@ export function TrainersDirectoryPage() {
 }
 
 export function TrainerPublicDetailPage({ userId }: { userId: number }) {
+  const { t } = useTranslation();
   const profileQuery = useGetPublicTrainer(userId);
   const profileId = profileQuery.data?.id ?? 0;
   const servicesQuery = useGetPublicTrainerServices(profileId);
@@ -105,7 +97,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
       <SiteLayout>
         <main className="mx-auto max-w-4xl px-4 py-12">
           <EmptyState
-            title="Trainer not found"
+            title={t("trainerModule.notFound")}
             description={toErrorMessage(profileQuery.error)}
           />
         </main>
@@ -123,17 +115,22 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
             <div>
               <p className="text-sm font-bold text-lime-300">
-                Trainer #{profile.userId}
+                {t("trainerModule.trainerNumber", { id: profile.userId })}
               </p>
               <h1 className="mt-1 text-3xl font-black">{profile.username}</h1>
               <p className="mt-2 text-zinc-300">
-                {profile.bio || "This trainer has not added a biography yet."}
+                {profile.bio || t("trainerModule.emptyBio")}
               </p>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">
-                <span>{profile.experienceYears ?? 0} years experience</span>
+                <span>
+                  {t("trainerModule.experience", {
+                    count: profile.experienceYears ?? 0,
+                  })}
+                </span>
                 {profile.pricePerSession && (
                   <span>
-                    {currency.format(profile.pricePerSession)} / session
+                    {currency.format(profile.pricePerSession)} /{" "}
+                    {t("trainerModule.perSession")}
                   </span>
                 )}
               </div>
@@ -142,7 +139,9 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
         </section>
 
         <section>
-          <h2 className="mb-4 text-2xl font-black">Services</h2>
+          <h2 className="mb-4 text-2xl font-black">
+            {t("trainerModule.services")}
+          </h2>
           {servicesQuery.isLoading ? (
             <LoadingSkeleton />
           ) : servicesQuery.data?.content?.length ? (
@@ -165,8 +164,8 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
           ) : (
             <EmptyState
-              title="No active services"
-              description="This trainer has not published a service."
+              title={t("trainerModule.noServices")}
+              description={t("trainerModule.noServicesDescription")}
             />
           )}
         </section>
@@ -174,7 +173,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
             <CalendarDays className="size-6" />
-            Availability
+            {t("trainerModule.availability")}
           </h2>
           {availabilityQuery.data?.content?.length ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -183,7 +182,9 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   key={slot.id}
                   className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
                 >
-                  <p className="font-black">{days[slot.dayOfWeek ?? 0]}</p>
+                  <p className="font-black">
+                    {t(`trainerModule.days.${slot.dayOfWeek ?? 0}`)}
+                  </p>
                   <p className="mt-1 text-sm">
                     {timeLabel(slot.startTime)}–{timeLabel(slot.endTime)}
                   </p>
@@ -192,8 +193,8 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
           ) : (
             <EmptyState
-              title="No availability"
-              description="No public schedule has been published."
+              title={t("trainerModule.noAvailability")}
+              description={t("trainerModule.noAvailabilityDescription")}
             />
           )}
         </section>
@@ -201,7 +202,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
             <Award className="size-6" />
-            Certificates
+            {t("trainerModule.certificates")}
           </h2>
           {certificatesQuery.data?.content?.length ? (
             <div className="grid gap-4 md:grid-cols-2">
@@ -215,15 +216,15 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                     {cert.issuingOrg}
                   </p>
                   <p className="mt-3 text-xs font-bold">
-                    {cert.issueDate || "Issue date not provided"}
+                    {cert.issueDate || t("trainerModule.issueDateMissing")}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
             <EmptyState
-              title="No certificates"
-              description="This trainer has not published certificates."
+              title={t("trainerModule.noCertificates")}
+              description={t("trainerModule.noCertificatesDescription")}
             />
           )}
         </section>
