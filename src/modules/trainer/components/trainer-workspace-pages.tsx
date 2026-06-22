@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, UploadCloud, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -141,9 +141,9 @@ export function TrainerProfilePage() {
         title={t("trainerModule.profileTitle")}
         description={t("trainerModule.profileDescription")}
       />
-      <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
+      <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.75fr)]">
         <form
-          className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
+          className="space-y-5 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-7"
           onSubmit={form.handleSubmit(async (values) => {
             try {
               await update.mutateAsync(values);
@@ -197,18 +197,27 @@ export function TrainerProfilePage() {
               />
             </FieldShell>
           </div>
-          <Button disabled={update.isPending}>Save profile</Button>
+          <Button disabled={update.isPending}>
+            {t("trainerModule.saveProfile")}
+          </Button>
         </form>
-        <aside className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="grid size-24 place-items-center rounded-full bg-lime-300 text-2xl font-black text-zinc-950">
-            {query.data?.username?.slice(0, 2).toUpperCase()}
+        <aside className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-zinc-950 to-zinc-800 p-7 text-center text-white shadow-sm dark:border-zinc-800">
+          <div className="relative grid size-28 place-items-center rounded-full border-4 border-white/20 bg-lime-300 text-2xl font-black text-zinc-950 shadow-xl">
+            {query.data?.username?.slice(0, 2).toUpperCase() || (
+              <UserRound className="size-10" />
+            )}
           </div>
-          <p className="mt-4 font-black">{query.data?.username}</p>
-          <p className="text-sm text-zinc-500">{query.data?.email}</p>
-          <label className="mt-5 block text-sm font-bold">
-            Upload avatar
+          <p className="mt-5 text-xl font-black">{query.data?.username}</p>
+          <p className="mt-1 text-sm text-zinc-300">{query.data?.email}</p>
+          <label
+            className="mt-6 inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-zinc-950 transition-all hover:-translate-y-0.5 hover:bg-lime-300 hover:shadow-lg"
+            htmlFor="trainer-avatar"
+          >
+            <UploadCloud className="size-4" />
+            {t("trainerModule.uploadAvatar")}
             <input
-              className="mt-2 block w-full text-xs"
+              className="sr-only"
+              id="trainer-avatar"
               type="file"
               accept="image/*"
               onChange={async (event) => {
@@ -268,7 +277,7 @@ export function TrainerServicesPage() {
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            Add service
+            {t("trainerModule.addService")}
           </Button>
         }
       />
@@ -285,16 +294,19 @@ export function TrainerServicesPage() {
                 <div>
                   <h2 className="font-black">{item.name}</h2>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {item.description || "No description"}
+                    {item.description || t("common.noDescription")}
                   </p>
                 </div>
-                <Badge>{item.isActive ? "Active" : "Inactive"}</Badge>
+                <Badge>
+                  {t(item.isActive ? "common.active" : "common.inactive")}
+                </Badge>
               </div>
               <p className="mt-4 font-black text-orange-600">
-                {currency.format(item.price ?? 0)} · {item.durationMinutes} min
+                {currency.format(item.price ?? 0)} · {item.durationMinutes}{" "}
+                {t("trainerModule.minutesShort")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Button onClick={() => show(item)}>Edit</Button>
+                <Button onClick={() => show(item)}>{t("common.edit")}</Button>
                 <Button
                   className="bg-zinc-600"
                   onClick={() =>
@@ -303,12 +315,12 @@ export function TrainerServicesPage() {
                   }
                 >
                   <RefreshCw className="size-4" />
-                  Toggle
+                  {t("common.toggle")}
                 </Button>
                 {item.id && (
                   <ConfirmDialog
-                    label="Delete"
-                    title="Delete this service?"
+                    label={t("common.delete")}
+                    title={t("trainerModule.deleteServiceTitle")}
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -318,14 +330,16 @@ export function TrainerServicesPage() {
         </div>
       ) : (
         <EmptyState
-          title="No services"
-          description="Create the first service customers can book."
+          title={t("trainerModule.emptyServices")}
+          description={t("trainerModule.emptyServicesDescription")}
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={editing ? "Edit service" : "Create service"}
+        title={t(
+          editing ? "trainerModule.editService" : "trainerModule.createService",
+        )}
       >
         <form
           className="space-y-4"
@@ -350,11 +364,14 @@ export function TrainerServicesPage() {
             }
           })}
         >
-          <FieldShell label="Name" error={form.formState.errors.name}>
+          <FieldShell
+            label={t("common.name")}
+            error={form.formState.errors.name}
+          >
             <input className={inputClassName} {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label="Description"
+            label={t("common.description")}
             error={form.formState.errors.description}
           >
             <textarea
@@ -363,7 +380,10 @@ export function TrainerServicesPage() {
             />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
-            <FieldShell label="Price" error={form.formState.errors.price}>
+            <FieldShell
+              label={t("trainerModule.price")}
+              error={form.formState.errors.price}
+            >
               <input
                 className={inputClassName}
                 type="number"
@@ -371,7 +391,7 @@ export function TrainerServicesPage() {
               />
             </FieldShell>
             <FieldShell
-              label="Duration (minutes)"
+              label={t("trainerModule.durationMinutes")}
               error={form.formState.errors.durationMinutes}
             >
               <input
@@ -381,7 +401,9 @@ export function TrainerServicesPage() {
               />
             </FieldShell>
           </div>
-          <Button className="w-full">{editing ? "Update" : "Create"}</Button>
+          <Button className="w-full">
+            {t(editing ? "common.update" : "common.create")}
+          </Button>
         </form>
       </Dialog>
     </>
@@ -468,29 +490,31 @@ export function TrainerAvailabilityPage() {
         >
           {days.map((day, index) => (
             <option key={day} value={index}>
-              {day}
+              {t(`trainerModule.days.${index}`)}
             </option>
           ))}
         </select>
         <input
-          aria-label="Start time"
+          aria-label={t("trainerModule.startTime")}
           className={inputClassName}
           type="time"
           {...form.register("startTime")}
         />
         <input
-          aria-label="End time"
+          aria-label={t("trainerModule.endTime")}
           className={inputClassName}
           type="time"
           {...form.register("endTime")}
         />
         <input
-          aria-label="Effective date"
+          aria-label={t("trainerModule.effectiveDate")}
           className={inputClassName}
           type="date"
           {...form.register("effectiveDate")}
         />
-        <Button>{editing ? "Update" : "Add slot"}</Button>
+        <Button>
+          {t(editing ? "common.update" : "trainerModule.addSlot")}
+        </Button>
       </form>
       {query.isLoading ? (
         <LoadingSkeleton />
@@ -501,19 +525,21 @@ export function TrainerAvailabilityPage() {
               key={item.id}
               className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
             >
-              <h2 className="font-black">{days[item.dayOfWeek ?? 0]}</h2>
+              <h2 className="font-black">
+                {t(`trainerModule.days.${item.dayOfWeek ?? 0}`)}
+              </h2>
               <p className="mt-2">
                 {timeText(item.startTime)}–{timeText(item.endTime)}
               </p>
               <p className="mt-1 text-xs text-zinc-500">
-                {item.isRecurring ? "Recurring" : item.effectiveDate}
+                {item.isRecurring ? t("common.recurring") : item.effectiveDate}
               </p>
               <div className="mt-4 flex gap-2">
-                <Button onClick={() => edit(item)}>Edit</Button>
+                <Button onClick={() => edit(item)}>{t("common.edit")}</Button>
                 {item.id && (
                   <ConfirmDialog
-                    label="Delete"
-                    title="Delete this availability?"
+                    label={t("common.delete")}
+                    title={t("trainerModule.deleteAvailabilityTitle")}
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -523,8 +549,8 @@ export function TrainerAvailabilityPage() {
         </div>
       ) : (
         <EmptyState
-          title="No availability"
-          description="Add a working slot above."
+          title={t("trainerModule.noAvailability")}
+          description={t("trainerModule.emptyAvailabilityDescription")}
         />
       )}
     </>
@@ -568,7 +594,7 @@ export function TrainerCertificatesPage() {
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            Add certificate
+            {t("trainerModule.addCertificate")}
           </Button>
         }
       />
@@ -584,15 +610,15 @@ export function TrainerCertificatesPage() {
               <h2 className="font-black">{item.name}</h2>
               <p className="text-sm text-zinc-500">{item.issuingOrg}</p>
               <p className="mt-3 text-xs font-bold">
-                {item.issueDate || "No issue date"} →{" "}
-                {item.expiryDate || "No expiry"}
+                {item.issueDate || t("trainerModule.noIssueDate")} →{" "}
+                {item.expiryDate || t("trainerModule.noExpiry")}
               </p>
               <div className="mt-4 flex gap-2">
-                <Button onClick={() => show(item)}>Edit</Button>
+                <Button onClick={() => show(item)}>{t("common.edit")}</Button>
                 {item.id && (
                   <ConfirmDialog
-                    label="Delete"
-                    title="Delete this certificate?"
+                    label={t("common.delete")}
+                    title={t("trainerModule.deleteCertificateTitle")}
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -602,14 +628,18 @@ export function TrainerCertificatesPage() {
         </div>
       ) : (
         <EmptyState
-          title="No certificates"
-          description="Add professional credentials."
+          title={t("trainerModule.noCertificates")}
+          description={t("trainerModule.emptyCertificatesDescription")}
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={editing ? "Edit certificate" : "Add certificate"}
+        title={t(
+          editing
+            ? "trainerModule.editCertificate"
+            : "trainerModule.addCertificate",
+        )}
       >
         <form
           className="space-y-4"
@@ -639,11 +669,14 @@ export function TrainerCertificatesPage() {
             }
           })}
         >
-          <FieldShell label="Name" error={form.formState.errors.name}>
+          <FieldShell
+            label={t("common.name")}
+            error={form.formState.errors.name}
+          >
             <input className={inputClassName} {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label="Issuing organization"
+            label={t("trainerModule.issuingOrganization")}
             error={form.formState.errors.issuingOrg}
           >
             <input
@@ -653,24 +686,37 @@ export function TrainerCertificatesPage() {
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <input
-              aria-label="Issue date"
+              aria-label={t("trainerModule.issueDate")}
               className={inputClassName}
               type="date"
               {...form.register("issueDate")}
             />
             <input
-              aria-label="Expiry date"
+              aria-label={t("trainerModule.expiryDate")}
               className={inputClassName}
               type="date"
               {...form.register("expiryDate")}
             />
           </div>
-          <input
-            multiple
-            type="file"
-            onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-          />
-          <Button className="w-full">Save certificate</Button>
+          <label
+            className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-sm font-bold transition hover:border-lime-500 hover:bg-lime-50 dark:border-zinc-700 dark:hover:bg-lime-950/20"
+            htmlFor="certificate-files"
+          >
+            <span>{t("trainerModule.supportingFiles")}</span>
+            <UploadCloud className="size-4" />
+            <input
+              className="sr-only"
+              id="certificate-files"
+              multiple
+              type="file"
+              onChange={(event) =>
+                setFiles(Array.from(event.target.files ?? []))
+              }
+            />
+          </label>
+          <Button className="w-full">
+            {t("trainerModule.saveCertificate")}
+          </Button>
         </form>
       </Dialog>
     </>
@@ -709,20 +755,20 @@ export function TrainerPartnershipsPage() {
         })}
       >
         <input
-          aria-label="Gym ID"
+          aria-label={t("trainerModule.gymId")}
           className={inputClassName}
           min="1"
-          placeholder="Gym ID"
+          placeholder={t("trainerModule.gymId")}
           type="number"
           {...form.register("gymId", { valueAsNumber: true })}
         />
         <input
-          aria-label="Request message"
+          aria-label={t("trainerModule.requestMessage")}
           className={inputClassName}
-          placeholder="Request message"
+          placeholder={t("trainerModule.requestMessage")}
           {...form.register("requestMessage")}
         />
-        <Button>Send request</Button>
+        <Button>{t("trainerModule.sendRequest")}</Button>
       </form>
       {query.isLoading ? (
         <LoadingSkeleton />
@@ -735,17 +781,21 @@ export function TrainerPartnershipsPage() {
             >
               <div>
                 <h2 className="font-black">
-                  {item.gymName || `Gym #${item.gymId}`}
+                  {item.gymName || `${t("common.gyms")} #${item.gymId}`}
                 </h2>
                 <p className="mt-1 text-sm text-zinc-500">
-                  {item.requestMessage || "No message"}
+                  {item.requestMessage || t("common.noMessage")}
                 </p>
-                <Badge className="mt-3">{item.status}</Badge>
+                <Badge className="mt-3">
+                  {t(`statusLabels.${String(item.status).toLowerCase()}`, {
+                    defaultValue: item.status,
+                  })}
+                </Badge>
               </div>
               {item.id && item.status === "APPROVED" && (
                 <ConfirmDialog
-                  label="End partnership"
-                  title="End this partnership?"
+                  label={t("trainerModule.endPartnership")}
+                  title={t("trainerModule.endPartnershipTitle")}
                   onConfirm={() => end.mutate(item.id!)}
                 />
               )}
@@ -754,8 +804,8 @@ export function TrainerPartnershipsPage() {
         </div>
       ) : (
         <EmptyState
-          title="No partnerships"
-          description="Send a request using a gym ID."
+          title={t("trainerModule.emptyPartnerships")}
+          description={t("trainerModule.emptyPartnershipsDescription")}
         />
       )}
     </>

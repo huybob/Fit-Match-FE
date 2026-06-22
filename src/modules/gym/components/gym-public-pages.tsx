@@ -113,7 +113,11 @@ export function GymsPublicPage() {
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="text-xl font-black">{gym.name}</h2>
-                      <Badge>{gym.status}</Badge>
+                      <Badge>
+                        {t(`statusLabels.${String(gym.status).toLowerCase()}`, {
+                          defaultValue: gym.status,
+                        })}
+                      </Badge>
                     </div>
                     <p className="mt-2 flex items-center gap-1 text-sm text-zinc-500">
                       <MapPin className="size-4" />
@@ -177,8 +181,12 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
   return (
     <SiteLayout>
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-        <section className="rounded-2xl bg-zinc-950 p-7 text-white">
-          <Badge>{gym.data.status}</Badge>
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-lime-950 p-7 text-white shadow-xl shadow-zinc-950/10">
+          <Badge>
+            {t(`statusLabels.${String(gym.data.status).toLowerCase()}`, {
+              defaultValue: gym.data.status,
+            })}
+          </Badge>
           <h1 className="mt-4 text-4xl font-black">{gym.data.name}</h1>
           <p className="mt-3 max-w-3xl text-zinc-300">{gym.data.description}</p>
           <p className="mt-5 flex items-center gap-2 font-bold">
@@ -227,7 +235,11 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                 >
                   <div className="flex justify-between">
                     <h3 className="font-black">{facility.name}</h3>
-                    <Badge>{facility.type}</Badge>
+                    <Badge>
+                      {t(`gymModule.facilityTypes.${facility.type}`, {
+                        defaultValue: facility.type,
+                      })}
+                    </Badge>
                   </div>
                   <p className="mt-2 text-sm text-zinc-500">
                     {facility.description}

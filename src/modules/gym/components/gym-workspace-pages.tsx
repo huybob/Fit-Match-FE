@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Building2, MapPin, Plus, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -133,37 +133,42 @@ export function MyGymsPage() {
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            Create gym
+            {t("gymModule.createGym")}
           </Button>
         }
       />
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.data?.content?.length ? (
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid gap-5">
           {query.data.content.map((gym) => (
             <article
               key={gym.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="grid overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 lg:grid-cols-[minmax(0,1fr)_auto_320px]"
             >
-              <div className="flex justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-black">{gym.name}</h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+              <div className="flex min-w-0 gap-4 p-6">
+                <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-lime-300/25 text-lime-700 dark:text-lime-300">
+                  <Building2 className="size-7" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="truncate text-xl font-black">{gym.name}</h2>
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+                    <MapPin className="size-4 shrink-0" />
                     {gym.district}, {gym.city}
                   </p>
+                  <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
+                    {gym.address}
+                  </p>
                 </div>
-                <Badge>{gym.status}</Badge>
               </div>
-              <p className="mt-3 text-sm">{gym.address}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800 lg:border-y-0 lg:border-l lg:px-5">
                 <Link
-                  className="inline-flex h-11 items-center rounded-md bg-zinc-950 px-4 text-sm font-bold text-white dark:bg-lime-300 dark:text-zinc-950"
+                  className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-lime-300 dark:text-zinc-950"
                   href={`/gym/gyms/${gym.id}`}
                 >
-                  Manage
+                  {t("common.manage")}
                 </Link>
-                <Button onClick={() => show(gym)}>Edit</Button>
+                <Button onClick={() => show(gym)}>{t("common.edit")}</Button>
                 {gym.id && (
                   <Button
                     className="bg-orange-600"
@@ -174,16 +179,35 @@ export function MyGymsPage() {
                       })
                     }
                   >
-                    {gym.status === "ACTIVE" ? "Close" : "Reopen"}
+                    {t(
+                      gym.status === "ACTIVE"
+                        ? "gymModule.closeGym"
+                        : "gymModule.reopenGym",
+                    )}
                   </Button>
                 )}
               </div>
               {gym.id && (
-                <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
-                  <label className="font-bold">
-                    Upload logo
+                <div className="grid content-center gap-3 border-t border-zinc-100 bg-zinc-50/70 p-5 text-xs dark:border-zinc-800 dark:bg-zinc-900/50 lg:border-l lg:border-t-0">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+                      {t("common.status")}
+                    </span>
+                    <Badge>
+                      {t(`statusLabels.${String(gym.status).toLowerCase()}`, {
+                        defaultValue: gym.status,
+                      })}
+                    </Badge>
+                  </div>
+                  <label
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 font-bold transition hover:border-lime-400 hover:bg-lime-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-lime-950/20"
+                    htmlFor={`gym-logo-${gym.id}`}
+                  >
+                    <span>{t("gymModule.uploadLogo")}</span>
+                    <UploadCloud className="size-4 text-lime-600" />
                     <input
-                      className="mt-1 block w-full"
+                      className="sr-only"
+                      id={`gym-logo-${gym.id}`}
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
@@ -193,10 +217,15 @@ export function MyGymsPage() {
                       }}
                     />
                   </label>
-                  <label className="font-bold">
-                    Upload cover
+                  <label
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 font-bold transition hover:border-lime-400 hover:bg-lime-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-lime-950/20"
+                    htmlFor={`gym-cover-${gym.id}`}
+                  >
+                    <span>{t("gymModule.uploadCover")}</span>
+                    <UploadCloud className="size-4 text-lime-600" />
                     <input
-                      className="mt-1 block w-full"
+                      className="sr-only"
+                      id={`gym-cover-${gym.id}`}
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
@@ -213,14 +242,14 @@ export function MyGymsPage() {
         </div>
       ) : (
         <EmptyState
-          title="No gyms"
-          description="Create your first gym to add branches and facilities."
+          title={t("gymModule.emptyOwnedGyms")}
+          description={t("gymModule.emptyOwnedGymsDescription")}
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={editing ? "Edit gym" : "Create gym"}
+        title={t(editing ? "gymModule.editGym" : "gymModule.createGym")}
       >
         <form
           className="space-y-4"
@@ -302,7 +331,7 @@ export function MyGymsPage() {
               />
             </FieldShell>
           </div>
-          <Button className="w-full">Save gym</Button>
+          <Button className="w-full">{t("common.save")}</Button>
         </form>
       </Dialog>
     </>
@@ -398,7 +427,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           action={
             <Button onClick={() => showBranch()}>
               <Plus className="size-4" />
-              Add branch
+              {t("gymModule.addBranch")}
             </Button>
           }
         />
@@ -414,11 +443,13 @@ export function GymManagePage({ gymId }: { gymId: number }) {
                   {item.address}, {item.district}
                 </p>
                 <div className="mt-4 flex gap-2">
-                  <Button onClick={() => showBranch(item)}>Edit</Button>
+                  <Button onClick={() => showBranch(item)}>
+                    {t("common.edit")}
+                  </Button>
                   {item.id && (
                     <ConfirmDialog
-                      label="Delete"
-                      title="Delete this branch?"
+                      label={t("common.delete")}
+                      title={t("gymModule.deleteBranchTitle")}
                       onConfirm={() =>
                         deleteBranch.mutate({ gymId, id: item.id! })
                       }
@@ -430,8 +461,8 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         ) : (
           <EmptyState
-            title="No branches"
-            description="Add the first physical location."
+            title={t("gymModule.noBranches")}
+            description={t("gymModule.emptyBranchesDescription")}
           />
         )}
       </section>
@@ -442,7 +473,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           action={
             <Button onClick={() => showFacility()}>
               <Plus className="size-4" />
-              Add facility
+              {t("gymModule.addFacility")}
             </Button>
           }
         />
@@ -455,15 +486,21 @@ export function GymManagePage({ gymId }: { gymId: number }) {
               >
                 <div className="flex justify-between">
                   <h3 className="font-black">{item.name}</h3>
-                  <Badge>{item.type}</Badge>
+                  <Badge>
+                    {t(`gymModule.facilityTypes.${item.type}`, {
+                      defaultValue: item.type,
+                    })}
+                  </Badge>
                 </div>
                 <p className="mt-2 text-sm text-zinc-500">{item.description}</p>
                 <div className="mt-4 flex gap-2">
-                  <Button onClick={() => showFacility(item)}>Edit</Button>
+                  <Button onClick={() => showFacility(item)}>
+                    {t("common.edit")}
+                  </Button>
                   {item.id && (
                     <ConfirmDialog
-                      label="Delete"
-                      title="Delete this facility?"
+                      label={t("common.delete")}
+                      title={t("gymModule.deleteFacilityTitle")}
                       onConfirm={() =>
                         deleteFacility.mutate({ gymId, id: item.id! })
                       }
@@ -475,15 +512,17 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         ) : (
           <EmptyState
-            title="No facilities"
-            description="Add equipment or amenities."
+            title={t("gymModule.noFacilities")}
+            description={t("gymModule.emptyFacilitiesDescription")}
           />
         )}
       </section>
       <Dialog
         open={branchOpen}
         onClose={() => setBranchOpen(false)}
-        title={editingBranch ? "Edit branch" : "Add branch"}
+        title={t(
+          editingBranch ? "gymModule.editBranch" : "gymModule.addBranch",
+        )}
       >
         <form
           className="space-y-3"
@@ -512,44 +551,46 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           })}
         >
           <input
-            aria-label="Branch name"
+            aria-label={t("gymModule.branchName")}
             className={inputClassName}
-            placeholder="Name"
+            placeholder={t("gymModule.branchName")}
             {...branchForm.register("name")}
           />
           <input
-            aria-label="Branch address"
+            aria-label={t("gymModule.branchAddress")}
             className={inputClassName}
-            placeholder="Address"
+            placeholder={t("gymModule.branchAddress")}
             {...branchForm.register("address")}
           />
           <div className="grid grid-cols-2 gap-2">
             <input
-              aria-label="Branch city"
+              aria-label={t("gymModule.city")}
               className={inputClassName}
-              placeholder="City"
+              placeholder={t("gymModule.city")}
               {...branchForm.register("city")}
             />
             <input
-              aria-label="Branch district"
+              aria-label={t("gymModule.district")}
               className={inputClassName}
-              placeholder="District"
+              placeholder={t("gymModule.district")}
               {...branchForm.register("district")}
             />
           </div>
           <input
-            aria-label="Branch phone"
+            aria-label={t("gymModule.branchPhone")}
             className={inputClassName}
-            placeholder="Phone"
+            placeholder={t("gymModule.branchPhone")}
             {...branchForm.register("phone")}
           />
-          <Button className="w-full">Save branch</Button>
+          <Button className="w-full">{t("gymModule.saveBranch")}</Button>
         </form>
       </Dialog>
       <Dialog
         open={facilityOpen}
         onClose={() => setFacilityOpen(false)}
-        title={editingFacility ? "Edit facility" : "Add facility"}
+        title={t(
+          editingFacility ? "gymModule.editFacility" : "gymModule.addFacility",
+        )}
       >
         <form
           className="space-y-3"
@@ -582,37 +623,39 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           })}
         >
           <input
-            aria-label="Facility name"
+            aria-label={t("gymModule.facilityName")}
             className={inputClassName}
-            placeholder="Name"
+            placeholder={t("gymModule.facilityName")}
             {...facilityForm.register("name")}
           />
           <textarea
-            aria-label="Facility description"
+            aria-label={t("gymModule.facilityDescription")}
             className={`${inputClassName} h-24 py-3`}
-            placeholder="Description"
+            placeholder={t("gymModule.facilityDescription")}
             {...facilityForm.register("description")}
           />
           <select
-            aria-label="Facility type"
+            aria-label={t("gymModule.facilityType")}
             className={inputClassName}
             {...facilityForm.register("type")}
           >
             {facilityTypes.map((type) => (
-              <option key={type}>{type}</option>
+              <option key={type} value={type}>
+                {t(`gymModule.facilityTypes.${type}`)}
+              </option>
             ))}
           </select>
           <input
-            aria-label="Facility icon URL"
+            aria-label={t("gymModule.facilityIconUrl")}
             className={inputClassName}
-            placeholder="Icon URL"
+            placeholder={t("gymModule.facilityIconUrl")}
             {...facilityForm.register("iconUrl")}
           />
           <label className="flex gap-2 text-sm font-bold">
             <input type="checkbox" {...facilityForm.register("isAvailable")} />
-            Available
+            {t("common.available")}
           </label>
-          <Button className="w-full">Save facility</Button>
+          <Button className="w-full">{t("gymModule.saveFacility")}</Button>
         </form>
       </Dialog>
     </>
@@ -656,25 +699,31 @@ export function GymPartnershipsPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-black">
-                    {item.ptName || `Trainer #${item.profileId}`}
+                    {item.ptName ||
+                      `${t("common.trainers")} #${item.profileId}`}
                   </h2>
                   <p className="mt-1 text-sm text-zinc-500">
-                    {item.gymName} · {item.requestMessage || "No message"}
+                    {item.gymName} ·{" "}
+                    {item.requestMessage || t("common.noMessage")}
                   </p>
-                  <Badge className="mt-3">{item.status}</Badge>
+                  <Badge className="mt-3">
+                    {t(`statusLabels.${String(item.status).toLowerCase()}`, {
+                      defaultValue: item.status,
+                    })}
+                  </Badge>
                 </div>
                 {item.id && (
                   <div className="flex gap-2">
                     {item.status === "PENDING" && (
                       <>
                         <Button onClick={() => void run(item.id!, "approve")}>
-                          Approve
+                          {t("gymModule.approve")}
                         </Button>
                         <Button
                           className="bg-red-600"
                           onClick={() => void run(item.id!, "reject")}
                         >
-                          Reject
+                          {t("gymModule.reject")}
                         </Button>
                       </>
                     )}
@@ -683,7 +732,7 @@ export function GymPartnershipsPage() {
                         className="bg-red-600"
                         onClick={() => void run(item.id!, "end")}
                       >
-                        End
+                        {t("gymModule.end")}
                       </Button>
                     )}
                   </div>
@@ -694,8 +743,8 @@ export function GymPartnershipsPage() {
         </div>
       ) : (
         <EmptyState
-          title="No partnerships"
-          description="PT requests will appear here."
+          title={t("gymModule.emptyPartnerships")}
+          description={t("gymModule.emptyPartnershipsDescription")}
         />
       )}
     </>

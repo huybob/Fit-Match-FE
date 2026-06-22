@@ -108,7 +108,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
   return (
     <SiteLayout>
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
-        <section className="rounded-2xl bg-zinc-950 p-6 text-white sm:p-8">
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-lime-950 p-6 text-white shadow-xl shadow-zinc-950/10 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <div className="grid size-24 place-items-center rounded-full bg-lime-300 text-3xl font-black text-zinc-950">
               <UserRound className="size-10" />
@@ -157,7 +157,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   </p>
                   <p className="mt-4 font-black text-orange-600">
                     {currency.format(service.price ?? 0)} ·{" "}
-                    {service.durationMinutes} min
+                    {service.durationMinutes} {t("trainerModule.minutesShort")}
                   </p>
                 </article>
               ))}
