@@ -1,4 +1,4 @@
-import { TrainerDetailPage } from "@/modules/ecommerce/ecommerce-pages";
+import { TrainerPublicDetailPage } from "@/modules/trainer/components/trainer-public-pages";
 
 export default async function TrainerDetailRoute({
   params,
@@ -6,5 +6,5 @@ export default async function TrainerDetailRoute({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <TrainerDetailPage id={id} />;
+  return <TrainerPublicDetailPage userId={Number(id)} />;
 }
