@@ -26,6 +26,18 @@
     "noMessage": "Không có nội dung",
     "menu": "Trình đơn",
     "footerDescription": "Khám phá phòng gym, đặt lịch huấn luyện viên và quản lý hành trình luyện tập tại một nơi.",
+    "popular": "Phổ biến",
+    "reviewsCount": "{{count}} đánh giá",
+    "actions": "Thao tác",
+    "all": "Tất cả",
+    "male": "Nam",
+    "female": "Nữ",
+    "goal": "Mục tiêu",
+    "price": "Giá",
+    "duration": "Thời lượng",
+    "type": "Loại",
+    "specialty": "Chuyên môn",
+    "experience": "Kinh nghiệm",
     "gyms": "Phòng gym",
     "brand": "FitMatch",
     "home": "Trang chủ",
@@ -63,7 +75,20 @@
     "featuredPackages": "Gói tập nổi bật",
     "featuredTrainers": "PT nổi bật",
     "reviews": "Khách hàng nói gì",
-    "faq": "Câu hỏi thường gặp"
+    "faq": "Câu hỏi thường gặp",
+    "heroBadge": "Phòng gym · Fitness · Huấn luyện viên",
+    "offerTitle": "Mọi thứ bạn cần để luyện tập tự tin hơn",
+    "offerDescription": "Một hành trình tập trung để khám phá phòng gym, so sánh PT, đặt lịch và quản lý gói tập.",
+    "smartBookingTitle": "Đặt lịch thông minh",
+    "smartBookingDescription": "Chọn PT, ngày, giờ và loại buổi tập qua vài bước rõ ràng.",
+    "marketplaceTitle": "Thị trường fitness",
+    "marketplaceDescription": "So sánh các gói gym và chọn phương án phù hợp với mục tiêu.",
+    "memberTitle": "Không gian hội viên",
+    "memberDescription": "Theo dõi lịch đặt, gói đang dùng và cập nhật hồ sơ tại một nơi.",
+    "reviewsTitle": "Được tin dùng bởi cộng đồng yêu luyện tập",
+    "reviewOne": "Việc tìm đúng PT trở nên rõ ràng và nhẹ nhàng.",
+    "reviewTwo": "Luồng đặt lịch nhanh và rất dễ hiểu.",
+    "reviewThree": "Quản lý gói tập và lịch trình giờ đã thực sự gọn gàng."
   },
   "auth": {
     "username": "Tên đăng nhập",
@@ -85,6 +110,15 @@
     "changePasswordTitle": "Đổi mật khẩu",
     "recoveryUnavailable": "Chức năng khôi phục mật khẩu chưa khả dụng vì FitMatch API hiện chưa cung cấp endpoint này.",
     "returnToLogin": "Quay lại đăng nhập",
+    "loginDescription": "Sử dụng tài khoản FitMatch để tiếp tục vào khu vực làm việc.",
+    "registerDescription": "Tạo tài khoản dành cho khách hàng, huấn luyện viên hoặc đơn vị phòng gym.",
+    "changePasswordDescription": "Chọn mật khẩu mới đủ mạnh để bảo vệ tài khoản của bạn.",
+    "forgotDescription": "Kiểm tra trạng thái hỗ trợ khôi phục tài khoản hiện tại.",
+    "panelTitle": "Một không gian cho mọi hành trình luyện tập.",
+    "panelDescription": "Khám phá phòng gym, kết nối huấn luyện viên và vận hành công việc hằng ngày trong một trải nghiệm hiện đại, tập trung.",
+    "benefitOne": "Hồ sơ phòng gym và PT thực tế",
+    "benefitTwo": "Đặt lịch và quản lý thời gian nhanh chóng",
+    "benefitThree": "Không gian vận hành theo từng vai trò",
     "loginSuccess": "Đăng nhập thành công",
     "registerSuccess": "Đăng ký thành công",
     "forgotSuccess": "Đã gửi hướng dẫn khôi phục mật khẩu"
@@ -262,7 +296,10 @@
     "pending": "Đang chờ",
     "approved": "Đã chấp nhận",
     "rejected": "Đã từ chối",
-    "ended": "Đã kết thúc"
+    "ended": "Đã kết thúc",
+    "confirmed": "Đã xác nhận",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy"
   },
   "packages": {
     "title": "Danh sách gói tập",
@@ -272,7 +309,11 @@
     "duration": "Thời gian",
     "type": "Loại gói",
     "selected": "Đã chọn gói tập",
-    "added": "Đã thêm gói vào giỏ"
+    "added": "Đã thêm gói vào giỏ",
+    "description": "So sánh gói tập theo giá, thời lượng và loại hình luyện tập.",
+    "membership": "Gói hội viên",
+    "pt": "Huấn luyện cá nhân",
+    "class": "Lớp tập nhóm"
   },
   "trainers": {
     "title": "Danh sách huấn luyện viên",
@@ -282,7 +323,8 @@
     "experience": "Kinh nghiệm",
     "price": "Giá/buổi",
     "available": "Lịch trống",
-    "booked": "Đã chọn PT để đặt lịch"
+    "booked": "Đã chọn PT để đặt lịch",
+    "description": "So sánh PT theo chuyên môn, kinh nghiệm, đánh giá và giá mỗi buổi."
   },
   "booking": {
     "title": "Đặt lịch tập",
@@ -292,6 +334,7 @@
     "type": "Loại buổi tập",
     "customer": "Thông tin người đặt",
     "success": "Đặt lịch thành công",
+    "description": "Chọn PT, lịch tập, loại buổi tập và thông tin liên hệ.",
     "cancelled": "Đã hủy lịch",
     "history": "Lịch đã đặt",
     "status": "Trạng thái"
@@ -302,6 +345,7 @@
     "payment": "Phương thức thanh toán",
     "success": "Thanh toán thành công",
     "empty": "Giỏ hàng đang trống",
+    "emptyDescription": "Khám phá các gói tập và thêm một gói để tiếp tục.",
     "successTitle": "Đặt mua thành công"
   },
   "profile": {
@@ -317,9 +361,12 @@
     "trainers": "Quản lý PT",
     "bookings": "Quản lý booking",
     "users": "Quản lý người dùng",
+    "usersDescription": "Theo dõi vai trò tài khoản và trạng thái người dùng trên toàn nền tảng.",
+    "usersLoadError": "Không thể tải danh sách người dùng",
+    "usersLoadErrorDescription": "Kiểm tra kết nối API và thử lại.",
     "createPackage": "Thêm gói tập",
     "createTrainer": "Thêm PT",
-    "saved": "Đã lưu dữ liệu mock",
-    "deleted": "Đã xóa dữ liệu mock"
+    "saved": "Đã lưu thay đổi",
+    "deleted": "Đã xóa mục"
   }
 }

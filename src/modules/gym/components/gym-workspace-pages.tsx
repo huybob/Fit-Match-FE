@@ -57,12 +57,16 @@ function Header({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-3xl font-black">{title}</h1>
-        <p className="mt-2 text-sm text-zinc-500">{description}</p>
+    <div className="relative mb-7 flex flex-col gap-5 overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/75 px-6 py-6 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+      <div className="absolute -right-12 -top-16 size-36 rounded-full bg-lime-300/20 blur-3xl" />
+      <div className="relative">
+        <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
+        <h1 className="text-3xl font-black tracking-tight">{title}</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
+          {description}
+        </p>
       </div>
-      {action}
+      <div className="relative shrink-0">{action}</div>
     </div>
   );
 }

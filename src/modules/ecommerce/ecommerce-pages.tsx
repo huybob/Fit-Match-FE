@@ -17,7 +17,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { appRoutes } from "@/constants/ecommerce.constant";
-import { adminStats, bookings, gymPackages, trainers } from "@/data/mock-ecommerce.data";
+import {
+  adminStats,
+  bookings,
+  gymPackages,
+  trainers,
+} from "@/data/mock-ecommerce.data";
 import { useToast } from "@/lib/toast-provider";
 import { BookingForm } from "@/modules/forms/booking-form";
 import {
@@ -37,26 +42,26 @@ import { GymPackage, Trainer } from "@/types/ecommerce.type";
 import { formatCurrency } from "@/utils/format.util";
 
 type ServiceCard = {
-  title: string;
+  titleKey: string;
   Icon: ComponentType<{ className?: string }>;
-  description: string;
+  descriptionKey: string;
 };
 
 const serviceCards: ServiceCard[] = [
   {
-    title: "Smart booking",
+    titleKey: "home.smartBookingTitle",
     Icon: CalendarCheck,
-    description: "Choose trainer, date, time and session type.",
+    descriptionKey: "home.smartBookingDescription",
   },
   {
-    title: "Fitness ecommerce",
+    titleKey: "home.marketplaceTitle",
     Icon: ShoppingCart,
-    description: "Add gym packages to cart and mock checkout.",
+    descriptionKey: "home.marketplaceDescription",
   },
   {
-    title: "Member profile",
+    titleKey: "home.memberTitle",
     Icon: ShieldCheck,
-    description: "Track bookings, active packages and profile updates.",
+    descriptionKey: "home.memberDescription",
   },
 ];
 
@@ -68,15 +73,22 @@ export function HomePage() {
       <Hero />
       <Section
         eyebrow={t("home.servicesTitle")}
-        title="Gym memberships, PT coaching, group classes"
-        description="A polished ecommerce journey for discovering packages, trainers, booking sessions and checking out."
+        title={t("home.offerTitle")}
+        description={t("home.offerDescription")}
       >
         <div className="grid gap-4 md:grid-cols-3">
-          {serviceCards.map(({ title, Icon, description }) => (
-            <Card key={title} className="fit-card p-6">
-              <Icon className="size-8 text-[#ff6b22]" />
-              <h3 className="mt-5 text-lg font-bold">{title}</h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">{description}</p>
+          {serviceCards.map(({ titleKey, Icon, descriptionKey }) => (
+            <Card
+              key={titleKey}
+              className="fit-card group p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className="grid size-12 place-items-center rounded-2xl bg-orange-100 text-[#ff6b22] transition-transform duration-300 group-hover:scale-105 dark:bg-orange-950/40">
+                <Icon className="size-6" />
+              </div>
+              <h3 className="mt-5 text-lg font-black">{t(titleKey)}</h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                {t(descriptionKey)}
+              </p>
             </Card>
           ))}
         </div>
@@ -87,20 +99,22 @@ export function HomePage() {
       <Section eyebrow={t("home.featuredTrainers")} title={t("trainers.title")}>
         <TrainerGrid trainers={trainers.slice(0, 3)} />
       </Section>
-      <Section eyebrow={t("home.reviews")} title="Trusted by busy professionals">
+      <Section eyebrow={t("home.reviews")} title={t("home.reviewsTitle")}>
         <div className="grid gap-4 md:grid-cols-3">
-          {["Great PT matching", "Booking is so fast", "Checkout feels premium"].map((review) => (
-            <Card key={review} className="fit-card p-6">
-              <div className="flex gap-1 text-orange-500">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="size-4 fill-current" />
-                ))}
-              </div>
-              <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
-                {review}. The interface makes it simple to compare trainers, packages and booking times.
-              </p>
-            </Card>
-          ))}
+          {["home.reviewOne", "home.reviewTwo", "home.reviewThree"].map(
+            (review) => (
+              <Card key={review} className="fit-card p-6">
+                <div className="flex gap-1 text-orange-500">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <Star key={index} className="size-4 fill-current" />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                  {t(review)}
+                </p>
+              </Card>
+            ),
+          )}
         </div>
       </Section>
     </SiteLayout>
@@ -111,11 +125,13 @@ function Hero() {
   const { t } = useTranslation();
 
   return (
-    <section className="overflow-hidden border-b border-[#dedfce] bg-[#10130f] text-white dark:border-white/10">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-24">
+    <section className="relative overflow-hidden border-b border-[#dedfce] bg-[#10130f] text-white dark:border-white/10">
+      <div className="absolute -left-32 top-0 size-96 rounded-full bg-lime-300/10 blur-3xl" />
+      <div className="absolute -right-32 bottom-0 size-96 rounded-full bg-orange-500/10 blur-3xl" />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.85fr] lg:px-8 lg:py-24">
         <div>
           <Badge className="border-[#a3ff12]/40 bg-[#a3ff12]/10 text-[#a3ff12]">
-            Gym / Fitness / Personal Trainer
+            {t("home.heroBadge")}
           </Badge>
           <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight sm:text-6xl">
             {t("home.heroTitle")}
@@ -124,19 +140,28 @@ function Hero() {
             {t("home.heroDesc")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-black" href={appRoutes.booking}>
+            <Link
+              className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-black shadow-lg shadow-lime-500/15 transition hover:-translate-y-0.5"
+              href={appRoutes.booking}
+            >
               {t("home.cta")}
               <ArrowRight className="size-4" />
             </Link>
-            <Link className="inline-flex h-12 items-center justify-center rounded-md border border-white/20 px-6 text-sm font-bold text-white hover:bg-white/10" href={appRoutes.packages}>
+            <Link
+              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 px-6 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+              href={appRoutes.packages}
+            >
               {t("home.secondary")}
             </Link>
           </div>
         </div>
-        <Card className="border-white/10 bg-white/10 p-5 text-white shadow-2xl shadow-black/30 backdrop-blur">
+        <Card className="border-white/10 bg-white/[0.07] p-5 text-white shadow-2xl shadow-black/30 backdrop-blur-xl">
           <div className="grid gap-4">
             {bookings.map((booking) => (
-              <div key={booking.id} className="rounded-lg border border-white/10 bg-black/20 p-4">
+              <div
+                key={booking.id}
+                className="rounded-2xl border border-white/10 bg-black/20 p-4 transition hover:border-lime-300/30 hover:bg-white/5"
+              >
                 <div className="flex items-center justify-between">
                   <p className="font-bold">{booking.type}</p>
                   <StatusBadge status={booking.status} />
@@ -157,14 +182,24 @@ export function PackagesPage() {
   const { t } = useTranslation();
   const [type, setType] = useState("all");
   const packages = useMemo(
-    () => (type === "all" ? gymPackages : gymPackages.filter((item) => item.type === type)),
+    () =>
+      type === "all"
+        ? gymPackages
+        : gymPackages.filter((item) => item.type === type),
     [type],
   );
 
   return (
     <SiteLayout>
-      <PageShell title={t("packages.title")} description="Filter by price, duration and package type.">
-        <FilterBar value={type} onChange={setType} options={["all", "membership", "pt", "class"]} />
+      <PageShell
+        title={t("packages.title")}
+        description={t("packages.description")}
+      >
+        <FilterBar
+          value={type}
+          onChange={setType}
+          options={["all", "membership", "pt", "class"]}
+        />
         <PackageGrid packages={packages} />
         <Pagination />
       </PageShell>
@@ -184,7 +219,10 @@ export function PackageDetailPage({ id }: { id: string }) {
             <h2 className="text-2xl font-black">{t("packages.detail")}</h2>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {item.features.map((feature) => (
-                <div key={feature} className="flex items-center gap-3 rounded-md bg-[#f1f2e8] p-4 dark:bg-black/20">
+                <div
+                  key={feature}
+                  className="flex items-center gap-3 rounded-md bg-[#f1f2e8] p-4 dark:bg-black/20"
+                >
                   <Check className="size-4 text-[#ff6b22]" />
                   <span className="text-sm font-bold">{feature}</span>
                 </div>
@@ -201,12 +239,22 @@ export function PackageDetailPage({ id }: { id: string }) {
 export function TrainersPage() {
   const { t } = useTranslation();
   const [gender, setGender] = useState("all");
-  const filtered = gender === "all" ? trainers : trainers.filter((trainer) => trainer.gender === gender);
+  const filtered =
+    gender === "all"
+      ? trainers
+      : trainers.filter((trainer) => trainer.gender === gender);
 
   return (
     <SiteLayout>
-      <PageShell title={t("trainers.title")} description="Filter by specialty, gender, experience and price.">
-        <FilterBar value={gender} onChange={setGender} options={["all", "male", "female"]} />
+      <PageShell
+        title={t("trainers.title")}
+        description={t("trainers.description")}
+      >
+        <FilterBar
+          value={gender}
+          onChange={setGender}
+          options={["all", "male", "female"]}
+        />
         <TrainerGrid trainers={filtered} />
         <Pagination />
       </PageShell>
@@ -227,7 +275,11 @@ export function TrainerDetailPage({ id }: { id: string }) {
             <h2 className="text-xl font-black">{t("trainers.available")}</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {trainer.availableSlots.map((slot) => (
-                <Link key={slot} href={appRoutes.booking} className="rounded-md border border-zinc-200 p-4 text-center font-bold hover:border-emerald-500 dark:border-zinc-800">
+                <Link
+                  key={slot}
+                  href={appRoutes.booking}
+                  className="rounded-md border border-zinc-200 p-4 text-center font-bold hover:border-emerald-500 dark:border-zinc-800"
+                >
                   {slot}
                 </Link>
               ))}
@@ -243,7 +295,10 @@ export function BookingPage() {
   const { t } = useTranslation();
   return (
     <SiteLayout>
-      <PageShell title={t("booking.title")} description="Choose trainer, date, time, session type and customer information.">
+      <PageShell
+        title={t("booking.title")}
+        description={t("booking.description")}
+      >
         <Card className="fit-card p-6">
           <BookingForm />
         </Card>
@@ -261,21 +316,35 @@ export function CartPage() {
     <SiteLayout>
       <PageShell title={t("checkout.cartTitle")}>
         {items.length === 0 ? (
-          <EmptyState title={t("checkout.empty")} description="Browse packages and add one to continue." />
+          <EmptyState
+            title={t("checkout.empty")}
+            description={t("checkout.emptyDescription")}
+          />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[1fr_0.4fr]">
             <div className="space-y-3">
               {items.map((item) => (
-                <Card key={item.id} className="fit-card flex items-center justify-between gap-4 p-4">
+                <Card
+                  key={item.id}
+                  className="fit-card flex items-center justify-between gap-4 p-4"
+                >
                   <div>
                     <p className="font-black">{item.name}</p>
-                    <p className="text-sm text-zinc-500">{formatCurrency(item.price)}</p>
+                    <p className="text-sm text-zinc-500">
+                      {formatCurrency(item.price)}
+                    </p>
                   </div>
                   <Button
                     className="bg-white text-red-600 ring-1 ring-zinc-200 hover:bg-red-50 dark:bg-zinc-950 dark:ring-zinc-800"
                     onClick={() => {
-                      setItems((value) => value.filter((next) => next.id !== item.id));
-                      toast({ type: "warning", title: t("common.warning"), description: item.name });
+                      setItems((value) =>
+                        value.filter((next) => next.id !== item.id),
+                      );
+                      toast({
+                        type: "warning",
+                        title: t("common.warning"),
+                        description: item.name,
+                      });
                     }}
                   >
                     <Trash2 className="size-4" />
@@ -283,7 +352,9 @@ export function CartPage() {
                 </Card>
               ))}
             </div>
-            <CheckoutSummary total={items.reduce((sum, item) => sum + item.price, 0)} />
+            <CheckoutSummary
+              total={items.reduce((sum, item) => sum + item.price, 0)}
+            />
           </div>
         )}
       </PageShell>
@@ -315,7 +386,10 @@ export function CheckoutSuccessPage() {
         <Card className="fit-card p-10 text-center">
           <PackageCheck className="mx-auto size-14 text-[#a3ff12]" />
           <p className="mt-5 text-xl font-black">{t("checkout.success")}</p>
-          <Link className="fit-cta mt-6 inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-bold" href="/profile/bookings">
+          <Link
+            className="fit-cta mt-6 inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-bold"
+            href="/profile/bookings"
+          >
             {t("booking.history")}
           </Link>
         </Card>
@@ -334,7 +408,9 @@ export function ProfilePage() {
             <ProfileForm />
           </Card>
           <Card className="fit-card p-6">
-            <h2 className="text-xl font-black">{t("profile.activePackages")}</h2>
+            <h2 className="text-xl font-black">
+              {t("profile.activePackages")}
+            </h2>
             <PackageGrid packages={gymPackages.slice(0, 2)} compact />
           </Card>
         </div>
@@ -392,7 +468,12 @@ export function AdminPackagesPage() {
         </Card>
         <div className="mt-6">
           <DataTable
-            columns={["Name", "Type", "Price", "Actions"]}
+            columns={[
+              t("common.name"),
+              t("common.type"),
+              t("common.price"),
+              t("common.actions"),
+            ]}
             rows={gymPackages.map((item) => [
               item.name,
               item.type,
@@ -416,7 +497,12 @@ export function AdminTrainersPage() {
         </Card>
         <div className="mt-6">
           <DataTable
-            columns={["Name", "Specialty", "Price", "Actions"]}
+            columns={[
+              t("common.name"),
+              t("common.specialty"),
+              t("common.price"),
+              t("common.actions"),
+            ]}
             rows={trainers.map((trainer) => [
               trainer.name,
               trainer.specialty,
@@ -441,9 +527,19 @@ export function AdminBookingsPage() {
   );
 }
 
-function PackageGrid({ packages, compact = false }: { packages: GymPackage[]; compact?: boolean }) {
+function PackageGrid({
+  packages,
+  compact = false,
+}: {
+  packages: GymPackage[];
+  compact?: boolean;
+}) {
   return (
-    <div className={compact ? "mt-5 grid gap-4" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3"}>
+    <div
+      className={
+        compact ? "mt-5 grid gap-4" : "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+      }
+    >
       {packages.map((item) => (
         <PackageCard key={item.id} item={item} />
       ))}
@@ -456,18 +552,34 @@ function PackageCard({ item }: { item: GymPackage }) {
   const { toast } = useToast();
 
   return (
-    <Card className="fit-card relative p-6">
-      {item.popular && <Badge className="absolute right-5 top-5 border-[#a3ff12]/50 bg-[#a3ff12]/20 text-[#4d7600] dark:text-[#a3ff12]">Popular</Badge>}
-      <Dumbbell className="size-8 text-[#ff6b22]" />
+    <Card className="fit-card group relative flex h-full flex-col overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-lime-300 via-lime-400 to-orange-400 opacity-0 transition-opacity group-hover:opacity-100" />
+      {item.popular && (
+        <Badge className="absolute right-5 top-5 border-[#a3ff12]/50 bg-[#a3ff12]/20 text-[#4d7600] dark:text-[#a3ff12]">
+          {t("common.popular")}
+        </Badge>
+      )}
+      <div className="grid size-12 place-items-center rounded-2xl bg-orange-100 text-[#ff6b22] dark:bg-orange-950/40">
+        <Dumbbell className="size-6" />
+      </div>
       <h3 className="mt-5 text-xl font-black">{item.name}</h3>
       <p className="mt-2 text-sm leading-6 text-zinc-500">{item.description}</p>
       <p className="mt-5 text-3xl font-black">{formatCurrency(item.price)}</p>
-      <div className="mt-5 flex gap-2">
-        <Link className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-zinc-200 text-sm font-bold hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950" href={`/packages/${item.id}`}>
+      <div className="mt-auto flex gap-2 pt-6">
+        <Link
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-200 text-sm font-bold transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
+          href={`/packages/${item.id}`}
+        >
           {t("common.viewDetails")}
         </Link>
         <Button
-          onClick={() => toast({ type: "success", title: t("packages.added"), description: item.name })}
+          onClick={() =>
+            toast({
+              type: "success",
+              title: t("packages.added"),
+              description: item.name,
+            })
+          }
           className="fit-cta h-10 flex-1"
         >
           {t("common.addToCart")}
@@ -492,24 +604,40 @@ function TrainerCard({ trainer }: { trainer: Trainer }) {
   const { toast } = useToast();
 
   return (
-    <Card className="fit-card p-6">
-      <div className="flex size-16 items-center justify-center rounded-lg bg-[#10130f] text-xl font-black text-[#a3ff12] dark:bg-[#a3ff12] dark:text-[#10130f]">
-        {trainer.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}
+    <Card className="fit-card group flex h-full flex-col p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="flex size-16 items-center justify-center rounded-2xl bg-[#10130f] text-xl font-black text-[#a3ff12] shadow-lg shadow-zinc-950/10 transition-transform group-hover:scale-105 dark:bg-[#a3ff12] dark:text-[#10130f]">
+        {trainer.name
+          .split(" ")
+          .map((part) => part[0])
+          .join("")
+          .slice(0, 2)}
       </div>
       <h3 className="mt-5 text-xl font-black">{trainer.name}</h3>
-      <p className="mt-1 text-sm font-semibold text-zinc-500">{trainer.specialty}</p>
+      <p className="mt-1 text-sm font-semibold text-zinc-500">
+        {trainer.specialty}
+      </p>
       <div className="mt-3 flex items-center gap-2 text-sm font-bold">
         <Star className="size-4 fill-orange-400 text-orange-400" />
-        {trainer.rating} · {trainer.reviews} reviews
+        {trainer.rating} ·{" "}
+        {t("common.reviewsCount", { count: trainer.reviews })}
       </div>
       <p className="mt-4 text-lg font-black">{formatCurrency(trainer.price)}</p>
-      <div className="mt-5 flex gap-2">
-        <Link className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-zinc-200 text-sm font-bold hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950" href={`/trainers/${trainer.id}`}>
+      <div className="mt-auto flex gap-2 pt-6">
+        <Link
+          className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-200 text-sm font-bold transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
+          href={`/trainers/${trainer.id}`}
+        >
           {t("common.viewDetails")}
         </Link>
         <Button
           className="fit-cta h-10 flex-1"
-          onClick={() => toast({ type: "success", title: t("trainers.booked"), description: trainer.name })}
+          onClick={() =>
+            toast({
+              type: "success",
+              title: t("trainers.booked"),
+              description: trainer.name,
+            })
+          }
         >
           {t("common.bookNow")}
         </Button>
@@ -528,10 +656,20 @@ function PageShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-black tracking-tight sm:text-4xl">{title}</h1>
-        {description && <p className="mt-3 max-w-3xl text-zinc-500">{description}</p>}
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+      <div className="relative mb-8 overflow-hidden rounded-3xl border border-[#dedfce]/80 bg-white/70 px-6 py-7 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.04] sm:px-8">
+        <div className="absolute -right-12 -top-16 size-40 rounded-full bg-lime-300/20 blur-3xl" />
+        <div className="relative">
+          <div className="mb-4 h-1 w-12 rounded-full bg-[#ff6b22]" />
+          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+            {title}
+          </h1>
+          {description && (
+            <p className="mt-3 max-w-3xl leading-7 text-zinc-500">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
       {children}
     </main>
@@ -550,10 +688,14 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <p className="text-sm font-black uppercase text-[#ff6b22]">{eyebrow}</p>
+    <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#ff6b22]">
+        {eyebrow}
+      </p>
       <h2 className="mt-2 text-3xl font-black tracking-tight">{title}</h2>
-      {description && <p className="mt-3 max-w-3xl text-zinc-500">{description}</p>}
+      {description && (
+        <p className="mt-3 max-w-3xl text-zinc-500">{description}</p>
+      )}
       <div className="mt-8">{children}</div>
     </section>
   );
@@ -571,7 +713,7 @@ function FilterBar({
   const { t } = useTranslation();
 
   return (
-    <Card className="fit-card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+    <Card className="fit-card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2 text-sm font-black">
         <Filter className="size-4" />
         {t("packages.filter")}
@@ -579,11 +721,17 @@ function FilterBar({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm font-bold dark:border-zinc-800 dark:bg-zinc-950"
+        className="h-10 min-w-48 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-bold outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-300/20 dark:border-zinc-800 dark:bg-zinc-950"
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {t(
+              option === "all"
+                ? "common.all"
+                : option === "male" || option === "female"
+                  ? `common.${option}`
+                  : `packages.${option}`,
+            )}
           </option>
         ))}
       </select>
@@ -597,7 +745,13 @@ function BookingTable({ admin = false }: { admin?: boolean }) {
 
   return (
     <DataTable
-      columns={["ID", t("booking.trainer"), t("booking.date"), t("booking.status"), "Actions"]}
+      columns={[
+        "ID",
+        t("booking.trainer"),
+        t("booking.date"),
+        t("booking.status"),
+        t("common.actions"),
+      ]}
       rows={bookings.map((booking) => [
         booking.id,
         booking.trainerName,
@@ -609,7 +763,13 @@ function BookingTable({ admin = false }: { admin?: boolean }) {
           <Button
             key={booking.id}
             className="bg-white text-red-600 ring-1 ring-zinc-200 hover:bg-red-50 dark:bg-zinc-950 dark:ring-zinc-800"
-            onClick={() => toast({ type: "warning", title: t("booking.cancelled"), description: booking.id })}
+            onClick={() =>
+              toast({
+                type: "warning",
+                title: t("booking.cancelled"),
+                description: booking.id,
+              })
+            }
           >
             {t("common.cancel")}
           </Button>
@@ -626,7 +786,10 @@ function CheckoutSummary({ total }: { total: number }) {
     <Card className="fit-card h-fit p-6">
       <p className="text-sm font-bold text-zinc-500">{t("common.checkout")}</p>
       <p className="mt-3 text-3xl font-black">{formatCurrency(total)}</p>
-      <Link className="fit-cta mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-black" href={appRoutes.checkout}>
+      <Link
+        className="fit-cta mt-6 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-black"
+        href={appRoutes.checkout}
+      >
         {t("common.checkout")}
       </Link>
     </Card>
@@ -655,6 +818,7 @@ function AdminActions() {
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const tone =
     status === "confirmed" || status === "completed"
       ? "bg-emerald-50 text-emerald-700"
@@ -662,5 +826,9 @@ function StatusBadge({ status }: { status: string }) {
         ? "bg-red-50 text-red-700"
         : "bg-orange-50 text-orange-700";
 
-  return <span className={`rounded-full px-3 py-1 text-xs font-black ${tone}`}>{status}</span>;
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-black ${tone}`}>
+      {t(`statusLabels.${status}`, { defaultValue: status })}
+    </span>
+  );
 }

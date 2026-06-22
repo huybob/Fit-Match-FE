@@ -26,6 +26,18 @@
     "noMessage": "No message",
     "menu": "Menu",
     "footerDescription": "Discover gyms, book personal trainers and manage your fitness journey in one place.",
+    "popular": "Popular",
+    "reviewsCount": "{{count}} reviews",
+    "actions": "Actions",
+    "all": "All",
+    "male": "Male",
+    "female": "Female",
+    "goal": "Goal",
+    "price": "Price",
+    "duration": "Duration",
+    "type": "Type",
+    "specialty": "Specialty",
+    "experience": "Experience",
     "brand": "FitMatch",
     "home": "Home",
     "gyms": "Gyms",
@@ -63,7 +75,20 @@
     "featuredPackages": "Featured packages",
     "featuredTrainers": "Featured trainers",
     "reviews": "Customer reviews",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "heroBadge": "Gym · Fitness · Personal trainer",
+    "offerTitle": "Everything you need to train with confidence",
+    "offerDescription": "A focused journey for discovering gyms, comparing trainers, booking sessions and managing your membership.",
+    "smartBookingTitle": "Smart booking",
+    "smartBookingDescription": "Choose a trainer, date, time and session type in a few clear steps.",
+    "marketplaceTitle": "Fitness marketplace",
+    "marketplaceDescription": "Compare gym packages and select the option that fits your goals.",
+    "memberTitle": "Member workspace",
+    "memberDescription": "Track bookings, active packages and profile updates in one place.",
+    "reviewsTitle": "Trusted by busy fitness enthusiasts",
+    "reviewOne": "Finding the right PT feels clear and effortless.",
+    "reviewTwo": "The booking flow is fast and easy to understand.",
+    "reviewThree": "Managing packages and schedules finally feels organized."
   },
   "auth": {
     "username": "Username",
@@ -85,6 +110,15 @@
     "changePasswordTitle": "Change password",
     "recoveryUnavailable": "Password recovery is not available because the FitMatch API does not currently expose this endpoint.",
     "returnToLogin": "Return to login",
+    "loginDescription": "Use your FitMatch account to continue to your workspace.",
+    "registerDescription": "Create an account for customers, trainers or gym operators.",
+    "changePasswordDescription": "Choose a strong new password to keep your account protected.",
+    "forgotDescription": "Review the current account recovery availability.",
+    "panelTitle": "One workspace for every fitness journey.",
+    "panelDescription": "Discover gyms, connect with trainers and run daily operations through a focused, modern experience.",
+    "benefitOne": "Real gym and trainer profiles",
+    "benefitTwo": "Fast booking and schedule management",
+    "benefitThree": "Role-based operational workspaces",
     "loginSuccess": "Logged in successfully",
     "registerSuccess": "Registered successfully",
     "forgotSuccess": "Password recovery instructions sent"
@@ -262,7 +296,10 @@
     "pending": "Pending",
     "approved": "Approved",
     "rejected": "Rejected",
-    "ended": "Ended"
+    "ended": "Ended",
+    "confirmed": "Confirmed",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
   },
   "packages": {
     "title": "Gym packages",
@@ -272,7 +309,11 @@
     "duration": "Duration",
     "type": "Package type",
     "selected": "Package selected",
-    "added": "Package added to cart"
+    "added": "Package added to cart",
+    "description": "Compare packages by price, duration and training type.",
+    "membership": "Membership",
+    "pt": "Personal training",
+    "class": "Group class"
   },
   "trainers": {
     "title": "Personal trainers",
@@ -282,7 +323,8 @@
     "experience": "Experience",
     "price": "Price/session",
     "available": "Available slots",
-    "booked": "Trainer selected for booking"
+    "booked": "Trainer selected for booking",
+    "description": "Compare trainers by specialty, experience, rating and session price."
   },
   "booking": {
     "title": "Book a training session",
@@ -292,6 +334,7 @@
     "type": "Session type",
     "customer": "Customer information",
     "success": "Booking created successfully",
+    "description": "Choose your trainer, schedule, session type and contact details.",
     "cancelled": "Booking cancelled",
     "history": "Booked sessions",
     "status": "Status"
@@ -302,6 +345,7 @@
     "payment": "Payment method",
     "success": "Payment completed",
     "empty": "Your cart is empty",
+    "emptyDescription": "Browse available packages and add one to continue.",
     "successTitle": "Purchase completed"
   },
   "profile": {
@@ -317,9 +361,12 @@
     "trainers": "Manage trainers",
     "bookings": "Manage bookings",
     "users": "Manage users",
+    "usersDescription": "Review account roles and current user status across the platform.",
+    "usersLoadError": "Unable to load users",
+    "usersLoadErrorDescription": "Check the API connection and try again.",
     "createPackage": "Create package",
     "createTrainer": "Create trainer",
-    "saved": "Mock data saved",
-    "deleted": "Mock data deleted"
+    "saved": "Changes saved",
+    "deleted": "Item deleted"
   }
 }

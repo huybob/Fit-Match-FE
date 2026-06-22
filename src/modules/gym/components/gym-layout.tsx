@@ -17,12 +17,12 @@ export function GymLayout({ children }: { children: ReactNode }) {
   return (
     <SiteLayout>
       <AuthGuard roles={["ROLE_GYM_OPERATOR"]}>
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[220px_1fr]">
-          <aside className="h-fit rounded-2xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
+          <aside className="h-fit rounded-2xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90 lg:sticky lg:top-24">
             <p className="px-3 py-2 text-xs font-black uppercase tracking-wider text-zinc-500">
               {t("gymModule.workspace")}
             </p>
-            <nav className="grid gap-1">
+            <nav className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
               {links.map(([label, href]) => (
                 <Link
                   key={href}

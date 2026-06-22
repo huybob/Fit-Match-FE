@@ -22,8 +22,8 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
   return (
     <SiteLayout>
       <AuthGuard roles={["ROLE_PT"]}>
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[220px_1fr]">
-          <aside className="h-fit rounded-2xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
+          <aside className="h-fit rounded-2xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90 lg:sticky lg:top-24">
             <p className="px-3 py-2 text-xs font-black uppercase tracking-wider text-zinc-500">
               {t("trainerModule.workspace")}
             </p>

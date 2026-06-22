@@ -11,6 +11,10 @@
   --fit-line: #dedfce;
   --fit-green: #a3ff12;
   --fit-orange: #ff6b22;
+  --fit-muted: #68705f;
+  --fit-radius: 1rem;
+  --fit-shadow-sm: 0 8px 24px rgba(16, 19, 15, 0.06);
+  --fit-shadow-lg: 0 24px 80px rgba(16, 19, 15, 0.12);
 }
 
 @theme inline {
@@ -23,6 +27,42 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  min-height: 100vh;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image: linear-gradient(
+      rgba(16, 19, 15, 0.025) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(16, 19, 15, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, black, transparent 75%);
+}
+
+:focus-visible {
+  outline: 2px solid var(--fit-green);
+  outline-offset: 3px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #b8bcaa;
+  background-clip: padding-box;
 }
 
 button:not(:disabled),
@@ -95,6 +135,19 @@ textarea {
   border-color: var(--fit-line);
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 18px 60px rgba(16, 19, 15, 0.08);
+}
+
+.fit-surface {
+  border: 1px solid var(--fit-line);
+  border-radius: var(--fit-radius);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--fit-shadow-sm);
+  backdrop-filter: blur(16px);
+}
+
+.dark .fit-surface {
+  border-color: rgba(245, 245, 237, 0.1);
+  background: rgba(18, 22, 16, 0.9);
 }
 
 .dark .fit-card {

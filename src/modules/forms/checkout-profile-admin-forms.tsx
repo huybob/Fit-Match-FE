@@ -23,7 +23,12 @@ export function CheckoutForm() {
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit(() => toast({ type: "success", title: t("checkout.success") }))}>
+    <form
+      className="space-y-4"
+      onSubmit={form.handleSubmit(() =>
+        toast({ type: "success", title: t("checkout.success") }),
+      )}
+    >
       <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
         <input className={inputClassName} {...form.register("name")} />
       </FieldShell>
@@ -33,7 +38,10 @@ export function CheckoutForm() {
       <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
         <input className={inputClassName} {...form.register("phone")} />
       </FieldShell>
-      <FieldShell label={t("checkout.payment")} error={form.formState.errors.method}>
+      <FieldShell
+        label={t("checkout.payment")}
+        error={form.formState.errors.method}
+      >
         <select className={selectClassName} {...form.register("method")}>
           <option>Mock Visa</option>
           <option>Mock Mastercard</option>
@@ -50,18 +58,27 @@ export function ProfileForm() {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: "Demo User", phone: "0900000000", goal: "Lose fat and build strength" },
+    defaultValues: {
+      name: "Demo User",
+      phone: "0900000000",
+      goal: "Lose fat and build strength",
+    },
   });
 
   return (
-    <form className="space-y-4" onSubmit={form.handleSubmit(() => toast({ type: "success", title: t("profile.updateSuccess") }))}>
+    <form
+      className="space-y-4"
+      onSubmit={form.handleSubmit(() =>
+        toast({ type: "success", title: t("profile.updateSuccess") }),
+      )}
+    >
       <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
         <input className={inputClassName} {...form.register("name")} />
       </FieldShell>
       <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
         <input className={inputClassName} {...form.register("phone")} />
       </FieldShell>
-      <FieldShell label="Goal" error={form.formState.errors.goal}>
+      <FieldShell label={t("common.goal")} error={form.formState.errors.goal}>
         <input className={inputClassName} {...form.register("goal")} />
       </FieldShell>
       <Button>{t("common.save")}</Button>
@@ -74,21 +91,38 @@ export function AdminPackageForm() {
   const { toast } = useToast();
   const form = useForm<z.input<typeof adminPackageSchema>>({
     resolver: zodResolver(adminPackageSchema),
-    defaultValues: { name: "", price: 1000000, duration: "1 month", type: "membership" },
+    defaultValues: {
+      name: "",
+      price: 1000000,
+      duration: "1 month",
+      type: "membership",
+    },
   });
 
   return (
-    <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(() => toast({ type: "success", title: t("admin.saved") }))}>
-      <FieldShell label="Name" error={form.formState.errors.name}>
+    <form
+      className="grid gap-4 md:grid-cols-2"
+      onSubmit={form.handleSubmit(() =>
+        toast({ type: "success", title: t("admin.saved") }),
+      )}
+    >
+      <FieldShell label={t("common.name")} error={form.formState.errors.name}>
         <input className={inputClassName} {...form.register("name")} />
       </FieldShell>
-      <FieldShell label="Price" error={form.formState.errors.price}>
-        <input className={inputClassName} type="number" {...form.register("price")} />
+      <FieldShell label={t("common.price")} error={form.formState.errors.price}>
+        <input
+          className={inputClassName}
+          type="number"
+          {...form.register("price")}
+        />
       </FieldShell>
-      <FieldShell label="Duration" error={form.formState.errors.duration}>
+      <FieldShell
+        label={t("common.duration")}
+        error={form.formState.errors.duration}
+      >
         <input className={inputClassName} {...form.register("duration")} />
       </FieldShell>
-      <FieldShell label="Type" error={form.formState.errors.type}>
+      <FieldShell label={t("common.type")} error={form.formState.errors.type}>
         <select className={selectClassName} {...form.register("type")}>
           <option value="membership">Membership</option>
           <option value="pt">PT</option>
@@ -109,18 +143,37 @@ export function AdminTrainerForm() {
   });
 
   return (
-    <form className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(() => toast({ type: "success", title: t("admin.saved") }))}>
-      <FieldShell label="Name" error={form.formState.errors.name}>
+    <form
+      className="grid gap-4 md:grid-cols-2"
+      onSubmit={form.handleSubmit(() =>
+        toast({ type: "success", title: t("admin.saved") }),
+      )}
+    >
+      <FieldShell label={t("common.name")} error={form.formState.errors.name}>
         <input className={inputClassName} {...form.register("name")} />
       </FieldShell>
-      <FieldShell label="Specialty" error={form.formState.errors.specialty}>
+      <FieldShell
+        label={t("common.specialty")}
+        error={form.formState.errors.specialty}
+      >
         <input className={inputClassName} {...form.register("specialty")} />
       </FieldShell>
-      <FieldShell label="Experience" error={form.formState.errors.experience}>
-        <input className={inputClassName} type="number" {...form.register("experience")} />
+      <FieldShell
+        label={t("common.experience")}
+        error={form.formState.errors.experience}
+      >
+        <input
+          className={inputClassName}
+          type="number"
+          {...form.register("experience")}
+        />
       </FieldShell>
-      <FieldShell label="Price" error={form.formState.errors.price}>
-        <input className={inputClassName} type="number" {...form.register("price")} />
+      <FieldShell label={t("common.price")} error={form.formState.errors.price}>
+        <input
+          className={inputClassName}
+          type="number"
+          {...form.register("price")}
+        />
       </FieldShell>
       <Button className="md:col-span-2">{t("common.save")}</Button>
     </form>
