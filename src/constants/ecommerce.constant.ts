@@ -3,6 +3,7 @@ export const appRoutes = {
   login: "/login",
   register: "/register",
   packages: "/packages",
+  gyms: "/gyms",
   trainers: "/trainers",
   booking: "/booking",
   cart: "/cart",
@@ -11,5 +12,17 @@ export const appRoutes = {
   admin: "/admin",
 };
 
-export const bookingTimes = ["06:30", "08:00", "10:30", "16:30", "18:30", "20:00"];
-export const trainingTypes = ["PT 1:1", "Strength class", "Yoga recovery", "HIIT class"];
+export const bookingTimes = [
+  "06:30",
+  "08:00",
+  "10:30",
+  "16:30",
+  "18:30",
+  "20:00",
+];
+export const trainingTypes = [
+  "PT 1:1",
+  "Strength class",
+  "Yoga recovery",
+  "HIIT class",
+];

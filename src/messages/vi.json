@@ -1,5 +1,6 @@
 {
   "common": {
+    "gyms": "Phòng gym",
     "brand": "FitMatch",
     "home": "Trang chủ",
     "packages": "Gói tập",
