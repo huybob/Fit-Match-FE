@@ -2,6 +2,7 @@
   "common": {
     "brand": "FitMatch",
     "home": "Home",
+    "gyms": "Gyms",
     "packages": "Packages",
     "trainers": "Trainers",
     "booking": "Booking",
