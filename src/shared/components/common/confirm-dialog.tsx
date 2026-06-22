@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/components/ui/button";
+import { Dialog } from "@/shared/components/ui/dialog";
 
 export function ConfirmDialog({
   label,
@@ -13,6 +15,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <>
@@ -23,32 +26,27 @@ export function ConfirmDialog({
       >
         {label}
       </Button>
-      {open && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-zinc-950/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-950">
-            <h3 className="text-lg font-bold">{title}</h3>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button
-                type="button"
-                className="bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                className="bg-red-600 hover:bg-red-500"
-                onClick={() => {
-                  onConfirm();
-                  setOpen(false);
-                }}
-              >
-                Confirm
-              </Button>
-            </div>
-          </div>
+      <Dialog open={open} title={title} onClose={() => setOpen(false)}>
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            className="bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
+            onClick={() => setOpen(false)}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            type="button"
+            className="bg-red-600 hover:bg-red-500"
+            onClick={() => {
+              onConfirm();
+              setOpen(false);
+            }}
+          >
+            {t("common.confirm")}
+          </Button>
         </div>
-      )}
+      </Dialog>
     </>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Building2, MapPin, Search, Star } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { inputClassName } from "@/modules/forms/form-controls";
 import {
   useGymBranches,
@@ -18,6 +19,7 @@ import { Button } from "@/shared/components/ui/button";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 export function GymsPublicPage() {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     keyword: "",
     city: "",
@@ -38,49 +40,47 @@ export function GymsPublicPage() {
       <main className="mx-auto max-w-7xl px-4 py-10">
         <div className="max-w-2xl">
           <p className="text-sm font-black uppercase tracking-widest text-orange-600">
-            Gym discovery
+            {t("gymModule.discovery")}
           </p>
-          <h1 className="mt-2 text-4xl font-black">Find your FitMatch gym</h1>
-          <p className="mt-3 text-zinc-500">
-            Search real gyms by keyword, city, district and rating.
-          </p>
+          <h1 className="mt-2 text-4xl font-black">{t("gymModule.title")}</h1>
+          <p className="mt-3 text-zinc-500">{t("gymModule.description")}</p>
         </div>
         <form
           className="mt-7 grid gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-2 lg:grid-cols-5"
           onSubmit={search}
         >
           <input
-            aria-label="Keyword"
+            aria-label={t("gymModule.keyword")}
             className={inputClassName}
-            placeholder="Name or keyword"
+            placeholder={t("gymModule.keyword")}
             value={filters.keyword}
             onChange={(e) =>
               setFilters({ ...filters, keyword: e.target.value })
             }
           />
           <input
-            aria-label="City"
+            aria-label={t("gymModule.city")}
             className={inputClassName}
-            placeholder="City"
+            placeholder={t("gymModule.city")}
             value={filters.city}
             onChange={(e) => setFilters({ ...filters, city: e.target.value })}
           />
           <input
-            aria-label="District"
+            aria-label={t("gymModule.district")}
             className={inputClassName}
-            placeholder="District"
+            placeholder={t("gymModule.district")}
             value={filters.district}
             onChange={(e) =>
               setFilters({ ...filters, district: e.target.value })
             }
           />
           <input
-            aria-label="Minimum rating"
+            aria-label={t("gymModule.minimumRating")}
             className={inputClassName}
             min="0"
             max="5"
             step="0.5"
-            placeholder="Min rating"
+            placeholder={t("gymModule.minimumRating")}
             type="number"
             value={filters.minRating}
             onChange={(e) =>
@@ -89,7 +89,7 @@ export function GymsPublicPage() {
           />
           <Button>
             <Search className="size-4" />
-            Search
+            {t("gymModule.search")}
           </Button>
         </form>
         <section className="mt-8">
@@ -97,7 +97,7 @@ export function GymsPublicPage() {
             <LoadingSkeleton />
           ) : query.isError ? (
             <EmptyState
-              title="Unable to load gyms"
+              title={t("gymModule.loadError")}
               description={toErrorMessage(query.error)}
             />
           ) : query.data?.content?.length ? (
@@ -120,7 +120,7 @@ export function GymsPublicPage() {
                       {gym.district}, {gym.city}
                     </p>
                     <p className="mt-3 line-clamp-2 text-sm">
-                      {gym.description || "No description"}
+                      {gym.description || t("common.noDescription")}
                     </p>
                     <div className="mt-5 flex items-center justify-between">
                       <span className="flex items-center gap-1 font-bold">
@@ -131,7 +131,7 @@ export function GymsPublicPage() {
                         className="font-black text-orange-600"
                         href={`/gyms/${gym.id}`}
                       >
-                        View gym
+                        {t("gymModule.viewGym")}
                       </Link>
                     </div>
                   </div>
@@ -140,8 +140,8 @@ export function GymsPublicPage() {
             </div>
           ) : (
             <EmptyState
-              title="No gyms found"
-              description="Try another search or location."
+              title={t("gymModule.noGyms")}
+              description={t("gymModule.noGymsDescription")}
             />
           )}
         </section>
@@ -151,6 +151,7 @@ export function GymsPublicPage() {
 }
 
 export function GymPublicDetailPage({ gymId }: { gymId: number }) {
+  const { t } = useTranslation();
   const gym = useGymDetail(gymId);
   const branches = useGymBranches(gymId);
   const facilities = useGymFacilities(gymId);
@@ -167,7 +168,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
       <SiteLayout>
         <main className="mx-auto max-w-4xl px-4 py-10">
           <EmptyState
-            title="Gym not found"
+            title={t("gymModule.notFound")}
             description={toErrorMessage(gym.error)}
           />
         </main>
@@ -186,7 +187,9 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
           </p>
         </section>
         <section>
-          <h2 className="mb-4 text-2xl font-black">Branches</h2>
+          <h2 className="mb-4 text-2xl font-black">
+            {t("gymModule.branches")}
+          </h2>
           {branches.data?.content?.length ? (
             <div className="grid gap-4 md:grid-cols-2">
               {branches.data.content.map((branch) => (
@@ -199,20 +202,22 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                     {branch.address}, {branch.district}
                   </p>
                   <p className="mt-3 text-sm font-bold">
-                    {branch.phone || "No phone"}
+                    {branch.phone || t("common.noPhone")}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
             <EmptyState
-              title="No branches"
-              description="This gym has not published branches."
+              title={t("gymModule.noBranches")}
+              description={t("gymModule.noBranchesDescription")}
             />
           )}
         </section>
         <section>
-          <h2 className="mb-4 text-2xl font-black">Facilities</h2>
+          <h2 className="mb-4 text-2xl font-black">
+            {t("gymModule.facilities")}
+          </h2>
           {facilities.data?.content?.length ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {facilities.data.content.map((facility) => (
@@ -232,8 +237,8 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
             </div>
           ) : (
             <EmptyState
-              title="No facilities"
-              description="Facility information is not available."
+              title={t("gymModule.noFacilities")}
+              description={t("gymModule.noFacilitiesDescription")}
             />
           )}
         </section>

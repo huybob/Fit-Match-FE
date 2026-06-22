@@ -20,6 +20,7 @@ import { useThemeMode } from "@/lib/theme-provider";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { Button } from "@/shared/components/ui/button";
+import { MotionPage } from "@/shared/components/common/motion-page";
 import { cn } from "@/shared/utils/cn.util";
 
 const navItems = [
@@ -34,7 +35,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className="fit-shell min-h-screen text-[#10130f] dark:text-[#f5f5ed]">
       <SiteHeader />
-      {children}
+      <MotionPage>{children}</MotionPage>
       <SiteFooter />
     </div>
   );
@@ -139,7 +140,7 @@ function SiteHeader() {
                       className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
                       href={getHomeRouteForRole(user.role)}
                     >
-                      Workspace
+                      {t("common.workspace")}
                     </Link>
                   )}
                   <Link
@@ -215,7 +216,7 @@ function SiteHeader() {
                     className="block rounded-md px-3 py-2 text-sm font-semibold"
                     href={getHomeRouteForRole(user.role)}
                   >
-                    Workspace
+                    {t("common.workspace")}
                   </Link>
                 )}
                 <Link

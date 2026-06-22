@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell, inputClassName } from "@/modules/forms/form-controls";
@@ -68,15 +69,17 @@ function Header({
 function errorToast(
   toast: ReturnType<typeof useToast>["toast"],
   error: unknown,
+  title: string,
 ) {
   toast({
     type: "error",
-    title: "Request failed",
+    title,
     description: toErrorMessage(error),
   });
 }
 
 export function MyGymsPage() {
+  const { t } = useTranslation();
   const query = useMyGyms();
   const create = useCreateGym();
   const update = useUpdateGym();
@@ -125,8 +128,8 @@ export function MyGymsPage() {
   return (
     <>
       <Header
-        title="My gyms"
-        description="Create and operate gyms owned by this account."
+        title={t("gymModule.myGyms")}
+        description={t("gymModule.myGymsDescription")}
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
@@ -233,19 +236,24 @@ export function MyGymsPage() {
               else await create.mutateAsync(payload);
               toast({
                 type: "success",
-                title: editing ? "Gym updated" : "Gym created",
+                title: t(
+                  editing ? "gymModule.gymUpdated" : "gymModule.gymCreated",
+                ),
               });
               setOpen(false);
             } catch (error) {
-              errorToast(toast, error);
+              errorToast(toast, error, t("common.requestFailed"));
             }
           })}
         >
-          <FieldShell label="Name" error={form.formState.errors.name}>
+          <FieldShell
+            label={t("common.name")}
+            error={form.formState.errors.name}
+          >
             <input className={inputClassName} {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label="Description"
+            label={t("common.description")}
             error={form.formState.errors.description}
           >
             <textarea
@@ -254,24 +262,39 @@ export function MyGymsPage() {
             />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
-            <FieldShell label="City" error={form.formState.errors.city}>
+            <FieldShell
+              label={t("gymModule.city")}
+              error={form.formState.errors.city}
+            >
               <input className={inputClassName} {...form.register("city")} />
             </FieldShell>
-            <FieldShell label="District" error={form.formState.errors.district}>
+            <FieldShell
+              label={t("gymModule.district")}
+              error={form.formState.errors.district}
+            >
               <input
                 className={inputClassName}
                 {...form.register("district")}
               />
             </FieldShell>
           </div>
-          <FieldShell label="Address" error={form.formState.errors.address}>
+          <FieldShell
+            label={t("common.address")}
+            error={form.formState.errors.address}
+          >
             <input className={inputClassName} {...form.register("address")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
-            <FieldShell label="Phone" error={form.formState.errors.phone}>
+            <FieldShell
+              label={t("common.phone")}
+              error={form.formState.errors.phone}
+            >
               <input className={inputClassName} {...form.register("phone")} />
             </FieldShell>
-            <FieldShell label="Email" error={form.formState.errors.email}>
+            <FieldShell
+              label={t("common.email")}
+              error={form.formState.errors.email}
+            >
               <input
                 className={inputClassName}
                 type="email"
@@ -287,6 +310,7 @@ export function MyGymsPage() {
 }
 
 export function GymManagePage({ gymId }: { gymId: number }) {
+  const { t } = useTranslation();
   const gym = useGymDetail(gymId);
   const branches = useGymBranches(gymId);
   const facilities = useGymFacilities(gymId);
@@ -357,7 +381,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
   if (gym.isError || !gym.data)
     return (
       <EmptyState
-        title="Gym not found"
+        title={t("gymModule.notFound")}
         description={toErrorMessage(gym.error)}
       />
     );
@@ -365,12 +389,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
     <>
       <Header
         title={gym.data.name ?? "Gym"}
-        description="Manage branches and facilities."
+        description={t("gymModule.manageDescription")}
       />
       <section className="mb-10">
         <Header
-          title="Branches"
-          description="Physical locations of this gym."
+          title={t("gymModule.branches")}
+          description={t("gymModule.branchesDescription")}
           action={
             <Button onClick={() => showBranch()}>
               <Plus className="size-4" />
@@ -413,8 +437,8 @@ export function GymManagePage({ gymId }: { gymId: number }) {
       </section>
       <section>
         <Header
-          title="Facilities"
-          description="Equipment and amenities available to customers."
+          title={t("gymModule.facilities")}
+          description={t("gymModule.facilitiesDescription")}
           action={
             <Button onClick={() => showFacility()}>
               <Plus className="size-4" />
@@ -475,11 +499,15 @@ export function GymManagePage({ gymId }: { gymId: number }) {
               else await createBranch.mutateAsync({ gymId, payload });
               toast({
                 type: "success",
-                title: editingBranch ? "Branch updated" : "Branch created",
+                title: t(
+                  editingBranch
+                    ? "gymModule.branchUpdated"
+                    : "gymModule.branchCreated",
+                ),
               });
               setBranchOpen(false);
             } catch (error) {
-              errorToast(toast, error);
+              errorToast(toast, error, t("common.requestFailed"));
             }
           })}
         >
@@ -541,13 +569,15 @@ export function GymManagePage({ gymId }: { gymId: number }) {
               else await createFacility.mutateAsync({ gymId, payload });
               toast({
                 type: "success",
-                title: editingFacility
-                  ? "Facility updated"
-                  : "Facility created",
+                title: t(
+                  editingFacility
+                    ? "gymModule.facilityUpdated"
+                    : "gymModule.facilityCreated",
+                ),
               });
               setFacilityOpen(false);
             } catch (error) {
-              errorToast(toast, error);
+              errorToast(toast, error, t("common.requestFailed"));
             }
           })}
         >
@@ -590,22 +620,29 @@ export function GymManagePage({ gymId }: { gymId: number }) {
 }
 
 export function GymPartnershipsPage() {
+  const { t } = useTranslation();
   const query = useGymPartnerships();
   const action = usePartnershipAction();
   const { toast } = useToast();
   async function run(id: number, kind: "approve" | "reject" | "end") {
     try {
       await action.mutateAsync({ id, action: kind });
-      toast({ type: "success", title: `Partnership ${kind}d` });
+      const key =
+        kind === "approve"
+          ? "gymModule.partnershipApproved"
+          : kind === "reject"
+            ? "gymModule.partnershipRejected"
+            : "gymModule.partnershipEnded";
+      toast({ type: "success", title: t(key) });
     } catch (error) {
-      errorToast(toast, error);
+      errorToast(toast, error, t("common.requestFailed"));
     }
   }
   return (
     <>
       <Header
-        title="PT partnerships"
-        description="Approve, reject or end trainer partnerships."
+        title={t("gymModule.partnerships")}
+        description={t("gymModule.partnershipsDescription")}
       />
       {query.isLoading ? (
         <LoadingSkeleton />
