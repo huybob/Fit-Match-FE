@@ -179,7 +179,7 @@ function SiteHeader() {
           type="button"
           onClick={() => setIsMenuOpen((value) => !value)}
           className="ml-auto size-10 bg-white/80 p-0 text-[#10130f] shadow-none ring-1 ring-[#dedfce] hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10 lg:hidden"
-          aria-label="Menu"
+          aria-label={t("common.menu")}
         >
           {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
@@ -266,8 +266,7 @@ function SiteFooter() {
         <div>
           <p className="text-lg font-black">{t("common.brand")}</p>
           <p className="mt-2 max-w-md text-sm text-[#c9ccb8]">
-            Gym ecommerce UI for packages, PT booking, checkout and member
-            profile.
+            {t("common.footerDescription")}
           </p>
         </div>
         <div className="flex flex-wrap gap-4 text-sm font-semibold text-[#c9ccb8]">

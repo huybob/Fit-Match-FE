@@ -25,6 +25,15 @@ body {
   color: var(--foreground);
 }
 
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+select,
+input[type="file"] {
+  cursor: pointer;
+}
+
 * {
   scroll-margin-top: 5rem;
 }
