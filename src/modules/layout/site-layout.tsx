@@ -24,6 +24,7 @@ import { cn } from "@/shared/utils/cn.util";
 
 const navItems = [
   ["common.home", appRoutes.home],
+  ["common.gyms", appRoutes.gyms],
   ["common.packages", appRoutes.packages],
   ["common.trainers", appRoutes.trainers],
   ["common.booking", appRoutes.booking],
@@ -59,7 +60,9 @@ function SiteHeader() {
           <span className="flex size-10 items-center justify-center rounded-md bg-[#a3ff12] text-[#10130f] shadow-lg shadow-lime-500/20">
             <Dumbbell className="size-5" />
           </span>
-          <span className="text-lg font-black tracking-tight">{t("common.brand")}</span>
+          <span className="text-lg font-black tracking-tight">
+            {t("common.brand")}
+          </span>
         </Link>
 
         <nav className="ml-8 hidden items-center gap-6 lg:flex">
@@ -77,7 +80,9 @@ function SiteHeader() {
         <div className="ml-auto hidden items-center gap-2 sm:flex">
           <select
             value={locale}
-            onChange={(event) => changeLanguage(event.target.value as "vi" | "en")}
+            onChange={(event) =>
+              changeLanguage(event.target.value as "vi" | "en")
+            }
             className="h-10 rounded-md border border-[#dedfce] bg-white/80 px-3 text-sm font-bold text-[#10130f] outline-none dark:border-white/10 dark:bg-white/10 dark:text-white"
             aria-label={t("common.language")}
           >
@@ -91,7 +96,11 @@ function SiteHeader() {
             className="size-10 bg-white/80 p-0 text-[#10130f] shadow-none ring-1 ring-[#dedfce] hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10"
             aria-label={t("common.theme")}
           >
-            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            {theme === "dark" ? (
+              <Sun className="size-4" />
+            ) : (
+              <Moon className="size-4" />
+            )}
           </Button>
 
           <Link
@@ -119,15 +128,24 @@ function SiteHeader() {
               </Button>
               {isUserOpen && (
                 <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#dedfce] bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
-                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={appRoutes.profile}>
+                  <Link
+                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                    href={appRoutes.profile}
+                  >
                     {t("common.profile")}
                   </Link>
                   {getHomeRouteForRole(user.role) !== appRoutes.profile && (
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href={getHomeRouteForRole(user.role)}>
+                    <Link
+                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                      href={getHomeRouteForRole(user.role)}
+                    >
                       Workspace
                     </Link>
                   )}
-                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/change-password">
+                  <Link
+                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                    href="/change-password"
+                  >
                     {t("profile.changePassword")}
                   </Link>
                   <button
@@ -143,8 +161,15 @@ function SiteHeader() {
             </div>
           ) : (
             <>
-              <Link className="px-3 text-sm font-bold" href={appRoutes.login}>{t("common.login")}</Link>
-              <Link className="rounded-md bg-[#ff6b22] px-4 py-2 text-sm font-bold text-white" href={appRoutes.register}>{t("common.register")}</Link>
+              <Link className="px-3 text-sm font-bold" href={appRoutes.login}>
+                {t("common.login")}
+              </Link>
+              <Link
+                className="rounded-md bg-[#ff6b22] px-4 py-2 text-sm font-bold text-white"
+                href={appRoutes.register}
+              >
+                {t("common.register")}
+              </Link>
             </>
           )}
         </div>
@@ -179,15 +204,24 @@ function SiteHeader() {
                 <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-[#858a78]">
                   {user.username}
                 </p>
-                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
+                <Link
+                  className="block rounded-md px-3 py-2 text-sm font-semibold"
+                  href={appRoutes.profile}
+                >
                   {t("common.profile")}
                 </Link>
                 {getHomeRouteForRole(user.role) !== appRoutes.profile && (
-                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={getHomeRouteForRole(user.role)}>
+                  <Link
+                    className="block rounded-md px-3 py-2 text-sm font-semibold"
+                    href={getHomeRouteForRole(user.role)}
+                  >
                     Workspace
                   </Link>
                 )}
-                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/change-password">
+                <Link
+                  className="block rounded-md px-3 py-2 text-sm font-semibold"
+                  href="/change-password"
+                >
                   {t("profile.changePassword")}
                 </Link>
                 <button
@@ -201,10 +235,16 @@ function SiteHeader() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 border-t border-[#dedfce] pt-3 dark:border-white/10">
-                <Link className="rounded-md px-3 py-2 text-center text-sm font-semibold" href={appRoutes.login}>
+                <Link
+                  className="rounded-md px-3 py-2 text-center text-sm font-semibold"
+                  href={appRoutes.login}
+                >
                   {t("common.login")}
                 </Link>
-                <Link className="rounded-md bg-[#ff6b22] px-3 py-2 text-center text-sm font-bold text-white" href={appRoutes.register}>
+                <Link
+                  className="rounded-md bg-[#ff6b22] px-3 py-2 text-center text-sm font-bold text-white"
+                  href={appRoutes.register}
+                >
                   {t("common.register")}
                 </Link>
               </div>
@@ -225,7 +265,8 @@ function SiteFooter() {
         <div>
           <p className="text-lg font-black">{t("common.brand")}</p>
           <p className="mt-2 max-w-md text-sm text-[#c9ccb8]">
-            Gym ecommerce UI for packages, PT booking, checkout and member profile.
+            Gym ecommerce UI for packages, PT booking, checkout and member
+            profile.
           </p>
         </div>
         <div className="flex flex-wrap gap-4 text-sm font-semibold text-[#c9ccb8]">

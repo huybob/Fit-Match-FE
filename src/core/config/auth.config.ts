@@ -3,7 +3,7 @@ export const authConfig = {
   roleRoutes: {
     ROLE_CUSTOMER: "/profile",
     ROLE_PT: "/trainer/profile",
-    ROLE_GYM_OPERATOR: "/schedule",
+    ROLE_GYM_OPERATOR: "/gym/gyms",
     ROLE_ADMIN: "/admin",
   },
 };
