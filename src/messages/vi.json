@@ -388,6 +388,9 @@
   "attendance": {
     "navigation": "Điểm danh", "customerTitle": "Lịch sử điểm danh", "customerDescription": "Theo dõi thời gian check-in và check-out được tạo từ lịch tập.", "ptTitle": "Điểm danh khách hàng", "ptDescription": "Theo dõi điểm danh phát sinh từ các buổi tập của khách hàng.", "loadError": "Không thể tải lịch sử điểm danh", "empty": "Chưa có dữ liệu điểm danh", "emptyDescription": "Điểm danh được tự động tạo khi lịch đã xác nhận được check-in.", "checkIn": "Check-in", "checkOut": "Check-out", "me": "Buổi tập của tôi", "statuses": { "ON_TIME": "Đúng giờ", "LATE": "Đi muộn", "ABSENT": "Vắng mặt" }
   },
+  "payment": {
+    "navigation":"Thanh toán","customerTitle":"Thanh toán của tôi","customerDescription":"Thanh toán lịch đã xác nhận và theo dõi lịch sử giao dịch.","ptTitle":"Doanh thu thanh toán","ptDescription":"Theo dõi thu nhập phát sinh từ thanh toán của khách hàng.","create":"Thanh toán booking","created":"Đã tạo thanh toán","refunded":"Đã xử lý hoàn tiền","pay":"Tiếp tục thanh toán","refund":"Yêu cầu hoàn tiền","refundAmount":"Số tiền hoàn","refundReason":"Lý do hoàn tiền","bookingId":"ID booking","method":"Phương thức thanh toán","customer":"Khách hàng","trainer":"Huấn luyện viên","totalAmount":"Tổng thanh toán","totalEarning":"Thu nhập PT","allStatuses":"Tất cả trạng thái","loadError":"Không thể tải thanh toán","empty":"Chưa có thanh toán","emptyDescription":"Thanh toán sẽ xuất hiện sau khi booking được xác nhận.","statuses":{"PENDING":"Đang chờ","COMPLETED":"Hoàn thành","FAILED":"Thất bại","REFUNDED":"Đã hoàn tiền","PARTIALLY_REFUNDED":"Hoàn tiền một phần"},"methods":{"VNPAY":"VNPay","MOMO":"MoMo","BANK_TRANSFER":"Chuyển khoản","CASH":"Tiền mặt"}
+  },
   "packages": {
     "title": "Danh sách gói tập",
     "detail": "Chi tiết gói tập",

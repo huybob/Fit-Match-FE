@@ -8,6 +8,7 @@ import {
   ClipboardList,
   NotebookTabs,
   ScanLine,
+  WalletCards,
   Handshake,
   UserRound,
 } from "lucide-react";
@@ -41,6 +42,11 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
       label: t("attendance.navigation"),
       href: "/trainer/attendance",
       icon: ScanLine,
+    },
+    {
+      label: t("payment.navigation"),
+      href: "/trainer/payments",
+      icon: WalletCards,
     },
     {
       label: t("trainerModule.profile"),
