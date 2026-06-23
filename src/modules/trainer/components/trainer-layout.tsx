@@ -2,6 +2,7 @@
 
 import {
   Award,
+  Banknote,
   BriefcaseBusiness,
   CalendarCheck2,
   CalendarDays,
@@ -48,6 +49,11 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
       label: t("payment.navigation"),
       href: "/trainer/payments",
       icon: WalletCards,
+    },
+    {
+      label: t("withdrawal.navigation"),
+      href: "/trainer/withdrawals",
+      icon: Banknote,
     },
     { label: t("review.navigation"), href: "/trainer/reviews", icon: Star },
     {

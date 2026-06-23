@@ -460,5 +460,32 @@
     "createTrainer": "Thêm PT",
     "saved": "Đã lưu thay đổi",
     "deleted": "Đã xóa mục"
+  },
+  "withdrawal": {
+    "navigation": "Rút tiền",
+    "ptTitle": "Yêu cầu rút tiền",
+    "ptDescription": "Tạo và theo dõi các yêu cầu rút thu nhập về tài khoản ngân hàng.",
+    "adminTitle": "Duyệt rút tiền",
+    "adminDescription": "Xem xét, duyệt hoặc từ chối yêu cầu rút tiền của huấn luyện viên.",
+    "create": "Tạo yêu cầu rút tiền",
+    "created": "Đã gửi yêu cầu rút tiền",
+    "submit": "Gửi yêu cầu",
+    "approve": "Duyệt",
+    "approved": "Đã duyệt yêu cầu",
+    "reject": "Từ chối",
+    "rejected": "Đã từ chối yêu cầu",
+    "amount": "Số tiền",
+    "bank": "Ngân hàng",
+    "account": "Số tài khoản",
+    "holder": "Chủ tài khoản",
+    "notes": "Ghi chú",
+    "trainer": "Huấn luyện viên",
+    "rejectionReason": "Lý do từ chối",
+    "approvedBy": "Người duyệt",
+    "allStatuses": "Tất cả trạng thái",
+    "loadError": "Không thể tải yêu cầu rút tiền",
+    "empty": "Chưa có yêu cầu rút tiền",
+    "emptyDescription": "Các yêu cầu rút tiền sẽ hiển thị ở đây.",
+    "statuses": { "PENDING": "Đang chờ", "APPROVED": "Đã duyệt", "REJECTED": "Đã từ chối" }
   }
 }
