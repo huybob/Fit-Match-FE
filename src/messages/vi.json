@@ -382,6 +382,9 @@
     "customerId": "ID khách hàng",
     "workoutPlanId": "ID giáo án (không bắt buộc)"
   },
+  "workoutPlan": {
+    "navigation": "Giáo án", "customerTitle": "Giáo án của tôi", "customerDescription": "Theo dõi giáo án được PT giao.", "ptTitle": "Giáo án khách hàng", "ptDescription": "Tạo và quản lý giáo án có cấu trúc cho khách hàng.", "create": "Tạo giáo án", "edit": "Sửa giáo án", "saved": "Đã lưu giáo án", "loadError": "Không thể tải giáo án", "empty": "Chưa có giáo án", "emptyDescription": "Giáo án phù hợp trạng thái sẽ xuất hiện tại đây.", "allStatuses": "Tất cả trạng thái", "statuses": { "ACTIVE": "Đang áp dụng", "COMPLETED": "Hoàn thành", "ARCHIVED": "Lưu trữ" }, "exercises": "bài tập", "customerId": "ID khách hàng", "name": "Tên giáo án", "startDate": "Ngày bắt đầu", "endDate": "Ngày kết thúc", "firstExercise": "Bài tập đầu tiên", "exerciseName": "Tên bài tập", "sets": "Số hiệp", "reps": "Số lần", "complete": "Hoàn thành", "archive": "Lưu trữ", "actionSuccess": { "complete": "Đã hoàn thành giáo án", "archive": "Đã lưu trữ giáo án" }
+  },
   "packages": {
     "title": "Danh sách gói tập",
     "detail": "Chi tiết gói tập",
