@@ -32,6 +32,14 @@ const navItems = [
   ["common.booking", appRoutes.booking],
 ] as const;
 
+function useVisibleNavItems() {
+  const { user, status } = useAuthStore();
+  const canBook = status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
+  return canBook
+    ? navItems
+    : navItems.filter(([, href]) => href !== appRoutes.booking);
+}
+
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className="fit-shell flex min-h-screen flex-col text-[#10130f] dark:text-[#f5f5ed]">
@@ -49,6 +57,7 @@ function SiteHeader() {
   const { locale, changeLanguage } = useLocale();
   const { theme, toggleTheme } = useThemeMode();
   const { user, status, logout } = useAuthStore();
+  const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
@@ -71,7 +80,7 @@ function SiteHeader() {
         </Link>
 
         <nav className="ml-8 hidden items-center gap-6 lg:flex">
-          {navItems.map(([key, href]) => (
+          {visibleNavItems.map(([key, href]) => (
             <Link
               key={href}
               href={href}
@@ -207,7 +216,7 @@ function SiteHeader() {
       {isMenuOpen && (
         <div className="border-t border-[#dedfce] bg-[#f7f7ef] px-4 py-4 dark:border-white/10 dark:bg-[#080a07] lg:hidden">
           <div className="space-y-2">
-            {navItems.map(([key, href]) => (
+            {visibleNavItems.map(([key, href]) => (
               <Link
                 key={href}
                 href={href}
@@ -288,6 +297,7 @@ function SiteHeader() {
 
 function SiteFooter() {
   const { t } = useTranslation();
+  const visibleNavItems = useVisibleNavItems();
 
   return (
     <footer className="border-t border-[#dedfce] bg-[#10130f] px-4 py-10 text-white dark:border-white/10 dark:bg-black sm:px-6 lg:px-8">
@@ -299,7 +309,7 @@ function SiteFooter() {
           </p>
         </div>
         <div className="flex flex-wrap gap-4 text-sm font-semibold text-[#c9ccb8]">
-          {navItems.map(([key, href]) => (
+          {visibleNavItems.map(([key, href]) => (
             <Link key={href} href={href} className={cn("hover:text-[#a3ff12]")}>
               {t(key)}
             </Link>
