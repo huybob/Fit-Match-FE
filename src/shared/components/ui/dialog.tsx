@@ -30,10 +30,11 @@ export function Dialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[90] grid place-items-center bg-zinc-950/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] grid place-items-center bg-zinc-950/70 p-4 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.22 }}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
           }}
@@ -42,11 +43,11 @@ export function Dialog({
             aria-labelledby={titleId}
             aria-modal="true"
             role="dialog"
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/20 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-zinc-950"
-            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/20 bg-gradient-to-b from-white to-zinc-50/80 p-6 shadow-2xl ring-1 ring-black/5 dark:border-white/10 dark:from-zinc-950 dark:to-zinc-900 dark:ring-white/5"
+            initial={{ opacity: 0, y: 32, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            exit={{ opacity: 0, y: 18, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
           >
             <div className="flex items-center justify-between gap-4">
               <h2 id={titleId} className="text-xl font-black">

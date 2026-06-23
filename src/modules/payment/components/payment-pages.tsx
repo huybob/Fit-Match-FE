@@ -14,6 +14,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useBookings } from "@/modules/booking/hooks/use-booking";
 import { useCreatePayment,usePayments,useRefundPayment } from "../hooks/use-payment";
 import { createPaymentSchema,refundSchema } from "../schemas";
 
@@ -28,5 +29,31 @@ export function PaymentsPage({scope}:{scope:"customer"|"pt"}){
  <div className="mt-5">{query.isLoading?<LoadingSkeleton/>:query.isError?<EmptyState title={t("payment.loadError")} description={toErrorMessage(query.error)}/>:!items.length?<EmptyState title={t("payment.empty")} description={t("payment.emptyDescription")}/>:<div className="grid gap-4 lg:grid-cols-2">{items.map(p=><article key={p.id} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"><div className="flex justify-between"><p className="text-xs font-black uppercase text-zinc-400">#{p.id} · Booking #{p.bookingId}</p><Badge>{p.status?t(`payment.statuses.${p.status}`):"—"}</Badge></div><h2 className="mt-2 text-xl font-black">{money(scope==="pt"?p.ptEarning:p.amount,i18n.language)}</h2><div className="mt-3 grid gap-1 text-sm text-zinc-500"><span>{t("payment.customer")}: {p.customerName}</span><span>{t("payment.trainer")}: {p.ptName}</span><span>{t("payment.method")}: {p.paymentMethod?t(`payment.methods.${p.paymentMethod}`):"—"}</span></div>{scope==="customer"&&p.status==="COMPLETED"&&<Button className="mt-4 bg-red-600" onClick={()=>setRefunding(p)}>{t("payment.refund")}</Button>}</article>)}</div>}</div>
  <CreatePaymentDialog open={creating} onClose={()=>setCreating(false)}/>{refunding&&<RefundDialog payment={refunding} onClose={()=>setRefunding(null)}/>}</div>;
 }
-function CreatePaymentDialog({open,onClose}:{open:boolean;onClose:()=>void}){const{t}=useTranslation();const{toast}=useToast();const mutation=useCreatePayment();const form=useForm<z.infer<typeof createPaymentSchema>>({resolver:zodResolver(createPaymentSchema),defaultValues:{bookingId:0,paymentMethod:"VNPAY"}});return <Dialog open={open} title={t("payment.create")} onClose={onClose}><form className="space-y-4" onSubmit={form.handleSubmit(async v=>{try{await mutation.mutateAsync({bookingId:v.bookingId,payload:{paymentMethod:v.paymentMethod}});toast({type:"success",title:t("payment.created")});onClose();}catch(e){toast({type:"error",title:t("common.requestFailed"),description:toErrorMessage(e)});}})}><FieldShell label={t("payment.bookingId")} error={form.formState.errors.bookingId}><input type="number" className={inputClassName} {...form.register("bookingId",{valueAsNumber:true})}/></FieldShell><FieldShell label={t("payment.method")}><select className={selectClassName} {...form.register("paymentMethod")}>{["VNPAY","MOMO","BANK_TRANSFER","CASH"].map(m=><option key={m} value={m}>{t(`payment.methods.${m}`)}</option>)}</select></FieldShell><Button disabled={mutation.isPending}><CreditCard className="size-4"/>{t("payment.pay")}</Button></form></Dialog>}
+function CreatePaymentDialog({open,onClose}:{open:boolean;onClose:()=>void}){
+  const{t,i18n}=useTranslation();const{toast}=useToast();const mutation=useCreatePayment();
+  const confirmed=useBookings("customer",{status:"CONFIRMED",page:0,size:50});
+  const checkedIn=useBookings("customer",{status:"CHECKED_IN",page:0,size:50});
+  const payable=[...(confirmed.data?.content??[]),...(checkedIn.data?.content??[])];
+  const loading=confirmed.isLoading||checkedIn.isLoading;
+  const money=(v:number|undefined)=>new Intl.NumberFormat(i18n.language==="vi"?"vi-VN":"en-US",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(v??0);
+  const form=useForm<z.infer<typeof createPaymentSchema>>({resolver:zodResolver(createPaymentSchema),defaultValues:{bookingId:0,paymentMethod:"VNPAY"}});
+  return <Dialog open={open} title={t("payment.create")} onClose={onClose}>
+    <form className="space-y-4" onSubmit={form.handleSubmit(async v=>{try{await mutation.mutateAsync({bookingId:v.bookingId,payload:{paymentMethod:v.paymentMethod}});toast({type:"success",title:t("payment.created")});onClose();}catch(e){toast({type:"error",title:t("common.requestFailed"),description:toErrorMessage(e)});}})}>
+      <FieldShell label={t("payment.bookingLabel")} error={form.formState.errors.bookingId}>
+        {loading?(
+          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
+        ):!payable.length?(
+          <p className="text-sm text-zinc-500">{t("payment.noPayableBooking")}</p>
+        ):(
+          <select className={selectClassName} {...form.register("bookingId",{valueAsNumber:true})}>
+            <option value={0}>{t("payment.bookingPlaceholder")}</option>
+            {payable.map(b=><option key={b.id} value={b.id}>#{b.id} · {b.ptServiceName??""} · {b.bookingDate} · {money(b.price)}</option>)}
+          </select>
+        )}
+      </FieldShell>
+      <FieldShell label={t("payment.method")}><select className={selectClassName} {...form.register("paymentMethod")}>{["VNPAY","MOMO","BANK_TRANSFER","CASH"].map(m=><option key={m} value={m}>{t(`payment.methods.${m}`)}</option>)}</select></FieldShell>
+      <Button disabled={mutation.isPending}><CreditCard className="size-4"/>{t("payment.pay")}</Button>
+    </form>
+  </Dialog>;
+}
 function RefundDialog({payment,onClose}:{payment:Payment;onClose:()=>void}){const{t}=useTranslation();const{toast}=useToast();const mutation=useRefundPayment();const form=useForm<z.infer<typeof refundSchema>>({resolver:zodResolver(refundSchema),defaultValues:{amount:payment.amount??0,reason:""}});return <Dialog open title={t("payment.refund")} onClose={onClose}><form className="space-y-4" onSubmit={form.handleSubmit(async v=>{try{await mutation.mutateAsync({id:payment.id!,payload:v});toast({type:"success",title:t("payment.refunded")});onClose();}catch(e){toast({type:"error",title:t("common.requestFailed"),description:toErrorMessage(e)});}})}><FieldShell label={t("payment.refundAmount")}><input type="number" className={inputClassName} {...form.register("amount",{valueAsNumber:true})}/></FieldShell><FieldShell label={t("payment.refundReason")}><textarea className={inputClassName} {...form.register("reason")}/></FieldShell><Button className="bg-red-600" disabled={mutation.isPending}><ReceiptText className="size-4"/>{t("payment.refund")}</Button></form></Dialog>}
