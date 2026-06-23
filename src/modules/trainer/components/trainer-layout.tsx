@@ -1,51 +1,60 @@
 "use client";
 
-import Link from "next/link";
+import {
+  Award,
+  BriefcaseBusiness,
+  CalendarDays,
+  Handshake,
+  UserRound,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { SiteLayout } from "@/modules/layout/site-layout";
-import { cn } from "@/shared/utils/cn.util";
-
-const links = [
-  ["profile", "/trainer/profile"],
-  ["services", "/trainer/services"],
-  ["availability", "/trainer/availability"],
-  ["certificates", "/trainer/certificates"],
-  ["partnerships", "/trainer/partnerships"],
-] as const;
+import { RoleWorkspaceShell } from "@/shared/components/common/role-workspace-shell";
 
 export function TrainerLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const links = [
+    {
+      label: t("trainerModule.profile"),
+      href: "/trainer/profile",
+      icon: UserRound,
+    },
+    {
+      label: t("trainerModule.services"),
+      href: "/trainer/services",
+      icon: BriefcaseBusiness,
+    },
+    {
+      label: t("trainerModule.availability"),
+      href: "/trainer/availability",
+      icon: CalendarDays,
+    },
+    {
+      label: t("trainerModule.certificates"),
+      href: "/trainer/certificates",
+      icon: Award,
+    },
+    {
+      label: t("trainerModule.partnerships"),
+      href: "/trainer/partnerships",
+      icon: Handshake,
+    },
+  ];
   return (
     <SiteLayout>
       <AuthGuard roles={["ROLE_PT"]}>
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
-          <aside className="h-fit rounded-2xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90 lg:sticky lg:top-24">
-            <p className="px-3 py-2 text-xs font-black uppercase tracking-wider text-zinc-500">
-              {t("trainerModule.workspace")}
-            </p>
-            <nav className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1">
-              {links.map(([key, href]) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className={cn(
-                    "rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-200",
-                    pathname === href
-                      ? "bg-lime-300 text-zinc-950 shadow-sm"
-                      : "hover:translate-x-0.5 hover:bg-zinc-100 dark:hover:bg-zinc-900",
-                  )}
-                >
-                  {t(`trainerModule.${key}`)}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-          <main className="min-w-0">{children}</main>
-        </div>
+        <RoleWorkspaceShell
+          title={t("trainerModule.workspace")}
+          description={t("trainerModule.workspaceDescription")}
+          links={links}
+          pathname={pathname}
+        >
+          {children}
+        </RoleWorkspaceShell>
       </AuthGuard>
     </SiteLayout>
   );

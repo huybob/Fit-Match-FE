@@ -7,6 +7,7 @@ export function MotionPage({ children }: { children: ReactNode }) {
   const reduceMotion = useReducedMotion();
   return (
     <motion.div
+      className="flex-1"
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{

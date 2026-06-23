@@ -125,6 +125,7 @@
   },
   "trainerModule": {
     "workspace": "Trainer workspace",
+    "workspaceDescription": "Manage your profile, services, schedule and gym partnerships.",
     "profile": "Profile",
     "services": "Services",
     "availability": "Availability",
@@ -214,6 +215,10 @@
   },
   "gymModule": {
     "workspace": "Gym workspace",
+    "workspaceDescription": "Operate gym locations, facilities and trainer partnerships from one place.",
+    "totalGyms": "Total gyms",
+    "activeGyms": "Active gyms",
+    "coveredCities": "Covered cities",
     "myGyms": "My gyms",
     "partnerships": "PT partnerships",
     "discovery": "Gym discovery",

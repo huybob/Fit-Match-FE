@@ -2,7 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Building2, MapPin, Plus, UploadCloud } from "lucide-react";
+import {
+  Activity,
+  Building2,
+  Mail,
+  MapPin,
+  MapPinned,
+  Phone,
+  Plus,
+  UploadCloud,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -129,6 +138,27 @@ export function MyGymsPage() {
     );
     setOpen(true);
   }
+  const ownedGyms = query.data?.content ?? [];
+  const summary = [
+    {
+      label: t("gymModule.totalGyms"),
+      value: ownedGyms.length,
+      icon: Building2,
+      tone: "bg-lime-100 text-lime-700 dark:bg-lime-950/40 dark:text-lime-300",
+    },
+    {
+      label: t("gymModule.activeGyms"),
+      value: ownedGyms.filter((gym) => gym.status === "ACTIVE").length,
+      icon: Activity,
+      tone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+    },
+    {
+      label: t("gymModule.coveredCities"),
+      value: new Set(ownedGyms.map((gym) => gym.city).filter(Boolean)).size,
+      icon: MapPinned,
+      tone: "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+    },
+  ];
   return (
     <>
       <Header
@@ -141,6 +171,26 @@ export function MyGymsPage() {
           </Button>
         }
       />
+      {!!ownedGyms.length && (
+        <section className="mb-6 grid gap-3 sm:grid-cols-3">
+          {summary.map(({ label, value, icon: Icon, tone }) => (
+            <div
+              key={label}
+              className="flex items-center gap-4 rounded-2xl border border-zinc-200/80 bg-white/85 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80"
+            >
+              <span
+                className={`grid size-11 place-items-center rounded-xl ${tone}`}
+              >
+                <Icon className="size-5" />
+              </span>
+              <div>
+                <p className="text-2xl font-black">{value}</p>
+                <p className="text-xs font-bold text-zinc-500">{label}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.data?.content?.length ? (
@@ -148,7 +198,7 @@ export function MyGymsPage() {
           {query.data.content.map((gym) => (
             <article
               key={gym.id}
-              className="grid overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 lg:grid-cols-[minmax(0,1fr)_auto_320px]"
+              className="grid overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 2xl:grid-cols-[minmax(260px,1fr)_auto_280px]"
             >
               <div className="flex min-w-0 gap-4 p-6">
                 <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-lime-300/25 text-lime-700 dark:text-lime-300">
@@ -165,7 +215,7 @@ export function MyGymsPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800 lg:border-y-0 lg:border-l lg:px-5">
+              <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800 2xl:border-y-0 2xl:border-l 2xl:px-5">
                 <Link
                   className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-lime-300 dark:text-zinc-950"
                   href={`/gym/gyms/${gym.id}`}
@@ -192,7 +242,7 @@ export function MyGymsPage() {
                 )}
               </div>
               {gym.id && (
-                <div className="grid content-center gap-3 border-t border-zinc-100 bg-zinc-50/70 p-5 text-xs dark:border-zinc-800 dark:bg-zinc-900/50 lg:border-l lg:border-t-0">
+                <div className="grid content-center gap-3 border-t border-zinc-100 bg-zinc-50/70 p-5 text-xs dark:border-zinc-800 dark:bg-zinc-900/50 sm:grid-cols-[auto_1fr_1fr] sm:items-center 2xl:grid-cols-1 2xl:items-stretch 2xl:border-l 2xl:border-t-0">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
                       {t("common.status")}
@@ -424,6 +474,54 @@ export function GymManagePage({ gymId }: { gymId: number }) {
         title={gym.data.name ?? "Gym"}
         description={t("gymModule.manageDescription")}
       />
+      <section className="mb-8 grid gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-950 p-5 text-white shadow-lg dark:border-zinc-800 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
+          <MapPin className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
+              {t("common.address")}
+            </p>
+            <p className="mt-1 text-sm font-bold">
+              {gym.data.address}, {gym.data.district}, {gym.data.city}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
+          <Phone className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
+              {t("common.phone")}
+            </p>
+            <p className="mt-1 text-sm font-bold">
+              {gym.data.phone || t("common.noPhone")}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
+          <Mail className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
+              {t("common.email")}
+            </p>
+            <p className="mt-1 truncate text-sm font-bold">
+              {gym.data.email || "—"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3 sm:justify-start">
+          <Activity className="size-5 shrink-0 text-lime-300" />
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
+              {t("common.status")}
+            </p>
+            <Badge className="mt-1 border-lime-300/30 bg-lime-300/10 text-lime-300">
+              {t(`statusLabels.${String(gym.data.status).toLowerCase()}`, {
+                defaultValue: gym.data.status,
+              })}
+            </Badge>
+          </div>
+        </div>
+      </section>
       <section className="mb-10">
         <Header
           title={t("gymModule.branches")}
