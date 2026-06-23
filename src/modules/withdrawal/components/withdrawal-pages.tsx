@@ -23,6 +23,36 @@ import {
 } from "../hooks/use-withdrawal";
 import { createWithdrawalSchema, rejectWithdrawalSchema } from "../schemas";
 
+const VIETNAM_BANKS = [
+  "Vietcombank",
+  "VietinBank",
+  "BIDV",
+  "Agribank",
+  "Techcombank",
+  "MB Bank",
+  "ACB",
+  "VPBank",
+  "Sacombank",
+  "TPBank",
+  "SHB",
+  "HDBank",
+  "VIB",
+  "OCB",
+  "Eximbank",
+  "MSB",
+  "SeABank",
+  "LienVietPostBank",
+  "ABBank",
+  "Bac A Bank",
+  "Nam A Bank",
+  "PVcomBank",
+  "SCB",
+  "Saigonbank",
+  "VietBank",
+  "Cake by VPBank",
+  "Timo",
+] as const;
+
 const statuses: WithdrawalStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 const money = (value: number | undefined, lang: string) =>
   new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
@@ -199,7 +229,12 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
           <input type="number" className={inputClassName} {...form.register("amount", { valueAsNumber: true })} />
         </FieldShell>
         <FieldShell label={t("withdrawal.bank")} error={form.formState.errors.bankName}>
-          <input className={inputClassName} {...form.register("bankName")} />
+          <select className={selectClassName} {...form.register("bankName")}>
+            <option value="">{t("withdrawal.bankPlaceholder")}</option>
+            {VIETNAM_BANKS.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
         </FieldShell>
         <FieldShell label={t("withdrawal.account")} error={form.formState.errors.bankAccount}>
           <input className={inputClassName} {...form.register("bankAccount")} />
