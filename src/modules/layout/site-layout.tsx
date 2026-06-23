@@ -6,6 +6,7 @@ import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ChevronDown,
+  Bell,
   Dumbbell,
   LogOut,
   Menu,
@@ -20,6 +21,7 @@ import { useLocale } from "@/lib/i18n-provider";
 import { useThemeMode } from "@/lib/theme-provider";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
+import { useUnreadCount } from "@/modules/notification/hooks/use-notification";
 import { Button } from "@/shared/components/ui/button";
 import { MotionPage } from "@/shared/components/common/motion-page";
 import { cn } from "@/shared/utils/cn.util";
@@ -57,6 +59,8 @@ function SiteHeader() {
   const { locale, changeLanguage } = useLocale();
   const { theme, toggleTheme } = useThemeMode();
   const { user, status, logout } = useAuthStore();
+  const canUseNotifications = status === "authenticated" && ["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"].includes(user?.role ?? "");
+  const unread = useUnreadCount(canUseNotifications);
   const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -128,6 +132,12 @@ function SiteHeader() {
           >
             <ShoppingCart className="size-4" />
           </Link>
+          {canUseNotifications && (
+            <Link aria-label={t("notification.title")} href="/notifications" className="relative inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] dark:bg-white/10 dark:text-white dark:ring-white/10">
+              <Bell className="size-4" />
+              {!!unread.data?.unread && <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{unread.data.unread}</span>}
+            </Link>
+          )}
 
           {status === "idle" || status === "loading" ? (
             <div
@@ -249,6 +259,7 @@ function SiteHeader() {
                 >
                   {t("common.profile")}
                 </Link>
+                {canUseNotifications && <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/notifications">{t("notification.title")}</Link>}
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">

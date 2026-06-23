@@ -1,0 +1,1 @@
+"use client";import{AuthGuard}from"@/modules/auth/auth-guard";import{SiteLayout}from"@/modules/layout/site-layout";import{NotificationPage}from"@/modules/notification/components/notification-page";export default function Page(){return <SiteLayout><AuthGuard roles={["ROLE_CUSTOMER","ROLE_PT","ROLE_GYM_OPERATOR"]}><NotificationPage/></AuthGuard></SiteLayout>}
