@@ -9,6 +9,7 @@ import {
   NotebookTabs,
   ScanLine,
   WalletCards,
+  Star,
   Handshake,
   UserRound,
 } from "lucide-react";
@@ -48,6 +49,7 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
       href: "/trainer/payments",
       icon: WalletCards,
     },
+    { label: t("review.navigation"), href: "/trainer/reviews", icon: Star },
     {
       label: t("trainerModule.profile"),
       href: "/trainer/profile",
