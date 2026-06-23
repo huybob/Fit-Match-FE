@@ -3,7 +3,9 @@
 import {
   Award,
   BriefcaseBusiness,
+  CalendarCheck2,
   CalendarDays,
+  ClipboardList,
   Handshake,
   UserRound,
 } from "lucide-react";
@@ -18,6 +20,16 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const links = [
+    {
+      label: t("bookingModule.navigation"),
+      href: "/trainer/bookings",
+      icon: CalendarCheck2,
+    },
+    {
+      label: t("sessionModule.navigation"),
+      href: "/trainer/sessions",
+      icon: ClipboardList,
+    },
     {
       label: t("trainerModule.profile"),
       href: "/trainer/profile",

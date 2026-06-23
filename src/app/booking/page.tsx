@@ -1,5 +1,5 @@
-import { BookingPage } from "@/modules/ecommerce/ecommerce-pages";
+import { redirect } from "next/navigation";
 
 export default function BookingRoute() {
-  return <BookingPage />;
+  redirect("/profile/bookings");
 }

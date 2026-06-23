@@ -144,6 +144,16 @@ function SiteHeader() {
                   >
                     {t("common.profile")}
                   </Link>
+                  {user.role === "ROLE_CUSTOMER" && (
+                    <>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/bookings">
+                        {t("bookingModule.navigation")}
+                      </Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/sessions">
+                        {t("sessionModule.navigation")}
+                      </Link>
+                    </>
+                  )}
                   {getHomeRouteForRole(user.role) !== appRoutes.profile && (
                     <Link
                       className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
@@ -220,6 +230,16 @@ function SiteHeader() {
                 >
                   {t("common.profile")}
                 </Link>
+                {user.role === "ROLE_CUSTOMER" && (
+                  <>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">
+                      {t("bookingModule.navigation")}
+                    </Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/sessions">
+                      {t("sessionModule.navigation")}
+                    </Link>
+                  </>
+                )}
                 {getHomeRouteForRole(user.role) !== appRoutes.profile && (
                   <Link
                     className="block rounded-md px-3 py-2 text-sm font-semibold"

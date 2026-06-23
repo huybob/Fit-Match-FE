@@ -1,5 +1,5 @@
 "use client";
-import { Building2, Handshake } from "lucide-react";
+import { Building2, CalendarCheck2, Handshake } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,11 @@ export function GymLayout({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { t } = useTranslation();
   const links = [
+    {
+      label: t("bookingModule.navigation"),
+      href: "/gym/bookings",
+      icon: CalendarCheck2,
+    },
     { label: t("gymModule.myGyms"), href: "/gym/gyms", icon: Building2 },
     {
       label: t("gymModule.partnerships"),
