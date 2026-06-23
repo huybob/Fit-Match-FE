@@ -569,6 +569,7 @@ function PackageGrid({
 function PackageCard({ item }: { item: GymPackage }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const canBook = useCanBook();
 
   return (
     <Card className="fit-card group relative flex h-full flex-col overflow-hidden p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -591,18 +592,20 @@ function PackageCard({ item }: { item: GymPackage }) {
         >
           {t("common.viewDetails")}
         </Link>
-        <Button
-          onClick={() =>
-            toast({
-              type: "success",
-              title: t("packages.added"),
-              description: item.name,
-            })
-          }
-          className="fit-cta h-10 flex-1"
-        >
-          {t("common.addToCart")}
-        </Button>
+        {canBook && (
+          <Button
+            onClick={() =>
+              toast({
+                type: "success",
+                title: t("packages.added"),
+                description: item.name,
+              })
+            }
+            className="fit-cta h-10 flex-1"
+          >
+            {t("common.addToCart")}
+          </Button>
+        )}
       </div>
     </Card>
   );

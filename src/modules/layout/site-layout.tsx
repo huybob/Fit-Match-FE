@@ -60,6 +60,7 @@ function SiteHeader() {
   const { theme, toggleTheme } = useThemeMode();
   const { user, status, logout } = useAuthStore();
   const canUseNotifications = status === "authenticated" && ["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"].includes(user?.role ?? "");
+  const canUseCustomerCommerce = status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
   const unread = useUnreadCount(canUseNotifications);
   const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
@@ -126,12 +127,14 @@ function SiteHeader() {
             )}
           </Button>
 
-          <Link
-            href={appRoutes.cart}
-            className="inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] transition hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10"
-          >
-            <ShoppingCart className="size-4" />
-          </Link>
+          {canUseCustomerCommerce && (
+            <Link
+              href={appRoutes.cart}
+              className="inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] transition hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10"
+            >
+              <ShoppingCart className="size-4" />
+            </Link>
+          )}
           {canUseNotifications && (
             <Link aria-label={t("notification.title")} href="/notifications" className="relative inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] dark:bg-white/10 dark:text-white dark:ring-white/10">
               <Bell className="size-4" />
@@ -157,12 +160,14 @@ function SiteHeader() {
               </Button>
               {isUserOpen && (
                 <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#dedfce] bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
-                  <Link
-                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
-                    href={appRoutes.profile}
-                  >
-                    {t("common.profile")}
-                  </Link>
+                  {user.role === "ROLE_CUSTOMER" && (
+                    <Link
+                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                      href={appRoutes.profile}
+                    >
+                      {t("common.profile")}
+                    </Link>
+                  )}
                   {user.role === "ROLE_CUSTOMER" && (
                     <>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/bookings">
@@ -253,12 +258,14 @@ function SiteHeader() {
                 <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-[#858a78]">
                   {user.username}
                 </p>
-                <Link
-                  className="block rounded-md px-3 py-2 text-sm font-semibold"
-                  href={appRoutes.profile}
-                >
-                  {t("common.profile")}
-                </Link>
+                {user.role === "ROLE_CUSTOMER" && (
+                  <Link
+                    className="block rounded-md px-3 py-2 text-sm font-semibold"
+                    href={appRoutes.profile}
+                  >
+                    {t("common.profile")}
+                  </Link>
+                )}
                 {canUseNotifications && <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/notifications">{t("notification.title")}</Link>}
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
