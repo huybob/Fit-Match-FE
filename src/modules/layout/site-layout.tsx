@@ -177,6 +177,9 @@ function SiteHeader() {
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/attendance">
                         {t("attendance.navigation")}
                       </Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/measurements">
+                        {t("measurement.navigation")}
+                      </Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/payments">
                         {t("payment.navigation")}
                       </Link>
@@ -273,6 +276,9 @@ function SiteHeader() {
                     </Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/attendance">
                       {t("attendance.navigation")}
+                    </Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/measurements">
+                      {t("measurement.navigation")}
                     </Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/payments">
                       {t("payment.navigation")}

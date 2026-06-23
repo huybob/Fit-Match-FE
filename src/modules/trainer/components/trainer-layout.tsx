@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   NotebookTabs,
+  Ruler,
   ScanLine,
   WalletCards,
   Star,
@@ -43,6 +44,11 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
       label: t("attendance.navigation"),
       href: "/trainer/attendance",
       icon: ScanLine,
+    },
+    {
+      label: t("measurement.navigation"),
+      href: "/trainer/measurements",
+      icon: Ruler,
     },
     {
       label: t("payment.navigation"),
