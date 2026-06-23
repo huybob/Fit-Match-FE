@@ -125,6 +125,7 @@
   },
   "trainerModule": {
     "workspace": "Quản lý huấn luyện viên",
+    "workspaceDescription": "Quản lý hồ sơ, dịch vụ, lịch làm việc và hợp tác phòng gym.",
     "profile": "Hồ sơ",
     "services": "Dịch vụ",
     "availability": "Lịch khả dụng",
@@ -214,6 +215,10 @@
   },
   "gymModule": {
     "workspace": "Quản lý phòng gym",
+    "workspaceDescription": "Vận hành địa điểm, tiện ích và hợp tác PT tại một nơi.",
+    "totalGyms": "Tổng phòng gym",
+    "activeGyms": "Đang hoạt động",
+    "coveredCities": "Thành phố phủ sóng",
     "myGyms": "Phòng gym của tôi",
     "partnerships": "Hợp tác với PT",
     "discovery": "Khám phá phòng gym",

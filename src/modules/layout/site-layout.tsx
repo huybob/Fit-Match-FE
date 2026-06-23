@@ -34,7 +34,7 @@ const navItems = [
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="fit-shell min-h-screen text-[#10130f] dark:text-[#f5f5ed]">
+    <div className="fit-shell flex min-h-screen flex-col text-[#10130f] dark:text-[#f5f5ed]">
       <SiteHeader />
       <MotionPage>{children}</MotionPage>
       <SiteFooter />
