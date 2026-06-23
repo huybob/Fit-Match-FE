@@ -24,6 +24,7 @@ import {
   trainers,
 } from "@/data/mock-ecommerce.data";
 import { useToast } from "@/lib/toast-provider";
+import { useAuthStore } from "@/modules/auth/auth.store";
 import { BookingForm } from "@/modules/forms/booking-form";
 import {
   AdminPackageForm,
@@ -46,6 +47,11 @@ type ServiceCard = {
   Icon: ComponentType<{ className?: string }>;
   descriptionKey: string;
 };
+
+function useCanBook() {
+  const { user, status } = useAuthStore();
+  return status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
+}
 
 const serviceCards: ServiceCard[] = [
   {
@@ -123,6 +129,7 @@ export function HomePage() {
 
 function Hero() {
   const { t } = useTranslation();
+  const canBook = useCanBook();
 
   return (
     <section className="relative overflow-hidden border-b border-[#dedfce] bg-[#10130f] text-white dark:border-white/10">
@@ -140,13 +147,15 @@ function Hero() {
             {t("home.heroDesc")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-black shadow-lg shadow-lime-500/15 transition hover:-translate-y-0.5"
-              href={appRoutes.booking}
-            >
-              {t("home.cta")}
-              <ArrowRight className="size-4" />
-            </Link>
+            {canBook && (
+              <Link
+                className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-black shadow-lg shadow-lime-500/15 transition hover:-translate-y-0.5"
+                href={appRoutes.booking}
+              >
+                {t("home.cta")}
+                <ArrowRight className="size-4" />
+              </Link>
+            )}
             <Link
               className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 px-6 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
               href={appRoutes.packages}
@@ -264,6 +273,7 @@ export function TrainersPage() {
 
 export function TrainerDetailPage({ id }: { id: string }) {
   const { t } = useTranslation();
+  const canBook = useCanBook();
   const trainer = trainers.find((item) => item.id === id) ?? trainers[0];
 
   return (
@@ -274,15 +284,24 @@ export function TrainerDetailPage({ id }: { id: string }) {
           <Card className="fit-card p-6">
             <h2 className="text-xl font-black">{t("trainers.available")}</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {trainer.availableSlots.map((slot) => (
-                <Link
-                  key={slot}
-                  href={appRoutes.booking}
-                  className="rounded-md border border-zinc-200 p-4 text-center font-bold hover:border-emerald-500 dark:border-zinc-800"
-                >
-                  {slot}
-                </Link>
-              ))}
+              {trainer.availableSlots.map((slot) =>
+                canBook ? (
+                  <Link
+                    key={slot}
+                    href={appRoutes.booking}
+                    className="rounded-md border border-zinc-200 p-4 text-center font-bold hover:border-emerald-500 dark:border-zinc-800"
+                  >
+                    {slot}
+                  </Link>
+                ) : (
+                  <div
+                    key={slot}
+                    className="rounded-md border border-zinc-200 p-4 text-center font-bold text-zinc-500 dark:border-zinc-800"
+                  >
+                    {slot}
+                  </div>
+                ),
+              )}
             </div>
           </Card>
         </div>
@@ -602,6 +621,7 @@ function TrainerGrid({ trainers }: { trainers: Trainer[] }) {
 function TrainerCard({ trainer }: { trainer: Trainer }) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const canBook = useCanBook();
 
   return (
     <Card className="fit-card group flex h-full flex-col p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -629,18 +649,20 @@ function TrainerCard({ trainer }: { trainer: Trainer }) {
         >
           {t("common.viewDetails")}
         </Link>
-        <Button
-          className="fit-cta h-10 flex-1"
-          onClick={() =>
-            toast({
-              type: "success",
-              title: t("trainers.booked"),
-              description: trainer.name,
-            })
-          }
-        >
-          {t("common.bookNow")}
-        </Button>
+        {canBook && (
+          <Button
+            className="fit-cta h-10 flex-1"
+            onClick={() =>
+              toast({
+                type: "success",
+                title: t("trainers.booked"),
+                description: trainer.name,
+              })
+            }
+          >
+            {t("common.bookNow")}
+          </Button>
+        )}
       </div>
     </Card>
   );
