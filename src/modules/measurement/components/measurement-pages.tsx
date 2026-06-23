@@ -1,13 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LineChart, Plus, Ruler, Search } from "lucide-react";
-import { useState } from "react";
+import { LineChart, Plus, Ruler } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { FieldShell, inputClassName } from "@/modules/forms/form-controls";
+import { useBookings } from "@/modules/booking/hooks/use-booking";
+import { FieldShell, inputClassName, selectClassName } from "@/modules/forms/form-controls";
 import type { Measurement } from "@/services/measurement.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
@@ -106,9 +107,16 @@ function CustomerMeasurements() {
 
 function PtMeasurements() {
   const { t } = useTranslation();
-  const [input, setInput] = useState("");
   const [customerId, setCustomerId] = useState(0);
   const [creating, setCreating] = useState(false);
+  const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
+  const customers = useMemo(() => {
+    const seen = new Map<number, string>();
+    bookingsQuery.data?.content?.forEach((b) => {
+      if (b.customerId && !seen.has(b.customerId)) seen.set(b.customerId, b.customerName ?? `#${b.customerId}`);
+    });
+    return Array.from(seen, ([id, name]) => ({ id, name }));
+  }, [bookingsQuery.data]);
   const query = useCustomerMeasurements(customerId);
   const items = query.data ?? [];
   return (
@@ -123,25 +131,26 @@ function PtMeasurements() {
           </Button>
         }
       />
-      <form
-        className="mt-5 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setCustomerId(Number(input) || 0);
-        }}
-      >
-        <input
-          type="number"
-          className={inputClassName}
-          placeholder={t("measurement.customerId")}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <Button type="submit">
-          <Search className="size-4" />
-          {t("measurement.view")}
-        </Button>
-      </form>
+      <div className="mt-5">
+        <FieldShell label={t("measurement.customerLabel")}>
+          {bookingsQuery.isLoading ? (
+            <p className="text-sm text-zinc-500">{t("common.loading")}</p>
+          ) : !customers.length ? (
+            <p className="text-sm text-zinc-500">{t("measurement.noCustomers")}</p>
+          ) : (
+            <select
+              className={selectClassName}
+              value={customerId}
+              onChange={(e) => setCustomerId(Number(e.target.value) || 0)}
+            >
+              <option value={0}>{t("measurement.customerPlaceholder")}</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>#{c.id} · {c.name}</option>
+              ))}
+            </select>
+          )}
+        </FieldShell>
+      </div>
 
       <div className="mt-5">
         {customerId <= 0 ? (
@@ -206,6 +215,14 @@ function CreateMeasurementDialog({
   const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useCreateMeasurement();
+  const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
+  const customers = useMemo(() => {
+    const seen = new Map<number, string>();
+    bookingsQuery.data?.content?.forEach((b) => {
+      if (b.customerId && !seen.has(b.customerId)) seen.set(b.customerId, b.customerName ?? `#${b.customerId}`);
+    });
+    return Array.from(seen, ([id, name]) => ({ id, name }));
+  }, [bookingsQuery.data]);
   const form = useForm<z.infer<typeof createMeasurementSchema>>({
     resolver: zodResolver(createMeasurementSchema),
     defaultValues: { customerId: defaultCustomerId || undefined, measurementDate: "" },
@@ -226,8 +243,17 @@ function CreateMeasurementDialog({
         })}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldShell label={t("measurement.customerId")} error={form.formState.errors.customerId}>
-            <input type="number" className={inputClassName} {...form.register("customerId", { valueAsNumber: true })} />
+          <FieldShell label={t("measurement.customerLabel")} error={form.formState.errors.customerId}>
+            {customers.length ? (
+              <select className={selectClassName} {...form.register("customerId", { valueAsNumber: true })}>
+                <option value={0}>{t("measurement.customerPlaceholder")}</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>#{c.id} · {c.name}</option>
+                ))}
+              </select>
+            ) : (
+              <input type="number" className={inputClassName} {...form.register("customerId", { valueAsNumber: true })} />
+            )}
           </FieldShell>
           <FieldShell label={t("measurement.date")} error={form.formState.errors.measurementDate}>
             <input type="date" className={inputClassName} {...form.register("measurementDate")} />
