@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   NotebookTabs,
+  ScanLine,
   Handshake,
   UserRound,
 } from "lucide-react";
@@ -35,6 +36,11 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
       label: t("workoutPlan.navigation"),
       href: "/trainer/workout-plans",
       icon: NotebookTabs,
+    },
+    {
+      label: t("attendance.navigation"),
+      href: "/trainer/attendance",
+      icon: ScanLine,
     },
     {
       label: t("trainerModule.profile"),

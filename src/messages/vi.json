@@ -385,6 +385,9 @@
   "workoutPlan": {
     "navigation": "Giáo án", "customerTitle": "Giáo án của tôi", "customerDescription": "Theo dõi giáo án được PT giao.", "ptTitle": "Giáo án khách hàng", "ptDescription": "Tạo và quản lý giáo án có cấu trúc cho khách hàng.", "create": "Tạo giáo án", "edit": "Sửa giáo án", "saved": "Đã lưu giáo án", "loadError": "Không thể tải giáo án", "empty": "Chưa có giáo án", "emptyDescription": "Giáo án phù hợp trạng thái sẽ xuất hiện tại đây.", "allStatuses": "Tất cả trạng thái", "statuses": { "ACTIVE": "Đang áp dụng", "COMPLETED": "Hoàn thành", "ARCHIVED": "Lưu trữ" }, "exercises": "bài tập", "customerId": "ID khách hàng", "name": "Tên giáo án", "startDate": "Ngày bắt đầu", "endDate": "Ngày kết thúc", "firstExercise": "Bài tập đầu tiên", "exerciseName": "Tên bài tập", "sets": "Số hiệp", "reps": "Số lần", "complete": "Hoàn thành", "archive": "Lưu trữ", "actionSuccess": { "complete": "Đã hoàn thành giáo án", "archive": "Đã lưu trữ giáo án" }
   },
+  "attendance": {
+    "navigation": "Điểm danh", "customerTitle": "Lịch sử điểm danh", "customerDescription": "Theo dõi thời gian check-in và check-out được tạo từ lịch tập.", "ptTitle": "Điểm danh khách hàng", "ptDescription": "Theo dõi điểm danh phát sinh từ các buổi tập của khách hàng.", "loadError": "Không thể tải lịch sử điểm danh", "empty": "Chưa có dữ liệu điểm danh", "emptyDescription": "Điểm danh được tự động tạo khi lịch đã xác nhận được check-in.", "checkIn": "Check-in", "checkOut": "Check-out", "me": "Buổi tập của tôi", "statuses": { "ON_TIME": "Đúng giờ", "LATE": "Đi muộn", "ABSENT": "Vắng mặt" }
+  },
   "packages": {
     "title": "Danh sách gói tập",
     "detail": "Chi tiết gói tập",
