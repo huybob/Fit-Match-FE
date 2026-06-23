@@ -460,5 +460,32 @@
     "createTrainer": "Create trainer",
     "saved": "Changes saved",
     "deleted": "Item deleted"
+  },
+  "withdrawal": {
+    "navigation": "Withdrawals",
+    "ptTitle": "Withdrawal requests",
+    "ptDescription": "Create and track requests to withdraw earnings to your bank account.",
+    "adminTitle": "Review withdrawals",
+    "adminDescription": "Review, approve, or reject trainer withdrawal requests.",
+    "create": "New withdrawal request",
+    "created": "Withdrawal request submitted",
+    "submit": "Submit request",
+    "approve": "Approve",
+    "approved": "Request approved",
+    "reject": "Reject",
+    "rejected": "Request rejected",
+    "amount": "Amount",
+    "bank": "Bank",
+    "account": "Account number",
+    "holder": "Account holder",
+    "notes": "Notes",
+    "trainer": "Trainer",
+    "rejectionReason": "Rejection reason",
+    "approvedBy": "Approved by",
+    "allStatuses": "All statuses",
+    "loadError": "Unable to load withdrawals",
+    "empty": "No withdrawal requests",
+    "emptyDescription": "Withdrawal requests will appear here.",
+    "statuses": { "PENDING": "Pending", "APPROVED": "Approved", "REJECTED": "Rejected" }
   }
 }
