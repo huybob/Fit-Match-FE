@@ -460,5 +460,34 @@
     "createTrainer": "Create trainer",
     "saved": "Changes saved",
     "deleted": "Item deleted"
+  },
+  "measurement": {
+    "navigation": "Body metrics",
+    "customerTitle": "My body metrics",
+    "customerDescription": "Track progress of body metrics recorded by your trainer.",
+    "ptTitle": "Customer body metrics",
+    "ptDescription": "Record and review your customers' body metric history.",
+    "create": "Add metrics",
+    "created": "Body metrics saved",
+    "submit": "Save metrics",
+    "view": "View",
+    "customerId": "Customer ID",
+    "date": "Measurement date",
+    "notes": "Notes",
+    "loadError": "Unable to load body metrics",
+    "empty": "No metrics yet",
+    "emptyDescription": "Body metrics will appear here.",
+    "selectCustomer": "Enter a customer ID",
+    "selectCustomerDescription": "Enter a customer ID to view their body metric history.",
+    "fields": {
+      "weight": "Weight",
+      "height": "Height",
+      "bodyFatPercent": "Body fat",
+      "muscleMass": "Muscle mass",
+      "waist": "Waist",
+      "chest": "Chest",
+      "arm": "Arm",
+      "thigh": "Thigh"
+    }
   }
 }

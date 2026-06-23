@@ -460,5 +460,34 @@
     "createTrainer": "Thêm PT",
     "saved": "Đã lưu thay đổi",
     "deleted": "Đã xóa mục"
+  },
+  "measurement": {
+    "navigation": "Chỉ số cơ thể",
+    "customerTitle": "Chỉ số cơ thể của tôi",
+    "customerDescription": "Theo dõi tiến trình các chỉ số cơ thể được PT ghi nhận.",
+    "ptTitle": "Chỉ số cơ thể khách hàng",
+    "ptDescription": "Ghi nhận và xem lịch sử chỉ số cơ thể của khách hàng.",
+    "create": "Thêm chỉ số",
+    "created": "Đã lưu chỉ số cơ thể",
+    "submit": "Lưu chỉ số",
+    "view": "Xem",
+    "customerId": "ID khách hàng",
+    "date": "Ngày đo",
+    "notes": "Ghi chú",
+    "loadError": "Không thể tải chỉ số cơ thể",
+    "empty": "Chưa có chỉ số",
+    "emptyDescription": "Các chỉ số cơ thể sẽ hiển thị ở đây.",
+    "selectCustomer": "Nhập ID khách hàng",
+    "selectCustomerDescription": "Nhập ID khách hàng để xem lịch sử chỉ số cơ thể.",
+    "fields": {
+      "weight": "Cân nặng",
+      "height": "Chiều cao",
+      "bodyFatPercent": "Tỷ lệ mỡ",
+      "muscleMass": "Khối cơ",
+      "waist": "Vòng eo",
+      "chest": "Vòng ngực",
+      "arm": "Vòng tay",
+      "thigh": "Vòng đùi"
+    }
   }
 }
