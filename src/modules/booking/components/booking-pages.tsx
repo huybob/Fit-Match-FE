@@ -16,6 +16,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { cn } from "@/shared/utils/cn.util";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useSearchGyms, useGymBranches } from "@/modules/gym/hooks/use-gym";
+import { useGetPublicTrainer, useGetPublicTrainerServices } from "@/modules/trainer/hooks/use-trainer";
 import { useBookingAction, useBookings, useCreateBooking } from "../hooks/use-booking";
 import { createBookingSchema } from "../schemas";
 
@@ -102,7 +104,109 @@ function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | n
 function Info({ label, value }: { label: string; value?: string }) { return <div><dt className="text-xs font-black uppercase tracking-wide text-zinc-400">{label}</dt><dd className="mt-1 font-bold text-zinc-800 dark:text-zinc-100">{value || "—"}</dd></div>; }
 
 function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t } = useTranslation(); const { toast } = useToast(); const create = useCreateBooking();
-  const form = useForm<z.infer<typeof createBookingSchema>>({ resolver: zodResolver(createBookingSchema), defaultValues: { branchId: 0, ptServiceId: 0, bookingDate: new Date().toISOString().slice(0, 10), startTime: "08:00", notes: "" } });
-  return <Dialog open={open} title={t("bookingModule.create")} onClose={onClose}><form className="grid gap-4 sm:grid-cols-2" onSubmit={form.handleSubmit(async (values) => { try { await create.mutateAsync({ ...values, startTime: `${values.startTime}:00` }); toast({ type: "success", title: t("bookingModule.createdDraft"), description: t("bookingModule.submitDraftHint") }); form.reset(); onClose(); } catch (error) { toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(error) }); } })}><FieldShell label={t("bookingModule.branchId")} error={form.formState.errors.branchId}><input type="number" min={1} className={inputClassName} {...form.register("branchId", { valueAsNumber: true })} /></FieldShell><FieldShell label={t("bookingModule.serviceId")} error={form.formState.errors.ptServiceId}><input type="number" min={1} className={inputClassName} {...form.register("ptServiceId", { valueAsNumber: true })} /></FieldShell><FieldShell label={t("bookingModule.date")} error={form.formState.errors.bookingDate}><input type="date" className={inputClassName} {...form.register("bookingDate")} /></FieldShell><FieldShell label={t("bookingModule.startTime")} error={form.formState.errors.startTime}><input type="time" className={inputClassName} {...form.register("startTime")} /></FieldShell><div className="sm:col-span-2"><FieldShell label={t("bookingModule.notes")} error={form.formState.errors.notes}><textarea className={cn(inputClassName, "min-h-24 py-3")} {...form.register("notes")} /></FieldShell></div><div className="sm:col-span-2 rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200">{t("bookingModule.idHint")}</div><Button className="sm:col-span-2" disabled={create.isPending}><CalendarCheck2 className="size-4" />{create.isPending ? t("common.loading") : t("bookingModule.saveDraft")}</Button></form></Dialog>;
+  const { t, i18n } = useTranslation();
+  const { toast } = useToast();
+  const create = useCreateBooking();
+  const [ptUserId, setPtUserId] = useState(0);
+  const [gymId, setGymId] = useState(0);
+  const trainer = useGetPublicTrainer(ptUserId);
+  const profileId = trainer.data?.id ?? 0;
+  const services = useGetPublicTrainerServices(profileId);
+  const gyms = useSearchGyms({ size: 50 });
+  const branches = useGymBranches(gymId);
+  const form = useForm<z.infer<typeof createBookingSchema>>({
+    resolver: zodResolver(createBookingSchema),
+    defaultValues: { branchId: 0, ptServiceId: 0, bookingDate: new Date().toISOString().slice(0, 10), startTime: "08:00", notes: "" },
+  });
+  return (
+    <Dialog open={open} title={t("bookingModule.create")} onClose={onClose}>
+      <form
+        className="grid gap-4 sm:grid-cols-2"
+        onSubmit={form.handleSubmit(async (values) => {
+          try {
+            await create.mutateAsync({ ...values, startTime: `${values.startTime}:00` });
+            toast({ type: "success", title: t("bookingModule.createdDraft"), description: t("bookingModule.submitDraftHint") });
+            form.reset();
+            setPtUserId(0);
+            setGymId(0);
+            onClose();
+          } catch (error) {
+            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(error) });
+          }
+        })}
+      >
+        <div className="sm:col-span-2">
+          <FieldShell label={t("bookingModule.ptUserIdLabel")}>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                className={inputClassName}
+                placeholder={t("bookingModule.ptUserIdPlaceholder")}
+                onChange={(e) => setPtUserId(Number(e.target.value) || 0)}
+              />
+              {trainer.isFetching && <span className="self-center text-xs text-zinc-500">{t("common.loading")}</span>}
+            </div>
+          </FieldShell>
+          {trainer.isError && <p className="mt-1 text-sm text-red-500">{t("bookingModule.ptNotFound")}</p>}
+          {trainer.data && (
+            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/30">
+              <strong>{trainer.data.username}</strong> · {trainer.data.bio || t("trainerModule.emptyBio")}
+            </div>
+          )}
+        </div>
+
+        <FieldShell label={t("bookingModule.serviceLabel")} error={form.formState.errors.ptServiceId}>
+          <select
+            className={cn(selectClassName)}
+            disabled={!services.data?.content?.length}
+            {...form.register("ptServiceId", { valueAsNumber: true })}
+          >
+            <option value={0}>{services.isFetching ? t("common.loading") : t("bookingModule.servicePlaceholder")}</option>
+            {services.data?.content?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} · {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-US", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(s.price ?? 0)}
+              </option>
+            ))}
+          </select>
+        </FieldShell>
+
+        <FieldShell label={t("bookingModule.gymLabel")}>
+          <select className={cn(selectClassName)} value={gymId} onChange={(e) => { setGymId(Number(e.target.value) || 0); form.setValue("branchId", 0); }}>
+            <option value={0}>{gyms.isFetching ? t("common.loading") : t("bookingModule.gymPlaceholder")}</option>
+            {gyms.data?.content?.map((g) => (
+              <option key={g.id} value={g.id}>{g.name} · {g.city}</option>
+            ))}
+          </select>
+        </FieldShell>
+
+        <FieldShell label={t("bookingModule.branchLabel")} error={form.formState.errors.branchId}>
+          <select className={cn(selectClassName)} disabled={!branches.data?.content?.length} {...form.register("branchId", { valueAsNumber: true })}>
+            <option value={0}>{branches.isFetching ? t("common.loading") : t("bookingModule.branchPlaceholder")}</option>
+            {branches.data?.content?.map((b) => (
+              <option key={b.id} value={b.id}>{b.name} · {b.address}</option>
+            ))}
+          </select>
+        </FieldShell>
+
+        <FieldShell label={t("bookingModule.date")} error={form.formState.errors.bookingDate}>
+          <input type="date" className={inputClassName} {...form.register("bookingDate")} />
+        </FieldShell>
+        <FieldShell label={t("bookingModule.startTime")} error={form.formState.errors.startTime}>
+          <input type="time" className={inputClassName} {...form.register("startTime")} />
+        </FieldShell>
+
+        <div className="sm:col-span-2">
+          <FieldShell label={t("bookingModule.notes")} error={form.formState.errors.notes}>
+            <textarea className={cn(inputClassName, "min-h-24 py-3")} {...form.register("notes")} />
+          </FieldShell>
+        </div>
+
+        <Button className="sm:col-span-2" disabled={create.isPending}>
+          <CalendarCheck2 className="size-4" />
+          {create.isPending ? t("common.loading") : t("bookingModule.saveDraft")}
+        </Button>
+      </form>
+    </Dialog>
+  );
 }
