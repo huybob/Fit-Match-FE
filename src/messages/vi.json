@@ -485,6 +485,7 @@
     "rejected": "Đã từ chối yêu cầu",
     "amount": "Số tiền",
     "bank": "Ngân hàng",
+    "bankPlaceholder": "Chọn ngân hàng",
     "account": "Số tài khoản",
     "holder": "Chủ tài khoản",
     "notes": "Ghi chú",

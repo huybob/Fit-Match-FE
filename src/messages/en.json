@@ -485,6 +485,7 @@
     "rejected": "Request rejected",
     "amount": "Amount",
     "bank": "Bank",
+    "bankPlaceholder": "Pick a bank",
     "account": "Account number",
     "holder": "Account holder",
     "notes": "Notes",
