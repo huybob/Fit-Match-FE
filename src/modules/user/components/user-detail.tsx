@@ -18,9 +18,9 @@ export function UserDetail({ id }: UserDetailProps) {
   }
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white p-5">
+    <section className="rounded-md border border-border bg-card p-5">
       <h2 className="text-lg font-semibold">{user.displayName}</h2>
-      <p className="mt-1 text-sm text-slate-600">{user.email}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
     </section>
   );
 }

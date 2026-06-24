@@ -29,6 +29,13 @@ import { motion } from "framer-motion";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn.util";
 
 type Language = "vi" | "en";
@@ -441,22 +448,24 @@ function TopBar({
             ))}
           </div>
 
-          <label className="relative hidden h-10 items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-700 sm:flex">
+          <div className="hidden sm:flex items-center gap-2">
             <Filter className="size-4 text-zinc-500" />
-            <select
-              aria-label={t.branch}
-              value={selectedBranchIndex}
-              onChange={(event) => setSelectedBranchIndex(Number(event.target.value))}
-              className="max-w-44 appearance-none bg-transparent pr-6 outline-none"
+            <Select
+              value={String(selectedBranchIndex)}
+              onValueChange={(v) => setSelectedBranchIndex(Number(v))}
             >
-              {t.branches.map((branch, index) => (
-                <option key={branch} value={index}>
-                  {branch}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 size-4 text-zinc-400" />
-          </label>
+              <SelectTrigger className="h-10 w-44 rounded-md border-zinc-200 bg-white text-sm font-semibold text-zinc-700">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {t.branches.map((branch, index) => (
+                  <SelectItem key={branch} value={String(index)}>
+                    {branch}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="relative">
             <Button

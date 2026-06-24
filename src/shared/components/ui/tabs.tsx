@@ -1,32 +1,65 @@
 "use client";
 
-import { ReactNode } from "react";
+import * as React from "react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { cn } from "@/shared/utils/cn.util";
 
-export function Tabs({
-  tabs,
-  active,
-  onChange,
-}: {
-  tabs: { value: string; label: ReactNode }[];
-  active: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="flex rounded-md border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900">
-      {tabs.map((tab) => (
-        <button
-          key={tab.value}
-          type="button"
-          onClick={() => onChange(tab.value)}
-          className={cn(
-            "h-9 rounded px-3 text-sm font-bold text-zinc-600 transition dark:text-zinc-300",
-            active === tab.value && "bg-white text-zinc-950 shadow-sm dark:bg-zinc-950 dark:text-white",
-          )}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  );
-}
+const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Root
+    ref={ref}
+    data-slot="tabs"
+    className={cn("flex flex-col gap-3", className)}
+    {...props}
+  />
+));
+Tabs.displayName = TabsPrimitive.Root.displayName;
+
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    data-slot="tabs-list"
+    className={cn(
+      "inline-flex h-10 w-fit items-center justify-center gap-1 rounded-xl border border-border bg-muted p-1 text-muted-foreground",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
+
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    data-slot="tabs-trigger"
+    className={cn(
+      "inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+      className,
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    data-slot="tabs-content"
+    className={cn("flex-1 outline-none", className)}
+    {...props}
+  />
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
+
+export { Tabs, TabsList, TabsTrigger, TabsContent };

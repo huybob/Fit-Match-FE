@@ -2,51 +2,66 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { Dialog } from "@/shared/components/ui/dialog";
+import { cn } from "@/shared/utils/cn.util";
 
 export function ConfirmDialog({
   label,
   title,
+  description,
+  destructive = true,
   onConfirm,
 }: {
   label: string;
   title: string;
+  description?: string;
+  destructive?: boolean;
   onConfirm: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <Button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="bg-red-600 hover:bg-red-500"
-      >
-        {label}
-      </Button>
-      <Dialog open={open} title={title} onClose={() => setOpen(false)}>
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            className="bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-white dark:ring-zinc-800"
-            onClick={() => setOpen(false)}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            type="button"
-            className="bg-red-600 hover:bg-red-500"
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant={destructive ? "destructive" : "default"}
+        >
+          {label}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          {description && (
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          )}
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            className={cn(destructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
           >
             {t("common.confirm")}
-          </Button>
-        </div>
-      </Dialog>
-    </>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

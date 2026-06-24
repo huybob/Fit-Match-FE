@@ -23,6 +23,13 @@ import { useAuthStore } from "@/modules/auth/auth.store";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { useUnreadCount } from "@/modules/notification/hooks/use-notification";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { MotionPage } from "@/shared/components/common/motion-page";
 import { cn } from "@/shared/utils/cn.util";
 
@@ -102,17 +109,18 @@ function SiteHeader() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 sm:flex">
-          <select
+          <Select
             value={locale}
-            onChange={(event) =>
-              changeLanguage(event.target.value as "vi" | "en")
-            }
-            className="h-10 rounded-md border border-[#dedfce] bg-white/80 px-3 text-sm font-bold text-[#10130f] outline-none dark:border-white/10 dark:bg-white/10 dark:text-white"
-            aria-label={t("common.language")}
+            onValueChange={(v) => changeLanguage(v as "vi" | "en")}
           >
-            <option value="vi">VI</option>
-            <option value="en">EN</option>
-          </select>
+            <SelectTrigger className="h-10 w-20 rounded-md border-[#dedfce] bg-white/80 text-sm font-bold text-[#10130f] dark:border-white/10 dark:bg-white/10 dark:text-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="vi">VI</SelectItem>
+              <SelectItem value="en">EN</SelectItem>
+            </SelectContent>
+          </Select>
 
           <Button
             type="button"

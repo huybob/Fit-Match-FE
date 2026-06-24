@@ -13,8 +13,8 @@ import {
 } from "@/modules/trainer/hooks/use-trainer";
 import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/common/empty-state";
+import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
-import { inputClassName } from "@/modules/forms/form-controls";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 const currency = new Intl.NumberFormat("vi-VN", {
@@ -42,22 +42,22 @@ export function TrainersDirectoryPage() {
   return (
     <SiteLayout>
       <main className="mx-auto max-w-4xl px-4 py-12">
-        <p className="text-sm font-black uppercase tracking-widest text-orange-600">
+        <p className="text-sm font-black uppercase tracking-widest text-accent">
           {t("trainerModule.directoryEyebrow")}
         </p>
         <h1 className="mt-3 text-4xl font-black">
           {t("trainerModule.directoryTitle")}
         </h1>
-        <p className="mt-4 max-w-2xl text-zinc-600 dark:text-zinc-300">
+        <p className="mt-4 max-w-2xl text-muted-foreground">
           {t("trainerModule.directoryDescription")}
         </p>
         <form
-          className="mt-8 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row"
+          className="mt-8 flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm sm:flex-row"
           onSubmit={submit}
         >
-          <input
+          <Input
             aria-label={t("trainerModule.userId")}
-            className={inputClassName}
+            className="flex-1"
             inputMode="numeric"
             min="1"
             onChange={(event) => setUserId(event.target.value)}
@@ -110,11 +110,11 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
         <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-lime-950 p-6 text-white shadow-xl shadow-zinc-950/10 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="grid size-24 place-items-center rounded-full bg-lime-300 text-3xl font-black text-zinc-950">
+            <div className="grid size-24 place-items-center rounded-full bg-primary text-3xl font-black text-zinc-950">
               <UserRound className="size-10" />
             </div>
             <div>
-              <p className="text-sm font-bold text-lime-300">
+              <p className="text-sm font-bold text-primary">
                 {t("trainerModule.trainerNumber", { id: profile.userId })}
               </p>
               <h1 className="mt-1 text-3xl font-black">{profile.username}</h1>
@@ -149,13 +149,13 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
               {servicesQuery.data.content.map((service) => (
                 <article
                   key={service.id}
-                  className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+                  className="rounded-xl border border-border bg-card p-5"
                 >
                   <h3 className="font-black">{service.name}</h3>
-                  <p className="mt-2 text-sm text-zinc-500">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     {service.description}
                   </p>
-                  <p className="mt-4 font-black text-orange-600">
+                  <p className="mt-4 font-black text-accent">
                     {currency.format(service.price ?? 0)} ·{" "}
                     {service.durationMinutes} {t("trainerModule.minutesShort")}
                   </p>
@@ -180,7 +180,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
               {availabilityQuery.data.content.map((slot) => (
                 <article
                   key={slot.id}
-                  className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
+                  className="rounded-lg border border-border p-4"
                 >
                   <p className="font-black">
                     {t(`trainerModule.days.${slot.dayOfWeek ?? 0}`)}
@@ -209,10 +209,10 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
               {certificatesQuery.data.content.map((cert) => (
                 <article
                   key={cert.id}
-                  className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
+                  className="rounded-xl border border-border p-5"
                 >
                   <h3 className="font-black">{cert.name}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {cert.issuingOrg}
                   </p>
                   <p className="mt-3 text-xs font-bold">

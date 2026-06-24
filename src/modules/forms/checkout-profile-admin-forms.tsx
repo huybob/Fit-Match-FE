@@ -5,8 +5,17 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
+import { Controller } from "react-hook-form";
 import { Button } from "@/shared/components/ui/button";
-import { FieldShell, inputClassName, selectClassName } from "./form-controls";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { FieldShell } from "./form-controls";
 import {
   adminPackageSchema,
   adminTrainerSchema,
@@ -30,23 +39,29 @@ export function CheckoutForm() {
       )}
     >
       <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
-        <input className={inputClassName} {...form.register("name")} />
+        <Input {...form.register("name")} />
       </FieldShell>
       <FieldShell label={t("auth.email")} error={form.formState.errors.email}>
-        <input className={inputClassName} {...form.register("email")} />
+        <Input type="email" {...form.register("email")} />
       </FieldShell>
       <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
-        <input className={inputClassName} {...form.register("phone")} />
+        <Input {...form.register("phone")} />
       </FieldShell>
-      <FieldShell
-        label={t("checkout.payment")}
-        error={form.formState.errors.method}
-      >
-        <select className={selectClassName} {...form.register("method")}>
-          <option>Mock Visa</option>
-          <option>Mock Mastercard</option>
-          <option>Mock Momo</option>
-        </select>
+      <FieldShell label={t("checkout.payment")} error={form.formState.errors.method}>
+        <Controller
+          control={form.control}
+          name="method"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Mock Visa">Mock Visa</SelectItem>
+                <SelectItem value="Mock Mastercard">Mock Mastercard</SelectItem>
+                <SelectItem value="Mock Momo">Mock Momo</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
       </FieldShell>
       <Button className="w-full">{t("common.checkout")}</Button>
     </form>
@@ -73,13 +88,13 @@ export function ProfileForm() {
       )}
     >
       <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
-        <input className={inputClassName} {...form.register("name")} />
+        <Input {...form.register("name")} />
       </FieldShell>
       <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
-        <input className={inputClassName} {...form.register("phone")} />
+        <Input {...form.register("phone")} />
       </FieldShell>
       <FieldShell label={t("common.goal")} error={form.formState.errors.goal}>
-        <input className={inputClassName} {...form.register("goal")} />
+        <Input {...form.register("goal")} />
       </FieldShell>
       <Button>{t("common.save")}</Button>
     </form>
@@ -107,27 +122,29 @@ export function AdminPackageForm() {
       )}
     >
       <FieldShell label={t("common.name")} error={form.formState.errors.name}>
-        <input className={inputClassName} {...form.register("name")} />
+        <Input {...form.register("name")} />
       </FieldShell>
       <FieldShell label={t("common.price")} error={form.formState.errors.price}>
-        <input
-          className={inputClassName}
-          type="number"
-          {...form.register("price")}
-        />
+        <Input type="number" {...form.register("price")} />
       </FieldShell>
-      <FieldShell
-        label={t("common.duration")}
-        error={form.formState.errors.duration}
-      >
-        <input className={inputClassName} {...form.register("duration")} />
+      <FieldShell label={t("common.duration")} error={form.formState.errors.duration}>
+        <Input {...form.register("duration")} />
       </FieldShell>
       <FieldShell label={t("common.type")} error={form.formState.errors.type}>
-        <select className={selectClassName} {...form.register("type")}>
-          <option value="membership">Membership</option>
-          <option value="pt">PT</option>
-          <option value="class">Class</option>
-        </select>
+        <Controller
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="membership">Membership</SelectItem>
+                <SelectItem value="pt">PT</SelectItem>
+                <SelectItem value="class">Class</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
       </FieldShell>
       <Button className="md:col-span-2">{t("common.save")}</Button>
     </form>
@@ -150,30 +167,16 @@ export function AdminTrainerForm() {
       )}
     >
       <FieldShell label={t("common.name")} error={form.formState.errors.name}>
-        <input className={inputClassName} {...form.register("name")} />
+        <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell
-        label={t("common.specialty")}
-        error={form.formState.errors.specialty}
-      >
-        <input className={inputClassName} {...form.register("specialty")} />
+      <FieldShell label={t("common.specialty")} error={form.formState.errors.specialty}>
+        <Input {...form.register("specialty")} />
       </FieldShell>
-      <FieldShell
-        label={t("common.experience")}
-        error={form.formState.errors.experience}
-      >
-        <input
-          className={inputClassName}
-          type="number"
-          {...form.register("experience")}
-        />
+      <FieldShell label={t("common.experience")} error={form.formState.errors.experience}>
+        <Input type="number" {...form.register("experience")} />
       </FieldShell>
       <FieldShell label={t("common.price")} error={form.formState.errors.price}>
-        <input
-          className={inputClassName}
-          type="number"
-          {...form.register("price")}
-        />
+        <Input type="number" {...form.register("price")} />
       </FieldShell>
       <Button className="md:col-span-2">{t("common.save")}</Button>
     </form>

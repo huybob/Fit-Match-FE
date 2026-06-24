@@ -3,11 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, RefreshCw, UploadCloud, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { FieldShell, inputClassName } from "@/modules/forms/form-controls";
+import { FieldShell } from "@/modules/forms/form-controls";
 import {
   useCreateTrainerAvailability,
   useCreateTrainerCertificate,
@@ -44,9 +44,20 @@ import type {
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import { PageHeader } from "@/shared/components/common/page-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import { DatePicker } from "@/shared/components/ui/date-picker";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 const days = [
@@ -63,29 +74,15 @@ const currency = new Intl.NumberFormat("vi-VN", {
   currency: "VND",
 });
 
-function Header({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="relative mb-7 flex flex-col gap-5 overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/75 px-6 py-6 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-      <div className="absolute -right-12 -top-16 size-36 rounded-full bg-lime-300/20 blur-3xl" />
-      <div className="relative">
-        <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
-        <h1 className="text-3xl font-black tracking-tight">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-          {description}
-        </p>
-      </div>
-      <div className="relative shrink-0">{action}</div>
-    </div>
-  );
-}
+const partnerStatusVariant: Record<
+  string,
+  React.ComponentProps<typeof Badge>["variant"]
+> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "destructive",
+};
+
 function fail(
   toast: ReturnType<typeof useToast>["toast"],
   error: unknown,
@@ -97,12 +94,14 @@ function fail(
     description: toErrorMessage(error),
   });
 }
+
 function timeText(value?: string | { hour?: number; minute?: number }) {
   if (typeof value === "string") return value.slice(0, 5);
   return value
     ? `${String(value.hour ?? 0).padStart(2, "0")}:${String(value.minute ?? 0).padStart(2, "0")}`
     : "";
 }
+
 function localTime(value: string) {
   return `${value}:00`;
 }
@@ -131,6 +130,7 @@ export function TrainerProfilePage() {
         pricePerSession: query.data.pricePerSession ?? 1,
       });
   }, [form, query.data]);
+
   if (query.isLoading) return <LoadingSkeleton />;
   if (query.isError)
     return (
@@ -139,15 +139,16 @@ export function TrainerProfilePage() {
         description={toErrorMessage(query.error)}
       />
     );
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("trainerModule.profileTitle")}
         description={t("trainerModule.profileDescription")}
       />
       <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.75fr)]">
         <form
-          className="space-y-5 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-7"
+          className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-7"
           onSubmit={form.handleSubmit(async (values) => {
             try {
               await update.mutateAsync(values);
@@ -164,18 +165,14 @@ export function TrainerProfilePage() {
             label={t("trainerModule.biography")}
             error={form.formState.errors.bio}
           >
-            <textarea
-              className={`${inputClassName} h-32 py-3`}
-              {...form.register("bio")}
-            />
+            <Textarea className="min-h-32" {...form.register("bio")} />
           </FieldShell>
           <div className="grid gap-4 sm:grid-cols-3">
             <FieldShell
               label={t("trainerModule.experienceYears")}
               error={form.formState.errors.experienceYears}
             >
-              <input
-                className={inputClassName}
+              <Input
                 type="number"
                 {...form.register("experienceYears", { valueAsNumber: true })}
               />
@@ -184,8 +181,7 @@ export function TrainerProfilePage() {
               label={t("trainerModule.priceHour")}
               error={form.formState.errors.pricePerHour}
             >
-              <input
-                className={inputClassName}
+              <Input
                 type="number"
                 {...form.register("pricePerHour", { valueAsNumber: true })}
               />
@@ -194,8 +190,7 @@ export function TrainerProfilePage() {
               label={t("trainerModule.priceSession")}
               error={form.formState.errors.pricePerSession}
             >
-              <input
-                className={inputClassName}
+              <Input
                 type="number"
                 {...form.register("pricePerSession", { valueAsNumber: true })}
               />
@@ -205,8 +200,8 @@ export function TrainerProfilePage() {
             {t("trainerModule.saveProfile")}
           </Button>
         </form>
-        <aside className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-zinc-950 to-zinc-800 p-7 text-center text-white shadow-sm dark:border-zinc-800">
-          <div className="relative grid size-28 place-items-center rounded-full border-4 border-white/20 bg-lime-300 text-2xl font-black text-zinc-950 shadow-xl">
+        <aside className="flex flex-col items-center justify-center rounded-2xl border border-border bg-gradient-to-br from-zinc-950 to-zinc-800 p-7 text-center text-white shadow-sm">
+          <div className="relative grid size-28 place-items-center rounded-full border-4 border-white/20 bg-primary text-2xl font-black text-zinc-950 shadow-xl">
             {query.data?.username?.slice(0, 2).toUpperCase() || (
               <UserRound className="size-10" />
             )}
@@ -214,7 +209,7 @@ export function TrainerProfilePage() {
           <p className="mt-5 text-xl font-black">{query.data?.username}</p>
           <p className="mt-1 text-sm text-zinc-300">{query.data?.email}</p>
           <label
-            className="mt-6 inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-zinc-950 transition-all hover:-translate-y-0.5 hover:bg-lime-300 hover:shadow-lg"
+            className="mt-6 inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-zinc-950 transition-all hover:-translate-y-0.5 hover:bg-primary hover:shadow-lg"
             htmlFor="trainer-avatar"
           >
             <UploadCloud className="size-4" />
@@ -259,6 +254,7 @@ export function TrainerServicesPage() {
     resolver: zodResolver(trainerServiceSchema),
     defaultValues: { name: "", description: "", price: 1, durationMinutes: 60 },
   });
+
   function show(service?: TrainerService) {
     setEditing(service ?? null);
     form.reset(
@@ -273,9 +269,10 @@ export function TrainerServicesPage() {
     );
     setOpen(true);
   }
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("trainerModule.services")}
         description={t("trainerModule.servicesDescription")}
         action={
@@ -292,27 +289,27 @@ export function TrainerServicesPage() {
           {query.data.content.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-xl border border-border bg-card p-5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-black">{item.name}</h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {item.description || t("common.noDescription")}
                   </p>
                 </div>
-                <Badge>
+                <Badge variant={item.isActive ? "success" : "secondary"}>
                   {t(item.isActive ? "common.active" : "common.inactive")}
                 </Badge>
               </div>
-              <p className="mt-4 font-black text-orange-600">
+              <p className="mt-4 font-black text-accent">
                 {currency.format(item.price ?? 0)} · {item.durationMinutes}{" "}
                 {t("trainerModule.minutesShort")}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Button onClick={() => show(item)}>{t("common.edit")}</Button>
                 <Button
-                  className="bg-zinc-600"
+                  variant="secondary"
                   onClick={() =>
                     item.id &&
                     toggle.mutate({ id: item.id, isActive: !item.isActive })
@@ -372,24 +369,20 @@ export function TrainerServicesPage() {
             label={t("common.name")}
             error={form.formState.errors.name}
           >
-            <input className={inputClassName} {...form.register("name")} />
+            <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
             label={t("common.description")}
             error={form.formState.errors.description}
           >
-            <textarea
-              className={`${inputClassName} h-24 py-3`}
-              {...form.register("description")}
-            />
+            <Textarea className="min-h-24" {...form.register("description")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
               label={t("trainerModule.price")}
               error={form.formState.errors.price}
             >
-              <input
-                className={inputClassName}
+              <Input
                 type="number"
                 {...form.register("price", { valueAsNumber: true })}
               />
@@ -398,8 +391,7 @@ export function TrainerServicesPage() {
               label={t("trainerModule.durationMinutes")}
               error={form.formState.errors.durationMinutes}
             >
-              <input
-                className={inputClassName}
+              <Input
                 type="number"
                 {...form.register("durationMinutes", { valueAsNumber: true })}
               />
@@ -432,6 +424,7 @@ export function TrainerAvailabilityPage() {
       effectiveDate: "",
     },
   });
+
   function edit(item?: Availability) {
     setEditing(item ?? null);
     form.reset(
@@ -452,14 +445,15 @@ export function TrainerAvailabilityPage() {
           },
     );
   }
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("trainerModule.availability")}
         description={t("trainerModule.availabilityDescription")}
       />
       <form
-        className="mb-6 grid gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-5"
+        className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-5 md:grid-cols-5"
         onSubmit={form.handleSubmit(async (values) => {
           const payload = {
             dayOfWeek: values.dayOfWeek,
@@ -488,33 +482,42 @@ export function TrainerAvailabilityPage() {
           }
         })}
       >
-        <select
-          className={inputClassName}
-          {...form.register("dayOfWeek", { valueAsNumber: true })}
-        >
-          {days.map((day, index) => (
-            <option key={day} value={index}>
-              {t(`trainerModule.days.${index}`)}
-            </option>
-          ))}
-        </select>
-        <input
+        <Controller
+          control={form.control}
+          name="dayOfWeek"
+          render={({ field }) => (
+            <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {days.map((day, index) => (
+                  <SelectItem key={day} value={String(index)}>
+                    {t(`trainerModule.days.${index}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+        <Input
           aria-label={t("trainerModule.startTime")}
-          className={inputClassName}
           type="time"
           {...form.register("startTime")}
         />
-        <input
+        <Input
           aria-label={t("trainerModule.endTime")}
-          className={inputClassName}
           type="time"
           {...form.register("endTime")}
         />
-        <input
-          aria-label={t("trainerModule.effectiveDate")}
-          className={inputClassName}
-          type="date"
-          {...form.register("effectiveDate")}
+        <Controller
+          control={form.control}
+          name="effectiveDate"
+          render={({ field }) => (
+            <DatePicker
+              value={field.value}
+              onChange={field.onChange}
+              placeholder={t("trainerModule.effectiveDate")}
+            />
+          )}
         />
         <Button>
           {t(editing ? "common.update" : "trainerModule.addSlot")}
@@ -527,7 +530,7 @@ export function TrainerAvailabilityPage() {
           {query.data.content.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-xl border border-border bg-card p-5"
             >
               <h2 className="font-black">
                 {t(`trainerModule.days.${item.dayOfWeek ?? 0}`)}
@@ -535,7 +538,7 @@ export function TrainerAvailabilityPage() {
               <p className="mt-2">
                 {timeText(item.startTime)}–{timeText(item.endTime)}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {item.isRecurring ? t("common.recurring") : item.effectiveDate}
               </p>
               <div className="mt-4 flex gap-2">
@@ -575,6 +578,7 @@ export function TrainerCertificatesPage() {
     resolver: zodResolver(certificateSchema),
     defaultValues: { name: "", issuingOrg: "", issueDate: "", expiryDate: "" },
   });
+
   function show(item?: Certificate) {
     setEditing(item ?? null);
     setFiles([]);
@@ -590,9 +594,10 @@ export function TrainerCertificatesPage() {
     );
     setOpen(true);
   }
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("trainerModule.certificates")}
         description={t("trainerModule.certificatesDescription")}
         action={
@@ -609,10 +614,10 @@ export function TrainerCertificatesPage() {
           {query.data.content.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-xl border border-border bg-card p-5"
             >
               <h2 className="font-black">{item.name}</h2>
-              <p className="text-sm text-zinc-500">{item.issuingOrg}</p>
+              <p className="text-sm text-muted-foreground">{item.issuingOrg}</p>
               <p className="mt-3 text-xs font-bold">
                 {item.issueDate || t("trainerModule.noIssueDate")} →{" "}
                 {item.expiryDate || t("trainerModule.noExpiry")}
@@ -677,33 +682,40 @@ export function TrainerCertificatesPage() {
             label={t("common.name")}
             error={form.formState.errors.name}
           >
-            <input className={inputClassName} {...form.register("name")} />
+            <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
             label={t("trainerModule.issuingOrganization")}
             error={form.formState.errors.issuingOrg}
           >
-            <input
-              className={inputClassName}
-              {...form.register("issuingOrg")}
-            />
+            <Input {...form.register("issuingOrg")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
-            <input
-              aria-label={t("trainerModule.issueDate")}
-              className={inputClassName}
-              type="date"
-              {...form.register("issueDate")}
+            <Controller
+              control={form.control}
+              name="issueDate"
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={t("trainerModule.issueDate")}
+                />
+              )}
             />
-            <input
-              aria-label={t("trainerModule.expiryDate")}
-              className={inputClassName}
-              type="date"
-              {...form.register("expiryDate")}
+            <Controller
+              control={form.control}
+              name="expiryDate"
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={t("trainerModule.expiryDate")}
+                />
+              )}
             />
           </div>
           <label
-            className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-zinc-300 px-4 py-3 text-sm font-bold transition hover:border-lime-500 hover:bg-lime-50 dark:border-zinc-700 dark:hover:bg-lime-950/20"
+            className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-border px-4 py-3 text-sm font-bold transition hover:border-primary hover:bg-primary/5"
             htmlFor="certificate-files"
           >
             <span>{t("trainerModule.supportingFiles")}</span>
@@ -737,14 +749,15 @@ export function TrainerPartnershipsPage() {
     resolver: zodResolver(partnershipSchema),
     defaultValues: { gymId: 0, requestMessage: "" },
   });
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("trainerModule.partnerships")}
         description={t("trainerModule.partnershipsDescription")}
       />
       <form
-        className="mb-6 grid gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-[180px_1fr_auto]"
+        className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[180px_1fr_auto]"
         onSubmit={form.handleSubmit(async (values) => {
           try {
             await request.mutateAsync(values);
@@ -758,17 +771,15 @@ export function TrainerPartnershipsPage() {
           }
         })}
       >
-        <input
+        <Input
           aria-label={t("trainerModule.gymId")}
-          className={inputClassName}
           min="1"
           placeholder={t("trainerModule.gymId")}
           type="number"
           {...form.register("gymId", { valueAsNumber: true })}
         />
-        <input
+        <Input
           aria-label={t("trainerModule.requestMessage")}
-          className={inputClassName}
           placeholder={t("trainerModule.requestMessage")}
           {...form.register("requestMessage")}
         />
@@ -781,16 +792,21 @@ export function TrainerPartnershipsPage() {
           {query.data.content.map((item) => (
             <article
               key={item.id}
-              className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <h2 className="font-black">
                   {item.gymName || `${t("common.gyms")} #${item.gymId}`}
                 </h2>
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {item.requestMessage || t("common.noMessage")}
                 </p>
-                <Badge className="mt-3">
+                <Badge
+                  className="mt-3"
+                  variant={
+                    partnerStatusVariant[String(item.status)] ?? "default"
+                  }
+                >
                   {t(`statusLabels.${String(item.status).toLowerCase()}`, {
                     defaultValue: item.status,
                   })}

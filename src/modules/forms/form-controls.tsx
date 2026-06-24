@@ -1,35 +1,38 @@
 "use client";
 
-import { ReactNode } from "react";
+import * as React from "react";
+import { type FieldError } from "react-hook-form";
+import { Label } from "@/shared/components/ui/label";
 import { cn } from "@/shared/utils/cn.util";
 
 export function FieldShell({
   label,
   error,
   children,
+  className,
 }: {
   label: string;
-  error?: { message?: string };
-  children: ReactNode;
+  error?: FieldError | { message?: string };
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="block space-y-2">
-      <span className="text-sm font-black text-zinc-700 dark:text-zinc-200">
-        {label}
-      </span>
-      <div>{children}</div>
-      {error && (
-        <p className="mt-1 text-sm font-semibold text-red-500">
-          {error.message}
-        </p>
+    <div className={cn("grid gap-1.5", className)}>
+      <Label>{label}</Label>
+      {children}
+      {error?.message && (
+        <p className="text-xs font-semibold text-destructive">{error.message}</p>
       )}
-    </label>
+    </div>
   );
 }
 
 export const inputClassName = cn(
-  "h-11 w-full rounded-xl border border-[#d6d8c6] bg-white/90 px-3.5 text-sm font-semibold text-[#10130f] shadow-sm outline-none transition placeholder:font-medium placeholder:text-[#858a78] hover:border-[#b9bda8] focus:border-[#88d900] focus:ring-4 focus:ring-[#a3ff12]/20",
-  "dark:border-white/10 dark:bg-[#121610] dark:text-white",
+  "flex h-11 w-full rounded-xl border border-input bg-card/90 px-3.5 text-sm font-semibold text-foreground shadow-sm outline-none transition",
+  "placeholder:font-medium placeholder:text-muted-foreground",
+  "hover:border-[#b9bda8] focus-visible:border-[#88d900] focus-visible:ring-4 focus-visible:ring-ring/20",
+  "disabled:cursor-not-allowed disabled:opacity-60",
+  "dark:bg-card",
 );
 
-export const selectClassName = inputClassName;
+export const selectClassName = cn(inputClassName, "cursor-pointer");

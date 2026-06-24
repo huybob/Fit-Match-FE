@@ -1,33 +1,328 @@
 "use client";
-import{zodResolver}from"@hookform/resolvers/zod";import{MessageSquareReply,Plus,Star,Trash2}from"lucide-react";import{useState}from"react";import{useForm}from"react-hook-form";import{useTranslation}from"react-i18next";import{z}from"zod";import{useToast}from"@/lib/toast-provider";import{FieldShell,inputClassName}from"@/modules/forms/form-controls";import{useMyGyms}from"@/modules/gym/hooks/use-gym";import{useGetMyTrainerProfile}from"@/modules/trainer/hooks/use-trainer";import type{Review}from"@/services/review.service";import{EmptyState}from"@/shared/components/common/empty-state";import{LoadingSkeleton}from"@/shared/components/common/loading-skeleton";import{Button}from"@/shared/components/ui/button";import{Dialog}from"@/shared/components/ui/dialog";import{toErrorMessage}from"@/shared/utils/error.util";import{useBookings}from"@/modules/booking/hooks/use-booking";import{useDeleteReview,useReplyReview,useReviews,useSaveReview}from"../hooks/use-review";import{replySchema,reviewSchema}from"../schemas";
 
-export function CustomerReviewsPage(){return <ReviewPage scope="customer"/>}export function TrainerReviewsPage(){const q=useGetMyTrainerProfile();if(q.isLoading)return <LoadingSkeleton/>;return <ReviewPage scope="pt" targetId={q.data?.id??0}/>;}export function GymReviewsPage(){const q=useMyGyms();const gyms=q.data?.content??[];const[id,setId]=useState(0);const current=id||gyms[0]?.id||0;return <><select className={inputClassName} value={current} onChange={e=>setId(Number(e.target.value))}>{gyms.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</select><div className="mt-4"><ReviewPage scope="gym" targetId={current}/></div></>}
-function ReviewPage({scope,targetId=0}:{scope:"customer"|"pt"|"gym";targetId?:number}){const{t}=useTranslation();const[editing,setEditing]=useState<Review|null|undefined>();const[replying,setReplying]=useState<Review|null>(null);const query=useReviews(scope,targetId);const del=useDeleteReview();const{toast}=useToast();const items=query.data?.content??[];return <div><section className="mb-6 flex items-end justify-between rounded-3xl border border-zinc-200 bg-white/80 p-6 dark:border-zinc-800 dark:bg-zinc-950/80"><div><div className="mb-3 h-1 w-10 rounded-full bg-orange-500"/><h1 className="text-3xl font-black">{t(`review.${scope}Title`)}</h1><p className="mt-2 text-sm text-zinc-500">{t(`review.${scope}Description`)}</p></div>{scope==="customer"&&<Button onClick={()=>setEditing(null)}><Plus className="size-4"/>{t("review.create")}</Button>}</section>{query.isLoading?<LoadingSkeleton/>:query.isError?<EmptyState title={t("review.loadError")} description={toErrorMessage(query.error)}/>:!items.length?<EmptyState title={t("review.empty")} description={t("review.emptyDescription")}/>:<div className="grid gap-4 lg:grid-cols-2">{items.map(r=><article key={r.id} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"><div className="flex justify-between"><p className="font-black">{r.customerName}</p><span className="flex items-center gap-1 font-black text-orange-500"><Star className="size-4 fill-current"/>{r.rating}/5</span></div><p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">{r.comment||t("review.noComment")}</p>{r.reply&&<div className="mt-4 rounded-xl bg-zinc-50 p-3 text-sm dark:bg-zinc-900"><b>{r.repliedByName}:</b> {r.reply}</div>}<div className="mt-4 flex gap-2">{scope==="customer"?<><Button onClick={()=>setEditing(r)}>{t("common.edit")}</Button><Button className="bg-red-600" onClick={async()=>{await del.mutateAsync(r.id!);toast({type:"success",title:t("review.deleted")})}}><Trash2 className="size-4"/></Button></>:<Button onClick={()=>setReplying(r)}><MessageSquareReply className="size-4"/>{t("review.reply")}</Button>}</div></article>)}</div>}{editing!==undefined&&<ReviewDialog review={editing} onClose={()=>setEditing(undefined)}/>} {replying&&<ReplyDialog review={replying} onClose={()=>setReplying(null)}/>}</div>}
-function ReviewDialog({review,onClose}:{review:Review|null;onClose:()=>void}){
-  const{t}=useTranslation();const{toast}=useToast();const save=useSaveReview();
-  const bookingsQuery=useBookings("customer",{status:"COMPLETED",page:0,size:50});
-  const completed=bookingsQuery.data?.content??[];
-  const form=useForm<z.infer<typeof reviewSchema>>({resolver:zodResolver(reviewSchema),defaultValues:{bookingId:review?.bookingId??0,rating:review?.rating??5,comment:review?.comment??""}});
-  return <Dialog open title={review?t("review.edit"):t("review.create")} onClose={onClose}>
-    <form className="space-y-4" onSubmit={form.handleSubmit(async v=>{try{await save.mutateAsync({id:review?.id,payload:v});toast({type:"success",title:t("review.saved")});onClose()}catch(e){toast({type:"error",title:t("common.requestFailed"),description:toErrorMessage(e)})}})}>
-      <FieldShell label={t("review.bookingLabel")}>
-        {review?(
-          <input className={inputClassName} disabled value={`#${review.bookingId} · ${review.ptName??""}`}/>
-        ):bookingsQuery.isLoading?(
-          <p className="text-sm text-zinc-500">{t("common.loading")}</p>
-        ):!completed.length?(
-          <p className="text-sm text-zinc-500">{t("review.noCompletedBooking")}</p>
-        ):(
-          <select className={inputClassName} {...form.register("bookingId",{valueAsNumber:true})}>
-            <option value={0}>{t("review.bookingPlaceholder")}</option>
-            {completed.map(b=><option key={b.id} value={b.id}>#{b.id} · {b.ptServiceName??""} · {b.ptName??""} · {b.bookingDate}</option>)}
-          </select>
-        )}
-      </FieldShell>
-      <FieldShell label={t("review.rating")}><select className={inputClassName} {...form.register("rating",{valueAsNumber:true})}>{[5,4,3,2,1].map(v=><option key={v} value={v}>{v}/5</option>)}</select></FieldShell>
-      <FieldShell label={t("review.comment")}><textarea className={inputClassName} {...form.register("comment")}/></FieldShell>
-      <Button>{t("common.save")}</Button>
-    </form>
-  </Dialog>;
+import { zodResolver } from "@hookform/resolvers/zod";
+import { MessageSquareReply, Plus, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
+import { z } from "zod";
+import { useToast } from "@/lib/toast-provider";
+import { FieldShell } from "@/modules/forms/form-controls";
+import { useMyGyms } from "@/modules/gym/hooks/use-gym";
+import { useGetMyTrainerProfile } from "@/modules/trainer/hooks/use-trainer";
+import type { Review } from "@/services/review.service";
+import { EmptyState } from "@/shared/components/common/empty-state";
+import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import { Button } from "@/shared/components/ui/button";
+import { Dialog } from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { toErrorMessage } from "@/shared/utils/error.util";
+import { useBookings } from "@/modules/booking/hooks/use-booking";
+import {
+  useDeleteReview,
+  useReplyReview,
+  useReviews,
+  useSaveReview,
+} from "../hooks/use-review";
+import { replySchema, reviewSchema } from "../schemas";
+
+export function CustomerReviewsPage() {
+  return <ReviewPage scope="customer" />;
 }
-function ReplyDialog({review,onClose}:{review:Review;onClose:()=>void}){const{t}=useTranslation();const{toast}=useToast();const mutation=useReplyReview();const form=useForm<z.infer<typeof replySchema>>({resolver:zodResolver(replySchema),defaultValues:{reply:review.reply??""}});return <Dialog open title={t("review.reply")} onClose={onClose}><form className="space-y-4" onSubmit={form.handleSubmit(async v=>{try{await mutation.mutateAsync({id:review.id!,reply:v.reply});toast({type:"success",title:t("review.replied")});onClose()}catch(e){toast({type:"error",title:t("common.requestFailed"),description:toErrorMessage(e)})}})}><FieldShell label={t("review.reply")}><textarea className={inputClassName} {...form.register("reply")}/></FieldShell><Button>{t("review.sendReply")}</Button></form></Dialog>}
+
+export function TrainerReviewsPage() {
+  const q = useGetMyTrainerProfile();
+  if (q.isLoading) return <LoadingSkeleton />;
+  return <ReviewPage scope="pt" targetId={q.data?.id ?? 0} />;
+}
+
+export function GymReviewsPage() {
+  const q = useMyGyms();
+  const gyms = q.data?.content ?? [];
+  const [id, setId] = useState(0);
+  const current = id || gyms[0]?.id || 0;
+  return (
+    <>
+      <Select
+        value={String(current)}
+        onValueChange={(v) => setId(Number(v))}
+      >
+        <SelectTrigger className="w-72">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {gyms.map((g) => (
+            <SelectItem key={g.id} value={String(g.id)}>
+              {g.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <div className="mt-4">
+        <ReviewPage scope="gym" targetId={current} />
+      </div>
+    </>
+  );
+}
+
+function ReviewPage({
+  scope,
+  targetId = 0,
+}: {
+  scope: "customer" | "pt" | "gym";
+  targetId?: number;
+}) {
+  const { t } = useTranslation();
+  const [editing, setEditing] = useState<Review | null | undefined>();
+  const [replying, setReplying] = useState<Review | null>(null);
+  const query = useReviews(scope, targetId);
+  const del = useDeleteReview();
+  const { toast } = useToast();
+  const items = query.data?.content ?? [];
+
+  return (
+    <div>
+      <section className="mb-6 flex items-end justify-between rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
+        <div>
+          <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
+          <h1 className="text-3xl font-black">{t(`review.${scope}Title`)}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t(`review.${scope}Description`)}
+          </p>
+        </div>
+        {scope === "customer" && (
+          <Button onClick={() => setEditing(null)}>
+            <Plus className="size-4" />
+            {t("review.create")}
+          </Button>
+        )}
+      </section>
+
+      {query.isLoading ? (
+        <LoadingSkeleton />
+      ) : query.isError ? (
+        <EmptyState
+          title={t("review.loadError")}
+          description={toErrorMessage(query.error)}
+        />
+      ) : !items.length ? (
+        <EmptyState
+          title={t("review.empty")}
+          description={t("review.emptyDescription")}
+        />
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {items.map((r) => (
+            <article
+              key={r.id}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <div className="flex justify-between">
+                <p className="font-black">{r.customerName}</p>
+                <span className="flex items-center gap-1 font-black text-accent">
+                  <Star className="size-4 fill-current" />
+                  {r.rating}/5
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {r.comment || t("review.noComment")}
+              </p>
+              {r.reply && (
+                <div className="mt-4 rounded-xl bg-muted/50 p-3 text-sm">
+                  <b>{r.repliedByName}:</b> {r.reply}
+                </div>
+              )}
+              <div className="mt-4 flex gap-2">
+                {scope === "customer" ? (
+                  <>
+                    <Button onClick={() => setEditing(r)}>
+                      {t("common.edit")}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        await del.mutateAsync(r.id!);
+                        toast({ type: "success", title: t("review.deleted") });
+                      }}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setReplying(r)}>
+                    <MessageSquareReply className="size-4" />
+                    {t("review.reply")}
+                  </Button>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {editing !== undefined && (
+        <ReviewDialog review={editing} onClose={() => setEditing(undefined)} />
+      )}
+      {replying && (
+        <ReplyDialog review={replying} onClose={() => setReplying(null)} />
+      )}
+    </div>
+  );
+}
+
+function ReviewDialog({
+  review,
+  onClose,
+}: {
+  review: Review | null;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const save = useSaveReview();
+  const bookingsQuery = useBookings("customer", {
+    status: "COMPLETED",
+    page: 0,
+    size: 50,
+  });
+  const completed = bookingsQuery.data?.content ?? [];
+  const form = useForm<z.infer<typeof reviewSchema>>({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: {
+      bookingId: review?.bookingId ?? 0,
+      rating: review?.rating ?? 5,
+      comment: review?.comment ?? "",
+    },
+  });
+
+  return (
+    <Dialog
+      open
+      title={review ? t("review.edit") : t("review.create")}
+      onClose={onClose}
+    >
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(async (v) => {
+          try {
+            await save.mutateAsync({ id: review?.id, payload: v });
+            toast({ type: "success", title: t("review.saved") });
+            onClose();
+          } catch (e) {
+            toast({
+              type: "error",
+              title: t("common.requestFailed"),
+              description: toErrorMessage(e),
+            });
+          }
+        })}
+      >
+        <FieldShell label={t("review.bookingLabel")}>
+          {review ? (
+            <Input
+              disabled
+              value={`#${review.bookingId} · ${review.ptName ?? ""}`}
+            />
+          ) : bookingsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">
+              {t("common.loading")}
+            </p>
+          ) : !completed.length ? (
+            <p className="text-sm text-muted-foreground">
+              {t("review.noCompletedBooking")}
+            </p>
+          ) : (
+            <Controller
+              control={form.control}
+              name="bookingId"
+              render={({ field }) => (
+                <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("review.bookingPlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {completed.map((b) => (
+                      <SelectItem key={b.id} value={String(b.id)}>
+                        #{b.id} · {b.ptServiceName ?? ""} · {b.ptName ?? ""} · {b.bookingDate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          )}
+        </FieldShell>
+        <FieldShell label={t("review.rating")}>
+          <Controller
+            control={form.control}
+            name="rating"
+            render={({ field }) => (
+              <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[5, 4, 3, 2, 1].map((v) => (
+                    <SelectItem key={v} value={String(v)}>{v}/5</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FieldShell>
+        <FieldShell label={t("review.comment")}>
+          <Textarea {...form.register("comment")} />
+        </FieldShell>
+        <Button>{t("common.save")}</Button>
+      </form>
+    </Dialog>
+  );
+}
+
+function ReplyDialog({
+  review,
+  onClose,
+}: {
+  review: Review;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const mutation = useReplyReview();
+  const form = useForm<z.infer<typeof replySchema>>({
+    resolver: zodResolver(replySchema),
+    defaultValues: { reply: review.reply ?? "" },
+  });
+
+  return (
+    <Dialog open title={t("review.reply")} onClose={onClose}>
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(async (v) => {
+          try {
+            await mutation.mutateAsync({ id: review.id!, reply: v.reply });
+            toast({ type: "success", title: t("review.replied") });
+            onClose();
+          } catch (e) {
+            toast({
+              type: "error",
+              title: t("common.requestFailed"),
+              description: toErrorMessage(e),
+            });
+          }
+        })}
+      >
+        <FieldShell label={t("review.reply")}>
+          <Textarea {...form.register("reply")} />
+        </FieldShell>
+        <Button>{t("review.sendReply")}</Button>
+      </form>
+    </Dialog>
+  );
+}

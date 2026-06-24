@@ -3,17 +3,26 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BadgeCheck, Banknote, Plus, XCircle } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { FieldShell, inputClassName, selectClassName } from "@/modules/forms/form-controls";
+import { FieldShell } from "@/modules/forms/form-controls";
 import type { Withdrawal, WithdrawalStatus } from "@/services/withdrawal.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import {
   useApproveWithdrawal,
@@ -24,47 +33,23 @@ import {
 import { createWithdrawalSchema, rejectWithdrawalSchema } from "../schemas";
 
 const VIETNAM_BANKS = [
-  "Vietcombank",
-  "VietinBank",
-  "BIDV",
-  "Agribank",
-  "Techcombank",
-  "MB Bank",
-  "ACB",
-  "VPBank",
-  "Sacombank",
-  "TPBank",
-  "SHB",
-  "HDBank",
-  "VIB",
-  "OCB",
-  "Eximbank",
-  "MSB",
-  "SeABank",
-  "LienVietPostBank",
-  "ABBank",
-  "Bac A Bank",
-  "Nam A Bank",
-  "PVcomBank",
-  "SCB",
-  "Saigonbank",
-  "VietBank",
-  "Cake by VPBank",
-  "Timo",
+  "Vietcombank", "VietinBank", "BIDV", "Agribank", "Techcombank",
+  "MB Bank", "ACB", "VPBank", "Sacombank", "TPBank", "SHB", "HDBank",
+  "VIB", "OCB", "Eximbank", "MSB", "SeABank", "LienVietPostBank",
+  "ABBank", "Bac A Bank", "Nam A Bank", "PVcomBank", "SCB", "Saigonbank",
+  "VietBank", "Cake by VPBank", "Timo",
 ] as const;
 
 const statuses: WithdrawalStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 const money = (value: number | undefined, lang: string) =>
   new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
+    style: "currency", currency: "VND", maximumFractionDigits: 0,
   }).format(value ?? 0);
 
-const statusTone: Record<WithdrawalStatus, string> = {
-  PENDING: "bg-orange-50 text-orange-700",
-  APPROVED: "bg-emerald-50 text-emerald-700",
-  REJECTED: "bg-red-50 text-red-700",
+const statusVariant: Record<WithdrawalStatus, React.ComponentProps<typeof Badge>["variant"]> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "destructive",
 };
 
 export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
@@ -77,11 +62,11 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
 
   return (
     <div>
-      <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-zinc-200 bg-white/80 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80 sm:flex-row sm:items-end sm:justify-between">
+      <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
+          <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
           <h1 className="text-3xl font-black">{t(`withdrawal.${scope}Title`)}</h1>
-          <p className="mt-2 text-sm text-zinc-500">{t(`withdrawal.${scope}Description`)}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t(`withdrawal.${scope}Description`)}</p>
         </div>
         {scope === "pt" && (
           <Button onClick={() => setCreating(true)}>
@@ -91,18 +76,17 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
         )}
       </section>
 
-      <select
-        className={selectClassName}
-        value={status}
-        onChange={(e) => setStatus(e.target.value as WithdrawalStatus | "")}
-      >
-        <option value="">{t("withdrawal.allStatuses")}</option>
-        {statuses.map((s) => (
-          <option key={s} value={s}>
-            {t(`withdrawal.statuses.${s}`)}
-          </option>
-        ))}
-      </select>
+      <Select value={status} onValueChange={(v) => setStatus(v as WithdrawalStatus | "")}>
+        <SelectTrigger className="w-64">
+          <SelectValue placeholder={t("withdrawal.allStatuses")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">{t("withdrawal.allStatuses")}</SelectItem>
+          {statuses.map((s) => (
+            <SelectItem key={s} value={s}>{t(`withdrawal.statuses.${s}`)}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <div className="mt-5">
         {query.isLoading ? (
@@ -114,55 +98,34 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {items.map((w) => (
-              <article
-                key={w.id}
-                className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
-              >
+              <article key={w.id} className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-black uppercase text-zinc-400">#{w.id}</p>
-                  <Badge className={w.status ? statusTone[w.status] : undefined}>
+                  <p className="text-xs font-black uppercase text-muted-foreground">#{w.id}</p>
+                  <Badge variant={w.status ? statusVariant[w.status] : "default"}>
                     {w.status ? t(`withdrawal.statuses.${w.status}`) : "—"}
                   </Badge>
                 </div>
                 <h2 className="mt-2 flex items-center gap-2 text-2xl font-black">
-                  <Banknote className="size-6 text-lime-600" />
+                  <Banknote className="size-6 text-primary" />
                   {money(w.amount, i18n.language)}
                 </h2>
-                <div className="mt-3 grid gap-1 text-sm text-zinc-500">
-                  {scope === "admin" && (
-                    <span>
-                      {t("withdrawal.trainer")}: {w.ptName}
-                    </span>
-                  )}
-                  <span>
-                    {t("withdrawal.bank")}: {w.bankName}
-                  </span>
-                  <span>
-                    {t("withdrawal.account")}: {w.bankAccount}
-                  </span>
-                  <span>
-                    {t("withdrawal.holder")}: {w.bankHolder}
-                  </span>
-                  {w.notes && (
-                    <span>
-                      {t("withdrawal.notes")}: {w.notes}
-                    </span>
-                  )}
+                <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
+                  {scope === "admin" && <span>{t("withdrawal.trainer")}: {w.ptName}</span>}
+                  <span>{t("withdrawal.bank")}: {w.bankName}</span>
+                  <span>{t("withdrawal.account")}: {w.bankAccount}</span>
+                  <span>{t("withdrawal.holder")}: {w.bankHolder}</span>
+                  {w.notes && <span>{t("withdrawal.notes")}: {w.notes}</span>}
                   {w.status === "REJECTED" && w.rejectionReason && (
-                    <span className="text-red-600">
-                      {t("withdrawal.rejectionReason")}: {w.rejectionReason}
-                    </span>
+                    <span className="text-destructive">{t("withdrawal.rejectionReason")}: {w.rejectionReason}</span>
                   )}
                   {w.status === "APPROVED" && w.approvedByName && (
-                    <span className="text-emerald-600">
-                      {t("withdrawal.approvedBy")}: {w.approvedByName}
-                    </span>
+                    <span className="text-emerald-600">{t("withdrawal.approvedBy")}: {w.approvedByName}</span>
                   )}
                 </div>
                 {scope === "admin" && w.status === "PENDING" && (
                   <div className="mt-4 flex gap-2">
                     <ApproveButton id={w.id!} />
-                    <Button className="bg-red-600" onClick={() => setRejecting(w)}>
+                    <Button variant="destructive" onClick={() => setRejecting(w)}>
                       <XCircle className="size-4" />
                       {t("withdrawal.reject")}
                     </Button>
@@ -210,6 +173,7 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
     resolver: zodResolver(createWithdrawalSchema),
     defaultValues: { amount: 0, bankName: "", bankAccount: "", bankHolder: "", notes: "" },
   });
+
   return (
     <Dialog open={open} title={t("withdrawal.create")} onClose={onClose}>
       <form
@@ -226,24 +190,34 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
         })}
       >
         <FieldShell label={t("withdrawal.amount")} error={form.formState.errors.amount}>
-          <input type="number" className={inputClassName} {...form.register("amount", { valueAsNumber: true })} />
+          <Input type="number" {...form.register("amount", { valueAsNumber: true })} />
         </FieldShell>
         <FieldShell label={t("withdrawal.bank")} error={form.formState.errors.bankName}>
-          <select className={selectClassName} {...form.register("bankName")}>
-            <option value="">{t("withdrawal.bankPlaceholder")}</option>
-            {VIETNAM_BANKS.map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+          <Controller
+            control={form.control}
+            name="bankName"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("withdrawal.bankPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIETNAM_BANKS.map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </FieldShell>
         <FieldShell label={t("withdrawal.account")} error={form.formState.errors.bankAccount}>
-          <input className={inputClassName} {...form.register("bankAccount")} />
+          <Input {...form.register("bankAccount")} />
         </FieldShell>
         <FieldShell label={t("withdrawal.holder")} error={form.formState.errors.bankHolder}>
-          <input className={inputClassName} {...form.register("bankHolder")} />
+          <Input {...form.register("bankHolder")} />
         </FieldShell>
         <FieldShell label={t("withdrawal.notes")} error={form.formState.errors.notes}>
-          <textarea className={inputClassName} {...form.register("notes")} />
+          <Textarea {...form.register("notes")} />
         </FieldShell>
         <Button disabled={mutation.isPending}>
           <Banknote className="size-4" />
@@ -262,6 +236,7 @@ function RejectDialog({ withdrawal, onClose }: { withdrawal: Withdrawal; onClose
     resolver: zodResolver(rejectWithdrawalSchema),
     defaultValues: { reason: "" },
   });
+
   return (
     <Dialog open title={t("withdrawal.reject")} onClose={onClose}>
       <form
@@ -277,9 +252,9 @@ function RejectDialog({ withdrawal, onClose }: { withdrawal: Withdrawal; onClose
         })}
       >
         <FieldShell label={t("withdrawal.rejectionReason")} error={form.formState.errors.reason}>
-          <textarea className={inputClassName} {...form.register("reason")} />
+          <Textarea {...form.register("reason")} />
         </FieldShell>
-        <Button className="bg-red-600" disabled={mutation.isPending}>
+        <Button variant="destructive" disabled={mutation.isPending}>
           <XCircle className="size-4" />
           {t("withdrawal.reject")}
         </Button>

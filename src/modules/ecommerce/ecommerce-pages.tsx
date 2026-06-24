@@ -36,6 +36,13 @@ import { SiteLayout } from "@/modules/layout/site-layout";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { DataTable, Pagination } from "@/shared/components/common/data-table";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
@@ -743,23 +750,24 @@ function FilterBar({
         <Filter className="size-4" />
         {t("packages.filter")}
       </div>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 min-w-48 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-bold outline-none focus:border-lime-500 focus:ring-4 focus:ring-lime-300/20 dark:border-zinc-800 dark:bg-zinc-950"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {t(
-              option === "all"
-                ? "common.all"
-                : option === "male" || option === "female"
-                  ? `common.${option}`
-                  : `packages.${option}`,
-            )}
-          </option>
-        ))}
-      </select>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="h-10 min-w-48 rounded-xl">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {t(
+                option === "all"
+                  ? "common.all"
+                  : option === "male" || option === "female"
+                    ? `common.${option}`
+                    : `packages.${option}`,
+              )}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </Card>
   );
 }

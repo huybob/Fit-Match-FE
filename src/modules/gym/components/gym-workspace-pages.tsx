@@ -13,11 +13,11 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { FieldShell, inputClassName } from "@/modules/forms/form-controls";
+import { FieldShell } from "@/modules/forms/form-controls";
 import {
   useCreateBranch,
   useCreateFacility,
@@ -41,9 +41,19 @@ import type { Gym, GymBranch, GymFacility } from "@/services/gym.service";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import { PageHeader } from "@/shared/components/common/page-header";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 const facilityTypes = [
@@ -56,29 +66,25 @@ const facilityTypes = [
   "WIFI",
   "OTHER",
 ] as const;
-function Header({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="relative mb-7 flex flex-col gap-5 overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/75 px-6 py-6 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/75 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-      <div className="absolute -right-12 -top-16 size-36 rounded-full bg-lime-300/20 blur-3xl" />
-      <div className="relative">
-        <div className="mb-3 h-1 w-10 rounded-full bg-orange-500" />
-        <h1 className="text-3xl font-black tracking-tight">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-          {description}
-        </p>
-      </div>
-      <div className="relative shrink-0">{action}</div>
-    </div>
-  );
-}
+
+const gymStatusVariant: Record<
+  string,
+  React.ComponentProps<typeof Badge>["variant"]
+> = {
+  ACTIVE: "success",
+  INACTIVE: "secondary",
+  CLOSED: "destructive",
+};
+
+const partnerStatusVariant: Record<
+  string,
+  React.ComponentProps<typeof Badge>["variant"]
+> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "destructive",
+};
+
 function errorToast(
   toast: ReturnType<typeof useToast>["toast"],
   error: unknown,
@@ -113,6 +119,7 @@ export function MyGymsPage() {
       email: "",
     },
   });
+
   function show(gym?: Gym) {
     setEditing(gym ?? null);
     form.reset(
@@ -138,13 +145,14 @@ export function MyGymsPage() {
     );
     setOpen(true);
   }
+
   const ownedGyms = query.data?.content ?? [];
   const summary = [
     {
       label: t("gymModule.totalGyms"),
       value: ownedGyms.length,
       icon: Building2,
-      tone: "bg-lime-100 text-lime-700 dark:bg-lime-950/40 dark:text-lime-300",
+      tone: "bg-primary/10 text-primary",
     },
     {
       label: t("gymModule.activeGyms"),
@@ -156,12 +164,13 @@ export function MyGymsPage() {
       label: t("gymModule.coveredCities"),
       value: new Set(ownedGyms.map((gym) => gym.city).filter(Boolean)).size,
       icon: MapPinned,
-      tone: "bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+      tone: "bg-accent/10 text-accent",
     },
   ];
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("gymModule.myGyms")}
         description={t("gymModule.myGymsDescription")}
         action={
@@ -176,7 +185,7 @@ export function MyGymsPage() {
           {summary.map(({ label, value, icon: Icon, tone }) => (
             <div
               key={label}
-              className="flex items-center gap-4 rounded-2xl border border-zinc-200/80 bg-white/85 p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80"
+              className="flex items-center gap-4 rounded-2xl border border-border bg-card/85 p-4 shadow-sm"
             >
               <span
                 className={`grid size-11 place-items-center rounded-xl ${tone}`}
@@ -185,7 +194,7 @@ export function MyGymsPage() {
               </span>
               <div>
                 <p className="text-2xl font-black">{value}</p>
-                <p className="text-xs font-bold text-zinc-500">{label}</p>
+                <p className="text-xs font-bold text-muted-foreground">{label}</p>
               </div>
             </div>
           ))}
@@ -198,26 +207,24 @@ export function MyGymsPage() {
           {query.data.content.map((gym) => (
             <article
               key={gym.id}
-              className="grid overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 2xl:grid-cols-[minmax(260px,1fr)_auto_280px]"
+              className="grid overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md 2xl:grid-cols-[minmax(260px,1fr)_auto_280px]"
             >
               <div className="flex min-w-0 gap-4 p-6">
-                <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-lime-300/25 text-lime-700 dark:text-lime-300">
+                <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary">
                   <Building2 className="size-7" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="truncate text-xl font-black">{gym.name}</h2>
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="size-4 shrink-0" />
                     {gym.district}, {gym.city}
                   </p>
-                  <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">
-                    {gym.address}
-                  </p>
+                  <p className="mt-3 text-sm">{gym.address}</p>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-6 py-4 dark:border-zinc-800 2xl:border-y-0 2xl:border-l 2xl:px-5">
+              <div className="flex flex-wrap items-center gap-2 border-t border-border px-6 py-4 2xl:border-y-0 2xl:border-l 2xl:px-5">
                 <Link
-                  className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-md dark:bg-lime-300 dark:text-zinc-950"
+                  className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-foreground px-4 text-sm font-bold text-background transition-all hover:-translate-y-0.5 hover:shadow-md"
                   href={`/gym/gyms/${gym.id}`}
                 >
                   {t("common.manage")}
@@ -225,7 +232,7 @@ export function MyGymsPage() {
                 <Button onClick={() => show(gym)}>{t("common.edit")}</Button>
                 {gym.id && (
                   <Button
-                    className="bg-orange-600"
+                    variant="accent"
                     onClick={() =>
                       status.mutate({
                         id: gym.id!,
@@ -242,23 +249,25 @@ export function MyGymsPage() {
                 )}
               </div>
               {gym.id && (
-                <div className="grid content-center gap-3 border-t border-zinc-100 bg-zinc-50/70 p-5 text-xs dark:border-zinc-800 dark:bg-zinc-900/50 sm:grid-cols-[auto_1fr_1fr] sm:items-center 2xl:grid-cols-1 2xl:items-stretch 2xl:border-l 2xl:border-t-0">
+                <div className="grid content-center gap-3 border-t border-border bg-muted/30 p-5 text-xs sm:grid-cols-[auto_1fr_1fr] sm:items-center 2xl:grid-cols-1 2xl:items-stretch 2xl:border-l 2xl:border-t-0">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-black uppercase tracking-wide text-zinc-500">
+                    <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">
                       {t("common.status")}
                     </span>
-                    <Badge>
+                    <Badge
+                      variant={gymStatusVariant[String(gym.status)] ?? "default"}
+                    >
                       {t(`statusLabels.${String(gym.status).toLowerCase()}`, {
                         defaultValue: gym.status,
                       })}
                     </Badge>
                   </div>
                   <label
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 font-bold transition hover:border-lime-400 hover:bg-lime-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-lime-950/20"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 font-bold transition hover:border-primary hover:bg-primary/5"
                     htmlFor={`gym-logo-${gym.id}`}
                   >
                     <span>{t("gymModule.uploadLogo")}</span>
-                    <UploadCloud className="size-4 text-lime-600" />
+                    <UploadCloud className="size-4 text-primary" />
                     <input
                       className="sr-only"
                       id={`gym-logo-${gym.id}`}
@@ -272,11 +281,11 @@ export function MyGymsPage() {
                     />
                   </label>
                   <label
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 font-bold transition hover:border-lime-400 hover:bg-lime-50 dark:border-zinc-700 dark:bg-zinc-950 dark:hover:bg-lime-950/20"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 font-bold transition hover:border-primary hover:bg-primary/5"
                     htmlFor={`gym-cover-${gym.id}`}
                   >
                     <span>{t("gymModule.uploadCover")}</span>
-                    <UploadCloud className="size-4 text-lime-600" />
+                    <UploadCloud className="size-4 text-primary" />
                     <input
                       className="sr-only"
                       id={`gym-cover-${gym.id}`}
@@ -333,56 +342,46 @@ export function MyGymsPage() {
             label={t("common.name")}
             error={form.formState.errors.name}
           >
-            <input className={inputClassName} {...form.register("name")} />
+            <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
             label={t("common.description")}
             error={form.formState.errors.description}
           >
-            <textarea
-              className={`${inputClassName} h-24 py-3`}
-              {...form.register("description")}
-            />
+            <Textarea className="min-h-24" {...form.register("description")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
               label={t("gymModule.city")}
               error={form.formState.errors.city}
             >
-              <input className={inputClassName} {...form.register("city")} />
+              <Input {...form.register("city")} />
             </FieldShell>
             <FieldShell
               label={t("gymModule.district")}
               error={form.formState.errors.district}
             >
-              <input
-                className={inputClassName}
-                {...form.register("district")}
-              />
+              <Input {...form.register("district")} />
             </FieldShell>
           </div>
           <FieldShell
             label={t("common.address")}
             error={form.formState.errors.address}
           >
-            <input className={inputClassName} {...form.register("address")} />
+            <Input {...form.register("address")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
               label={t("common.phone")}
               error={form.formState.errors.phone}
             >
-              <input className={inputClassName} {...form.register("phone")} />
+              <Input {...form.register("phone")} />
             </FieldShell>
             <FieldShell
               label={t("common.email")}
               error={form.formState.errors.email}
             >
-              <input
-                className={inputClassName}
-                type="email"
-                {...form.register("email")}
-              />
+              <Input type="email" {...form.register("email")} />
             </FieldShell>
           </div>
           <Button className="w-full">{t("common.save")}</Button>
@@ -407,9 +406,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
   const [branchOpen, setBranchOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<GymBranch | null>(null);
   const [facilityOpen, setFacilityOpen] = useState(false);
-  const [editingFacility, setEditingFacility] = useState<GymFacility | null>(
-    null,
-  );
+  const [editingFacility, setEditingFacility] = useState<GymFacility | null>(null);
   const branchForm = useForm<z.infer<typeof branchSchema>>({
     resolver: zodResolver(branchSchema),
     defaultValues: { name: "", address: "", city: "", district: "", phone: "" },
@@ -424,6 +421,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
       isAvailable: true,
     },
   });
+
   function showBranch(item?: GymBranch) {
     setEditingBranch(item ?? null);
     branchForm.reset(
@@ -439,6 +437,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
     );
     setBranchOpen(true);
   }
+
   function showFacility(item?: GymFacility) {
     setEditingFacility(item ?? null);
     facilityForm.reset(
@@ -460,6 +459,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
     );
     setFacilityOpen(true);
   }
+
   if (gym.isLoading) return <LoadingSkeleton />;
   if (gym.isError || !gym.data)
     return (
@@ -468,15 +468,16 @@ export function GymManagePage({ gymId }: { gymId: number }) {
         description={toErrorMessage(gym.error)}
       />
     );
+
   return (
     <>
-      <Header
+      <PageHeader
         title={gym.data.name ?? "Gym"}
         description={t("gymModule.manageDescription")}
       />
-      <section className="mb-8 grid gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-950 p-5 text-white shadow-lg dark:border-zinc-800 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mb-8 grid gap-3 rounded-2xl border border-border bg-zinc-950 p-5 text-white shadow-lg sm:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
-          <MapPin className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <MapPin className="mt-0.5 size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
               {t("common.address")}
@@ -487,7 +488,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
-          <Phone className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <Phone className="mt-0.5 size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
               {t("common.phone")}
@@ -498,7 +499,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         </div>
         <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
-          <Mail className="mt-0.5 size-5 shrink-0 text-lime-300" />
+          <Mail className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
               {t("common.email")}
@@ -509,12 +510,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3 sm:justify-start">
-          <Activity className="size-5 shrink-0 text-lime-300" />
+          <Activity className="size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
               {t("common.status")}
             </p>
-            <Badge className="mt-1 border-lime-300/30 bg-lime-300/10 text-lime-300">
+            <Badge className="mt-1 border-primary/30 bg-primary/10 text-primary">
               {t(`statusLabels.${String(gym.data.status).toLowerCase()}`, {
                 defaultValue: gym.data.status,
               })}
@@ -522,8 +523,9 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         </div>
       </section>
+
       <section className="mb-10">
-        <Header
+        <PageHeader
           title={t("gymModule.branches")}
           description={t("gymModule.branchesDescription")}
           action={
@@ -538,10 +540,10 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             {branches.data.content.map((item) => (
               <article
                 key={item.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+                className="rounded-xl border border-border bg-card p-5"
               >
                 <h3 className="font-black">{item.name}</h3>
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {item.address}, {item.district}
                 </p>
                 <div className="mt-4 flex gap-2">
@@ -568,8 +570,9 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           />
         )}
       </section>
+
       <section>
-        <Header
+        <PageHeader
           title={t("gymModule.facilities")}
           description={t("gymModule.facilitiesDescription")}
           action={
@@ -584,17 +587,19 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             {facilities.data.content.map((item) => (
               <article
                 key={item.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+                className="rounded-xl border border-border bg-card p-5"
               >
                 <div className="flex justify-between">
                   <h3 className="font-black">{item.name}</h3>
-                  <Badge>
+                  <Badge variant="secondary">
                     {t(`gymModule.facilityTypes.${item.type}`, {
                       defaultValue: item.type,
                     })}
                   </Badge>
                 </div>
-                <p className="mt-2 text-sm text-zinc-500">{item.description}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {item.description}
+                </p>
                 <div className="mt-4 flex gap-2">
                   <Button onClick={() => showFacility(item)}>
                     {t("common.edit")}
@@ -619,6 +624,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           />
         )}
       </section>
+
       <Dialog
         open={branchOpen}
         onClose={() => setBranchOpen(false)}
@@ -652,41 +658,37 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             }
           })}
         >
-          <input
+          <Input
             aria-label={t("gymModule.branchName")}
-            className={inputClassName}
             placeholder={t("gymModule.branchName")}
             {...branchForm.register("name")}
           />
-          <input
+          <Input
             aria-label={t("gymModule.branchAddress")}
-            className={inputClassName}
             placeholder={t("gymModule.branchAddress")}
             {...branchForm.register("address")}
           />
           <div className="grid grid-cols-2 gap-2">
-            <input
+            <Input
               aria-label={t("gymModule.city")}
-              className={inputClassName}
               placeholder={t("gymModule.city")}
               {...branchForm.register("city")}
             />
-            <input
+            <Input
               aria-label={t("gymModule.district")}
-              className={inputClassName}
               placeholder={t("gymModule.district")}
               {...branchForm.register("district")}
             />
           </div>
-          <input
+          <Input
             aria-label={t("gymModule.branchPhone")}
-            className={inputClassName}
             placeholder={t("gymModule.branchPhone")}
             {...branchForm.register("phone")}
           />
           <Button className="w-full">{t("gymModule.saveBranch")}</Button>
         </form>
       </Dialog>
+
       <Dialog
         open={facilityOpen}
         onClose={() => setFacilityOpen(false)}
@@ -724,32 +726,37 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             }
           })}
         >
-          <input
+          <Input
             aria-label={t("gymModule.facilityName")}
-            className={inputClassName}
             placeholder={t("gymModule.facilityName")}
             {...facilityForm.register("name")}
           />
-          <textarea
+          <Textarea
             aria-label={t("gymModule.facilityDescription")}
-            className={`${inputClassName} h-24 py-3`}
+            className="min-h-24"
             placeholder={t("gymModule.facilityDescription")}
             {...facilityForm.register("description")}
           />
-          <select
-            aria-label={t("gymModule.facilityType")}
-            className={inputClassName}
-            {...facilityForm.register("type")}
-          >
-            {facilityTypes.map((type) => (
-              <option key={type} value={type}>
-                {t(`gymModule.facilityTypes.${type}`)}
-              </option>
-            ))}
-          </select>
-          <input
+          <Controller
+            control={facilityForm.control}
+            name="type"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("gymModule.facilityType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {facilityTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {t(`gymModule.facilityTypes.${type}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          <Input
             aria-label={t("gymModule.facilityIconUrl")}
-            className={inputClassName}
             placeholder={t("gymModule.facilityIconUrl")}
             {...facilityForm.register("iconUrl")}
           />
@@ -769,6 +776,7 @@ export function GymPartnershipsPage() {
   const query = useGymPartnerships();
   const action = usePartnershipAction();
   const { toast } = useToast();
+
   async function run(id: number, kind: "approve" | "reject" | "end") {
     try {
       await action.mutateAsync({ id, action: kind });
@@ -783,9 +791,10 @@ export function GymPartnershipsPage() {
       errorToast(toast, error, t("common.requestFailed"));
     }
   }
+
   return (
     <>
-      <Header
+      <PageHeader
         title={t("gymModule.partnerships")}
         description={t("gymModule.partnershipsDescription")}
       />
@@ -796,7 +805,7 @@ export function GymPartnershipsPage() {
           {query.data.content.map((item) => (
             <article
               key={item.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-xl border border-border bg-card p-5"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -804,11 +813,16 @@ export function GymPartnershipsPage() {
                     {item.ptName ||
                       `${t("common.trainers")} #${item.profileId}`}
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {item.gymName} ·{" "}
                     {item.requestMessage || t("common.noMessage")}
                   </p>
-                  <Badge className="mt-3">
+                  <Badge
+                    className="mt-3"
+                    variant={
+                      partnerStatusVariant[String(item.status)] ?? "default"
+                    }
+                  >
                     {t(`statusLabels.${String(item.status).toLowerCase()}`, {
                       defaultValue: item.status,
                     })}
@@ -822,7 +836,7 @@ export function GymPartnershipsPage() {
                           {t("gymModule.approve")}
                         </Button>
                         <Button
-                          className="bg-red-600"
+                          variant="destructive"
                           onClick={() => void run(item.id!, "reject")}
                         >
                           {t("gymModule.reject")}
@@ -831,7 +845,7 @@ export function GymPartnershipsPage() {
                     )}
                     {item.status === "APPROVED" && (
                       <Button
-                        className="bg-red-600"
+                        variant="destructive"
                         onClick={() => void run(item.id!, "end")}
                       >
                         {t("gymModule.end")}

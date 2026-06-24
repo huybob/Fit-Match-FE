@@ -9,9 +9,18 @@ import { useToast } from "@/lib/toast-provider";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { authService } from "@/services/auth.service";
+import { Controller } from "react-hook-form";
 import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
-import { FieldShell, inputClassName } from "./form-controls";
+import { FieldShell } from "./form-controls";
 import { changePasswordSchema, loginSchema, registerSchema } from "./schemas";
 
 export function LoginForm() {
@@ -37,10 +46,10 @@ export function LoginForm() {
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldShell label={t("auth.username")} error={form.formState.errors.username}>
-        <input autoComplete="username" className={inputClassName} {...form.register("username")} />
+        <Input autoComplete="username" {...form.register("username")} />
       </FieldShell>
       <FieldShell label={t("auth.password")} error={form.formState.errors.password}>
-        <input autoComplete="current-password" className={inputClassName} type="password" {...form.register("password")} />
+        <Input autoComplete="current-password" type="password" {...form.register("password")} />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
         {form.formState.isSubmitting ? t("common.loading") : t("common.login")}
@@ -78,23 +87,34 @@ export function RegisterForm() {
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldShell label={t("auth.username")} error={form.formState.errors.username}>
-        <input autoComplete="username" className={inputClassName} {...form.register("username")} />
+        <Input autoComplete="username" {...form.register("username")} />
       </FieldShell>
       <FieldShell label={t("auth.email")} error={form.formState.errors.email}>
-        <input autoComplete="email" className={inputClassName} type="email" {...form.register("email")} />
+        <Input autoComplete="email" type="email" {...form.register("email")} />
       </FieldShell>
       <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
-        <input autoComplete="tel" className={inputClassName} {...form.register("phone")} />
+        <Input autoComplete="tel" {...form.register("phone")} />
       </FieldShell>
       <FieldShell label={t("auth.role")} error={form.formState.errors.role}>
-        <select className={inputClassName} {...form.register("role")}>
-          <option value="ROLE_CUSTOMER">{t("auth.customer")}</option>
-          <option value="ROLE_PT">{t("auth.trainer")}</option>
-          <option value="ROLE_GYM_OPERATOR">{t("auth.gymOperator")}</option>
-        </select>
+        <Controller
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ROLE_CUSTOMER">{t("auth.customer")}</SelectItem>
+                <SelectItem value="ROLE_PT">{t("auth.trainer")}</SelectItem>
+                <SelectItem value="ROLE_GYM_OPERATOR">{t("auth.gymOperator")}</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
       </FieldShell>
       <FieldShell label={t("auth.password")} error={form.formState.errors.password}>
-        <input autoComplete="new-password" className={inputClassName} type="password" {...form.register("password")} />
+        <Input autoComplete="new-password" type="password" {...form.register("password")} />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
         {form.formState.isSubmitting ? t("common.loading") : t("common.register")}
@@ -128,10 +148,10 @@ export function ChangePasswordForm() {
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldShell label={t("auth.currentPassword")} error={form.formState.errors.oldPassword}>
-        <input autoComplete="current-password" className={inputClassName} type="password" {...form.register("oldPassword")} />
+        <Input autoComplete="current-password" type="password" {...form.register("oldPassword")} />
       </FieldShell>
       <FieldShell label={t("auth.newPassword")} error={form.formState.errors.newPassword}>
-        <input autoComplete="new-password" className={inputClassName} type="password" {...form.register("newPassword")} />
+        <Input autoComplete="new-password" type="password" {...form.register("newPassword")} />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
         {form.formState.isSubmitting ? t("common.loading") : t("common.save")}

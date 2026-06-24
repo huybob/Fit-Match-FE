@@ -1,10 +1,54 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f7f7ef;
   --foreground: #10130f;
+
+  --card: #ffffff;
+  --card-foreground: #10130f;
+
+  --popover: #ffffff;
+  --popover-foreground: #10130f;
+
+  --primary: #a3ff12;
+  --primary-foreground: #10130f;
+
+  --secondary: #f1f2e8;
+  --secondary-foreground: #10130f;
+
+  --muted: #f1f2e8;
+  --muted-foreground: #68705f;
+
+  --accent: #ff6b22;
+  --accent-foreground: #ffffff;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #dedfce;
+  --input: #d6d8c6;
+  --ring: #a3ff12;
+
+  --chart-1: #a3ff12;
+  --chart-2: #ff6b22;
+  --chart-3: #10b981;
+  --chart-4: #3b82f6;
+  --chart-5: #8b5cf6;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #10130f;
+  --sidebar-primary: #10130f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f2e8;
+  --sidebar-accent-foreground: #10130f;
+  --sidebar-border: #dedfce;
+  --sidebar-ring: #a3ff12;
+
+  --radius: 1rem;
+
   --fit-ink: #10130f;
   --fit-panel: #ffffff;
   --fit-soft: #f1f2e8;
@@ -17,9 +61,94 @@
   --fit-shadow-lg: 0 24px 80px rgba(16, 19, 15, 0.12);
 }
 
+.dark {
+  --background: #080a07;
+  --foreground: #f5f5ed;
+
+  --card: #121610;
+  --card-foreground: #f5f5ed;
+
+  --popover: #121610;
+  --popover-foreground: #f5f5ed;
+
+  --primary: #a3ff12;
+  --primary-foreground: #10130f;
+
+  --secondary: #1a1f15;
+  --secondary-foreground: #f5f5ed;
+
+  --muted: #1a1f15;
+  --muted-foreground: #a8ac99;
+
+  --accent: #ff6b22;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(245, 245, 237, 0.12);
+  --input: rgba(245, 245, 237, 0.18);
+  --ring: #a3ff12;
+
+  --sidebar: #0f1310;
+  --sidebar-foreground: #f5f5ed;
+  --sidebar-primary: #a3ff12;
+  --sidebar-primary-foreground: #10130f;
+  --sidebar-accent: #1a1f15;
+  --sidebar-accent-foreground: #f5f5ed;
+  --sidebar-border: rgba(245, 245, 237, 0.1);
+  --sidebar-ring: #a3ff12;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 0.5rem);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -49,7 +178,7 @@ body::before {
 }
 
 :focus-visible {
-  outline: 2px solid var(--fit-green);
+  outline: 2px solid var(--ring);
   outline-offset: 3px;
 }
 
@@ -176,4 +305,10 @@ html {
 ::selection {
   background: #34d399;
   color: #09090b;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
