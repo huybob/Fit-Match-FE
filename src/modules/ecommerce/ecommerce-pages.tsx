@@ -134,29 +134,35 @@ export function HomePage() {
   );
 }
 
+const heroStats = [
+  { value: "1,200+", labelKey: "home.statTrainers" },
+  { value: "450+", labelKey: "home.statGyms" },
+  { value: "85k+", labelKey: "home.statMembers" },
+  { value: "98%", labelKey: "home.statSatisfied" },
+];
+
 function Hero() {
   const { t } = useTranslation();
   const canBook = useCanBook();
 
   return (
-    <section className="relative overflow-hidden border-b border-[#dedfce] bg-[#10130f] text-white dark:border-white/10">
-      <div className="absolute -left-32 top-0 size-96 rounded-full bg-lime-300/10 blur-3xl" />
-      <div className="absolute -right-32 bottom-0 size-96 rounded-full bg-orange-500/10 blur-3xl" />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.85fr] lg:px-8 lg:py-24">
+    <section className="relative overflow-hidden border-b border-gray-100 bg-white dark:border-white/10 dark:bg-[#0a0f1a]">
+      <div className="absolute -right-40 top-0 size-[500px] rounded-full bg-blue-50 blur-3xl dark:bg-blue-950/20" />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
         <div>
-          <Badge className="border-[#a3ff12]/40 bg-[#a3ff12]/10 text-[#a3ff12]">
+          <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-wider text-[#2563EB] dark:bg-blue-900/30 dark:text-blue-300">
             {t("home.heroBadge")}
-          </Badge>
-          <h1 className="mt-6 max-w-4xl text-5xl font-black tracking-tight sm:text-6xl">
+          </span>
+          <h1 className="mt-5 max-w-2xl text-5xl font-black leading-tight tracking-tight text-gray-900 dark:text-white sm:text-6xl">
             {t("home.heroTitle")}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#d8dcc6]">
+          <p className="mt-5 max-w-xl text-lg leading-8 text-gray-500 dark:text-gray-400">
             {t("home.heroDesc")}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {canBook && (
               <Link
-                className="fit-cta inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-black shadow-lg shadow-lime-500/15 transition hover:-translate-y-0.5"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-6 text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:-translate-y-0.5 hover:bg-[#1D4ED8]"
                 href={appRoutes.booking}
               >
                 {t("home.cta")}
@@ -164,31 +170,46 @@ function Hero() {
               </Link>
             )}
             <Link
-              className="inline-flex h-12 items-center justify-center rounded-xl border border-white/20 px-6 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
+              className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-200 px-6 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:bg-gray-50 dark:border-white/10 dark:text-white dark:hover:bg-white/5"
               href={appRoutes.packages}
             >
               {t("home.secondary")}
             </Link>
           </div>
-        </div>
-        <Card className="border-white/10 bg-white/[0.07] p-5 text-white shadow-2xl shadow-black/30 backdrop-blur-xl">
-          <div className="grid gap-4">
-            {bookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="rounded-2xl border border-white/10 bg-black/20 p-4 transition hover:border-lime-300/30 hover:bg-white/5"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="font-bold">{booking.type}</p>
-                  <StatusBadge status={booking.status} />
-                </div>
-                <p className="mt-2 text-sm text-[#d8dcc6]">
-                  {booking.trainerName} · {booking.date} · {booking.time}
+
+          {/* Stats row */}
+          <div className="mt-10 grid grid-cols-4 gap-4 border-t border-gray-100 pt-8 dark:border-white/10">
+            {heroStats.map(({ value, labelKey }) => (
+              <div key={labelKey}>
+                <p className="text-2xl font-black text-gray-900 dark:text-white">{value}</p>
+                <p className="mt-0.5 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  {t(labelKey, { defaultValue: labelKey.split(".")[1] })}
                 </p>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
+
+        {/* Right: athlete image placeholder */}
+        <div className="relative hidden lg:block">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a2744] to-[#2563EB] shadow-2xl shadow-blue-500/20" style={{ aspectRatio: "4/5" }}>
+            <div className="absolute inset-0 flex items-center justify-center opacity-10">
+              <Dumbbell className="size-48 text-white" />
+            </div>
+            {/* Floating stat card */}
+            <div className="absolute bottom-6 left-6 right-6 rounded-xl bg-white/10 p-4 backdrop-blur-md">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-200">Buổi tập hôm nay</p>
+              <div className="mt-2 grid grid-cols-3 gap-3">
+                {bookings.slice(0, 3).map((b) => (
+                  <div key={b.id} className="rounded-lg bg-white/10 p-2">
+                    <p className="text-xs font-black text-white truncate">{b.trainerName.split(" ").pop()}</p>
+                    <p className="text-[10px] text-blue-200">{b.time}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -632,36 +653,43 @@ function TrainerCard({ trainer }: { trainer: Trainer }) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const canBook = useCanBook();
+  const initials = trainer.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <Card className="fit-card group flex h-full flex-col p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="flex size-16 items-center justify-center rounded-2xl bg-[#10130f] text-xl font-black text-[#a3ff12] shadow-lg shadow-zinc-950/10 transition-transform group-hover:scale-105 dark:bg-[#a3ff12] dark:text-[#10130f]">
-        {trainer.name
-          .split(" ")
-          .map((part) => part[0])
-          .join("")
-          .slice(0, 2)}
+    <Card className="fit-card group flex h-full flex-col overflow-hidden p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="flex items-start justify-between">
+        <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] text-lg font-black text-white shadow-md transition-transform duration-300 group-hover:scale-105">
+          {initials}
+        </div>
       </div>
-      <h3 className="mt-5 text-xl font-black">{trainer.name}</h3>
-      <p className="mt-1 text-sm font-semibold text-zinc-500">
+      <h3 className="mt-4 text-lg font-black leading-tight">{trainer.name}</h3>
+      <span className="mt-1.5 inline-flex w-fit items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-[#2563EB] dark:bg-blue-900/30 dark:text-blue-300">
         {trainer.specialty}
-      </p>
-      <div className="mt-3 flex items-center gap-2 text-sm font-bold">
-        <Star className="size-4 fill-orange-400 text-orange-400" />
-        {trainer.rating} ·{" "}
-        {t("common.reviewsCount", { count: trainer.reviews })}
+      </span>
+      <div className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-gray-600 dark:text-gray-400">
+        <Star className="size-4 fill-yellow-400 text-yellow-400" />
+        <span className="font-black text-gray-800 dark:text-white">{trainer.rating}</span>
+        <span>({trainer.reviews} đánh giá)</span>
       </div>
-      <p className="mt-4 text-lg font-black">{formatCurrency(trainer.price)}</p>
-      <div className="mt-auto flex gap-2 pt-6">
+      <p className="mt-4 text-xl font-black text-gray-900 dark:text-white">
+        {formatCurrency(trainer.price)}
+        <span className="ml-1 text-sm font-normal text-gray-500">/buổi</span>
+      </p>
+      <div className="mt-auto flex gap-2 pt-5">
         <Link
-          className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-zinc-200 text-sm font-bold transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
+          className="inline-flex h-9 flex-1 items-center justify-center rounded-xl border border-[#2563EB] text-sm font-semibold text-[#2563EB] transition hover:bg-blue-50 dark:hover:bg-blue-900/20"
           href={`/trainers/${trainer.id}`}
         >
-          {t("common.viewDetails")}
+          Xem Hồ sơ
         </Link>
         {canBook && (
           <Button
-            className="fit-cta h-10 flex-1"
+            className="h-9 flex-1 bg-[#2563EB] text-white hover:bg-[#1D4ED8]"
             onClick={() =>
               toast({
                 type: "success",
@@ -721,7 +749,7 @@ function Section({
 }) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#ff6b22]">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#2563EB]">
         {eyebrow}
       </p>
       <h2 className="mt-2 text-3xl font-black tracking-tight">{title}</h2>

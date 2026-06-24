@@ -1,66 +1,87 @@
 "use client";
 
-import { CheckCircle2, Dumbbell } from "lucide-react";
+import Link from "next/link";
+import { Rocket } from "lucide-react";
 import { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 
-export function AuthPageShell({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
+interface AuthPageShellProps {
+  variant: "login" | "register";
   children: ReactNode;
-}) {
-  const { t } = useTranslation();
+}
+
+export function AuthPageShell({ variant, children }: AuthPageShellProps) {
+  const isLogin = variant === "login";
+
+  const bluePanel = (
+    <div className="hidden overflow-hidden bg-[#2563EB] lg:flex lg:flex-col p-10 text-white">
+      {!isLogin && (
+        <>
+          <Link href="/" className="text-xl font-bold text-white">
+            FitMatch
+          </Link>
+          <div className="flex flex-col justify-center flex-1 py-8">
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-white/15 mb-8">
+              <Rocket className="size-8" />
+            </div>
+            <h2 className="text-4xl font-black leading-tight tracking-tight max-w-sm">
+              Nâng Tầm Hành Trình Tập Luyện.
+            </h2>
+            <p className="mt-5 text-blue-100 leading-relaxed max-w-sm">
+              Tham gia mạng lưới hàng đầu dành cho các chuyên gia thể hình và phòng gym cao cấp. Sự thay đổi của bạn bắt đầu từ đây.
+            </p>
+            <div className="mt-10 flex gap-3">
+              <div className="rounded-xl bg-white/15 px-5 py-3">
+                <p className="text-2xl font-black">500+</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-200 mt-0.5">
+                  HLV Chuyên Nghiệp
+                </p>
+              </div>
+              <div className="rounded-xl bg-white/15 px-5 py-3">
+                <p className="text-2xl font-black">1.2k</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-200 mt-0.5">
+                  Phòng Gym Cao Cấp
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
-    <main className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl items-center gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.72fr)] lg:px-8 lg:py-16">
-      <section className="relative hidden min-h-[560px] overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-lime-950 p-10 text-white shadow-2xl shadow-zinc-950/15 lg:flex lg:flex-col lg:justify-between">
-        <div className="absolute -right-24 -top-24 size-80 rounded-full bg-lime-300/20 blur-3xl" />
-        <div className="absolute -bottom-28 -left-20 size-72 rounded-full bg-orange-500/20 blur-3xl" />
-        <div className="relative">
-          <div className="grid size-12 place-items-center rounded-2xl bg-lime-300 text-zinc-950 shadow-lg shadow-lime-500/20">
-            <Dumbbell className="size-6" />
-          </div>
-          <p className="mt-8 text-sm font-black uppercase tracking-[0.18em] text-lime-300">
-            {t("common.brand")}
-          </p>
-          <h2 className="mt-3 max-w-lg text-4xl font-black leading-tight tracking-tight">
-            {t("auth.panelTitle")}
-          </h2>
-          <p className="mt-5 max-w-lg text-base leading-7 text-zinc-300">
-            {t("auth.panelDescription")}
-          </p>
-        </div>
-        <div className="relative grid gap-3">
-          {["auth.benefitOne", "auth.benefitTwo", "auth.benefitThree"].map(
-            (key) => (
-              <div
-                key={key}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur"
-              >
-                <CheckCircle2 className="size-5 shrink-0 text-lime-300" />
-                <span className="text-sm font-bold text-zinc-200">
-                  {t(key)}
-                </span>
+    <div className="min-h-screen flex flex-col">
+      <div
+        className={`flex flex-1 lg:grid ${isLogin ? "lg:grid-cols-[1fr_40%]" : "lg:grid-cols-[40%_1fr]"}`}
+      >
+        {isLogin ? (
+          <>
+            <div className="flex flex-col bg-gray-50">
+              <div className="px-8 pt-8 pb-4">
+                <Link href="/" className="text-xl font-bold text-[#2563EB]">
+                  FitMatch
+                </Link>
               </div>
-            ),
-          )}
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-md">
-        <p className="text-sm font-black uppercase tracking-[0.16em] text-orange-600">
-          {t("common.brand")}
-        </p>
-        <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-          {title}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-zinc-500">{description}</p>
-        <div className="fit-surface mt-7 p-6 sm:p-7">{children}</div>
-      </section>
-    </main>
+              <div className="flex flex-1 items-start justify-center px-6 pt-6 pb-12">
+                <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm border border-gray-100">
+                  {children}
+                </div>
+              </div>
+            </div>
+            {bluePanel}
+          </>
+        ) : (
+          <>
+            {bluePanel}
+            <div className="flex flex-col justify-center bg-white px-8 py-10 lg:px-16">
+              <div className="w-full max-w-md mx-auto">{children}</div>
+            </div>
+          </>
+        )}
+      </div>
+      <footer className="border-t border-gray-200 bg-white py-4 text-center text-xs text-gray-400">
+        © 2024 FitMatch Marketplace. Bảo lưu mọi quyền.
+      </footer>
+    </div>
   );
 }

@@ -4,27 +4,22 @@ import Link from "next/link";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SiteLayout } from "@/modules/layout/site-layout";
-import { AuthPageShell } from "@/shared/components/common/auth-page-shell";
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation();
   return (
     <SiteLayout>
-      <AuthPageShell
-        title={t("auth.forgotTitle")}
-        description={t("auth.forgotDescription")}
-      >
-        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
+      <main className="mx-auto max-w-md px-4 py-14 sm:px-6">
+        <h1 className="text-2xl font-black">{t("auth.forgotTitle")}</h1>
+        <p className="mt-2 text-sm text-gray-500">{t("auth.forgotDescription")}</p>
+        <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
           <Info className="size-6" />
           <p className="mt-3 font-semibold">{t("auth.recoveryUnavailable")}</p>
-          <Link
-            className="mt-5 inline-block text-sm font-black underline"
-            href="/login"
-          >
+          <Link className="mt-5 inline-block text-sm font-black underline" href="/login">
             {t("auth.returnToLogin")}
           </Link>
         </div>
-      </AuthPageShell>
+      </main>
     </SiteLayout>
   );
 }

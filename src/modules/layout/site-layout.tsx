@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  ChevronDown,
   Bell,
-  Dumbbell,
+  ChevronDown,
   LogOut,
   Menu,
   Moon,
@@ -51,7 +50,7 @@ function useVisibleNavItems() {
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="fit-shell flex min-h-screen flex-col text-[#10130f] dark:text-[#f5f5ed]">
+    <div className="fit-shell flex min-h-screen flex-col text-gray-900 dark:text-[#f5f5ed]">
       <SiteHeader />
       <MotionPage>{children}</MotionPage>
       <SiteFooter />
@@ -80,14 +79,11 @@ function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#dedfce]/80 bg-[#f7f7ef]/88 shadow-[0_6px_24px_rgba(16,19,15,0.04)] backdrop-blur-xl dark:border-white/10 dark:bg-[#080a07]/88">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#080a07]/95">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-[#a3ff12] text-[#10130f] shadow-lg shadow-lime-500/20">
-            <Dumbbell className="size-5" />
-          </span>
-          <span className="text-lg font-black tracking-tight">
-            {t("common.brand")}
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-xl font-black tracking-tight text-[#2563EB]">
+            FitMatch
           </span>
         </Link>
 
@@ -97,10 +93,10 @@ function SiteHeader() {
               key={href}
               href={href}
               className={cn(
-                "relative rounded-lg px-1 py-2 text-sm font-bold transition hover:text-[#10130f] dark:hover:text-white",
+                "relative rounded-lg px-1 py-2 text-sm font-semibold transition",
                 isActive(href)
-                  ? "text-[#10130f] after:absolute after:inset-x-1 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-[#ff6b22] dark:text-white"
-                  : "text-[#505647] dark:text-[#c9ccb8]",
+                  ? "text-[#2563EB] after:absolute after:inset-x-1 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-[#2563EB]"
+                  : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
               )}
             >
               {t(key)}
@@ -113,7 +109,7 @@ function SiteHeader() {
             value={locale}
             onValueChange={(v) => changeLanguage(v as "vi" | "en")}
           >
-            <SelectTrigger className="h-10 w-20 rounded-md border-[#dedfce] bg-white/80 text-sm font-bold text-[#10130f] dark:border-white/10 dark:bg-white/10 dark:text-white">
+            <SelectTrigger className="h-9 w-20 rounded-md border-gray-200 bg-white text-sm font-bold text-gray-700 dark:border-white/10 dark:bg-white/10 dark:text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -125,7 +121,7 @@ function SiteHeader() {
           <Button
             type="button"
             onClick={toggleTheme}
-            className="size-10 bg-white/80 p-0 text-[#10130f] shadow-none ring-1 ring-[#dedfce] hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10"
+            className="size-9 bg-gray-50 p-0 text-gray-600 shadow-none ring-1 ring-gray-200 hover:bg-gray-100 dark:bg-white/10 dark:text-white dark:ring-white/10"
             aria-label={t("common.theme")}
           >
             {theme === "dark" ? (
@@ -138,39 +134,47 @@ function SiteHeader() {
           {canUseCustomerCommerce && (
             <Link
               href={appRoutes.cart}
-              className="inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] transition hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10"
+              className="inline-flex size-9 items-center justify-center rounded-md bg-gray-50 text-gray-600 ring-1 ring-gray-200 transition hover:bg-gray-100 dark:bg-white/10 dark:text-white dark:ring-white/10"
             >
               <ShoppingCart className="size-4" />
             </Link>
           )}
           {canUseNotifications && (
-            <Link aria-label={t("notification.title")} href="/notifications" className="relative inline-flex size-10 items-center justify-center rounded-md bg-white/80 text-[#10130f] ring-1 ring-[#dedfce] dark:bg-white/10 dark:text-white dark:ring-white/10">
+            <Link
+              aria-label={t("notification.title")}
+              href="/notifications"
+              className="relative inline-flex size-9 items-center justify-center rounded-md bg-gray-50 text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-white dark:ring-white/10"
+            >
               <Bell className="size-4" />
-              {!!unread.data?.unread && <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{unread.data.unread}</span>}
+              {!!unread.data?.unread && (
+                <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-[#2563EB] px-1 text-[10px] font-black text-white">
+                  {unread.data.unread}
+                </span>
+              )}
             </Link>
           )}
 
           {status === "idle" || status === "loading" ? (
             <div
               aria-label={t("common.loading")}
-              className="h-10 w-32 animate-pulse rounded-md bg-[#dedfce] dark:bg-white/10"
+              className="h-9 w-32 animate-pulse rounded-md bg-gray-100 dark:bg-white/10"
             />
           ) : status === "authenticated" && user ? (
             <div className="relative">
               <Button
                 type="button"
                 onClick={() => setIsUserOpen((value) => !value)}
-                className="h-10 bg-[#ff6b22] px-3 text-white hover:bg-[#ff7f3f] dark:bg-[#ff6b22] dark:text-white"
+                className="h-9 bg-[#2563EB] px-3 text-white hover:bg-[#1D4ED8]"
               >
                 <UserCircle className="size-4" />
                 {user.username}
                 <ChevronDown className="size-4" />
               </Button>
               {isUserOpen && (
-                <div className="absolute right-0 top-12 w-56 rounded-lg border border-[#dedfce] bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
+                <div className="absolute right-0 top-11 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#121610]">
                   {user.role === "ROLE_CUSTOMER" && (
                     <Link
-                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10"
                       href={appRoutes.profile}
                     >
                       {t("common.profile")}
@@ -178,37 +182,37 @@ function SiteHeader() {
                   )}
                   {user.role === "ROLE_CUSTOMER" && (
                     <>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/bookings">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/bookings">
                         {t("bookingModule.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/sessions">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/sessions">
                         {t("sessionModule.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/workout-plans">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/workout-plans">
                         {t("workoutPlan.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/attendance">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/attendance">
                         {t("attendance.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/measurements">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/measurements">
                         {t("measurement.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/payments">
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/payments">
                         {t("payment.navigation")}
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10" href="/profile/reviews">{t("review.navigation")}</Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10" href="/profile/reviews">{t("review.navigation")}</Link>
                     </>
                   )}
                   {getHomeRouteForRole(user.role) !== appRoutes.profile && (
                     <Link
-                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10"
                       href={getHomeRouteForRole(user.role)}
                     >
                       {t("common.workspace")}
                     </Link>
                   )}
                   <Link
-                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/10"
                     href="/change-password"
                   >
                     {t("profile.changePassword")}
@@ -226,11 +230,14 @@ function SiteHeader() {
             </div>
           ) : (
             <>
-              <Link className="px-3 text-sm font-bold" href={appRoutes.login}>
+              <Link
+                className="px-3 text-sm font-semibold text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                href={appRoutes.login}
+              >
                 {t("common.login")}
               </Link>
               <Link
-                className="rounded-md bg-[#ff6b22] px-4 py-2 text-sm font-bold text-white"
+                className="rounded-md bg-[#2563EB] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1D4ED8]"
                 href={appRoutes.register}
               >
                 {t("common.register")}
@@ -242,7 +249,7 @@ function SiteHeader() {
         <Button
           type="button"
           onClick={() => setIsMenuOpen((value) => !value)}
-          className="ml-auto size-10 bg-white/80 p-0 text-[#10130f] shadow-none ring-1 ring-[#dedfce] hover:bg-white dark:bg-white/10 dark:text-white dark:ring-white/10 lg:hidden"
+          className="ml-auto size-9 bg-gray-50 p-0 text-gray-600 shadow-none ring-1 ring-gray-200 hover:bg-gray-100 dark:bg-white/10 dark:text-white dark:ring-white/10 lg:hidden"
           aria-label={t("common.menu")}
         >
           {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -250,69 +257,52 @@ function SiteHeader() {
       </div>
 
       {isMenuOpen && (
-        <div className="border-t border-[#dedfce] bg-[#f7f7ef] px-4 py-4 dark:border-white/10 dark:bg-[#080a07] lg:hidden">
-          <div className="space-y-2">
+        <div className="border-t border-gray-200 bg-white px-4 py-4 dark:border-white/10 dark:bg-[#080a07] lg:hidden">
+          <div className="space-y-1">
             {visibleNavItems.map(([key, href]) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setIsMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-[#f1f2e8] dark:hover:bg-white/10"
+                className="block rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
               >
                 {t(key)}
               </Link>
             ))}
             {status === "idle" || status === "loading" ? (
-              <div className="h-10 animate-pulse rounded-md bg-[#dedfce] dark:bg-white/10" />
+              <div className="h-10 animate-pulse rounded-md bg-gray-100 dark:bg-white/10" />
             ) : status === "authenticated" && user ? (
-              <div className="border-t border-[#dedfce] pt-2 dark:border-white/10">
-                <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-[#858a78]">
+              <div className="border-t border-gray-200 pt-2 mt-2 dark:border-white/10">
+                <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-gray-400">
                   {user.username}
                 </p>
                 {user.role === "ROLE_CUSTOMER" && (
-                  <Link
-                    className="block rounded-md px-3 py-2 text-sm font-semibold"
-                    href={appRoutes.profile}
-                  >
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
                     {t("common.profile")}
                   </Link>
                 )}
-                {canUseNotifications && <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/notifications">{t("notification.title")}</Link>}
+                {canUseNotifications && (
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/notifications">
+                    {t("notification.title")}
+                  </Link>
+                )}
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">
-                      {t("bookingModule.navigation")}
-                    </Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/sessions">
-                      {t("sessionModule.navigation")}
-                    </Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/workout-plans">
-                      {t("workoutPlan.navigation")}
-                    </Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/attendance">
-                      {t("attendance.navigation")}
-                    </Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/measurements">
-                      {t("measurement.navigation")}
-                    </Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/payments">
-                      {t("payment.navigation")}
-                    </Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">{t("bookingModule.navigation")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/sessions">{t("sessionModule.navigation")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/workout-plans">{t("workoutPlan.navigation")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/attendance">{t("attendance.navigation")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/measurements">{t("measurement.navigation")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/payments">{t("payment.navigation")}</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">{t("review.navigation")}</Link>
                   </>
                 )}
                 {getHomeRouteForRole(user.role) !== appRoutes.profile && (
-                  <Link
-                    className="block rounded-md px-3 py-2 text-sm font-semibold"
-                    href={getHomeRouteForRole(user.role)}
-                  >
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={getHomeRouteForRole(user.role)}>
                     {t("common.workspace")}
                   </Link>
                 )}
-                <Link
-                  className="block rounded-md px-3 py-2 text-sm font-semibold"
-                  href="/change-password"
-                >
+                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/change-password">
                   {t("profile.changePassword")}
                 </Link>
                 <button
@@ -325,15 +315,15 @@ function SiteHeader() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 border-t border-[#dedfce] pt-3 dark:border-white/10">
+              <div className="grid grid-cols-2 gap-2 border-t border-gray-200 pt-3 dark:border-white/10">
                 <Link
-                  className="rounded-md px-3 py-2 text-center text-sm font-semibold"
+                  className="rounded-md px-3 py-2 text-center text-sm font-semibold text-gray-700"
                   href={appRoutes.login}
                 >
                   {t("common.login")}
                 </Link>
                 <Link
-                  className="rounded-md bg-[#ff6b22] px-3 py-2 text-center text-sm font-bold text-white"
+                  className="rounded-md bg-[#2563EB] px-3 py-2 text-center text-sm font-bold text-white"
                   href={appRoutes.register}
                 >
                   {t("common.register")}
@@ -352,17 +342,17 @@ function SiteFooter() {
   const visibleNavItems = useVisibleNavItems();
 
   return (
-    <footer className="border-t border-[#dedfce] bg-[#10130f] px-4 py-10 text-white dark:border-white/10 dark:bg-black sm:px-6 lg:px-8">
+    <footer className="border-t border-gray-200 bg-gray-900 px-4 py-10 text-white dark:border-white/10 dark:bg-black sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-lg font-black">{t("common.brand")}</p>
-          <p className="mt-2 max-w-md text-sm text-[#c9ccb8]">
+          <p className="text-lg font-black text-white">{t("common.brand")}</p>
+          <p className="mt-2 max-w-md text-sm text-gray-400">
             {t("common.footerDescription")}
           </p>
         </div>
-        <div className="flex flex-wrap gap-4 text-sm font-semibold text-[#c9ccb8]">
+        <div className="flex flex-wrap gap-4 text-sm font-semibold text-gray-400">
           {visibleNavItems.map(([key, href]) => (
-            <Link key={href} href={href} className={cn("hover:text-[#a3ff12]")}>
+            <Link key={href} href={href} className={cn("hover:text-white transition")}>
               {t(key)}
             </Link>
           ))}
