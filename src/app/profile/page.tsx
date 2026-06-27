@@ -89,8 +89,8 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
 }
 
 function ProfileHeader({ user }: { user: AuthUser }) {
-  const initials = user.username
-    ? user.username
+  const initials = user.name
+    ? user.name
         .split(" ")
         .slice(0, 2)
         .map((n) => n[0]?.toUpperCase() ?? "")
@@ -110,7 +110,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold text-gray-900 truncate">{user.username}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 truncate">{user.name}</h1>
           <p className="text-sm text-[#475569] mt-1">
             Thành viên từ{" "}
             {user.createdAt
@@ -178,7 +178,7 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-[#475569]">Họ và tên</label>
           <Input
-            value={user.username ?? ""}
+            value={user.name ?? ""}
             readOnly
             className="h-11 border-[#e2e8f0] rounded-lg bg-gray-50 text-base text-[#191b23]"
           />
