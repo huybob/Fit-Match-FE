@@ -1,4 +1,11 @@
-import { Booking, GymPackage, Trainer } from "@/types/ecommerce.type";
+import {
+  BlogPost,
+  Booking,
+  Gym,
+  GymPackage,
+  Testimonial,
+  Trainer,
+} from "@/types/ecommerce.type";
 
 export const gymPackages: GymPackage[] = [
   {
@@ -49,58 +56,161 @@ export const gymPackages: GymPackage[] = [
 export const trainers: Trainer[] = [
   {
     id: "ngoc-anh",
-    name: "Ngoc Anh",
-    specialty: "Strength & Body Recomposition",
+    name: "Ngọc Anh",
+    specialty: "Sức mạnh & Thể lực",
     gender: "female",
-    experience: 6,
+    experience: 8,
     price: 450000,
     rating: 4.9,
-    reviews: 148,
+    reviews: 128,
     bio: "Certified PT focused on sustainable fat loss, strength training, and habit coaching.",
     availableSlots: ["08:00", "10:30", "16:30", "19:00"],
-  },
-  {
-    id: "tran-minh",
-    name: "Tran Minh",
-    specialty: "Powerlifting",
-    gender: "male",
-    experience: 8,
-    price: 520000,
-    rating: 4.8,
-    reviews: 121,
-    bio: "Powerlifting coach helping members improve squat, bench, deadlift, and injury prevention.",
-    availableSlots: ["06:30", "11:00", "17:30"],
+    location: "Quận 1, TP.HCM",
+    avatarColor: "from-blue-500 to-blue-700",
   },
   {
     id: "linh-chi",
     name: "Linh Chi",
-    specialty: "Yoga & Mobility",
+    specialty: "Yoga & Linh hoạt",
     gender: "female",
-    experience: 5,
+    experience: 12,
     price: 380000,
-    rating: 5,
-    reviews: 96,
+    rating: 5.0,
+    reviews: 214,
     bio: "Mobility specialist for office workers, runners, and members recovering from stiffness.",
     availableSlots: ["07:00", "12:00", "18:30"],
+    location: "Quận 3, TP.HCM",
+    avatarColor: "from-purple-500 to-purple-700",
+  },
+  {
+    id: "tran-minh",
+    name: "Trần Minh",
+    specialty: "Tập luyện Cường độ cao",
+    gender: "male",
+    experience: 5,
+    price: 520000,
+    rating: 4.8,
+    reviews: 93,
+    bio: "Powerlifting coach helping members improve squat, bench, deadlift, and injury prevention.",
+    availableSlots: ["06:30", "11:00", "17:30"],
+    location: "Bình Thạnh, TP.HCM",
+    avatarColor: "from-teal-500 to-teal-700",
   },
   {
     id: "hoang-nam",
-    name: "Hoang Nam",
-    specialty: "HIIT & Conditioning",
+    name: "Hoàng Nam",
+    specialty: "Dinh dưỡng & Giảm mỡ",
     gender: "male",
-    experience: 7,
+    experience: 10,
     price: 420000,
-    rating: 4.7,
-    reviews: 104,
+    rating: 4.9,
+    reviews: 182,
     bio: "Conditioning coach designing high-energy HIIT programs and athletic performance blocks.",
     availableSlots: ["09:00", "15:00", "20:00"],
+    location: "Quận 7, TP.HCM",
+    avatarColor: "from-orange-500 to-orange-700",
+  },
+];
+
+export const gyms: Gym[] = [
+  {
+    id: "vanguard",
+    name: "Vanguard Elite Athletics",
+    location: "Trung tâm, Quận 1",
+    rating: 4.9,
+    badge: "4.9 Đánh giá Cao nhất",
+    facilities: ["Phòng nặng hỗi", "Sân có lộ Olympic", "Lớp pháp tranh"],
+    gradient: "from-slate-800 via-slate-700 to-slate-900",
+  },
+  {
+    id: "pulse",
+    name: "Pulse High-Performance",
+    location: "Phú Nhuận, TP.HCM",
+    rating: 4.7,
+    badge: "Mô Studio",
+    facilities: ["Phòng HIT", "Quầy Dinh dưỡng", "Hồ bơi"],
+    gradient: "from-indigo-800 via-indigo-700 to-purple-900",
+  },
+  {
+    id: "zenith",
+    name: "Zenith Wellness Lab",
+    location: "Thủ Đức, TP.HCM",
+    rating: 4.8,
+    badge: "4.8 Thân Môi trường",
+    facilities: ["Yoga Studio", "Pilates Reformer", "Tắm hơi"],
+    gradient: "from-emerald-800 via-teal-700 to-cyan-900",
+  },
+];
+
+export const testimonials: Testimonial[] = [
+  {
+    id: "t1",
+    name: "Minh Quân",
+    title: "Khoa học Phục hồi · Thành viên Premium",
+    initials: "MQ",
+    quote:
+      '"FitMatch hoàn toàn tối ưu hóa cách tôi tìm kiếm các khóa huấn luyện chuyên sâu. Chất lượng các HLV cá nhân tại đây là vô đối trên thị trường. Quy trình đặt lịch thật sự dễ dàng."',
+    date: "12 tháng 5, 2024",
+  },
+  {
+    id: "t2",
+    name: "Thanh Thảo",
+    title: "Vận động viên Triathlon",
+    initials: "TT",
+    quote:
+      '"Sự lựa chọn phòng tập tuyệt vời. Tôi đi công tác nhiều và việc có thể đặt ve ngay tại các câu lạc bộ cao cấp của một ứng dụng duy nhất là bước ngoặt cho thời gian của tôi."',
+    date: "16 tháng 4, 2024",
+  },
+  {
+    id: "t3",
+    name: "Ryan M.",
+    title: "Nhà vô địch Fitness Amateur",
+    initials: "RM",
+    quote:
+      '"Là một vận động viên, việc đúng chuyên môn ở một nơi là then chốt. Bộ lọc và so sánh tôi đã tìm thấy một huấn luyện viên 5 thực thụ trong lần đầu tiên dùng app."',
+    date: "15 tháng 6, 2024",
+  },
+];
+
+export const blogPosts: BlogPost[] = [
+  {
+    id: "b1",
+    category: "Hiệu Suất",
+    title: "Khoa học Phục hồi: Tối đa hóa Kết quả sau 40",
+    excerpt: "Khám phá các chiến lược khoa học để phục hồi hiệu quả và duy trì thể lực đỉnh cao.",
+    date: "12 tháng 5, 2024",
+    color: "from-blue-600 to-blue-800",
+  },
+  {
+    id: "b2",
+    category: "Dinh Dưỡng",
+    title: "Tư vấn hóa Vị chế cho Sự trung hành tức",
+    excerpt: "Lựa chọn thực phẩm tối ưu để hỗ trợ quá trình tập luyện và phục hồi cơ thể.",
+    date: "16 tháng 4, 2024",
+    color: "from-green-600 to-emerald-800",
+  },
+  {
+    id: "b3",
+    category: "Sống Khỏe",
+    title: "Làm chủ Trạng thái Flow: Yoga cho sự Minh mẫn",
+    excerpt: "Kết hợp thiền định và vận động tập luyện để nâng cao kiểm soát Stress và sức khỏe tâm thần.",
+    date: "18 tháng 4, 2024",
+    color: "from-purple-600 to-purple-800",
+  },
+  {
+    id: "b4",
+    category: "Tập Luyện",
+    title: "Sự tiến hóa của Tập luyện Kháng lực năm 2024",
+    excerpt: "Các kỹ thuật phát triển mới nhất để tập luyện Kháng lực được áp dụng trong các kỳ Olympic.",
+    date: "15 tháng 6, 2024",
+    color: "from-orange-600 to-red-800",
   },
 ];
 
 export const bookings: Booking[] = [
   {
     id: "BK-1024",
-    trainerName: "Ngoc Anh",
+    trainerName: "Ngọc Anh",
     date: "2026-06-19",
     time: "16:30",
     type: "PT 1:1",
@@ -108,7 +218,7 @@ export const bookings: Booking[] = [
   },
   {
     id: "BK-1025",
-    trainerName: "Tran Minh",
+    trainerName: "Trần Minh",
     date: "2026-06-20",
     time: "06:30",
     type: "Strength class",
