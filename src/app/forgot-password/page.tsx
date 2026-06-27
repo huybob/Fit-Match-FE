@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, CheckCircle, ChevronLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { authService } from "@/services/auth.service";
+import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { forgotPasswordSchema } from "@/modules/forms/schemas";
@@ -14,6 +16,9 @@ import { forgotPasswordSchema } from "@/modules/forms/schemas";
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
+  const router = useRouter();
+  const { status } = useAuthStore();
+  const isAuthenticated = status === "authenticated";
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: { email: "" },
@@ -37,9 +42,19 @@ export default function ForgotPasswordPage() {
           <Link href="/" className="text-sm text-[#004ac6] tracking-tight font-normal">
             FitMatch
           </Link>
-          <Link href="/login" className="text-sm text-[#004ac6] hover:underline">
-            Quay lại Đăng nhập
-          </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-1 text-sm text-[#004ac6] hover:underline"
+            >
+              <ChevronLeft className="size-3.5" />
+              Quay lại
+            </button>
+          ) : (
+            <Link href="/login" className="text-sm text-[#004ac6] hover:underline">
+              Quay lại Đăng nhập
+            </Link>
+          )}
         </div>
       </header>
 
