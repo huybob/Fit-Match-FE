@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -35,6 +34,34 @@ type Scope = "customer" | "pt" | "gym";
 type BookingAction = "submit" | "confirm" | "checkIn" | "complete" | "noShow" | "cancel";
 const statuses: BookingStatus[] = ["DRAFT", "PENDING", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "NO_SHOW"];
 
+const scopeTitles: Record<string, string> = {
+  customerTitle: "Đặt lịch của tôi",
+  ptTitle: "Lịch đặt của khách",
+  gymTitle: "Lịch đặt tại phòng gym",
+  customerDescription: "Xem và quản lý các lịch đặt của bạn.",
+  ptDescription: "Xem và quản lý các lịch đặt từ khách hàng.",
+  gymDescription: "Xem và quản lý các lịch đặt tại phòng gym.",
+};
+
+const bookingStatusLabels: Record<string, string> = {
+  DRAFT: "Bản nháp",
+  PENDING: "Đang chờ",
+  CONFIRMED: "Đã xác nhận",
+  CHECKED_IN: "Đã check-in",
+  COMPLETED: "Hoàn thành",
+  CANCELLED: "Đã hủy",
+  NO_SHOW: "Vắng mặt",
+};
+
+const actionSuccessLabels: Record<string, string> = {
+  submit: "Đã gửi yêu cầu đặt lịch",
+  confirm: "Đã xác nhận lịch đặt",
+  checkIn: "Đã check-in",
+  complete: "Đã hoàn thành buổi tập",
+  noShow: "Đã đánh dấu vắng mặt",
+  cancel: "Đã hủy lịch đặt",
+};
+
 function dateText(value: string | undefined, language: string) {
   return value ? new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", { dateStyle: "medium" }).format(new Date(`${value}T00:00:00`)) : "—";
 }
@@ -54,7 +81,7 @@ function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badg
 }
 
 export function BookingWorkspacePage({ scope }: { scope: Scope }) {
-  const { t, i18n } = useTranslation();
+  const language = "vi";
   const [status, setStatus] = useState<BookingStatus | "">("");
   const [date, setDate] = useState("");
   const [page, setPage] = useState(0);
@@ -70,12 +97,12 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-            <h1 className="text-3xl font-black tracking-tight">{t(`bookingModule.${scope}Title`)}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t(`bookingModule.${scope}Description`)}</p>
+            <h1 className="text-3xl font-black tracking-tight">{scopeTitles[`${scope}Title`] ?? "Đặt lịch"}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{scopeTitles[`${scope}Description`] ?? ""}</p>
           </div>
           {scope === "customer" && (
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" />{t("bookingModule.create")}
+              <Plus className="size-4" />Tạo lịch đặt
             </Button>
           )}
         </div>
@@ -83,31 +110,31 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
 
       <section className="mb-5 grid gap-3 rounded-2xl border border-border bg-card/80 p-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("bookingModule.status")}</span>
+          <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">Trạng thái</span>
           <Select value={status} onValueChange={(v) => { setStatus(v as BookingStatus | ""); setPage(0); }}>
             <SelectTrigger>
-              <SelectValue placeholder={t("bookingModule.allStatuses")} />
+              <SelectValue placeholder="Tất cả trạng thái" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t("bookingModule.allStatuses")}</SelectItem>
+              <SelectItem value="">Tất cả trạng thái</SelectItem>
               {statuses.map((s) => (
-                <SelectItem key={s} value={s}>{t(`bookingModule.statuses.${s}`)}</SelectItem>
+                <SelectItem key={s} value={s}>{bookingStatusLabels[s] ?? s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         {scope !== "customer" && (
           <div className="grid gap-1.5">
-            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("bookingModule.date")}</span>
+            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">Ngày tập</span>
             <DatePicker value={date} onChange={(v) => { setDate(v); setPage(0); }} />
           </div>
         )}
       </section>
 
       {query.isLoading ? <LoadingSkeleton /> : query.isError ? (
-        <EmptyState title={t("bookingModule.loadError")} description={toErrorMessage(query.error)} />
+        <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title={t("bookingModule.empty")} description={t("bookingModule.emptyDescription")} />
+        <EmptyState title="Chưa có lịch đặt" description="Bạn chưa có lịch đặt nào. Hãy tạo lịch đặt mới để bắt đầu." />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {items.map((booking) => (
@@ -120,17 +147,17 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">#{booking.id}</p>
-                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{booking.ptServiceName ?? t("bookingModule.unnamedService")}</h2>
+                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{booking.ptServiceName ?? "Dịch vụ không tên"}</h2>
                 </div>
                 <Badge variant={statusVariant(booking.status)}>
-                  {booking.status ? t(`bookingModule.statuses.${booking.status}`) : "—"}
+                  {booking.status ? (bookingStatusLabels[booking.status] ?? booking.status) : "—"}
                 </Badge>
               </div>
               <div className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{dateText(booking.bookingDate, i18n.language)} · {timeText(booking.startTime)}</span>
+                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{dateText(booking.bookingDate, language)} · {timeText(booking.startTime)}</span>
                 <span className="flex items-center gap-2"><UserRound className="size-4 text-primary" />{scope === "customer" ? booking.ptName : booking.customerName}</span>
                 <span className="flex items-center gap-2"><MapPin className="size-4 text-blue-500" />{booking.branchName ?? booking.gymName}</span>
-                <strong className="text-foreground">{money(booking.price, i18n.language)}</strong>
+                <strong className="text-foreground">{money(booking.price, language)}</strong>
               </div>
             </button>
           ))}
@@ -156,7 +183,7 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
 }
 
 function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | null; scope: Scope; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
+  const language = "vi";
   const { toast } = useToast();
   const action = useBookingAction();
   const [confirming, setConfirming] = useState<{ action: BookingAction; message?: string } | null>(null);
@@ -164,44 +191,44 @@ function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | n
 
   const bookingId = booking.id;
   const actions: Array<{ action: BookingAction; label: string; message?: string }> = [];
-  if (scope === "customer" && booking.status === "DRAFT") actions.push({ action: "submit", label: t("bookingModule.submit") });
-  if (scope === "customer" && ["DRAFT", "PENDING", "CONFIRMED"].includes(booking.status ?? "")) actions.push({ action: "cancel", label: t("bookingModule.cancel") });
-  if ((scope === "pt" || scope === "gym") && booking.status === "PENDING") actions.push({ action: "confirm", label: t("bookingModule.confirm") });
+  if (scope === "customer" && booking.status === "DRAFT") actions.push({ action: "submit", label: "Gửi yêu cầu" });
+  if (scope === "customer" && ["DRAFT", "PENDING", "CONFIRMED"].includes(booking.status ?? "")) actions.push({ action: "cancel", label: "Hủy lịch" });
+  if ((scope === "pt" || scope === "gym") && booking.status === "PENDING") actions.push({ action: "confirm", label: "Xác nhận" });
   if (scope === "pt" && booking.status === "CONFIRMED") {
-    actions.push({ action: "checkIn", label: t("bookingModule.checkIn") });
-    actions.push({ action: "noShow", label: t("bookingModule.noShow") });
-    actions.push({ action: "cancel", label: t("bookingModule.cancel") });
+    actions.push({ action: "checkIn", label: "Check-in" });
+    actions.push({ action: "noShow", label: "Vắng mặt" });
+    actions.push({ action: "cancel", label: "Hủy lịch" });
   }
-  if (scope === "pt" && booking.status === "CHECKED_IN") actions.push({ action: "complete", label: t("bookingModule.complete") });
+  if (scope === "pt" && booking.status === "CHECKED_IN") actions.push({ action: "complete", label: "Hoàn thành" });
 
   async function run() {
     if (!confirming || !bookingId) return;
     try {
       await action.mutateAsync({ id: bookingId, action: confirming.action, message: confirming.message });
-      toast({ type: "success", title: t(`bookingModule.actionSuccess.${confirming.action}`) });
+      toast({ type: "success", title: actionSuccessLabels[confirming.action] ?? "Thao tác thành công" });
       setConfirming(null);
       onClose();
     } catch (error) {
-      toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(error) });
+      toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
     }
   }
 
   return (
-    <Dialog open title={t("bookingModule.detail")} onClose={onClose}>
+    <Dialog open title="Chi tiết lịch đặt" onClose={onClose}>
       <div className="rounded-2xl bg-muted/50 p-5">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-xl font-black">{booking.ptServiceName}</h3>
           <Badge variant={statusVariant(booking.status)}>
-            {booking.status ? t(`bookingModule.statuses.${booking.status}`) : "—"}
+            {booking.status ? (bookingStatusLabels[booking.status] ?? booking.status) : "—"}
           </Badge>
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <Info label={t("bookingModule.customer")} value={booking.customerName} />
-          <Info label={t("bookingModule.trainer")} value={booking.ptName} />
-          <Info label={t("bookingModule.location")} value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
-          <Info label={t("bookingModule.schedule")} value={`${dateText(booking.bookingDate, i18n.language)} · ${timeText(booking.startTime)}–${timeText(booking.endTime)}`} />
-          <Info label={t("bookingModule.duration")} value={`${booking.durationMinutes ?? 0} ${t("bookingModule.minutes")}`} />
-          <Info label={t("bookingModule.price")} value={money(booking.price, i18n.language)} />
+          <Info label="Khách hàng" value={booking.customerName} />
+          <Info label="Huấn luyện viên" value={booking.ptName} />
+          <Info label="Địa điểm" value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
+          <Info label="Lịch tập" value={`${dateText(booking.bookingDate, language)} · ${timeText(booking.startTime)}–${timeText(booking.endTime)}`} />
+          <Info label="Thời lượng" value={`${booking.durationMinutes ?? 0} phút`} />
+          <Info label="Giá" value={money(booking.price, language)} />
         </dl>
         {booking.notes && (
           <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm">{booking.notes}</p>
@@ -223,20 +250,20 @@ function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | n
       )}
 
       {confirming && (
-        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-          <p className="font-black">{t("bookingModule.confirmAction")}</p>
+        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <p className="font-black">Bạn có chắc muốn thực hiện thao tác này?</p>
           {["cancel", "confirm"].includes(confirming.action) && (
             <Textarea
               className="mt-3"
               maxLength={500}
-              placeholder={t("bookingModule.messageOptional")}
+              placeholder="Ghi chú (không bắt buộc)"
               value={confirming.message ?? ""}
               onChange={(e) => setConfirming({ ...confirming, message: e.target.value })}
             />
           )}
           <div className="mt-3 flex gap-2">
-            <Button disabled={action.isPending} onClick={() => void run()}>{t("common.confirm")}</Button>
-            <Button variant="outline" onClick={() => setConfirming(null)}>{t("common.cancel")}</Button>
+            <Button disabled={action.isPending} onClick={() => void run()}>Xác nhận</Button>
+            <Button variant="outline" onClick={() => setConfirming(null)}>Hủy</Button>
           </div>
         </div>
       )}
@@ -254,7 +281,7 @@ function Info({ label, value }: { label: string; value?: string }) {
 }
 
 function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
+  const language = "vi";
   const { toast } = useToast();
   const create = useCreateBooking();
   const [ptUserId, setPtUserId] = useState(0);
@@ -270,43 +297,43 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
   });
 
   return (
-    <Dialog open={open} title={t("bookingModule.create")} onClose={onClose}>
+    <Dialog open={open} title="Tạo lịch đặt" onClose={onClose}>
       <form
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={form.handleSubmit(async (values) => {
           try {
             await create.mutateAsync({ ...values, startTime: `${values.startTime}:00` });
-            toast({ type: "success", title: t("bookingModule.createdDraft"), description: t("bookingModule.submitDraftHint") });
+            toast({ type: "success", title: "Đã tạo bản nháp lịch đặt", description: "Hãy gửi yêu cầu để xác nhận lịch đặt." });
             form.reset();
             setPtUserId(0);
             setGymId(0);
             onClose();
           } catch (error) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(error) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
           }
         })}
       >
         <div className="sm:col-span-2">
-          <FieldShell label={t("bookingModule.ptUserIdLabel")}>
+          <FieldShell label="ID huấn luyện viên">
             <div className="flex gap-2">
               <Input
                 type="number"
                 min={1}
-                placeholder={t("bookingModule.ptUserIdPlaceholder")}
+                placeholder="Nhập ID người dùng của PT"
                 onChange={(e) => setPtUserId(Number(e.target.value) || 0)}
               />
-              {trainer.isFetching && <span className="self-center text-xs text-muted-foreground">{t("common.loading")}</span>}
+              {trainer.isFetching && <span className="self-center text-xs text-muted-foreground">Đang xử lý...</span>}
             </div>
           </FieldShell>
-          {trainer.isError && <p className="mt-1 text-sm text-destructive">{t("bookingModule.ptNotFound")}</p>}
+          {trainer.isError && <p className="mt-1 text-sm text-destructive">Không tìm thấy huấn luyện viên</p>}
           {trainer.data && (
-            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/30">
-              <strong>{trainer.data.username}</strong> · {trainer.data.bio || t("trainerModule.emptyBio")}
+            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
+              <strong>{trainer.data.username}</strong> · {trainer.data.bio || "Chưa có mô tả"}
             </div>
           )}
         </div>
 
-        <FieldShell label={t("bookingModule.serviceLabel")} error={form.formState.errors.ptServiceId}>
+        <FieldShell label="Dịch vụ" error={form.formState.errors.ptServiceId}>
           <Controller
             control={form.control}
             name="ptServiceId"
@@ -317,12 +344,12 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
                 disabled={!services.data?.content?.length}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={services.isFetching ? t("common.loading") : t("bookingModule.servicePlaceholder")} />
+                  <SelectValue placeholder={services.isFetching ? "Đang xử lý..." : "Chọn dịch vụ"} />
                 </SelectTrigger>
                 <SelectContent>
                   {services.data?.content?.map((s) => (
                     <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name} · {new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-US", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(s.price ?? 0)}
+                      {s.name} · {new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(s.price ?? 0)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -331,13 +358,13 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
           />
         </FieldShell>
 
-        <FieldShell label={t("bookingModule.gymLabel")}>
+        <FieldShell label="Phòng gym">
           <Select
             value={String(gymId)}
             onValueChange={(v) => { setGymId(Number(v)); form.setValue("branchId", 0); }}
           >
             <SelectTrigger>
-              <SelectValue placeholder={gyms.isFetching ? t("common.loading") : t("bookingModule.gymPlaceholder")} />
+              <SelectValue placeholder={gyms.isFetching ? "Đang xử lý..." : "Chọn phòng gym"} />
             </SelectTrigger>
             <SelectContent>
               {gyms.data?.content?.map((g) => (
@@ -347,7 +374,7 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
           </Select>
         </FieldShell>
 
-        <FieldShell label={t("bookingModule.branchLabel")} error={form.formState.errors.branchId}>
+        <FieldShell label="Chi nhánh" error={form.formState.errors.branchId}>
           <Controller
             control={form.control}
             name="branchId"
@@ -358,7 +385,7 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
                 disabled={!branches.data?.content?.length}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={branches.isFetching ? t("common.loading") : t("bookingModule.branchPlaceholder")} />
+                  <SelectValue placeholder={branches.isFetching ? "Đang xử lý..." : "Chọn chi nhánh"} />
                 </SelectTrigger>
                 <SelectContent>
                   {branches.data?.content?.map((b) => (
@@ -370,7 +397,7 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
           />
         </FieldShell>
 
-        <FieldShell label={t("bookingModule.date")} error={form.formState.errors.bookingDate}>
+        <FieldShell label="Ngày tập" error={form.formState.errors.bookingDate}>
           <Controller
             control={form.control}
             name="bookingDate"
@@ -379,19 +406,19 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
             )}
           />
         </FieldShell>
-        <FieldShell label={t("bookingModule.startTime")} error={form.formState.errors.startTime}>
+        <FieldShell label="Giờ bắt đầu" error={form.formState.errors.startTime}>
           <Input type="time" {...form.register("startTime")} />
         </FieldShell>
 
         <div className="sm:col-span-2">
-          <FieldShell label={t("bookingModule.notes")} error={form.formState.errors.notes}>
+          <FieldShell label="Ghi chú" error={form.formState.errors.notes}>
             <Textarea {...form.register("notes")} />
           </FieldShell>
         </div>
 
         <Button className="sm:col-span-2" disabled={create.isPending}>
           <CalendarCheck2 className="size-4" />
-          {create.isPending ? t("common.loading") : t("bookingModule.saveDraft")}
+          {create.isPending ? "Đang xử lý..." : "Lưu bản nháp"}
         </Button>
       </form>
     </Dialog>

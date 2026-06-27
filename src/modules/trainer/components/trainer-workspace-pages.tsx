@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, RefreshCw, UploadCloud, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -106,8 +105,17 @@ function localTime(value: string) {
   return `${value}:00`;
 }
 
+const dayLabels: Record<number, string> = {
+  0: "Thứ Hai",
+  1: "Thứ Ba",
+  2: "Thứ Tư",
+  3: "Thứ Năm",
+  4: "Thứ Sáu",
+  5: "Thứ Bảy",
+  6: "Chủ Nhật",
+};
+
 export function TrainerProfilePage() {
-  const { t } = useTranslation();
   const query = useGetMyTrainerProfile();
   const update = useUpdateTrainerProfile();
   const upload = useUploadTrainerAvatar();
@@ -135,7 +143,7 @@ export function TrainerProfilePage() {
   if (query.isError)
     return (
       <EmptyState
-        title={t("trainerModule.loadProfileError")}
+        title="Không thể tải hồ sơ huấn luyện viên"
         description={toErrorMessage(query.error)}
       />
     );
@@ -143,8 +151,8 @@ export function TrainerProfilePage() {
   return (
     <>
       <PageHeader
-        title={t("trainerModule.profileTitle")}
-        description={t("trainerModule.profileDescription")}
+        title="Hồ sơ huấn luyện viên"
+        description="Cập nhật thông tin cá nhân và ảnh đại diện của bạn."
       />
       <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.75fr)]">
         <form
@@ -154,22 +162,22 @@ export function TrainerProfilePage() {
               await update.mutateAsync(values);
               toast({
                 type: "success",
-                title: t("trainerModule.profileUpdated"),
+                title: "Cập nhật hồ sơ thành công",
               });
             } catch (error) {
-              fail(toast, error, t("common.requestFailed"));
+              fail(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <FieldShell
-            label={t("trainerModule.biography")}
+            label="Tiểu sử"
             error={form.formState.errors.bio}
           >
             <Textarea className="min-h-32" {...form.register("bio")} />
           </FieldShell>
           <div className="grid gap-4 sm:grid-cols-3">
             <FieldShell
-              label={t("trainerModule.experienceYears")}
+              label="Số năm kinh nghiệm"
               error={form.formState.errors.experienceYears}
             >
               <Input
@@ -178,7 +186,7 @@ export function TrainerProfilePage() {
               />
             </FieldShell>
             <FieldShell
-              label={t("trainerModule.priceHour")}
+              label="Giá mỗi giờ"
               error={form.formState.errors.pricePerHour}
             >
               <Input
@@ -187,7 +195,7 @@ export function TrainerProfilePage() {
               />
             </FieldShell>
             <FieldShell
-              label={t("trainerModule.priceSession")}
+              label="Giá mỗi buổi"
               error={form.formState.errors.pricePerSession}
             >
               <Input
@@ -197,7 +205,7 @@ export function TrainerProfilePage() {
             </FieldShell>
           </div>
           <Button disabled={update.isPending}>
-            {t("trainerModule.saveProfile")}
+            Lưu hồ sơ
           </Button>
         </form>
         <aside className="flex flex-col items-center justify-center rounded-2xl border border-border bg-gradient-to-br from-zinc-950 to-zinc-800 p-7 text-center text-white shadow-sm">
@@ -213,7 +221,7 @@ export function TrainerProfilePage() {
             htmlFor="trainer-avatar"
           >
             <UploadCloud className="size-4" />
-            {t("trainerModule.uploadAvatar")}
+            Tải lên ảnh đại diện
             <input
               className="sr-only"
               id="trainer-avatar"
@@ -226,10 +234,10 @@ export function TrainerProfilePage() {
                   await upload.mutateAsync(file);
                   toast({
                     type: "success",
-                    title: t("trainerModule.avatarUploaded"),
+                    title: "Tải lên ảnh đại diện thành công",
                   });
                 } catch (error) {
-                  fail(toast, error, t("common.requestFailed"));
+                  fail(toast, error, "Yêu cầu thất bại");
                 }
               }}
             />
@@ -241,7 +249,6 @@ export function TrainerProfilePage() {
 }
 
 export function TrainerServicesPage() {
-  const { t } = useTranslation();
   const query = useGetTrainerServices();
   const create = useCreateTrainerService();
   const update = useUpdateTrainerService();
@@ -273,12 +280,12 @@ export function TrainerServicesPage() {
   return (
     <>
       <PageHeader
-        title={t("trainerModule.services")}
-        description={t("trainerModule.servicesDescription")}
+        title="Dịch vụ huấn luyện"
+        description="Quản lý các dịch vụ bạn cung cấp cho học viên."
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            {t("trainerModule.addService")}
+            Thêm dịch vụ
           </Button>
         }
       />
@@ -295,19 +302,19 @@ export function TrainerServicesPage() {
                 <div>
                   <h2 className="font-black">{item.name}</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {item.description || t("common.noDescription")}
+                    {item.description || "Chưa có mô tả"}
                   </p>
                 </div>
                 <Badge variant={item.isActive ? "success" : "secondary"}>
-                  {t(item.isActive ? "common.active" : "common.inactive")}
+                  {item.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
                 </Badge>
               </div>
               <p className="mt-4 font-black text-accent">
                 {currency.format(item.price ?? 0)} · {item.durationMinutes}{" "}
-                {t("trainerModule.minutesShort")}
+                phút
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Button onClick={() => show(item)}>{t("common.edit")}</Button>
+                <Button onClick={() => show(item)}>Sửa</Button>
                 <Button
                   variant="secondary"
                   onClick={() =>
@@ -316,12 +323,12 @@ export function TrainerServicesPage() {
                   }
                 >
                   <RefreshCw className="size-4" />
-                  {t("common.toggle")}
+                  Đổi trạng thái
                 </Button>
                 {item.id && (
                   <ConfirmDialog
-                    label={t("common.delete")}
-                    title={t("trainerModule.deleteServiceTitle")}
+                    label="Xóa"
+                    title="Xóa dịch vụ này?"
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -331,16 +338,14 @@ export function TrainerServicesPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("trainerModule.emptyServices")}
-          description={t("trainerModule.emptyServicesDescription")}
+          title="Chưa có dịch vụ nào"
+          description="Hãy thêm dịch vụ đầu tiên của bạn."
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={t(
-          editing ? "trainerModule.editService" : "trainerModule.createService",
-        )}
+        title={editing ? "Sửa dịch vụ" : "Tạo dịch vụ mới"}
       >
         <form
           className="space-y-4"
@@ -353,33 +358,31 @@ export function TrainerServicesPage() {
               }
               toast({
                 type: "success",
-                title: t(
-                  editing
-                    ? "trainerModule.serviceUpdated"
-                    : "trainerModule.serviceCreated",
-                ),
+                title: editing
+                  ? "Cập nhật dịch vụ thành công"
+                  : "Tạo dịch vụ thành công",
               });
               setOpen(false);
             } catch (error) {
-              fail(toast, error, t("common.requestFailed"));
+              fail(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <FieldShell
-            label={t("common.name")}
+            label="Tên"
             error={form.formState.errors.name}
           >
             <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label={t("common.description")}
+            label="Mô tả"
             error={form.formState.errors.description}
           >
             <Textarea className="min-h-24" {...form.register("description")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
-              label={t("trainerModule.price")}
+              label="Giá"
               error={form.formState.errors.price}
             >
               <Input
@@ -388,7 +391,7 @@ export function TrainerServicesPage() {
               />
             </FieldShell>
             <FieldShell
-              label={t("trainerModule.durationMinutes")}
+              label="Thời lượng (phút)"
               error={form.formState.errors.durationMinutes}
             >
               <Input
@@ -398,7 +401,7 @@ export function TrainerServicesPage() {
             </FieldShell>
           </div>
           <Button className="w-full">
-            {t(editing ? "common.update" : "common.create")}
+            {editing ? "Cập nhật" : "Tạo mới"}
           </Button>
         </form>
       </Dialog>
@@ -407,7 +410,6 @@ export function TrainerServicesPage() {
 }
 
 export function TrainerAvailabilityPage() {
-  const { t } = useTranslation();
   const query = useGetTrainerAvailability();
   const create = useCreateTrainerAvailability();
   const update = useUpdateTrainerAvailability();
@@ -449,8 +451,8 @@ export function TrainerAvailabilityPage() {
   return (
     <>
       <PageHeader
-        title={t("trainerModule.availability")}
-        description={t("trainerModule.availabilityDescription")}
+        title="Lịch rảnh"
+        description="Quản lý các khung giờ bạn có thể nhận lịch tập."
       />
       <form
         className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-5 md:grid-cols-5"
@@ -470,15 +472,13 @@ export function TrainerAvailabilityPage() {
             }
             toast({
               type: "success",
-              title: t(
-                editing
-                  ? "trainerModule.availabilityUpdated"
-                  : "trainerModule.availabilityCreated",
-              ),
+              title: editing
+                ? "Cập nhật lịch rảnh thành công"
+                : "Thêm lịch rảnh thành công",
             });
             edit();
           } catch (error) {
-            fail(toast, error, t("common.requestFailed"));
+            fail(toast, error, "Yêu cầu thất bại");
           }
         })}
       >
@@ -491,7 +491,7 @@ export function TrainerAvailabilityPage() {
               <SelectContent>
                 {days.map((day, index) => (
                   <SelectItem key={day} value={String(index)}>
-                    {t(`trainerModule.days.${index}`)}
+                    {dayLabels[index] ?? day}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -499,12 +499,12 @@ export function TrainerAvailabilityPage() {
           )}
         />
         <Input
-          aria-label={t("trainerModule.startTime")}
+          aria-label="Giờ bắt đầu"
           type="time"
           {...form.register("startTime")}
         />
         <Input
-          aria-label={t("trainerModule.endTime")}
+          aria-label="Giờ kết thúc"
           type="time"
           {...form.register("endTime")}
         />
@@ -515,12 +515,12 @@ export function TrainerAvailabilityPage() {
             <DatePicker
               value={field.value}
               onChange={field.onChange}
-              placeholder={t("trainerModule.effectiveDate")}
+              placeholder="Ngày hiệu lực"
             />
           )}
         />
         <Button>
-          {t(editing ? "common.update" : "trainerModule.addSlot")}
+          {editing ? "Cập nhật" : "Thêm khung giờ"}
         </Button>
       </form>
       {query.isLoading ? (
@@ -533,20 +533,20 @@ export function TrainerAvailabilityPage() {
               className="rounded-xl border border-border bg-card p-5"
             >
               <h2 className="font-black">
-                {t(`trainerModule.days.${item.dayOfWeek ?? 0}`)}
+                {dayLabels[item.dayOfWeek ?? 0] ?? days[item.dayOfWeek ?? 0]}
               </h2>
               <p className="mt-2">
                 {timeText(item.startTime)}–{timeText(item.endTime)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {item.isRecurring ? t("common.recurring") : item.effectiveDate}
+                {item.isRecurring ? "Định kỳ" : item.effectiveDate}
               </p>
               <div className="mt-4 flex gap-2">
-                <Button onClick={() => edit(item)}>{t("common.edit")}</Button>
+                <Button onClick={() => edit(item)}>Sửa</Button>
                 {item.id && (
                   <ConfirmDialog
-                    label={t("common.delete")}
-                    title={t("trainerModule.deleteAvailabilityTitle")}
+                    label="Xóa"
+                    title="Xóa khung giờ này?"
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -556,8 +556,8 @@ export function TrainerAvailabilityPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("trainerModule.noAvailability")}
-          description={t("trainerModule.emptyAvailabilityDescription")}
+          title="Chưa có lịch rảnh"
+          description="Hãy thêm khung giờ rảnh đầu tiên của bạn."
         />
       )}
     </>
@@ -565,7 +565,6 @@ export function TrainerAvailabilityPage() {
 }
 
 export function TrainerCertificatesPage() {
-  const { t } = useTranslation();
   const query = useGetTrainerCertificates();
   const create = useCreateTrainerCertificate();
   const update = useUpdateTrainerCertificate();
@@ -598,12 +597,12 @@ export function TrainerCertificatesPage() {
   return (
     <>
       <PageHeader
-        title={t("trainerModule.certificates")}
-        description={t("trainerModule.certificatesDescription")}
+        title="Chứng chỉ"
+        description="Quản lý các chứng chỉ và bằng cấp của bạn."
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            {t("trainerModule.addCertificate")}
+            Thêm chứng chỉ
           </Button>
         }
       />
@@ -619,15 +618,15 @@ export function TrainerCertificatesPage() {
               <h2 className="font-black">{item.name}</h2>
               <p className="text-sm text-muted-foreground">{item.issuingOrg}</p>
               <p className="mt-3 text-xs font-bold">
-                {item.issueDate || t("trainerModule.noIssueDate")} →{" "}
-                {item.expiryDate || t("trainerModule.noExpiry")}
+                {item.issueDate || "Chưa có ngày cấp"} →{" "}
+                {item.expiryDate || "Không hết hạn"}
               </p>
               <div className="mt-4 flex gap-2">
-                <Button onClick={() => show(item)}>{t("common.edit")}</Button>
+                <Button onClick={() => show(item)}>Sửa</Button>
                 {item.id && (
                   <ConfirmDialog
-                    label={t("common.delete")}
-                    title={t("trainerModule.deleteCertificateTitle")}
+                    label="Xóa"
+                    title="Xóa chứng chỉ này?"
                     onConfirm={() => remove.mutate(item.id!)}
                   />
                 )}
@@ -637,18 +636,14 @@ export function TrainerCertificatesPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("trainerModule.noCertificates")}
-          description={t("trainerModule.emptyCertificatesDescription")}
+          title="Chưa có chứng chỉ nào"
+          description="Hãy thêm chứng chỉ đầu tiên của bạn."
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={t(
-          editing
-            ? "trainerModule.editCertificate"
-            : "trainerModule.addCertificate",
-        )}
+        title={editing ? "Sửa chứng chỉ" : "Thêm chứng chỉ"}
       >
         <form
           className="space-y-4"
@@ -666,26 +661,24 @@ export function TrainerCertificatesPage() {
               }
               toast({
                 type: "success",
-                title: t(
-                  editing
-                    ? "trainerModule.certificateUpdated"
-                    : "trainerModule.certificateCreated",
-                ),
+                title: editing
+                  ? "Cập nhật chứng chỉ thành công"
+                  : "Thêm chứng chỉ thành công",
               });
               setOpen(false);
             } catch (error) {
-              fail(toast, error, t("common.requestFailed"));
+              fail(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <FieldShell
-            label={t("common.name")}
+            label="Tên"
             error={form.formState.errors.name}
           >
             <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label={t("trainerModule.issuingOrganization")}
+            label="Tổ chức cấp"
             error={form.formState.errors.issuingOrg}
           >
             <Input {...form.register("issuingOrg")} />
@@ -698,7 +691,7 @@ export function TrainerCertificatesPage() {
                 <DatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder={t("trainerModule.issueDate")}
+                  placeholder="Ngày cấp"
                 />
               )}
             />
@@ -709,7 +702,7 @@ export function TrainerCertificatesPage() {
                 <DatePicker
                   value={field.value}
                   onChange={field.onChange}
-                  placeholder={t("trainerModule.expiryDate")}
+                  placeholder="Ngày hết hạn"
                 />
               )}
             />
@@ -718,7 +711,7 @@ export function TrainerCertificatesPage() {
             className="flex cursor-pointer items-center justify-between rounded-xl border border-dashed border-border px-4 py-3 text-sm font-bold transition hover:border-primary hover:bg-primary/5"
             htmlFor="certificate-files"
           >
-            <span>{t("trainerModule.supportingFiles")}</span>
+            <span>Tệp đính kèm</span>
             <UploadCloud className="size-4" />
             <input
               className="sr-only"
@@ -731,7 +724,7 @@ export function TrainerCertificatesPage() {
             />
           </label>
           <Button className="w-full">
-            {t("trainerModule.saveCertificate")}
+            Lưu chứng chỉ
           </Button>
         </form>
       </Dialog>
@@ -740,7 +733,6 @@ export function TrainerCertificatesPage() {
 }
 
 export function TrainerPartnershipsPage() {
-  const { t } = useTranslation();
   const query = useGetTrainerPartnerships();
   const request = useRequestTrainerPartnership();
   const end = useEndTrainerPartnership();
@@ -753,8 +745,8 @@ export function TrainerPartnershipsPage() {
   return (
     <>
       <PageHeader
-        title={t("trainerModule.partnerships")}
-        description={t("trainerModule.partnershipsDescription")}
+        title="Hợp tác phòng gym"
+        description="Quản lý các yêu cầu và quan hệ hợp tác với phòng gym."
       />
       <form
         className="mb-6 grid gap-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[180px_1fr_auto]"
@@ -764,26 +756,26 @@ export function TrainerPartnershipsPage() {
             form.reset();
             toast({
               type: "success",
-              title: t("trainerModule.partnershipRequested"),
+              title: "Gửi yêu cầu hợp tác thành công",
             });
           } catch (error) {
-            fail(toast, error, t("common.requestFailed"));
+            fail(toast, error, "Yêu cầu thất bại");
           }
         })}
       >
         <Input
-          aria-label={t("trainerModule.gymId")}
+          aria-label="Mã phòng gym"
           min="1"
-          placeholder={t("trainerModule.gymId")}
+          placeholder="Mã phòng gym"
           type="number"
           {...form.register("gymId", { valueAsNumber: true })}
         />
         <Input
-          aria-label={t("trainerModule.requestMessage")}
-          placeholder={t("trainerModule.requestMessage")}
+          aria-label="Lời nhắn gửi phòng gym"
+          placeholder="Lời nhắn gửi phòng gym"
           {...form.register("requestMessage")}
         />
-        <Button>{t("trainerModule.sendRequest")}</Button>
+        <Button>Gửi yêu cầu</Button>
       </form>
       {query.isLoading ? (
         <LoadingSkeleton />
@@ -796,10 +788,10 @@ export function TrainerPartnershipsPage() {
             >
               <div>
                 <h2 className="font-black">
-                  {item.gymName || `${t("common.gyms")} #${item.gymId}`}
+                  {item.gymName || `Phòng gym #${item.gymId}`}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {item.requestMessage || t("common.noMessage")}
+                  {item.requestMessage || "Không có nội dung"}
                 </p>
                 <Badge
                   className="mt-3"
@@ -807,15 +799,13 @@ export function TrainerPartnershipsPage() {
                     partnerStatusVariant[String(item.status)] ?? "default"
                   }
                 >
-                  {t(`statusLabels.${String(item.status).toLowerCase()}`, {
-                    defaultValue: item.status,
-                  })}
+                  {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" })[String(item.status).toLowerCase()] ?? item.status}
                 </Badge>
               </div>
               {item.id && item.status === "APPROVED" && (
                 <ConfirmDialog
-                  label={t("trainerModule.endPartnership")}
-                  title={t("trainerModule.endPartnershipTitle")}
+                  label="Kết thúc hợp tác"
+                  title="Kết thúc hợp tác với phòng gym này?"
                   onConfirm={() => end.mutate(item.id!)}
                 />
               )}
@@ -824,8 +814,8 @@ export function TrainerPartnershipsPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("trainerModule.emptyPartnerships")}
-          description={t("trainerModule.emptyPartnershipsDescription")}
+          title="Chưa có hợp tác nào"
+          description="Hãy gửi yêu cầu hợp tác với phòng gym đầu tiên."
         />
       )}
     </>

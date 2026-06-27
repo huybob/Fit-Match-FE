@@ -1,40 +1,52 @@
-import { axiosClient } from "@/core/http/axios-client";
-import { unwrapApiData } from "@/core/http/api-response";
-import type { components } from "@/services/generated/api-contracts";
+import { api } from "@/services/api";
+import type {
+  CreateSessionRequest,
+  FeedbackRequest,
+  TrainingSession,
+  TrainingSessionPage,
+  UpdateSessionRequest,
+} from "@/types/TrainingSession";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-type S = components["schemas"];
-export type TrainingSession = S["TrainingSessionResponse"];
-export type TrainingSessionPage = S["PagedResponseTrainingSessionResponse"];
-export type CreateSessionRequest = S["CreateSessionRequest"];
-export type UpdateSessionRequest = S["UpdateSessionRequest"];
-export type FeedbackRequest = S["FeedbackRequest"];
+export type {
+  CreateSessionRequest,
+  FeedbackRequest,
+  TrainingSession,
+  TrainingSessionPage,
+  UpdateSessionRequest,
+} from "@/types/TrainingSession";
 const page = { page: 0, size: 10 };
 
 async function list(path: string, params: Partial<PaginationParams> = {}) {
-  const response = await axiosClient.get<S["ApiResponsePagedResponseTrainingSessionResponse"]>(path, {
+  return api.get<TrainingSessionPage>(path, {
     params: { ...page, ...params },
   });
-  return unwrapApiData(response.data);
 }
 
 export const trainingSessionService = {
-  getMine: (params?: Partial<PaginationParams>) => list("/training/sessions/me", params),
-  getPt: (params?: Partial<PaginationParams>) => list("/training/sessions/pt", params),
+  getMine: (params?: Partial<PaginationParams>) =>
+    list("/training/sessions/me", params),
+  getPt: (params?: Partial<PaginationParams>) =>
+    list("/training/sessions/pt", params),
   async getDetail(id: number) {
-    const response = await axiosClient.get<S["ApiResponseTrainingSessionResponse"]>(`/training/sessions/${id}`);
-    return unwrapApiData(response.data);
+    return api.get<TrainingSession>(`/training/sessions/${id}`);
   },
   async create(payload: CreateSessionRequest) {
-    const response = await axiosClient.post<S["ApiResponseTrainingSessionResponse"]>("/training/sessions", payload);
-    return unwrapApiData(response.data);
+    return api.post<TrainingSession, CreateSessionRequest>(
+      "/training/sessions",
+      payload,
+    );
   },
   async update(id: number, payload: UpdateSessionRequest) {
-    const response = await axiosClient.put<S["ApiResponseTrainingSessionResponse"]>(`/training/sessions/${id}`, payload);
-    return unwrapApiData(response.data);
+    return api.put<TrainingSession, UpdateSessionRequest>(
+      `/training/sessions/${id}`,
+      payload,
+    );
   },
   async feedback(id: number, payload: FeedbackRequest) {
-    const response = await axiosClient.put<S["ApiResponseTrainingSessionResponse"]>(`/training/sessions/${id}/feedback`, payload);
-    return unwrapApiData(response.data);
+    return api.put<TrainingSession, FeedbackRequest>(
+      `/training/sessions/${id}/feedback`,
+      payload,
+    );
   },
 };

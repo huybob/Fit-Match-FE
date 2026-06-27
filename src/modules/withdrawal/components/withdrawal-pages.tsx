@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BadgeCheck, Banknote, Plus, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -41,8 +40,8 @@ const VIETNAM_BANKS = [
 ] as const;
 
 const statuses: WithdrawalStatus[] = ["PENDING", "APPROVED", "REJECTED"];
-const money = (value: number | undefined, lang: string) =>
-  new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
+const money = (value: number | undefined) =>
+  new Intl.NumberFormat("vi-VN", {
     style: "currency", currency: "VND", maximumFractionDigits: 0,
   }).format(value ?? 0);
 
@@ -52,8 +51,23 @@ const statusVariant: Record<WithdrawalStatus, React.ComponentProps<typeof Badge>
   REJECTED: "destructive",
 };
 
+const withdrawalStatusLabels: Record<WithdrawalStatus, string> = {
+  PENDING: "Đang chờ",
+  APPROVED: "Đã chấp nhận",
+  REJECTED: "Đã từ chối",
+};
+
+const scopeTitles: Record<"pt" | "admin", string> = {
+  pt: "Yêu cầu rút tiền",
+  admin: "Quản lý rút tiền",
+};
+
+const scopeDescriptions: Record<"pt" | "admin", string> = {
+  pt: "Gửi yêu cầu rút tiền về tài khoản ngân hàng của bạn.",
+  admin: "Xem và xử lý các yêu cầu rút tiền của huấn luyện viên.",
+};
+
 export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
-  const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<WithdrawalStatus | "">("");
   const [creating, setCreating] = useState(false);
   const [rejecting, setRejecting] = useState<Withdrawal | null>(null);
@@ -65,25 +79,25 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
       <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t(`withdrawal.${scope}Title`)}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t(`withdrawal.${scope}Description`)}</p>
+          <h1 className="text-3xl font-black">{scopeTitles[scope]}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{scopeDescriptions[scope]}</p>
         </div>
         {scope === "pt" && (
           <Button onClick={() => setCreating(true)}>
             <Plus className="size-4" />
-            {t("withdrawal.create")}
+            Tạo yêu cầu rút tiền
           </Button>
         )}
       </section>
 
       <Select value={status} onValueChange={(v) => setStatus(v as WithdrawalStatus | "")}>
         <SelectTrigger className="w-64">
-          <SelectValue placeholder={t("withdrawal.allStatuses")} />
+          <SelectValue placeholder="Tất cả trạng thái" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">{t("withdrawal.allStatuses")}</SelectItem>
+          <SelectItem value="">Tất cả trạng thái</SelectItem>
           {statuses.map((s) => (
-            <SelectItem key={s} value={s}>{t(`withdrawal.statuses.${s}`)}</SelectItem>
+            <SelectItem key={s} value={s}>{withdrawalStatusLabels[s]}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -92,9 +106,9 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
         {query.isLoading ? (
           <LoadingSkeleton />
         ) : query.isError ? (
-          <EmptyState title={t("withdrawal.loadError")} description={toErrorMessage(query.error)} />
+          <EmptyState title="Lỗi tải dữ liệu" description={toErrorMessage(query.error)} />
         ) : !items.length ? (
-          <EmptyState title={t("withdrawal.empty")} description={t("withdrawal.emptyDescription")} />
+          <EmptyState title="Chưa có yêu cầu rút tiền" description="Các yêu cầu rút tiền sẽ hiển thị tại đây." />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {items.map((w) => (
@@ -102,24 +116,24 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-black uppercase text-muted-foreground">#{w.id}</p>
                   <Badge variant={w.status ? statusVariant[w.status] : "default"}>
-                    {w.status ? t(`withdrawal.statuses.${w.status}`) : "—"}
+                    {w.status ? withdrawalStatusLabels[w.status] : "—"}
                   </Badge>
                 </div>
                 <h2 className="mt-2 flex items-center gap-2 text-2xl font-black">
                   <Banknote className="size-6 text-primary" />
-                  {money(w.amount, i18n.language)}
+                  {money(w.amount)}
                 </h2>
                 <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
-                  {scope === "admin" && <span>{t("withdrawal.trainer")}: {w.ptName}</span>}
-                  <span>{t("withdrawal.bank")}: {w.bankName}</span>
-                  <span>{t("withdrawal.account")}: {w.bankAccount}</span>
-                  <span>{t("withdrawal.holder")}: {w.bankHolder}</span>
-                  {w.notes && <span>{t("withdrawal.notes")}: {w.notes}</span>}
+                  {scope === "admin" && <span>Huấn luyện viên: {w.ptName}</span>}
+                  <span>Ngân hàng: {w.bankName}</span>
+                  <span>Số tài khoản: {w.bankAccount}</span>
+                  <span>Chủ tài khoản: {w.bankHolder}</span>
+                  {w.notes && <span>Ghi chú: {w.notes}</span>}
                   {w.status === "REJECTED" && w.rejectionReason && (
-                    <span className="text-destructive">{t("withdrawal.rejectionReason")}: {w.rejectionReason}</span>
+                    <span className="text-destructive">Lý do từ chối: {w.rejectionReason}</span>
                   )}
                   {w.status === "APPROVED" && w.approvedByName && (
-                    <span className="text-emerald-600">{t("withdrawal.approvedBy")}: {w.approvedByName}</span>
+                    <span className="text-emerald-600">Được duyệt bởi: {w.approvedByName}</span>
                   )}
                 </div>
                 {scope === "admin" && w.status === "PENDING" && (
@@ -127,7 +141,7 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
                     <ApproveButton id={w.id!} />
                     <Button variant="destructive" onClick={() => setRejecting(w)}>
                       <XCircle className="size-4" />
-                      {t("withdrawal.reject")}
+                      Từ chối
                     </Button>
                   </div>
                 )}
@@ -144,7 +158,6 @@ export function WithdrawalsPage({ scope }: { scope: "pt" | "admin" }) {
 }
 
 function ApproveButton({ id }: { id: number }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useApproveWithdrawal();
   return (
@@ -153,20 +166,19 @@ function ApproveButton({ id }: { id: number }) {
       onClick={async () => {
         try {
           await mutation.mutateAsync(id);
-          toast({ type: "success", title: t("withdrawal.approved") });
+          toast({ type: "success", title: "Đã duyệt yêu cầu" });
         } catch (e) {
-          toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+          toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
         }
       }}
     >
       <BadgeCheck className="size-4" />
-      {t("withdrawal.approve")}
+      Duyệt
     </Button>
   );
 }
 
 function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useCreateWithdrawal();
   const form = useForm<z.infer<typeof createWithdrawalSchema>>({
@@ -175,31 +187,31 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
   });
 
   return (
-    <Dialog open={open} title={t("withdrawal.create")} onClose={onClose}>
+    <Dialog open={open} title="Tạo yêu cầu rút tiền" onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync(v);
-            toast({ type: "success", title: t("withdrawal.created") });
+            toast({ type: "success", title: "Đã tạo yêu cầu rút tiền" });
             form.reset();
             onClose();
           } catch (e) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
           }
         })}
       >
-        <FieldShell label={t("withdrawal.amount")} error={form.formState.errors.amount}>
+        <FieldShell label="Số tiền" error={form.formState.errors.amount}>
           <Input type="number" {...form.register("amount", { valueAsNumber: true })} />
         </FieldShell>
-        <FieldShell label={t("withdrawal.bank")} error={form.formState.errors.bankName}>
+        <FieldShell label="Ngân hàng" error={form.formState.errors.bankName}>
           <Controller
             control={form.control}
             name="bankName"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("withdrawal.bankPlaceholder")} />
+                  <SelectValue placeholder="Chọn ngân hàng" />
                 </SelectTrigger>
                 <SelectContent>
                   {VIETNAM_BANKS.map((b) => (
@@ -210,18 +222,18 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
             )}
           />
         </FieldShell>
-        <FieldShell label={t("withdrawal.account")} error={form.formState.errors.bankAccount}>
+        <FieldShell label="Số tài khoản" error={form.formState.errors.bankAccount}>
           <Input {...form.register("bankAccount")} />
         </FieldShell>
-        <FieldShell label={t("withdrawal.holder")} error={form.formState.errors.bankHolder}>
+        <FieldShell label="Chủ tài khoản" error={form.formState.errors.bankHolder}>
           <Input {...form.register("bankHolder")} />
         </FieldShell>
-        <FieldShell label={t("withdrawal.notes")} error={form.formState.errors.notes}>
+        <FieldShell label="Ghi chú" error={form.formState.errors.notes}>
           <Textarea {...form.register("notes")} />
         </FieldShell>
         <Button disabled={mutation.isPending}>
           <Banknote className="size-4" />
-          {t("withdrawal.submit")}
+          Gửi yêu cầu
         </Button>
       </form>
     </Dialog>
@@ -229,7 +241,6 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
 }
 
 function RejectDialog({ withdrawal, onClose }: { withdrawal: Withdrawal; onClose: () => void }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useRejectWithdrawal();
   const form = useForm<z.infer<typeof rejectWithdrawalSchema>>({
@@ -238,25 +249,25 @@ function RejectDialog({ withdrawal, onClose }: { withdrawal: Withdrawal; onClose
   });
 
   return (
-    <Dialog open title={t("withdrawal.reject")} onClose={onClose}>
+    <Dialog open title="Từ chối" onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync({ id: withdrawal.id!, payload: v });
-            toast({ type: "success", title: t("withdrawal.rejected") });
+            toast({ type: "success", title: "Đã từ chối yêu cầu" });
             onClose();
           } catch (e) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
           }
         })}
       >
-        <FieldShell label={t("withdrawal.rejectionReason")} error={form.formState.errors.reason}>
+        <FieldShell label="Lý do từ chối" error={form.formState.errors.reason}>
           <Textarea {...form.register("reason")} />
         </FieldShell>
         <Button variant="destructive" disabled={mutation.isPending}>
           <XCircle className="size-4" />
-          {t("withdrawal.reject")}
+          Từ chối
         </Button>
       </form>
     </Dialog>

@@ -1,14 +1,12 @@
 "use client";
 
 import { useUsers } from "../hooks/use-user-hooks";
-import { useTranslation } from "react-i18next";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { Badge } from "@/shared/components/ui/badge";
 
 export function UserTable() {
   const { data: users, isLoading, error } = useUsers();
-  const { t } = useTranslation();
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -17,8 +15,8 @@ export function UserTable() {
   if (error) {
     return (
       <EmptyState
-        title={t("admin.usersLoadError")}
-        description={t("admin.usersLoadErrorDescription")}
+        title="Không thể tải danh sách người dùng"
+        description="Đã xảy ra lỗi khi tải danh sách người dùng. Vui lòng thử lại."
       />
     );
   }
@@ -28,10 +26,10 @@ export function UserTable() {
       <table className="w-full border-collapse text-left text-sm">
         <thead className="bg-muted/50 text-[11px] uppercase tracking-wider text-muted-foreground">
           <tr>
-            <th className="px-5 py-4 font-black">{t("common.name")}</th>
-            <th className="px-5 py-4 font-black">{t("common.email")}</th>
-            <th className="px-5 py-4 font-black">{t("auth.role")}</th>
-            <th className="px-5 py-4 font-black">{t("common.status")}</th>
+            <th className="px-5 py-4 font-black">Tên</th>
+            <th className="px-5 py-4 font-black">Email</th>
+            <th className="px-5 py-4 font-black">Vai trò</th>
+            <th className="px-5 py-4 font-black">Trạng thái</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">

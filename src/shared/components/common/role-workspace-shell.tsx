@@ -27,7 +27,7 @@ export function RoleWorkspaceShell({
 }) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/65 shadow-[0_24px_80px_rgba(16,19,15,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/60 lg:grid lg:min-h-[680px] lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white/65 shadow-[0_24px_80px_rgba(16,19,15,0.1)] backdrop-blur-xl lg:grid lg:min-h-[680px] lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-[#121610] via-[#10130f] to-[#182011] text-white lg:border-b-0 lg:border-r">
           <div className="absolute -left-16 top-12 size-48 rounded-full bg-lime-300/10 blur-3xl" />
           <div className="relative border-b border-white/10 px-5 py-5 lg:px-6 lg:py-7">
@@ -75,7 +75,7 @@ export function RoleWorkspaceShell({
           </nav>
         </aside>
 
-        <main className="min-w-0 bg-gradient-to-br from-white/70 to-zinc-50/50 p-4 dark:from-zinc-950/70 dark:to-zinc-900/50 sm:p-6 lg:p-8">
+        <main className="min-w-0 bg-gradient-to-br from-white/70 to-zinc-50/50 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

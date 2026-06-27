@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -41,9 +40,9 @@ import {
 } from "../hooks/use-training-session";
 import { feedbackSchema, sessionSchema, updateSessionSchema } from "../schemas";
 
-function when(value: string | undefined, language: string) {
+function when(value: string | undefined) {
   return value
-    ? new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", {
+    ? new Intl.DateTimeFormat("vi-VN", {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(new Date(value))
@@ -63,23 +62,31 @@ function duration(session: TrainingSession) {
 }
 
 export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
-  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<TrainingSession | null>(null);
   const [creating, setCreating] = useState(false);
   const query = useTrainingSessions(scope, page);
   const items = query.data?.content ?? [];
 
+  const scopeTitles: Record<string, string> = {
+    customer: "Buổi tập của tôi",
+    pt: "Quản lý buổi tập",
+  };
+  const scopeDescriptions: Record<string, string> = {
+    customer: "Xem lịch sử và chi tiết các buổi tập của bạn.",
+    pt: "Quản lý và cập nhật thông tin các buổi tập với học viên.",
+  };
+
   return (
     <div>
       <PageHeader
-        title={t(`sessionModule.${scope}Title`)}
-        description={t(`sessionModule.${scope}Description`)}
+        title={scopeTitles[scope] ?? "Buổi tập"}
+        description={scopeDescriptions[scope] ?? ""}
         action={
           scope === "pt" ? (
             <Button onClick={() => setCreating(true)}>
               <Plus className="size-4" />
-              {t("sessionModule.create")}
+              Tạo buổi tập
             </Button>
           ) : undefined
         }
@@ -89,13 +96,13 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState
-          title={t("sessionModule.loadError")}
+          title="Không thể tải dữ liệu"
           description={toErrorMessage(query.error)}
         />
       ) : !items.length ? (
         <EmptyState
-          title={t("sessionModule.empty")}
-          description={t("sessionModule.emptyDescription")}
+          title="Chưa có buổi tập nào"
+          description="Chưa có buổi tập nào được ghi nhận."
         />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
@@ -113,7 +120,7 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
                     {session.bookingId ? ` · Booking #${session.bookingId}` : ""}
                   </p>
                   <h2 className="mt-1 text-lg font-black group-hover:text-accent">
-                    {session.workoutPlanName ?? t("sessionModule.freeSession")}
+                    {session.workoutPlanName ?? "Buổi tập tự do"}
                   </h2>
                 </div>
                 {session.rating ? (
@@ -123,9 +130,7 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
                   </Badge>
                 ) : (
                   <Badge variant={session.actualEndTime ? "success" : "info"}>
-                    {session.actualEndTime
-                      ? t("sessionModule.finished")
-                      : t("sessionModule.inProgress")}
+                    {session.actualEndTime ? "Đã hoàn thành" : "Đang diễn ra"}
                   </Badge>
                 )}
               </div>
@@ -136,13 +141,13 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
                 </span>
                 <span className="flex items-center gap-2">
                   <CalendarClock className="size-4 text-accent" />
-                  {when(session.actualStartTime, i18n.language)}
+                  {when(session.actualStartTime)}
                 </span>
                 <span className="flex items-center gap-2">
                   <Activity className="size-4 text-blue-500" />
                   {duration(session) !== undefined
-                    ? `${duration(session)} ${t("sessionModule.minutes")}`
-                    : t("sessionModule.notFinished")}
+                    ? `${duration(session)} phút`
+                    : "Chưa kết thúc"}
                 </span>
                 <span className="flex items-center gap-2">
                   <Flame className="size-4 text-destructive" />
@@ -157,7 +162,7 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
       {(query.data?.totalPages ?? 0) > 1 && (
         <div className="mt-6 flex items-center justify-end gap-3">
           <Button disabled={page === 0} onClick={() => setPage((v) => v - 1)}>
-            {t("common.previous")}
+            Trang trước
           </Button>
           <span className="text-sm font-bold">
             {page + 1} / {query.data?.totalPages}
@@ -166,7 +171,7 @@ export function TrainingSessionsPage({ scope }: { scope: "customer" | "pt" }) {
             disabled={query.data?.last}
             onClick={() => setPage((v) => v + 1)}
           >
-            {t("common.next")}
+            Trang sau
           </Button>
         </div>
       )}
@@ -190,7 +195,6 @@ function SessionDetailDialog({
   scope: "customer" | "pt";
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const update = useUpdateTrainingSession();
   const feedback = useSubmitSessionFeedback();
@@ -214,21 +218,21 @@ function SessionDetailDialog({
   if (!session) return null;
 
   return (
-    <Dialog open title={t("sessionModule.detail")} onClose={onClose}>
+    <Dialog open title="Chi tiết buổi tập" onClose={onClose}>
       <div className="rounded-2xl bg-muted/50 p-5">
         <h3 className="text-xl font-black">
-          {session.workoutPlanName ?? t("sessionModule.freeSession")}
+          {session.workoutPlanName ?? "Buổi tập tự do"}
         </h3>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <Info label={t("sessionModule.customer")} value={session.customerName} />
-          <Info label={t("sessionModule.trainer")} value={session.ptName} />
+          <Info label="Học viên" value={session.customerName} />
+          <Info label="Huấn luyện viên" value={session.ptName} />
           <Info
-            label={t("sessionModule.startedAt")}
-            value={when(session.actualStartTime, i18n.language)}
+            label="Thời gian bắt đầu"
+            value={when(session.actualStartTime)}
           />
           <Info
-            label={t("sessionModule.endedAt")}
-            value={when(session.actualEndTime, i18n.language)}
+            label="Thời gian kết thúc"
+            value={when(session.actualEndTime)}
           />
         </dl>
       </div>
@@ -248,30 +252,30 @@ function SessionDetailDialog({
                   caloriesBurned: values.caloriesBurned,
                 },
               });
-              toast({ type: "success", title: t("sessionModule.updated") });
+              toast({ type: "success", title: "Đã cập nhật buổi tập" });
               onClose();
             } catch (error) {
               toast({
                 type: "error",
-                title: t("common.requestFailed"),
+                title: "Yêu cầu thất bại",
                 description: toErrorMessage(error),
               });
             }
           })}
         >
-          <FieldShell label={t("sessionModule.startedAt")}>
+          <FieldShell label="Thời gian bắt đầu">
             <Input
               type="datetime-local"
               {...updateForm.register("actualStartTime")}
             />
           </FieldShell>
-          <FieldShell label={t("sessionModule.endedAt")}>
+          <FieldShell label="Thời gian kết thúc">
             <Input
               type="datetime-local"
               {...updateForm.register("actualEndTime")}
             />
           </FieldShell>
-          <FieldShell label={t("sessionModule.calories")}>
+          <FieldShell label="Calo tiêu thụ">
             <Input
               type="number"
               min={0}
@@ -282,12 +286,12 @@ function SessionDetailDialog({
             />
           </FieldShell>
           <div className="sm:col-span-2">
-            <FieldShell label={t("sessionModule.notes")}>
+            <FieldShell label="Ghi chú">
               <Textarea className="min-h-24" {...updateForm.register("notes")} />
             </FieldShell>
           </div>
           <Button className="sm:col-span-2" disabled={update.isPending}>
-            {t("common.save")}
+            Lưu thay đổi
           </Button>
         </form>
       ) : (
@@ -297,18 +301,18 @@ function SessionDetailDialog({
             if (!session.id) return;
             try {
               await feedback.mutateAsync({ id: session.id, payload: values });
-              toast({ type: "success", title: t("sessionModule.feedbackSent") });
+              toast({ type: "success", title: "Đã gửi đánh giá" });
               onClose();
             } catch (error) {
               toast({
                 type: "error",
-                title: t("common.requestFailed"),
+                title: "Yêu cầu thất bại",
                 description: toErrorMessage(error),
               });
             }
           })}
         >
-          <FieldShell label={t("sessionModule.rating")}>
+          <FieldShell label="Đánh giá">
             <Controller
               control={feedbackForm.control}
               name="rating"
@@ -324,7 +328,7 @@ function SessionDetailDialog({
               )}
             />
           </FieldShell>
-          <FieldShell label={t("sessionModule.feedback")}>
+          <FieldShell label="Nhận xét">
             <Textarea
               className="min-h-28"
               maxLength={1000}
@@ -333,7 +337,7 @@ function SessionDetailDialog({
           </FieldShell>
           <Button disabled={feedback.isPending}>
             <MessageSquareText className="size-4" />
-            {t("sessionModule.sendFeedback")}
+            Gửi đánh giá
           </Button>
         </form>
       )}
@@ -348,7 +352,6 @@ function CreateSessionDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const create = useCreateTrainingSession();
   const form = useForm<z.infer<typeof sessionSchema>>({
@@ -363,7 +366,7 @@ function CreateSessionDialog({
   });
 
   return (
-    <Dialog open={open} title={t("sessionModule.create")} onClose={onClose}>
+    <Dialog open={open} title="Tạo buổi tập" onClose={onClose}>
       <form
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={form.handleSubmit(async (values) => {
@@ -375,20 +378,20 @@ function CreateSessionDialog({
               actualEndTime: values.actualEndTime || undefined,
               notes: values.notes || undefined,
             });
-            toast({ type: "success", title: t("sessionModule.created") });
+            toast({ type: "success", title: "Đã tạo buổi tập" });
             form.reset();
             onClose();
           } catch (error) {
             toast({
               type: "error",
-              title: t("common.requestFailed"),
+              title: "Yêu cầu thất bại",
               description: toErrorMessage(error),
             });
           }
         })}
       >
         <FieldShell
-          label={t("sessionModule.customerId")}
+          label="ID học viên"
           error={form.formState.errors.customerId}
         >
           <Input
@@ -398,7 +401,7 @@ function CreateSessionDialog({
           />
         </FieldShell>
         <FieldShell
-          label={t("sessionModule.workoutPlanId")}
+          label="ID giáo án"
           error={form.formState.errors.workoutPlanId}
         >
           <Input
@@ -410,19 +413,19 @@ function CreateSessionDialog({
             })}
           />
         </FieldShell>
-        <FieldShell label={t("sessionModule.startedAt")}>
+        <FieldShell label="Thời gian bắt đầu">
           <Input type="datetime-local" {...form.register("actualStartTime")} />
         </FieldShell>
-        <FieldShell label={t("sessionModule.endedAt")}>
+        <FieldShell label="Thời gian kết thúc">
           <Input type="datetime-local" {...form.register("actualEndTime")} />
         </FieldShell>
         <div className="sm:col-span-2">
-          <FieldShell label={t("sessionModule.notes")}>
+          <FieldShell label="Ghi chú">
             <Textarea className="min-h-24" {...form.register("notes")} />
           </FieldShell>
         </div>
         <Button className="sm:col-span-2" disabled={create.isPending}>
-          {create.isPending ? t("common.loading") : t("sessionModule.create")}
+          {create.isPending ? "Đang xử lý..." : "Tạo buổi tập"}
         </Button>
       </form>
     </Dialog>

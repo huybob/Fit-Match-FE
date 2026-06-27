@@ -1,36 +1,39 @@
-import { axiosClient } from "@/core/http/axios-client";
-import { unwrapApiData } from "@/core/http/api-response";
-import type { components } from "@/services/generated/api-contracts";
+import { api } from "@/services/api";
+import type {
+  Availability,
+  AvailabilityPage,
+  AvailabilityRequest,
+  Certificate,
+  CertificatePage,
+  CertificateRequest,
+  Partnership,
+  PartnershipPage,
+  PartnershipRequest,
+  PtProfile,
+  ServicePage,
+  TrainerService,
+  TrainerServiceRequest,
+  UpdatePtProfileRequest,
+} from "@/types/Trainer";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-type Schemas = components["schemas"];
-export type PtProfile = Schemas["PtProfileResponse"];
-export type UpdatePtProfileRequest = Schemas["UpdatePtProfileRequest"];
-export type TrainerService = Schemas["ServiceResponse"];
-export type TrainerServiceRequest = Schemas["ServiceRequest"];
-type GeneratedAvailability = Schemas["AvailabilityResponse"];
-type GeneratedAvailabilityRequest = Schemas["AvailabilityRequest"];
-// Spring/Jackson runtime serializes LocalTime as HH:mm:ss although the current
-// OpenAPI document exposes it as an object. Verified against the local API.
-export type Availability = Omit<GeneratedAvailability, "startTime" | "endTime"> & {
-  startTime?: string;
-  endTime?: string;
-};
-export type AvailabilityRequest = Omit<GeneratedAvailabilityRequest, "startTime" | "endTime"> & {
-  startTime: string;
-  endTime: string;
-};
-export type Certificate = Schemas["CertificateResponse"];
-export type CertificateRequest = Schemas["CertificateRequest"];
-export type Partnership = Schemas["PartnershipResponse"];
-export type PartnershipRequest = Schemas["PartnershipRequest"];
-export type PartnershipActionRequest = Schemas["PartnershipActionRequest"];
-export type ServicePage = Schemas["PagedResponseServiceResponse"];
-export type AvailabilityPage = Omit<Schemas["PagedResponseAvailabilityResponse"], "content"> & {
-  content?: Availability[];
-};
-export type CertificatePage = Schemas["PagedResponseCertificateResponse"];
-export type PartnershipPage = Schemas["PagedResponsePartnershipResponse"];
+export type {
+  Availability,
+  AvailabilityPage,
+  AvailabilityRequest,
+  Certificate,
+  CertificatePage,
+  CertificateRequest,
+  Partnership,
+  PartnershipActionRequest,
+  PartnershipPage,
+  PartnershipRequest,
+  PtProfile,
+  ServicePage,
+  TrainerService,
+  TrainerServiceRequest,
+  UpdatePtProfileRequest,
+} from "@/types/Trainer";
 
 const defaultPage: PaginationParams = { page: 0, size: 20 };
 
@@ -45,153 +48,114 @@ function certificateForm(payload: CertificateRequest, files: File[] = []) {
 }
 
 export const trainerService = {
-  async getPublicProfile(userId: number) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePtProfileResponse"]
-    >(`/pt/profile/${userId}`);
-    return unwrapApiData(response.data);
-  },
-  async getMyProfile() {
-    const response =
-      await axiosClient.get<Schemas["ApiResponsePtProfileResponse"]>(
-        "/pt/profile/me",
-      );
-    return unwrapApiData(response.data);
-  },
-  async updateMyProfile(payload: UpdatePtProfileRequest) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponsePtProfileResponse"]
-    >("/pt/profile/me", payload);
-    return unwrapApiData(response.data);
-  },
-  async uploadAvatar(file: File) {
+  getPublicProfile: (userId: number) =>
+    api.get<PtProfile>(`/pt/profile/${userId}`),
+
+  getMyProfile: () => api.get<PtProfile>("/pt/profile/me"),
+
+  updateMyProfile: (payload: UpdatePtProfileRequest) =>
+    api.put<PtProfile, UpdatePtProfileRequest>("/pt/profile/me", payload),
+
+  uploadAvatar(file: File) {
     const form = new FormData();
     form.append("file", file);
-    const response = await axiosClient.post<
-      Schemas["ApiResponsePtProfileResponse"]
-    >("/pt/profile/me/avatar", form);
-    return unwrapApiData(response.data);
+    return api.post<PtProfile, FormData>("/pt/profile/me/avatar", form);
   },
-  async getPublicServices(
+
+  getPublicServices: (
     profileId: number,
     params: PaginationParams = defaultPage,
-  ) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseServiceResponse"]
-    >(`/pt/services/profile/${profileId}`, {
+  ) =>
+    api.get<ServicePage>(`/pt/services/profile/${profileId}`, {
       params: { ...params, activeOnly: true },
-    });
-    return unwrapApiData(response.data);
-  },
-  async getMyServices(params: PaginationParams = defaultPage) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseServiceResponse"]
-    >("/pt/services/me", { params });
-    return unwrapApiData(response.data);
-  },
-  async createService(payload: TrainerServiceRequest) {
-    const response = await axiosClient.post<
-      Schemas["ApiResponseServiceResponse"]
-    >("/pt/services/me", payload);
-    return unwrapApiData(response.data);
-  },
-  async updateService(id: number, payload: TrainerServiceRequest) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponseServiceResponse"]
-    >(`/pt/services/me/${id}`, payload);
-    return unwrapApiData(response.data);
-  },
-  async toggleService(id: number, isActive: boolean) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponseServiceResponse"]
-    >(`/pt/services/me/${id}/toggle`, undefined, { params: { isActive } });
-    return unwrapApiData(response.data);
-  },
+    }),
+
+  getMyServices: (params: PaginationParams = defaultPage) =>
+    api.get<ServicePage>("/pt/services/me", { params }),
+
+  createService: (payload: TrainerServiceRequest) =>
+    api.post<TrainerService, TrainerServiceRequest>("/pt/services/me", payload),
+
+  updateService: (id: number, payload: TrainerServiceRequest) =>
+    api.put<TrainerService, TrainerServiceRequest>(
+      `/pt/services/me/${id}`,
+      payload,
+    ),
+
+  toggleService: (id: number, isActive: boolean) =>
+    api.put<TrainerService>(`/pt/services/me/${id}/toggle`, undefined, {
+      params: { isActive },
+    }),
+
   async deleteService(id: number) {
-    await axiosClient.delete(`/pt/services/me/${id}`);
+    await api.deleteRaw(`/pt/services/me/${id}`);
   },
-  async getPublicAvailability(
+
+  getPublicAvailability: (
     profileId: number,
     params: PaginationParams = defaultPage,
-  ) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseAvailabilityResponse"]
-    >(`/pt/availability/profile/${profileId}`, { params });
-    return unwrapApiData(response.data) as AvailabilityPage;
-  },
-  async getMyAvailability(params: PaginationParams = defaultPage) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseAvailabilityResponse"]
-    >("/pt/availability/me", { params });
-    return unwrapApiData(response.data) as AvailabilityPage;
-  },
-  async createAvailability(payload: AvailabilityRequest) {
-    const response = await axiosClient.post<
-      Schemas["ApiResponseAvailabilityResponse"]
-    >("/pt/availability/me", payload);
-    return unwrapApiData(response.data) as Availability;
-  },
-  async updateAvailability(id: number, payload: AvailabilityRequest) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponseAvailabilityResponse"]
-    >(`/pt/availability/me/${id}`, payload);
-    return unwrapApiData(response.data) as Availability;
-  },
+  ) =>
+    api.get<AvailabilityPage>(`/pt/availability/profile/${profileId}`, {
+      params,
+    }),
+
+  getMyAvailability: (params: PaginationParams = defaultPage) =>
+    api.get<AvailabilityPage>("/pt/availability/me", { params }),
+
+  createAvailability: (payload: AvailabilityRequest) =>
+    api.post<Availability, AvailabilityRequest>("/pt/availability/me", payload),
+
+  updateAvailability: (id: number, payload: AvailabilityRequest) =>
+    api.put<Availability, AvailabilityRequest>(
+      `/pt/availability/me/${id}`,
+      payload,
+    ),
+
   async deleteAvailability(id: number) {
-    await axiosClient.delete(`/pt/availability/me/${id}`);
+    await api.deleteRaw(`/pt/availability/me/${id}`);
   },
-  async getPublicCertificates(
+
+  getPublicCertificates: (
     profileId: number,
     params: PaginationParams = defaultPage,
-  ) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseCertificateResponse"]
-    >(`/pt/certificates/profile/${profileId}`, { params });
-    return unwrapApiData(response.data);
-  },
-  async getMyCertificates(params: PaginationParams = defaultPage) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponseCertificateResponse"]
-    >("/pt/certificates/me", { params });
-    return unwrapApiData(response.data);
-  },
-  async createCertificate(payload: CertificateRequest, files?: File[]) {
-    const response = await axiosClient.post<
-      Schemas["ApiResponseCertificateResponse"]
-    >("/pt/certificates/me", certificateForm(payload, files));
-    return unwrapApiData(response.data);
-  },
-  async updateCertificate(
+  ) =>
+    api.get<CertificatePage>(`/pt/certificates/profile/${profileId}`, {
+      params,
+    }),
+
+  getMyCertificates: (params: PaginationParams = defaultPage) =>
+    api.get<CertificatePage>("/pt/certificates/me", { params }),
+
+  createCertificate: (payload: CertificateRequest, files?: File[]) =>
+    api.post<Certificate, FormData>(
+      "/pt/certificates/me",
+      certificateForm(payload, files),
+    ),
+
+  updateCertificate: (
     id: number,
     payload: CertificateRequest,
     files?: File[],
-  ) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponseCertificateResponse"]
-    >(`/pt/certificates/me/${id}`, certificateForm(payload, files));
-    return unwrapApiData(response.data);
-  },
+  ) =>
+    api.put<Certificate, FormData>(
+      `/pt/certificates/me/${id}`,
+      certificateForm(payload, files),
+    ),
+
   async deleteCertificate(id: number) {
-    await axiosClient.delete(`/pt/certificates/me/${id}`);
+    await api.deleteRaw(`/pt/certificates/me/${id}`);
   },
-  async getMyPartnerships(
+
+  getMyPartnerships: (
     params: PaginationParams & { status?: string } = defaultPage,
-  ) {
-    const response = await axiosClient.get<
-      Schemas["ApiResponsePagedResponsePartnershipResponse"]
-    >("/pt/partnerships/me", { params });
-    return unwrapApiData(response.data);
-  },
-  async requestPartnership(payload: PartnershipRequest) {
-    const response = await axiosClient.post<
-      Schemas["ApiResponsePartnershipResponse"]
-    >("/pt/partnerships/request", payload);
-    return unwrapApiData(response.data);
-  },
-  async endPartnership(id: number) {
-    const response = await axiosClient.put<
-      Schemas["ApiResponsePartnershipResponse"]
-    >(`/pt/partnerships/${id}/end`);
-    return unwrapApiData(response.data);
-  },
+  ) => api.get<PartnershipPage>("/pt/partnerships/me", { params }),
+
+  requestPartnership: (payload: PartnershipRequest) =>
+    api.post<Partnership, PartnershipRequest>(
+      "/pt/partnerships/request",
+      payload,
+    ),
+
+  endPartnership: (id: number) =>
+    api.put<Partnership>(`/pt/partnerships/${id}/end`),
 };

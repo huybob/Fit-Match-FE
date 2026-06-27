@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { bookingTimes, trainingTypes } from "@/constants/ecommerce.constant";
 import { trainers } from "@/data/mock-ecommerce.data";
@@ -21,7 +20,6 @@ import { FieldShell } from "./form-controls";
 import { bookingSchema } from "./schemas";
 
 export function BookingForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -39,10 +37,10 @@ export function BookingForm() {
     <form
       className="grid gap-4 md:grid-cols-2"
       onSubmit={form.handleSubmit(() => {
-        toast({ type: "success", title: t("booking.success") });
+        toast({ type: "success", title: "Đặt lịch thành công" });
       })}
     >
-      <FieldShell label={t("booking.trainer")} error={form.formState.errors.trainerId}>
+      <FieldShell label="Huấn luyện viên" error={form.formState.errors.trainerId}>
         <Controller
           control={form.control}
           name="trainerId"
@@ -60,7 +58,7 @@ export function BookingForm() {
           )}
         />
       </FieldShell>
-      <FieldShell label={t("booking.type")} error={form.formState.errors.type}>
+      <FieldShell label="Loại buổi tập" error={form.formState.errors.type}>
         <Controller
           control={form.control}
           name="type"
@@ -76,7 +74,7 @@ export function BookingForm() {
           )}
         />
       </FieldShell>
-      <FieldShell label={t("booking.date")} error={form.formState.errors.date}>
+      <FieldShell label="Ngày tập" error={form.formState.errors.date}>
         <Controller
           control={form.control}
           name="date"
@@ -85,7 +83,7 @@ export function BookingForm() {
           )}
         />
       </FieldShell>
-      <FieldShell label={t("booking.time")} error={form.formState.errors.time}>
+      <FieldShell label="Giờ tập" error={form.formState.errors.time}>
         <Controller
           control={form.control}
           name="time"
@@ -101,14 +99,14 @@ export function BookingForm() {
           )}
         />
       </FieldShell>
-      <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
+      <FieldShell label="Họ và tên" error={form.formState.errors.name}>
         <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
+      <FieldShell label="Số điện thoại" error={form.formState.errors.phone}>
         <Input {...form.register("phone")} />
       </FieldShell>
       <Button className="md:col-span-2" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? t("common.loading") : t("common.confirm")}
+        {form.formState.isSubmitting ? "Đang xử lý..." : "Xác nhận"}
       </Button>
     </form>
   );

@@ -17,73 +17,71 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { RoleWorkspaceShell } from "@/shared/components/common/role-workspace-shell";
 
 export function TrainerLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { t } = useTranslation();
   const links = [
     {
-      label: t("bookingModule.navigation"),
+      label: "Lịch đặt",
       href: "/trainer/bookings",
       icon: CalendarCheck2,
     },
     {
-      label: t("sessionModule.navigation"),
+      label: "Buổi tập",
       href: "/trainer/sessions",
       icon: ClipboardList,
     },
     {
-      label: t("workoutPlan.navigation"),
+      label: "Giáo án",
       href: "/trainer/workout-plans",
       icon: NotebookTabs,
     },
     {
-      label: t("attendance.navigation"),
+      label: "Điểm danh",
       href: "/trainer/attendance",
       icon: ScanLine,
     },
     {
-      label: t("measurement.navigation"),
+      label: "Chỉ số cơ thể",
       href: "/trainer/measurements",
       icon: Ruler,
     },
     {
-      label: t("payment.navigation"),
+      label: "Thanh toán",
       href: "/trainer/payments",
       icon: WalletCards,
     },
     {
-      label: t("withdrawal.navigation"),
+      label: "Rút tiền",
       href: "/trainer/withdrawals",
       icon: Banknote,
     },
-    { label: t("review.navigation"), href: "/trainer/reviews", icon: Star },
+    { label: "Đánh giá", href: "/trainer/reviews", icon: Star },
     {
-      label: t("trainerModule.profile"),
+      label: "Hồ sơ PT",
       href: "/trainer/profile",
       icon: UserRound,
     },
     {
-      label: t("trainerModule.services"),
+      label: "Dịch vụ",
       href: "/trainer/services",
       icon: BriefcaseBusiness,
     },
     {
-      label: t("trainerModule.availability"),
+      label: "Lịch rảnh",
       href: "/trainer/availability",
       icon: CalendarDays,
     },
     {
-      label: t("trainerModule.certificates"),
+      label: "Chứng chỉ",
       href: "/trainer/certificates",
       icon: Award,
     },
     {
-      label: t("trainerModule.partnerships"),
+      label: "Hợp tác",
       href: "/trainer/partnerships",
       icon: Handshake,
     },
@@ -92,8 +90,8 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
     <SiteLayout>
       <AuthGuard roles={["ROLE_PT"]}>
         <RoleWorkspaceShell
-          title={t("trainerModule.workspace")}
-          description={t("trainerModule.workspaceDescription")}
+          title="Khu vực huấn luyện viên"
+          description="Quản lý lịch đặt, buổi tập, giáo án và các hoạt động huấn luyện của bạn."
           links={links}
           pathname={pathname}
         >

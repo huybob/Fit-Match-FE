@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipboardList, Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -43,8 +42,28 @@ const statusVariant: Record<
   ARCHIVED: "secondary",
 };
 
+const workoutPlanStatusLabels: Record<WorkoutPlanStatus, string> = {
+  ACTIVE: "Đang hoạt động",
+  COMPLETED: "Hoàn thành",
+  ARCHIVED: "Đã lưu trữ",
+};
+
+const scopeTitles: Record<"customer" | "pt", string> = {
+  customer: "Giáo án của tôi",
+  pt: "Quản lý giáo án",
+};
+
+const scopeDescriptions: Record<"customer" | "pt", string> = {
+  customer: "Xem các giáo án tập luyện được huấn luyện viên giao cho bạn.",
+  pt: "Tạo và quản lý giáo án tập luyện cho học viên của bạn.",
+};
+
+const actionSuccessLabels: Record<"complete" | "archive", string> = {
+  complete: "Đã hoàn thành giáo án",
+  archive: "Đã lưu trữ giáo án",
+};
+
 export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
-  const { t } = useTranslation();
   const [status, setStatus] = useState<WorkoutPlanStatus | "">("");
   const [editing, setEditing] = useState<WorkoutPlan | null | undefined>();
   const query = useWorkoutPlans(scope, status || undefined);
@@ -54,11 +73,11 @@ export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
   async function run(id: number, next: "complete" | "archive") {
     try {
       await action.mutateAsync({ id, action: next });
-      toast({ type: "success", title: t(`workoutPlan.actionSuccess.${next}`) });
+      toast({ type: "success", title: actionSuccessLabels[next] });
     } catch (error) {
       toast({
         type: "error",
-        title: t("common.requestFailed"),
+        title: "Yêu cầu thất bại",
         description: toErrorMessage(error),
       });
     }
@@ -69,15 +88,15 @@ export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
       <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t(`workoutPlan.${scope}Title`)}</h1>
+          <h1 className="text-3xl font-black">{scopeTitles[scope]}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {t(`workoutPlan.${scope}Description`)}
+            {scopeDescriptions[scope]}
           </p>
         </div>
         {scope === "pt" && (
           <Button onClick={() => setEditing(null)}>
             <Plus className="size-4" />
-            {t("workoutPlan.create")}
+            Tạo giáo án
           </Button>
         )}
       </section>
@@ -87,13 +106,13 @@ export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
         onValueChange={(v) => setStatus(v as WorkoutPlanStatus | "")}
       >
         <SelectTrigger className="w-64">
-          <SelectValue placeholder={t("workoutPlan.allStatuses")} />
+          <SelectValue placeholder="Tất cả trạng thái" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">{t("workoutPlan.allStatuses")}</SelectItem>
+          <SelectItem value="">Tất cả trạng thái</SelectItem>
           {statuses.map((s) => (
             <SelectItem key={s} value={s}>
-              {t(`workoutPlan.statuses.${s}`)}
+              {workoutPlanStatusLabels[s]}
             </SelectItem>
           ))}
         </SelectContent>
@@ -104,13 +123,13 @@ export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
           <LoadingSkeleton />
         ) : query.isError ? (
           <EmptyState
-            title={t("workoutPlan.loadError")}
+            title="Không thể tải giáo án"
             description={toErrorMessage(query.error)}
           />
         ) : !query.data?.content?.length ? (
           <EmptyState
-            title={t("workoutPlan.empty")}
-            description={t("workoutPlan.emptyDescription")}
+            title="Chưa có giáo án"
+            description="Chưa có giáo án nào được tạo."
           />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -134,32 +153,32 @@ export function WorkoutPlansPage({ scope }: { scope: "customer" | "pt" }) {
                     }
                   >
                     {plan.status
-                      ? t(`workoutPlan.statuses.${plan.status}`)
+                      ? (workoutPlanStatusLabels[plan.status] ?? "—")
                       : "—"}
                   </Badge>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {plan.description || t("common.noDescription")}
+                  {plan.description || "Chưa có mô tả"}
                 </p>
                 <p className="mt-4 text-sm font-bold">
                   {plan.startDate} → {plan.endDate} ·{" "}
-                  {plan.exercises?.length ?? 0} {t("workoutPlan.exercises")}
+                  {plan.exercises?.length ?? 0} bài tập
                 </p>
                 {scope === "pt" && (
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button onClick={() => setEditing(plan)}>
-                      {t("common.edit")}
+                      Sửa
                     </Button>
                     {plan.status === "ACTIVE" && (
                       <>
                         <Button onClick={() => void run(plan.id!, "complete")}>
-                          {t("workoutPlan.complete")}
+                          Hoàn thành
                         </Button>
                         <Button
                           variant="secondary"
                           onClick={() => void run(plan.id!, "archive")}
                         >
-                          {t("workoutPlan.archive")}
+                          Lưu trữ
                         </Button>
                       </>
                     )}
@@ -188,7 +207,6 @@ function WorkoutPlanDialog({
   plan: WorkoutPlan | null;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
   const save = useSaveWorkoutPlan();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof workoutPlanSchema>>({
@@ -208,7 +226,7 @@ function WorkoutPlanDialog({
   return (
     <Dialog
       open
-      title={plan ? t("workoutPlan.edit") : t("workoutPlan.create")}
+      title={plan ? "Sửa giáo án" : "Tạo giáo án"}
       onClose={onClose}
     >
       <form
@@ -216,19 +234,19 @@ function WorkoutPlanDialog({
         onSubmit={form.handleSubmit(async (values) => {
           try {
             await save.mutateAsync({ id: plan?.id, payload: values });
-            toast({ type: "success", title: t("workoutPlan.saved") });
+            toast({ type: "success", title: "Đã lưu giáo án" });
             onClose();
           } catch (error) {
             toast({
               type: "error",
-              title: t("common.requestFailed"),
+              title: "Yêu cầu thất bại",
               description: toErrorMessage(error),
             });
           }
         })}
       >
         <FieldShell
-          label={t("workoutPlan.customerId")}
+          label="ID học viên"
           error={form.formState.errors.customerId}
         >
           <Input
@@ -237,12 +255,12 @@ function WorkoutPlanDialog({
           />
         </FieldShell>
         <FieldShell
-          label={t("workoutPlan.name")}
+          label="Tên giáo án"
           error={form.formState.errors.name}
         >
           <Input {...form.register("name")} />
         </FieldShell>
-        <FieldShell label={t("workoutPlan.startDate")}>
+        <FieldShell label="Ngày bắt đầu">
           <Controller
             control={form.control}
             name="startDate"
@@ -252,7 +270,7 @@ function WorkoutPlanDialog({
           />
         </FieldShell>
         <FieldShell
-          label={t("workoutPlan.endDate")}
+          label="Ngày kết thúc"
           error={form.formState.errors.endDate}
         >
           <Controller
@@ -264,32 +282,32 @@ function WorkoutPlanDialog({
           />
         </FieldShell>
         <div className="sm:col-span-2">
-          <FieldShell label={t("common.description")}>
+          <FieldShell label="Mô tả">
             <Textarea {...form.register("description")} />
           </FieldShell>
         </div>
         <div className="sm:col-span-2 rounded-xl border border-border p-4">
-          <p className="mb-3 font-black">{t("workoutPlan.firstExercise")}</p>
+          <p className="mb-3 font-black">Bài tập đầu tiên</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <Input
-              placeholder={t("workoutPlan.exerciseName")}
+              placeholder="Tên bài tập"
               {...form.register("exercises.0.name")}
             />
             <Input
               type="number"
-              placeholder={t("workoutPlan.sets")}
+              placeholder="Số hiệp"
               {...form.register("exercises.0.sets", { valueAsNumber: true })}
             />
             <Input
               type="number"
-              placeholder={t("workoutPlan.reps")}
+              placeholder="Số lần"
               {...form.register("exercises.0.reps", { valueAsNumber: true })}
             />
           </div>
         </div>
         <Button className="sm:col-span-2" disabled={save.isPending}>
           <ClipboardList className="size-4" />
-          {t("common.save")}
+          Lưu thay đổi
         </Button>
       </form>
     </Dialog>

@@ -8,7 +8,6 @@ import {
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useAttendance } from "../hooks/use-attendance";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
@@ -25,9 +24,25 @@ const statusVariant: Record<
   ABSENT: "destructive",
 };
 
-function dateTime(value: string | undefined, language: string) {
+const scopeTitles: Record<string, string> = {
+  customer: "Lịch sử điểm danh của bạn",
+  pt: "Điểm danh buổi tập",
+};
+
+const scopeDescriptions: Record<string, string> = {
+  customer: "Xem lại toàn bộ lịch sử điểm danh các buổi tập của bạn.",
+  pt: "Theo dõi điểm danh của học viên trong các buổi huấn luyện.",
+};
+
+const statusLabels: Record<string, string> = {
+  ON_TIME: "Đúng giờ",
+  LATE: "Trễ",
+  ABSENT: "Vắng mặt",
+};
+
+function dateTime(value: string | undefined) {
   return value
-    ? new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", {
+    ? new Intl.DateTimeFormat("vi-VN", {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(new Date(value))
@@ -35,7 +50,6 @@ function dateTime(value: string | undefined, language: string) {
 }
 
 export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
-  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const query = useAttendance(scope, page);
   const items = query.data?.content ?? [];
@@ -49,9 +63,9 @@ export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
     <div>
       <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
         <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">{t(`attendance.${scope}Title`)}</h1>
+        <h1 className="text-3xl font-black">{scopeTitles[scope] ?? "Điểm danh"}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {t(`attendance.${scope}Description`)}
+          {scopeDescriptions[scope] ?? ""}
         </p>
       </section>
 
@@ -59,17 +73,17 @@ export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
         <div className="mb-5 grid gap-3 sm:grid-cols-3">
           <Stat
             icon={CheckCircle2}
-            label={t("attendance.statuses.ON_TIME")}
+            label={statusLabels["ON_TIME"]}
             value={stats.onTime}
           />
           <Stat
             icon={Clock3}
-            label={t("attendance.statuses.LATE")}
+            label={statusLabels["LATE"]}
             value={stats.late}
           />
           <Stat
             icon={XCircle}
-            label={t("attendance.statuses.ABSENT")}
+            label={statusLabels["ABSENT"]}
             value={stats.absent}
           />
         </div>
@@ -79,13 +93,13 @@ export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState
-          title={t("attendance.loadError")}
+          title="Không thể tải dữ liệu điểm danh"
           description={toErrorMessage(query.error)}
         />
       ) : !items.length ? (
         <EmptyState
-          title={t("attendance.empty")}
-          description={t("attendance.emptyDescription")}
+          title="Chưa có dữ liệu điểm danh"
+          description="Dữ liệu điểm danh sẽ xuất hiện sau khi bạn tham gia buổi tập."
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -106,22 +120,22 @@ export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
                   }
                 >
                   {item.status
-                    ? t(`attendance.statuses.${item.status}`)
+                    ? (statusLabels[item.status] ?? item.status)
                     : "—"}
                 </Badge>
               </div>
               <h2 className="mt-2 flex items-center gap-2 text-lg font-black">
                 <UserRound className="size-4 text-accent" />
-                {item.customerName ?? t("attendance.me")}
+                {item.customerName ?? "Tôi"}
               </h2>
               <div className="mt-4 grid gap-2 text-sm text-muted-foreground">
                 <span>
-                  {t("attendance.checkIn")}:{" "}
-                  {dateTime(item.checkInTime, i18n.language)}
+                  Giờ vào:{" "}
+                  {dateTime(item.checkInTime)}
                 </span>
                 <span>
-                  {t("attendance.checkOut")}:{" "}
-                  {dateTime(item.checkOutTime, i18n.language)}
+                  Giờ ra:{" "}
+                  {dateTime(item.checkOutTime)}
                 </span>
               </div>
               {item.sessionNotes && (
@@ -140,13 +154,13 @@ export function AttendancePage({ scope }: { scope: "customer" | "pt" }) {
             disabled={page === 0}
             onClick={() => setPage((v) => v - 1)}
           >
-            {t("common.previous")}
+            Trang trước
           </Button>
           <Button
             disabled={query.data?.last}
             onClick={() => setPage((v) => v + 1)}
           >
-            {t("common.next")}
+            Trang sau
           </Button>
         </div>
       )}

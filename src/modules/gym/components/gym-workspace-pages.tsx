@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -67,6 +66,17 @@ const facilityTypes = [
   "OTHER",
 ] as const;
 
+const facilityTypeLabels: Record<string, string> = {
+  EQUIPMENT: "Thiết bị",
+  AMENITY: "Tiện nghi",
+  CLASS_ROOM: "Phòng học",
+  LOCKER_ROOM: "Phòng thay đồ",
+  SHOWER: "Phòng tắm",
+  PARKING: "Bãi đỗ xe",
+  WIFI: "WiFi",
+  OTHER: "Khác",
+};
+
 const gymStatusVariant: Record<
   string,
   React.ComponentProps<typeof Badge>["variant"]
@@ -98,7 +108,6 @@ function errorToast(
 }
 
 export function MyGymsPage() {
-  const { t } = useTranslation();
   const query = useMyGyms();
   const create = useCreateGym();
   const update = useUpdateGym();
@@ -149,19 +158,19 @@ export function MyGymsPage() {
   const ownedGyms = query.data?.content ?? [];
   const summary = [
     {
-      label: t("gymModule.totalGyms"),
+      label: "Tổng số phòng gym",
       value: ownedGyms.length,
       icon: Building2,
       tone: "bg-primary/10 text-primary",
     },
     {
-      label: t("gymModule.activeGyms"),
+      label: "Phòng gym đang hoạt động",
       value: ownedGyms.filter((gym) => gym.status === "ACTIVE").length,
       icon: Activity,
-      tone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+      tone: "bg-emerald-100 text-emerald-700",
     },
     {
-      label: t("gymModule.coveredCities"),
+      label: "Thành phố đang có mặt",
       value: new Set(ownedGyms.map((gym) => gym.city).filter(Boolean)).size,
       icon: MapPinned,
       tone: "bg-accent/10 text-accent",
@@ -171,12 +180,12 @@ export function MyGymsPage() {
   return (
     <>
       <PageHeader
-        title={t("gymModule.myGyms")}
-        description={t("gymModule.myGymsDescription")}
+        title="Phòng gym của tôi"
+        description="Quản lý tất cả phòng gym bạn sở hữu."
         action={
           <Button onClick={() => show()}>
             <Plus className="size-4" />
-            {t("gymModule.createGym")}
+            Tạo phòng gym
           </Button>
         }
       />
@@ -227,9 +236,9 @@ export function MyGymsPage() {
                   className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-foreground px-4 text-sm font-bold text-background transition-all hover:-translate-y-0.5 hover:shadow-md"
                   href={`/gym/gyms/${gym.id}`}
                 >
-                  {t("common.manage")}
+                  Quản lý
                 </Link>
-                <Button onClick={() => show(gym)}>{t("common.edit")}</Button>
+                <Button onClick={() => show(gym)}>Sửa</Button>
                 {gym.id && (
                   <Button
                     variant="accent"
@@ -240,11 +249,7 @@ export function MyGymsPage() {
                       })
                     }
                   >
-                    {t(
-                      gym.status === "ACTIVE"
-                        ? "gymModule.closeGym"
-                        : "gymModule.reopenGym",
-                    )}
+                    {gym.status === "ACTIVE" ? "Đóng cửa gym" : "Mở lại gym"}
                   </Button>
                 )}
               </div>
@@ -252,21 +257,19 @@ export function MyGymsPage() {
                 <div className="grid content-center gap-3 border-t border-border bg-muted/30 p-5 text-xs sm:grid-cols-[auto_1fr_1fr] sm:items-center 2xl:grid-cols-1 2xl:items-stretch 2xl:border-l 2xl:border-t-0">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">
-                      {t("common.status")}
+                      Trạng thái
                     </span>
                     <Badge
                       variant={gymStatusVariant[String(gym.status)] ?? "default"}
                     >
-                      {t(`statusLabels.${String(gym.status).toLowerCase()}`, {
-                        defaultValue: gym.status,
-                      })}
+                      {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" })[String(gym.status).toLowerCase()] ?? gym.status}
                     </Badge>
                   </div>
                   <label
                     className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 font-bold transition hover:border-primary hover:bg-primary/5"
                     htmlFor={`gym-logo-${gym.id}`}
                   >
-                    <span>{t("gymModule.uploadLogo")}</span>
+                    <span>Tải lên logo</span>
                     <UploadCloud className="size-4 text-primary" />
                     <input
                       className="sr-only"
@@ -284,7 +287,7 @@ export function MyGymsPage() {
                     className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 font-bold transition hover:border-primary hover:bg-primary/5"
                     htmlFor={`gym-cover-${gym.id}`}
                   >
-                    <span>{t("gymModule.uploadCover")}</span>
+                    <span>Tải lên ảnh bìa</span>
                     <UploadCloud className="size-4 text-primary" />
                     <input
                       className="sr-only"
@@ -305,14 +308,14 @@ export function MyGymsPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("gymModule.emptyOwnedGyms")}
-          description={t("gymModule.emptyOwnedGymsDescription")}
+          title="Chưa có phòng gym nào"
+          description="Tạo phòng gym đầu tiên của bạn để bắt đầu quản lý."
         />
       )}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title={t(editing ? "gymModule.editGym" : "gymModule.createGym")}
+        title={editing ? "Chỉnh sửa phòng gym" : "Tạo phòng gym"}
       >
         <form
           className="space-y-4"
@@ -328,63 +331,61 @@ export function MyGymsPage() {
               else await create.mutateAsync(payload);
               toast({
                 type: "success",
-                title: t(
-                  editing ? "gymModule.gymUpdated" : "gymModule.gymCreated",
-                ),
+                title: editing ? "Đã cập nhật phòng gym" : "Đã tạo phòng gym",
               });
               setOpen(false);
             } catch (error) {
-              errorToast(toast, error, t("common.requestFailed"));
+              errorToast(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <FieldShell
-            label={t("common.name")}
+            label="Tên"
             error={form.formState.errors.name}
           >
             <Input {...form.register("name")} />
           </FieldShell>
           <FieldShell
-            label={t("common.description")}
+            label="Mô tả"
             error={form.formState.errors.description}
           >
             <Textarea className="min-h-24" {...form.register("description")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
-              label={t("gymModule.city")}
+              label="Thành phố"
               error={form.formState.errors.city}
             >
               <Input {...form.register("city")} />
             </FieldShell>
             <FieldShell
-              label={t("gymModule.district")}
+              label="Quận/huyện"
               error={form.formState.errors.district}
             >
               <Input {...form.register("district")} />
             </FieldShell>
           </div>
           <FieldShell
-            label={t("common.address")}
+            label="Địa chỉ"
             error={form.formState.errors.address}
           >
             <Input {...form.register("address")} />
           </FieldShell>
           <div className="grid grid-cols-2 gap-3">
             <FieldShell
-              label={t("common.phone")}
+              label="Số điện thoại"
               error={form.formState.errors.phone}
             >
               <Input {...form.register("phone")} />
             </FieldShell>
             <FieldShell
-              label={t("common.email")}
+              label="Email"
               error={form.formState.errors.email}
             >
               <Input type="email" {...form.register("email")} />
             </FieldShell>
           </div>
-          <Button className="w-full">{t("common.save")}</Button>
+          <Button className="w-full">Lưu thay đổi</Button>
         </form>
       </Dialog>
     </>
@@ -392,7 +393,6 @@ export function MyGymsPage() {
 }
 
 export function GymManagePage({ gymId }: { gymId: number }) {
-  const { t } = useTranslation();
   const gym = useGymDetail(gymId);
   const branches = useGymBranches(gymId);
   const facilities = useGymFacilities(gymId);
@@ -464,7 +464,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
   if (gym.isError || !gym.data)
     return (
       <EmptyState
-        title={t("gymModule.notFound")}
+        title="Không tìm thấy phòng gym"
         description={toErrorMessage(gym.error)}
       />
     );
@@ -473,14 +473,14 @@ export function GymManagePage({ gymId }: { gymId: number }) {
     <>
       <PageHeader
         title={gym.data.name ?? "Gym"}
-        description={t("gymModule.manageDescription")}
+        description="Quản lý chi tiết phòng gym của bạn."
       />
       <section className="mb-8 grid gap-3 rounded-2xl border border-border bg-zinc-950 p-5 text-white shadow-lg sm:grid-cols-2 xl:grid-cols-4">
         <div className="flex items-start gap-3 rounded-xl bg-white/5 p-3">
           <MapPin className="mt-0.5 size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
-              {t("common.address")}
+              Địa chỉ
             </p>
             <p className="mt-1 text-sm font-bold">
               {gym.data.address}, {gym.data.district}, {gym.data.city}
@@ -491,10 +491,10 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           <Phone className="mt-0.5 size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
-              {t("common.phone")}
+              Số điện thoại
             </p>
             <p className="mt-1 text-sm font-bold">
-              {gym.data.phone || t("common.noPhone")}
+              {gym.data.phone || "Chưa có số điện thoại"}
             </p>
           </div>
         </div>
@@ -502,7 +502,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           <Mail className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
-              {t("common.email")}
+              Email
             </p>
             <p className="mt-1 truncate text-sm font-bold">
               {gym.data.email || "—"}
@@ -513,12 +513,10 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           <Activity className="size-5 shrink-0 text-primary" />
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-zinc-400">
-              {t("common.status")}
+              Trạng thái
             </p>
             <Badge className="mt-1 border-primary/30 bg-primary/10 text-primary">
-              {t(`statusLabels.${String(gym.data.status).toLowerCase()}`, {
-                defaultValue: gym.data.status,
-              })}
+              {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" })[String(gym.data.status).toLowerCase()] ?? gym.data.status}
             </Badge>
           </div>
         </div>
@@ -526,12 +524,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
 
       <section className="mb-10">
         <PageHeader
-          title={t("gymModule.branches")}
-          description={t("gymModule.branchesDescription")}
+          title="Chi nhánh"
+          description="Quản lý các chi nhánh của phòng gym."
           action={
             <Button onClick={() => showBranch()}>
               <Plus className="size-4" />
-              {t("gymModule.addBranch")}
+              Thêm chi nhánh
             </Button>
           }
         />
@@ -548,12 +546,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button onClick={() => showBranch(item)}>
-                    {t("common.edit")}
+                    Sửa
                   </Button>
                   {item.id && (
                     <ConfirmDialog
-                      label={t("common.delete")}
-                      title={t("gymModule.deleteBranchTitle")}
+                      label="Xóa"
+                      title="Xóa chi nhánh"
                       onConfirm={() =>
                         deleteBranch.mutate({ gymId, id: item.id! })
                       }
@@ -565,20 +563,20 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         ) : (
           <EmptyState
-            title={t("gymModule.noBranches")}
-            description={t("gymModule.emptyBranchesDescription")}
+            title="Chưa có chi nhánh"
+            description="Thêm chi nhánh đầu tiên cho phòng gym của bạn."
           />
         )}
       </section>
 
       <section>
         <PageHeader
-          title={t("gymModule.facilities")}
-          description={t("gymModule.facilitiesDescription")}
+          title="Cơ sở vật chất"
+          description="Quản lý các tiện nghi và thiết bị của phòng gym."
           action={
             <Button onClick={() => showFacility()}>
               <Plus className="size-4" />
-              {t("gymModule.addFacility")}
+              Thêm cơ sở vật chất
             </Button>
           }
         />
@@ -592,9 +590,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
                 <div className="flex justify-between">
                   <h3 className="font-black">{item.name}</h3>
                   <Badge variant="secondary">
-                    {t(`gymModule.facilityTypes.${item.type}`, {
-                      defaultValue: item.type,
-                    })}
+                    {facilityTypeLabels[item.type] ?? item.type}
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -602,12 +598,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
                 </p>
                 <div className="mt-4 flex gap-2">
                   <Button onClick={() => showFacility(item)}>
-                    {t("common.edit")}
+                    Sửa
                   </Button>
                   {item.id && (
                     <ConfirmDialog
-                      label={t("common.delete")}
-                      title={t("gymModule.deleteFacilityTitle")}
+                      label="Xóa"
+                      title="Xóa cơ sở vật chất"
                       onConfirm={() =>
                         deleteFacility.mutate({ gymId, id: item.id! })
                       }
@@ -619,8 +615,8 @@ export function GymManagePage({ gymId }: { gymId: number }) {
           </div>
         ) : (
           <EmptyState
-            title={t("gymModule.noFacilities")}
-            description={t("gymModule.emptyFacilitiesDescription")}
+            title="Chưa có cơ sở vật chất"
+            description="Thêm cơ sở vật chất đầu tiên cho phòng gym của bạn."
           />
         )}
       </section>
@@ -628,9 +624,7 @@ export function GymManagePage({ gymId }: { gymId: number }) {
       <Dialog
         open={branchOpen}
         onClose={() => setBranchOpen(false)}
-        title={t(
-          editingBranch ? "gymModule.editBranch" : "gymModule.addBranch",
-        )}
+        title={editingBranch ? "Chỉnh sửa chi nhánh" : "Thêm chi nhánh"}
       >
         <form
           className="space-y-3"
@@ -646,55 +640,49 @@ export function GymManagePage({ gymId }: { gymId: number }) {
               else await createBranch.mutateAsync({ gymId, payload });
               toast({
                 type: "success",
-                title: t(
-                  editingBranch
-                    ? "gymModule.branchUpdated"
-                    : "gymModule.branchCreated",
-                ),
+                title: editingBranch ? "Đã cập nhật chi nhánh" : "Đã tạo chi nhánh",
               });
               setBranchOpen(false);
             } catch (error) {
-              errorToast(toast, error, t("common.requestFailed"));
+              errorToast(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <Input
-            aria-label={t("gymModule.branchName")}
-            placeholder={t("gymModule.branchName")}
+            aria-label="Tên chi nhánh"
+            placeholder="Tên chi nhánh"
             {...branchForm.register("name")}
           />
           <Input
-            aria-label={t("gymModule.branchAddress")}
-            placeholder={t("gymModule.branchAddress")}
+            aria-label="Địa chỉ chi nhánh"
+            placeholder="Địa chỉ chi nhánh"
             {...branchForm.register("address")}
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
-              aria-label={t("gymModule.city")}
-              placeholder={t("gymModule.city")}
+              aria-label="Thành phố"
+              placeholder="Thành phố"
               {...branchForm.register("city")}
             />
             <Input
-              aria-label={t("gymModule.district")}
-              placeholder={t("gymModule.district")}
+              aria-label="Quận/huyện"
+              placeholder="Quận/huyện"
               {...branchForm.register("district")}
             />
           </div>
           <Input
-            aria-label={t("gymModule.branchPhone")}
-            placeholder={t("gymModule.branchPhone")}
+            aria-label="Số điện thoại chi nhánh"
+            placeholder="Số điện thoại chi nhánh"
             {...branchForm.register("phone")}
           />
-          <Button className="w-full">{t("gymModule.saveBranch")}</Button>
+          <Button className="w-full">Lưu chi nhánh</Button>
         </form>
       </Dialog>
 
       <Dialog
         open={facilityOpen}
         onClose={() => setFacilityOpen(false)}
-        title={t(
-          editingFacility ? "gymModule.editFacility" : "gymModule.addFacility",
-        )}
+        title={editingFacility ? "Chỉnh sửa cơ sở vật chất" : "Thêm cơ sở vật chất"}
       >
         <form
           className="space-y-3"
@@ -714,27 +702,23 @@ export function GymManagePage({ gymId }: { gymId: number }) {
               else await createFacility.mutateAsync({ gymId, payload });
               toast({
                 type: "success",
-                title: t(
-                  editingFacility
-                    ? "gymModule.facilityUpdated"
-                    : "gymModule.facilityCreated",
-                ),
+                title: editingFacility ? "Đã cập nhật cơ sở vật chất" : "Đã tạo cơ sở vật chất",
               });
               setFacilityOpen(false);
             } catch (error) {
-              errorToast(toast, error, t("common.requestFailed"));
+              errorToast(toast, error, "Yêu cầu thất bại");
             }
           })}
         >
           <Input
-            aria-label={t("gymModule.facilityName")}
-            placeholder={t("gymModule.facilityName")}
+            aria-label="Tên cơ sở vật chất"
+            placeholder="Tên cơ sở vật chất"
             {...facilityForm.register("name")}
           />
           <Textarea
-            aria-label={t("gymModule.facilityDescription")}
+            aria-label="Mô tả cơ sở vật chất"
             className="min-h-24"
-            placeholder={t("gymModule.facilityDescription")}
+            placeholder="Mô tả cơ sở vật chất"
             {...facilityForm.register("description")}
           />
           <Controller
@@ -743,12 +727,12 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("gymModule.facilityType")} />
+                  <SelectValue placeholder="Loại cơ sở vật chất" />
                 </SelectTrigger>
                 <SelectContent>
                   {facilityTypes.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {t(`gymModule.facilityTypes.${type}`)}
+                      {facilityTypeLabels[type] ?? type}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -756,15 +740,15 @@ export function GymManagePage({ gymId }: { gymId: number }) {
             )}
           />
           <Input
-            aria-label={t("gymModule.facilityIconUrl")}
-            placeholder={t("gymModule.facilityIconUrl")}
+            aria-label="URL icon cơ sở vật chất"
+            placeholder="URL icon cơ sở vật chất"
             {...facilityForm.register("iconUrl")}
           />
           <label className="flex gap-2 text-sm font-bold">
             <input type="checkbox" {...facilityForm.register("isAvailable")} />
-            {t("common.available")}
+            Khả dụng
           </label>
-          <Button className="w-full">{t("gymModule.saveFacility")}</Button>
+          <Button className="w-full">Lưu cơ sở vật chất</Button>
         </form>
       </Dialog>
     </>
@@ -772,7 +756,6 @@ export function GymManagePage({ gymId }: { gymId: number }) {
 }
 
 export function GymPartnershipsPage() {
-  const { t } = useTranslation();
   const query = useGymPartnerships();
   const action = usePartnershipAction();
   const { toast } = useToast();
@@ -780,23 +763,23 @@ export function GymPartnershipsPage() {
   async function run(id: number, kind: "approve" | "reject" | "end") {
     try {
       await action.mutateAsync({ id, action: kind });
-      const key =
+      const title =
         kind === "approve"
-          ? "gymModule.partnershipApproved"
+          ? "Đã chấp nhận hợp tác"
           : kind === "reject"
-            ? "gymModule.partnershipRejected"
-            : "gymModule.partnershipEnded";
-      toast({ type: "success", title: t(key) });
+            ? "Đã từ chối hợp tác"
+            : "Đã kết thúc hợp tác";
+      toast({ type: "success", title });
     } catch (error) {
-      errorToast(toast, error, t("common.requestFailed"));
+      errorToast(toast, error, "Yêu cầu thất bại");
     }
   }
 
   return (
     <>
       <PageHeader
-        title={t("gymModule.partnerships")}
-        description={t("gymModule.partnershipsDescription")}
+        title="Hợp tác"
+        description="Quản lý các yêu cầu hợp tác với huấn luyện viên."
       />
       {query.isLoading ? (
         <LoadingSkeleton />
@@ -811,11 +794,11 @@ export function GymPartnershipsPage() {
                 <div>
                   <h2 className="font-black">
                     {item.ptName ||
-                      `${t("common.trainers")} #${item.profileId}`}
+                      `Huấn luyện viên #${item.profileId}`}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {item.gymName} ·{" "}
-                    {item.requestMessage || t("common.noMessage")}
+                    {item.requestMessage || "Không có nội dung"}
                   </p>
                   <Badge
                     className="mt-3"
@@ -823,9 +806,7 @@ export function GymPartnershipsPage() {
                       partnerStatusVariant[String(item.status)] ?? "default"
                     }
                   >
-                    {t(`statusLabels.${String(item.status).toLowerCase()}`, {
-                      defaultValue: item.status,
-                    })}
+                    {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" })[String(item.status).toLowerCase()] ?? item.status}
                   </Badge>
                 </div>
                 {item.id && (
@@ -833,13 +814,13 @@ export function GymPartnershipsPage() {
                     {item.status === "PENDING" && (
                       <>
                         <Button onClick={() => void run(item.id!, "approve")}>
-                          {t("gymModule.approve")}
+                          Chấp nhận
                         </Button>
                         <Button
                           variant="destructive"
                           onClick={() => void run(item.id!, "reject")}
                         >
-                          {t("gymModule.reject")}
+                          Từ chối
                         </Button>
                       </>
                     )}
@@ -848,7 +829,7 @@ export function GymPartnershipsPage() {
                         variant="destructive"
                         onClick={() => void run(item.id!, "end")}
                       >
-                        {t("gymModule.end")}
+                        Kết thúc hợp tác
                       </Button>
                     )}
                   </div>
@@ -859,8 +840,8 @@ export function GymPartnershipsPage() {
         </div>
       ) : (
         <EmptyState
-          title={t("gymModule.emptyPartnerships")}
-          description={t("gymModule.emptyPartnershipsDescription")}
+          title="Chưa có yêu cầu hợp tác"
+          description="Các yêu cầu hợp tác từ huấn luyện viên sẽ hiển thị tại đây."
         />
       )}
     </>

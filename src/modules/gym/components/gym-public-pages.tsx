@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Building2, MapPin, Search, Star } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   useGymBranches,
   useGymDetail,
@@ -19,7 +18,6 @@ import { Button } from "@/shared/components/ui/button";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 export function GymsPublicPage() {
-  const { t } = useTranslation();
   const [filters, setFilters] = useState({
     keyword: "",
     city: "",
@@ -42,11 +40,11 @@ export function GymsPublicPage() {
       <main className="mx-auto max-w-7xl px-4 py-10">
         <div className="max-w-2xl">
           <p className="text-sm font-black uppercase tracking-widest text-accent">
-            {t("gymModule.discovery")}
+            {"Khám phá phòng gym"}
           </p>
-          <h1 className="mt-2 text-4xl font-black">{t("gymModule.title")}</h1>
+          <h1 className="mt-2 text-4xl font-black">{"Danh sách phòng gym"}</h1>
           <p className="mt-3 text-muted-foreground">
-            {t("gymModule.description")}
+            {"Tìm kiếm và khám phá các phòng gym phù hợp với bạn."}
           </p>
         </div>
         <form
@@ -54,33 +52,33 @@ export function GymsPublicPage() {
           onSubmit={search}
         >
           <Input
-            aria-label={t("gymModule.keyword")}
-            placeholder={t("gymModule.keyword")}
+            aria-label={"Từ khóa"}
+            placeholder={"Từ khóa"}
             value={filters.keyword}
             onChange={(e) =>
               setFilters({ ...filters, keyword: e.target.value })
             }
           />
           <Input
-            aria-label={t("gymModule.city")}
-            placeholder={t("gymModule.city")}
+            aria-label={"Thành phố"}
+            placeholder={"Thành phố"}
             value={filters.city}
             onChange={(e) => setFilters({ ...filters, city: e.target.value })}
           />
           <Input
-            aria-label={t("gymModule.district")}
-            placeholder={t("gymModule.district")}
+            aria-label={"Quận/Huyện"}
+            placeholder={"Quận/Huyện"}
             value={filters.district}
             onChange={(e) =>
               setFilters({ ...filters, district: e.target.value })
             }
           />
           <Input
-            aria-label={t("gymModule.minimumRating")}
+            aria-label={"Đánh giá tối thiểu"}
             min="0"
             max="5"
             step="0.5"
-            placeholder={t("gymModule.minimumRating")}
+            placeholder={"Đánh giá tối thiểu"}
             type="number"
             value={filters.minRating}
             onChange={(e) =>
@@ -89,7 +87,7 @@ export function GymsPublicPage() {
           />
           <Button>
             <Search className="size-4" />
-            {t("gymModule.search")}
+            {"Tìm kiếm"}
           </Button>
         </form>
         <section className="mt-8">
@@ -97,7 +95,7 @@ export function GymsPublicPage() {
             <LoadingSkeleton />
           ) : query.isError ? (
             <EmptyState
-              title={t("gymModule.loadError")}
+              title={"Không thể tải danh sách phòng gym"}
               description={toErrorMessage(query.error)}
             />
           ) : query.data?.content?.length ? (
@@ -114,10 +112,7 @@ export function GymsPublicPage() {
                     <div className="flex items-start justify-between gap-3">
                       <h2 className="text-xl font-black">{gym.name}</h2>
                       <Badge>
-                        {t(
-                          `statusLabels.${String(gym.status).toLowerCase()}`,
-                          { defaultValue: gym.status },
-                        )}
+                        {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" } as Record<string, string>)[String(gym.status).toLowerCase()] ?? gym.status}
                       </Badge>
                     </div>
                     <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
@@ -125,7 +120,7 @@ export function GymsPublicPage() {
                       {gym.district}, {gym.city}
                     </p>
                     <p className="mt-3 line-clamp-2 text-sm">
-                      {gym.description || t("common.noDescription")}
+                      {gym.description || "Chưa có mô tả"}
                     </p>
                     <div className="mt-5 flex items-center justify-between">
                       <span className="flex items-center gap-1 font-bold">
@@ -136,7 +131,7 @@ export function GymsPublicPage() {
                         className="font-black text-accent"
                         href={`/gyms/${gym.id}`}
                       >
-                        {t("gymModule.viewGym")}
+                        {"Xem phòng gym"}
                       </Link>
                     </div>
                   </div>
@@ -145,8 +140,8 @@ export function GymsPublicPage() {
             </div>
           ) : (
             <EmptyState
-              title={t("gymModule.noGyms")}
-              description={t("gymModule.noGymsDescription")}
+              title={"Không tìm thấy phòng gym"}
+              description={"Thử thay đổi bộ lọc tìm kiếm để xem thêm kết quả."}
             />
           )}
         </section>
@@ -156,7 +151,6 @@ export function GymsPublicPage() {
 }
 
 export function GymPublicDetailPage({ gymId }: { gymId: number }) {
-  const { t } = useTranslation();
   const gym = useGymDetail(gymId);
   const branches = useGymBranches(gymId);
   const facilities = useGymFacilities(gymId);
@@ -174,7 +168,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
       <SiteLayout>
         <main className="mx-auto max-w-4xl px-4 py-10">
           <EmptyState
-            title={t("gymModule.notFound")}
+            title={"Không tìm thấy phòng gym"}
             description={toErrorMessage(gym.error)}
           />
         </main>
@@ -186,9 +180,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
       <main className="mx-auto max-w-6xl space-y-8 px-4 py-10">
         <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-lime-950 p-7 text-white shadow-xl shadow-zinc-950/10">
           <Badge>
-            {t(`statusLabels.${String(gym.data.status).toLowerCase()}`, {
-              defaultValue: gym.data.status,
-            })}
+            {({ active: "Đang hoạt động", inactive: "Ngừng hoạt động", pending: "Đang chờ", approved: "Đã chấp nhận", rejected: "Đã từ chối", ended: "Đã kết thúc", confirmed: "Đã xác nhận", completed: "Hoàn thành", cancelled: "Đã hủy" } as Record<string, string>)[String(gym.data.status).toLowerCase()] ?? gym.data.status}
           </Badge>
           <h1 className="mt-4 text-4xl font-black">{gym.data.name}</h1>
           <p className="mt-3 max-w-3xl text-zinc-300">{gym.data.description}</p>
@@ -200,7 +192,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
 
         <section>
           <h2 className="mb-4 text-2xl font-black">
-            {t("gymModule.branches")}
+            {"Chi nhánh"}
           </h2>
           {branches.data?.content?.length ? (
             <div className="grid gap-4 md:grid-cols-2">
@@ -214,22 +206,22 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                     {branch.address}, {branch.district}
                   </p>
                   <p className="mt-3 text-sm font-bold">
-                    {branch.phone || t("common.noPhone")}
+                    {branch.phone || "Chưa có số điện thoại"}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
             <EmptyState
-              title={t("gymModule.noBranches")}
-              description={t("gymModule.noBranchesDescription")}
+              title={"Chưa có chi nhánh"}
+              description={"Phòng gym này chưa có chi nhánh nào được thêm vào."}
             />
           )}
         </section>
 
         <section>
           <h2 className="mb-4 text-2xl font-black">
-            {t("gymModule.facilities")}
+            {"Cơ sở vật chất"}
           </h2>
           {facilities.data?.content?.length ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -241,9 +233,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                   <div className="flex justify-between">
                     <h3 className="font-black">{facility.name}</h3>
                     <Badge>
-                      {t(`gymModule.facilityTypes.${facility.type}`, {
-                        defaultValue: facility.type,
-                      })}
+                      {facility.type}
                     </Badge>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -254,8 +244,8 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
             </div>
           ) : (
             <EmptyState
-              title={t("gymModule.noFacilities")}
-              description={t("gymModule.noFacilitiesDescription")}
+              title={"Chưa có cơ sở vật chất"}
+              description={"Phòng gym này chưa có thông tin cơ sở vật chất."}
             />
           )}
         </section>

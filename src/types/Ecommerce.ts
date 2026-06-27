@@ -27,6 +27,7 @@ export interface Trainer {
   availableSlots: string[];
   location?: string;
   avatarColor?: string;
+  imageUrl?: string;
 }
 
 export interface Gym {
@@ -37,6 +38,7 @@ export interface Gym {
   badge?: string;
   facilities: string[];
   gradient: string;
+  imageUrl?: string;
 }
 
 export interface Testimonial {
@@ -55,6 +57,7 @@ export interface BlogPost {
   excerpt: string;
   date: string;
   color: string;
+  imageUrl?: string;
 }
 
 export interface Booking {

@@ -1,14 +1,31 @@
-import { axiosClient } from "@/core/http/axios-client";
-import { unwrapApiData } from "@/core/http/api-response";
-import type { components } from "@/services/generated/api-contracts";
-type S = components["schemas"];
-export type Payment = S["PaymentResponse"];
-export type PaymentStatus = NonNullable<Payment["status"]>;
-export type CreatePaymentRequest = S["CreatePaymentRequest"];
-export type RefundRequest = S["RefundRequest"];
-async function list(path: string, status?: PaymentStatus) { const response = await axiosClient.get<S["ApiResponsePagedResponsePaymentResponse"]>(path,{params:{page:0,size:20,status}}); return unwrapApiData(response.data); }
+import { api } from "@/services/api";
+import type {
+  CreatePaymentRequest,
+  Payment,
+  PaymentPage,
+  PaymentStatus,
+  RefundRequest,
+} from "@/types/Payment";
+
+export type {
+  CreatePaymentRequest,
+  Payment,
+  PaymentPage,
+  PaymentStatus,
+  RefundRequest,
+} from "@/types/Payment";
+
+function list(path: string, status?: PaymentStatus) {
+  return api.get<PaymentPage>(path, {
+    params: { page: 0, size: 20, status },
+  });
+}
+
 export const paymentService = {
-  getMine: (status?: PaymentStatus) => list("/payments/me",status), getPt: (status?: PaymentStatus) => list("/payments/pt",status),
-  async create(bookingId:number,payload:CreatePaymentRequest){const response=await axiosClient.post<S["ApiResponsePaymentResponse"]>(`/payments/${bookingId}`,payload);return unwrapApiData(response.data);},
-  async refund(id:number,payload:RefundRequest){const response=await axiosClient.put<S["ApiResponsePaymentResponse"]>(`/payments/${id}/refund`,payload);return unwrapApiData(response.data);},
+  getMine: (status?: PaymentStatus) => list("/payments/me", status),
+  getPt: (status?: PaymentStatus) => list("/payments/pt", status),
+  create: (bookingId: number, payload: CreatePaymentRequest) =>
+    api.post<Payment, CreatePaymentRequest>(`/payments/${bookingId}`, payload),
+  refund: (id: number, payload: RefundRequest) =>
+    api.put<Payment, RefundRequest>(`/payments/${id}/refund`, payload),
 };

@@ -32,7 +32,6 @@ export const inputClassName = cn(
   "placeholder:font-medium placeholder:text-muted-foreground",
   "hover:border-[#b9bda8] focus-visible:border-[#88d900] focus-visible:ring-4 focus-visible:ring-ring/20",
   "disabled:cursor-not-allowed disabled:opacity-60",
-  "dark:bg-card",
 );
 
 export const selectClassName = cn(inputClassName, "cursor-pointer");

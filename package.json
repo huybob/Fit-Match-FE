@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "api:generate": "openapi-typescript http://localhost:8080/v3/api-docs -o src/services/generated/api-contracts.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

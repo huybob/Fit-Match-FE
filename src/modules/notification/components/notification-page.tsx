@@ -2,7 +2,6 @@
 
 import { Bell, CheckCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   useNotifications,
   useReadAllNotifications,
@@ -15,7 +14,6 @@ import { cn } from "@/shared/utils/cn.util";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 export function NotificationPage() {
-  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const query = useNotifications(page);
   const read = useReadNotification();
@@ -25,7 +23,7 @@ export function NotificationPage() {
   const date = (v?: string) =>
     v
       ? new Intl.DateTimeFormat(
-          i18n.language === "vi" ? "vi-VN" : "en-US",
+          "vi-VN",
           { dateStyle: "medium", timeStyle: "short" },
         ).format(new Date(v))
       : "—";
@@ -35,9 +33,9 @@ export function NotificationPage() {
       <section className="mb-6 flex items-end justify-between rounded-3xl border border-border bg-card/80 p-6">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t("notification.title")}</h1>
+          <h1 className="text-3xl font-black">{"Thông báo"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {t("notification.description")}
+            {"Xem tất cả thông báo của bạn"}
           </p>
         </div>
         <Button
@@ -45,7 +43,7 @@ export function NotificationPage() {
           onClick={() => all.mutate()}
         >
           <CheckCheck className="size-4" />
-          {t("notification.readAll")}
+          {"Đánh dấu tất cả đã đọc"}
         </Button>
       </section>
 
@@ -53,13 +51,13 @@ export function NotificationPage() {
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState
-          title={t("notification.loadError")}
+          title={"Không thể tải thông báo"}
           description={toErrorMessage(query.error)}
         />
       ) : !items.length ? (
         <EmptyState
-          title={t("notification.empty")}
-          description={t("notification.emptyDescription")}
+          title={"Không có thông báo"}
+          description={"Bạn chưa có thông báo nào."}
         />
       ) : (
         <div className="space-y-3">
@@ -74,7 +72,7 @@ export function NotificationPage() {
                 "flex w-full gap-4 rounded-2xl border p-5 text-left transition",
                 item.read
                   ? "border-border bg-card"
-                  : "border-primary/40 bg-primary/5 dark:bg-primary/10",
+                  : "border-primary/40 bg-primary/5",
               )}
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-zinc-950 text-primary">

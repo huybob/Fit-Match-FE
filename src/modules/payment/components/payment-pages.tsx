@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, Plus, ReceiptText, WalletCards } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
@@ -30,8 +29,8 @@ import { useCreatePayment, usePayments, useRefundPayment } from "../hooks/use-pa
 import { createPaymentSchema, refundSchema } from "../schemas";
 
 const statuses: PaymentStatus[] = ["PENDING", "COMPLETED", "FAILED", "REFUNDED", "PARTIALLY_REFUNDED"];
-const money = (value: number | undefined, lang: string) =>
-  new Intl.NumberFormat(lang === "vi" ? "vi-VN" : "en-US", {
+const money = (value: number | undefined) =>
+  new Intl.NumberFormat("vi-VN", {
     style: "currency", currency: "VND", maximumFractionDigits: 0,
   }).format(value ?? 0);
 
@@ -43,8 +42,22 @@ const statusVariant: Partial<Record<PaymentStatus, React.ComponentProps<typeof B
   PENDING: "default",
 };
 
+const paymentStatusLabels: Record<string, string> = {
+  PENDING: "Đang chờ",
+  COMPLETED: "Hoàn thành",
+  FAILED: "Thất bại",
+  REFUNDED: "Đã hoàn tiền",
+  PARTIALLY_REFUNDED: "Hoàn tiền một phần",
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  VNPAY: "VNPay",
+  MOMO: "MoMo",
+  BANK_TRANSFER: "Chuyển khoản",
+  CASH: "Tiền mặt",
+};
+
 export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
-  const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<PaymentStatus | "">("");
   const [creating, setCreating] = useState(false);
   const [refunding, setRefunding] = useState<Payment | null>(null);
@@ -57,12 +70,16 @@ export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
       <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t(`payment.${scope}Title`)}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t(`payment.${scope}Description`)}</p>
+          <h1 className="text-3xl font-black">
+            {scope === "pt" ? "Lịch sử thu nhập" : "Lịch sử thanh toán"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {scope === "pt" ? "Xem lịch sử thu nhập từ các buổi tập của bạn." : "Xem lịch sử các giao dịch thanh toán của bạn."}
+          </p>
         </div>
         {scope === "customer" && (
           <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" />{t("payment.create")}
+            <Plus className="size-4" />Tạo thanh toán
           </Button>
         )}
       </section>
@@ -72,21 +89,21 @@ export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
           <WalletCards className="size-7 text-primary" />
           <div>
             <p className="text-xs font-black uppercase text-muted-foreground">
-              {t(scope === "pt" ? "payment.totalEarning" : "payment.totalAmount")}
+              {scope === "pt" ? "Tổng thu nhập" : "Tổng thanh toán"}
             </p>
-            <p className="text-2xl font-black">{money(total, i18n.language)}</p>
+            <p className="text-2xl font-black">{money(total)}</p>
           </div>
         </div>
       )}
 
       <Select value={status} onValueChange={(v) => setStatus(v as PaymentStatus | "")}>
         <SelectTrigger className="w-64">
-          <SelectValue placeholder={t("payment.allStatuses")} />
+          <SelectValue placeholder="Tất cả trạng thái" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">{t("payment.allStatuses")}</SelectItem>
+          <SelectItem value="">Tất cả trạng thái</SelectItem>
           {statuses.map((s) => (
-            <SelectItem key={s} value={s}>{t(`payment.statuses.${s}`)}</SelectItem>
+            <SelectItem key={s} value={s}>{paymentStatusLabels[s] ?? s}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -95,9 +112,9 @@ export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
         {query.isLoading ? (
           <LoadingSkeleton />
         ) : query.isError ? (
-          <EmptyState title={t("payment.loadError")} description={toErrorMessage(query.error)} />
+          <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
         ) : !items.length ? (
-          <EmptyState title={t("payment.empty")} description={t("payment.emptyDescription")} />
+          <EmptyState title="Chưa có thanh toán" description="Bạn chưa có giao dịch thanh toán nào." />
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {items.map((p) => (
@@ -105,20 +122,20 @@ export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
                 <div className="flex justify-between">
                   <p className="text-xs font-black uppercase text-muted-foreground">#{p.id} · Booking #{p.bookingId}</p>
                   <Badge variant={p.status ? (statusVariant[p.status] ?? "default") : "default"}>
-                    {p.status ? t(`payment.statuses.${p.status}`) : "—"}
+                    {p.status ? (paymentStatusLabels[p.status] ?? p.status) : "—"}
                   </Badge>
                 </div>
                 <h2 className="mt-2 text-xl font-black">
-                  {money(scope === "pt" ? p.ptEarning : p.amount, i18n.language)}
+                  {money(scope === "pt" ? p.ptEarning : p.amount)}
                 </h2>
                 <div className="mt-3 grid gap-1 text-sm text-muted-foreground">
-                  <span>{t("payment.customer")}: {p.customerName}</span>
-                  <span>{t("payment.trainer")}: {p.ptName}</span>
-                  <span>{t("payment.method")}: {p.paymentMethod ? t(`payment.methods.${p.paymentMethod}`) : "—"}</span>
+                  <span>Khách hàng: {p.customerName}</span>
+                  <span>Huấn luyện viên: {p.ptName}</span>
+                  <span>Phương thức: {p.paymentMethod ? (paymentMethodLabels[p.paymentMethod] ?? p.paymentMethod) : "—"}</span>
                 </div>
                 {scope === "customer" && p.status === "COMPLETED" && (
                   <Button variant="destructive" className="mt-4" onClick={() => setRefunding(p)}>
-                    {t("payment.refund")}
+                    Hoàn tiền
                   </Button>
                 )}
               </article>
@@ -134,7 +151,6 @@ export function PaymentsPage({ scope }: { scope: "customer" | "pt" }) {
 }
 
 function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const mutation = useCreatePayment();
   const confirmed = useBookings("customer", { status: "CONFIRMED", page: 0, size: 50 });
@@ -142,7 +158,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
   const payable = [...(confirmed.data?.content ?? []), ...(checkedIn.data?.content ?? [])];
   const loading = confirmed.isLoading || checkedIn.isLoading;
   const fmt = (v: number | undefined) =>
-    new Intl.NumberFormat(i18n.language === "vi" ? "vi-VN" : "en-US", {
+    new Intl.NumberFormat("vi-VN", {
       style: "currency", currency: "VND", maximumFractionDigits: 0,
     }).format(v ?? 0);
 
@@ -152,24 +168,24 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
   });
 
   return (
-    <Dialog open={open} title={t("payment.create")} onClose={onClose}>
+    <Dialog open={open} title="Tạo thanh toán" onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync({ bookingId: v.bookingId, payload: { paymentMethod: v.paymentMethod } });
-            toast({ type: "success", title: t("payment.created") });
+            toast({ type: "success", title: "Tạo thanh toán thành công" });
             onClose();
           } catch (e) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
           }
         })}
       >
-        <FieldShell label={t("payment.bookingLabel")} error={form.formState.errors.bookingId}>
+        <FieldShell label="Booking" error={form.formState.errors.bookingId}>
           {loading ? (
-            <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+            <p className="text-sm text-muted-foreground">Đang xử lý...</p>
           ) : !payable.length ? (
-            <p className="text-sm text-muted-foreground">{t("payment.noPayableBooking")}</p>
+            <p className="text-sm text-muted-foreground">Không có booking nào có thể thanh toán</p>
           ) : (
             <Controller
               control={form.control}
@@ -177,7 +193,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
               render={({ field }) => (
                 <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("payment.bookingPlaceholder")} />
+                    <SelectValue placeholder="Chọn booking" />
                   </SelectTrigger>
                   <SelectContent>
                     {payable.map((b) => (
@@ -191,7 +207,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
             />
           )}
         </FieldShell>
-        <FieldShell label={t("payment.method")}>
+        <FieldShell label="Phương thức thanh toán">
           <Controller
             control={form.control}
             name="paymentMethod"
@@ -200,7 +216,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {["VNPAY", "MOMO", "BANK_TRANSFER", "CASH"].map((m) => (
-                    <SelectItem key={m} value={m}>{t(`payment.methods.${m}`)}</SelectItem>
+                    <SelectItem key={m} value={m}>{paymentMethodLabels[m] ?? m}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -208,7 +224,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
           />
         </FieldShell>
         <Button disabled={mutation.isPending}>
-          <CreditCard className="size-4" />{t("payment.pay")}
+          <CreditCard className="size-4" />Thanh toán
         </Button>
       </form>
     </Dialog>
@@ -216,7 +232,6 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
 }
 
 function RefundDialog({ payment, onClose }: { payment: Payment; onClose: () => void }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useRefundPayment();
   const form = useForm<z.infer<typeof refundSchema>>({
@@ -225,27 +240,27 @@ function RefundDialog({ payment, onClose }: { payment: Payment; onClose: () => v
   });
 
   return (
-    <Dialog open title={t("payment.refund")} onClose={onClose}>
+    <Dialog open title="Hoàn tiền" onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync({ id: payment.id!, payload: v });
-            toast({ type: "success", title: t("payment.refunded") });
+            toast({ type: "success", title: "Hoàn tiền thành công" });
             onClose();
           } catch (e) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
           }
         })}
       >
-        <FieldShell label={t("payment.refundAmount")}>
+        <FieldShell label="Số tiền hoàn">
           <Input type="number" {...form.register("amount", { valueAsNumber: true })} />
         </FieldShell>
-        <FieldShell label={t("payment.refundReason")}>
+        <FieldShell label="Lý do hoàn tiền">
           <Textarea {...form.register("reason")} />
         </FieldShell>
         <Button variant="destructive" disabled={mutation.isPending}>
-          <ReceiptText className="size-4" />{t("payment.refund")}
+          <ReceiptText className="size-4" />Hoàn tiền
         </Button>
       </form>
     </Dialog>

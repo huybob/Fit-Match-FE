@@ -3,7 +3,6 @@
 import { Award, CalendarDays, Search, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import {
   useGetPublicTrainer,
@@ -28,10 +27,19 @@ function timeLabel(value?: string | { hour?: number; minute?: number }) {
   return `${String(value.hour ?? 0).padStart(2, "0")}:${String(value.minute ?? 0).padStart(2, "0")}`;
 }
 
+const DAY_LABELS: Record<number, string> = {
+  0: "Chủ nhật",
+  1: "Thứ hai",
+  2: "Thứ ba",
+  3: "Thứ tư",
+  4: "Thứ năm",
+  5: "Thứ sáu",
+  6: "Thứ bảy",
+};
+
 export function TrainersDirectoryPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const { t } = useTranslation();
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -43,32 +51,32 @@ export function TrainersDirectoryPage() {
     <SiteLayout>
       <main className="mx-auto max-w-4xl px-4 py-12">
         <p className="text-sm font-black uppercase tracking-widest text-accent">
-          {t("trainerModule.directoryEyebrow")}
+          Khám phá huấn luyện viên
         </p>
         <h1 className="mt-3 text-4xl font-black">
-          {t("trainerModule.directoryTitle")}
+          Danh sách huấn luyện viên
         </h1>
         <p className="mt-4 max-w-2xl text-muted-foreground">
-          {t("trainerModule.directoryDescription")}
+          So sánh PT theo chuyên môn, kinh nghiệm, đánh giá và giá mỗi buổi.
         </p>
         <form
           className="mt-8 flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm sm:flex-row"
           onSubmit={submit}
         >
           <Input
-            aria-label={t("trainerModule.userId")}
+            aria-label="Mã huấn luyện viên"
             className="flex-1"
             inputMode="numeric"
             min="1"
             onChange={(event) => setUserId(event.target.value)}
-            placeholder={t("trainerModule.userId")}
+            placeholder="Mã huấn luyện viên"
             required
             type="number"
             value={userId}
           />
           <Button className="shrink-0" type="submit">
             <Search className="size-4" />
-            {t("trainerModule.viewTrainer")}
+            Xem huấn luyện viên
           </Button>
         </form>
       </main>
@@ -77,7 +85,6 @@ export function TrainersDirectoryPage() {
 }
 
 export function TrainerPublicDetailPage({ userId }: { userId: number }) {
-  const { t } = useTranslation();
   const profileQuery = useGetPublicTrainer(userId);
   const profileId = profileQuery.data?.id ?? 0;
   const servicesQuery = useGetPublicTrainerServices(profileId);
@@ -97,7 +104,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
       <SiteLayout>
         <main className="mx-auto max-w-4xl px-4 py-12">
           <EmptyState
-            title={t("trainerModule.notFound")}
+            title="Không tìm thấy huấn luyện viên"
             description={toErrorMessage(profileQuery.error)}
           />
         </main>
@@ -115,22 +122,19 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
             <div>
               <p className="text-sm font-bold text-primary">
-                {t("trainerModule.trainerNumber", { id: profile.userId })}
+                Huấn luyện viên #{profile.userId}
               </p>
               <h1 className="mt-1 text-3xl font-black">{profile.username}</h1>
               <p className="mt-2 text-zinc-300">
-                {profile.bio || t("trainerModule.emptyBio")}
+                {profile.bio || "Chưa có mô tả"}
               </p>
               <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">
                 <span>
-                  {t("trainerModule.experience", {
-                    count: profile.experienceYears ?? 0,
-                  })}
+                  {profile.experienceYears ?? 0} năm kinh nghiệm
                 </span>
                 {profile.pricePerSession && (
                   <span>
-                    {currency.format(profile.pricePerSession)} /{" "}
-                    {t("trainerModule.perSession")}
+                    {currency.format(profile.pricePerSession)} / buổi
                   </span>
                 )}
               </div>
@@ -140,7 +144,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
 
         <section>
           <h2 className="mb-4 text-2xl font-black">
-            {t("trainerModule.services")}
+            Dịch vụ
           </h2>
           {servicesQuery.isLoading ? (
             <LoadingSkeleton />
@@ -157,15 +161,15 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   </p>
                   <p className="mt-4 font-black text-accent">
                     {currency.format(service.price ?? 0)} ·{" "}
-                    {service.durationMinutes} {t("trainerModule.minutesShort")}
+                    {service.durationMinutes} phút
                   </p>
                 </article>
               ))}
             </div>
           ) : (
             <EmptyState
-              title={t("trainerModule.noServices")}
-              description={t("trainerModule.noServicesDescription")}
+              title="Chưa có dịch vụ"
+              description="Huấn luyện viên này chưa có dịch vụ nào."
             />
           )}
         </section>
@@ -173,7 +177,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
             <CalendarDays className="size-6" />
-            {t("trainerModule.availability")}
+            Lịch trống
           </h2>
           {availabilityQuery.data?.content?.length ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -183,7 +187,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   className="rounded-lg border border-border p-4"
                 >
                   <p className="font-black">
-                    {t(`trainerModule.days.${slot.dayOfWeek ?? 0}`)}
+                    {DAY_LABELS[slot.dayOfWeek ?? 0] ?? `Ngày ${slot.dayOfWeek}`}
                   </p>
                   <p className="mt-1 text-sm">
                     {timeLabel(slot.startTime)}–{timeLabel(slot.endTime)}
@@ -193,8 +197,8 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
           ) : (
             <EmptyState
-              title={t("trainerModule.noAvailability")}
-              description={t("trainerModule.noAvailabilityDescription")}
+              title="Chưa có lịch trống"
+              description="Huấn luyện viên này chưa cập nhật lịch trống."
             />
           )}
         </section>
@@ -202,7 +206,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
         <section>
           <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
             <Award className="size-6" />
-            {t("trainerModule.certificates")}
+            Chứng chỉ
           </h2>
           {certificatesQuery.data?.content?.length ? (
             <div className="grid gap-4 md:grid-cols-2">
@@ -216,15 +220,15 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                     {cert.issuingOrg}
                   </p>
                   <p className="mt-3 text-xs font-bold">
-                    {cert.issueDate || t("trainerModule.issueDateMissing")}
+                    {cert.issueDate || "Chưa có ngày cấp"}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
             <EmptyState
-              title={t("trainerModule.noCertificates")}
-              description={t("trainerModule.noCertificatesDescription")}
+              title="Chưa có chứng chỉ"
+              description="Huấn luyện viên này chưa có chứng chỉ nào."
             />
           )}
         </section>

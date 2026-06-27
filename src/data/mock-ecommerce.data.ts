@@ -5,7 +5,7 @@ import {
   GymPackage,
   Testimonial,
   Trainer,
-} from "@/types/ecommerce.type";
+} from "@/types/Ecommerce";
 
 export const gymPackages: GymPackage[] = [
   {
@@ -28,7 +28,12 @@ export const gymPackages: GymPackage[] = [
     sessions: 24,
     popular: true,
     description: "Personalized strength program with weekly PT sessions.",
-    features: ["24 PT sessions", "Nutrition check", "Progress tracking", "Priority booking"],
+    features: [
+      "24 PT sessions",
+      "Nutrition check",
+      "Progress tracking",
+      "Priority booking",
+    ],
   },
   {
     id: "elite-body",
@@ -39,7 +44,12 @@ export const gymPackages: GymPackage[] = [
     originalPrice: 10900000,
     sessions: 365,
     description: "Premium annual membership for serious transformation goals.",
-    features: ["Unlimited gym", "Group classes", "Monthly PT review", "VIP locker"],
+    features: [
+      "Unlimited gym",
+      "Group classes",
+      "Monthly PT review",
+      "VIP locker",
+    ],
   },
   {
     id: "yoga-cardio",
@@ -49,7 +59,12 @@ export const gymPackages: GymPackage[] = [
     price: 1490000,
     sessions: 16,
     description: "Class package for mobility, cardio, and recovery training.",
-    features: ["16 classes", "Flexible cancellation", "App reminders", "Coach notes"],
+    features: [
+      "16 classes",
+      "Flexible cancellation",
+      "App reminders",
+      "Coach notes",
+    ],
   },
 ];
 
@@ -67,6 +82,8 @@ export const trainers: Trainer[] = [
     availableSlots: ["08:00", "10:30", "16:30", "19:00"],
     location: "Quận 1, TP.HCM",
     avatarColor: "from-blue-500 to-blue-700",
+    imageUrl:
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=200&h=200&auto=format&fit=crop",
   },
   {
     id: "linh-chi",
@@ -81,6 +98,8 @@ export const trainers: Trainer[] = [
     availableSlots: ["07:00", "12:00", "18:30"],
     location: "Quận 3, TP.HCM",
     avatarColor: "from-purple-500 to-purple-700",
+    imageUrl:
+      "https://images.unsplash.com/photo-1594381898411-846e7d193883?w=200&h=200&auto=format&fit=crop",
   },
   {
     id: "tran-minh",
@@ -95,6 +114,8 @@ export const trainers: Trainer[] = [
     availableSlots: ["06:30", "11:00", "17:30"],
     location: "Bình Thạnh, TP.HCM",
     avatarColor: "from-teal-500 to-teal-700",
+    imageUrl:
+      "https://images.unsplash.com/photo-1567013127542-490d757e51fc?w=200&h=200&auto=format&fit=crop",
   },
   {
     id: "hoang-nam",
@@ -109,6 +130,8 @@ export const trainers: Trainer[] = [
     availableSlots: ["09:00", "15:00", "20:00"],
     location: "Quận 7, TP.HCM",
     avatarColor: "from-orange-500 to-orange-700",
+    imageUrl:
+      "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=200&h=200&auto=format&fit=crop",
   },
 ];
 
@@ -121,6 +144,8 @@ export const gyms: Gym[] = [
     badge: "4.9 Đánh giá Cao nhất",
     facilities: ["Phòng nặng hỗi", "Sân có lộ Olympic", "Lớp pháp tranh"],
     gradient: "from-slate-800 via-slate-700 to-slate-900",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=400&auto=format&fit=crop",
   },
   {
     id: "pulse",
@@ -130,6 +155,8 @@ export const gyms: Gym[] = [
     badge: "Mô Studio",
     facilities: ["Phòng HIT", "Quầy Dinh dưỡng", "Hồ bơi"],
     gradient: "from-indigo-800 via-indigo-700 to-purple-900",
+    imageUrl:
+      "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=600&h=400&auto=format&fit=crop",
   },
   {
     id: "zenith",
@@ -139,6 +166,8 @@ export const gyms: Gym[] = [
     badge: "4.8 Thân Môi trường",
     facilities: ["Yoga Studio", "Pilates Reformer", "Tắm hơi"],
     gradient: "from-emerald-800 via-teal-700 to-cyan-900",
+    imageUrl:
+      "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&h=400&auto=format&fit=crop",
   },
 ];
 
@@ -177,33 +206,45 @@ export const blogPosts: BlogPost[] = [
     id: "b1",
     category: "Hiệu Suất",
     title: "Khoa học Phục hồi: Tối đa hóa Kết quả sau 40",
-    excerpt: "Khám phá các chiến lược khoa học để phục hồi hiệu quả và duy trì thể lực đỉnh cao.",
+    excerpt:
+      "Khám phá các chiến lược khoa học để phục hồi hiệu quả và duy trì thể lực đỉnh cao.",
     date: "12 tháng 5, 2024",
     color: "from-blue-600 to-blue-800",
+    imageUrl:
+      "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&h=240&auto=format&fit=crop",
   },
   {
     id: "b2",
     category: "Dinh Dưỡng",
     title: "Tư vấn hóa Vị chế cho Sự trung hành tức",
-    excerpt: "Lựa chọn thực phẩm tối ưu để hỗ trợ quá trình tập luyện và phục hồi cơ thể.",
+    excerpt:
+      "Lựa chọn thực phẩm tối ưu để hỗ trợ quá trình tập luyện và phục hồi cơ thể.",
     date: "16 tháng 4, 2024",
     color: "from-green-600 to-emerald-800",
+    imageUrl:
+      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&h=240&auto=format&fit=crop",
   },
   {
     id: "b3",
     category: "Sống Khỏe",
     title: "Làm chủ Trạng thái Flow: Yoga cho sự Minh mẫn",
-    excerpt: "Kết hợp thiền định và vận động tập luyện để nâng cao kiểm soát Stress và sức khỏe tâm thần.",
+    excerpt:
+      "Kết hợp thiền định và vận động tập luyện để nâng cao kiểm soát Stress và sức khỏe tâm thần.",
     date: "18 tháng 4, 2024",
     color: "from-purple-600 to-purple-800",
+    imageUrl:
+      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&h=240&auto=format&fit=crop",
   },
   {
     id: "b4",
     category: "Tập Luyện",
     title: "Sự tiến hóa của Tập luyện Kháng lực năm 2024",
-    excerpt: "Các kỹ thuật phát triển mới nhất để tập luyện Kháng lực được áp dụng trong các kỳ Olympic.",
+    excerpt:
+      "Các kỹ thuật phát triển mới nhất để tập luyện Kháng lực được áp dụng trong các kỳ Olympic.",
     date: "15 tháng 6, 2024",
     color: "from-orange-600 to-red-800",
+    imageUrl:
+      "https://images.unsplash.com/photo-1534367610401-9f5ed68180aa?w=400&h=240&auto=format&fit=crop",
   },
 ];
 

@@ -11,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#10130f] text-white shadow-sm hover:-translate-y-0.5 hover:bg-[#24291f] hover:shadow-lg hover:shadow-[#10130f]/15 active:translate-y-0 active:scale-[0.98] dark:bg-primary dark:text-primary-foreground dark:hover:bg-[#b7ff3d] dark:hover:shadow-primary/25",
+          "bg-[#10130f] text-white shadow-sm hover:-translate-y-0.5 hover:bg-[#24291f] hover:shadow-lg hover:shadow-[#10130f]/15 active:translate-y-0 active:scale-[0.98]",
         primary:
           "bg-primary text-primary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-[#b7ff3d] hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:scale-[0.98]",
         accent:
@@ -21,7 +21,7 @@ const buttonVariants = cva(
         outline:
           "border border-border bg-card text-card-foreground shadow-sm hover:bg-muted hover:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-[#e6e8d6] dark:hover:bg-[#222820]",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-[#e6e8d6]",
         ghost:
           "text-foreground hover:bg-muted hover:text-foreground",
         link: "text-foreground underline-offset-4 hover:underline",

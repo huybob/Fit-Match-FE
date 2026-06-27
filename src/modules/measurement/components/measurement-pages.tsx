@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { LineChart, Plus, Ruler } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { useBookings } from "@/modules/booking/hooks/use-booking";
@@ -43,13 +42,23 @@ const metricUnit: Record<(typeof metricFields)[number], string> = {
   waist: "cm", chest: "cm", arm: "cm", thigh: "cm",
 };
 
+const metricFieldLabels: Record<(typeof metricFields)[number], string> = {
+  weight: "Cân nặng",
+  height: "Chiều cao",
+  bodyFatPercent: "Tỷ lệ mỡ cơ thể",
+  muscleMass: "Khối cơ",
+  waist: "Vòng eo",
+  chest: "Vòng ngực",
+  arm: "Vòng tay",
+  thigh: "Vòng đùi",
+};
+
 export function MeasurementsPage({ scope }: { scope: "customer" | "pt" }) {
   if (scope === "customer") return <CustomerMeasurements />;
   return <PtMeasurements />;
 }
 
 function MeasurementCard({ m }: { m: Measurement }) {
-  const { t } = useTranslation();
   const present = metricFields.filter((f) => m[f] != null);
   return (
     <article className="rounded-2xl border border-border bg-card p-5">
@@ -63,7 +72,7 @@ function MeasurementCard({ m }: { m: Measurement }) {
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {present.map((f) => (
             <div key={f} className="rounded-xl bg-muted/50 p-3">
-              <p className="text-xs font-bold uppercase text-muted-foreground">{t(`measurement.fields.${f}`)}</p>
+              <p className="text-xs font-bold uppercase text-muted-foreground">{metricFieldLabels[f]}</p>
               <p className="mt-1 text-lg font-black">
                 {m[f]}
                 <span className="ml-1 text-xs font-semibold text-muted-foreground">{metricUnit[f]}</span>
@@ -78,17 +87,16 @@ function MeasurementCard({ m }: { m: Measurement }) {
 }
 
 function CustomerMeasurements() {
-  const { t } = useTranslation();
   const query = useMyMeasurements();
   const items = query.data?.content ?? [];
   return (
     <div>
-      <Header title={t("measurement.customerTitle")} description={t("measurement.customerDescription")} />
+      <Header title="Chỉ số cơ thể của tôi" description="Theo dõi sự thay đổi chỉ số cơ thể theo thời gian." />
       <div className="mt-5">
         {query.isLoading ? <LoadingSkeleton /> : query.isError ? (
-          <EmptyState title={t("measurement.loadError")} description={toErrorMessage(query.error)} />
+          <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
         ) : !items.length ? (
-          <EmptyState title={t("measurement.empty")} description={t("measurement.emptyDescription")} />
+          <EmptyState title="Chưa có chỉ số" description="Chưa có dữ liệu chỉ số cơ thể nào được ghi nhận." />
         ) : (
           <div className="grid gap-4">{items.map((m) => <MeasurementCard key={m.id} m={m} />)}</div>
         )}
@@ -98,7 +106,6 @@ function CustomerMeasurements() {
 }
 
 function PtMeasurements() {
-  const { t } = useTranslation();
   const [customerId, setCustomerId] = useState(0);
   const [creating, setCreating] = useState(false);
   const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
@@ -115,29 +122,29 @@ function PtMeasurements() {
   return (
     <div>
       <Header
-        title={t("measurement.ptTitle")}
-        description={t("measurement.ptDescription")}
+        title="Chỉ số cơ thể học viên"
+        description="Quản lý và theo dõi chỉ số cơ thể của học viên."
         action={
           <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" />{t("measurement.create")}
+            <Plus className="size-4" />Tạo mới chỉ số
           </Button>
         }
       />
       <div className="mt-5">
         {bookingsQuery.isLoading ? (
-          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+          <p className="text-sm text-muted-foreground">Đang xử lý...</p>
         ) : !customers.length ? (
-          <p className="text-sm text-muted-foreground">{t("measurement.noCustomers")}</p>
+          <p className="text-sm text-muted-foreground">Chưa có học viên nào.</p>
         ) : (
           <Select
             value={String(customerId)}
             onValueChange={(v) => setCustomerId(Number(v) || 0)}
           >
             <SelectTrigger className="w-72">
-              <SelectValue placeholder={t("measurement.customerPlaceholder")} />
+              <SelectValue placeholder="Chọn học viên" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0">{t("measurement.customerPlaceholder")}</SelectItem>
+              <SelectItem value="0">Chọn học viên</SelectItem>
               {customers.map((c) => (
                 <SelectItem key={c.id} value={String(c.id)}>#{c.id} · {c.name}</SelectItem>
               ))}
@@ -148,13 +155,13 @@ function PtMeasurements() {
 
       <div className="mt-5">
         {customerId <= 0 ? (
-          <EmptyState title={t("measurement.selectCustomer")} description={t("measurement.selectCustomerDescription")} />
+          <EmptyState title="Chọn học viên" description="Vui lòng chọn học viên để xem chỉ số cơ thể." />
         ) : query.isLoading ? (
           <LoadingSkeleton />
         ) : query.isError ? (
-          <EmptyState title={t("measurement.loadError")} description={toErrorMessage(query.error)} />
+          <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
         ) : !items.length ? (
-          <EmptyState title={t("measurement.empty")} description={t("measurement.emptyDescription")} />
+          <EmptyState title="Chưa có chỉ số" description="Chưa có dữ liệu chỉ số cơ thể nào được ghi nhận." />
         ) : (
           <div className="grid gap-4">{items.map((m) => <MeasurementCard key={m.id} m={m} />)}</div>
         )}
@@ -184,7 +191,6 @@ function Header({ title, description, action }: { title: string; description: st
 function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
   open: boolean; defaultCustomerId: number; onClose: () => void;
 }) {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const mutation = useCreateMeasurement();
   const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
@@ -201,22 +207,22 @@ function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
   });
 
   return (
-    <Dialog open={open} title={t("measurement.create")} onClose={onClose}>
+    <Dialog open={open} title="Tạo mới chỉ số" onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync(v);
-            toast({ type: "success", title: t("measurement.created") });
+            toast({ type: "success", title: "Đã tạo chỉ số thành công" });
             form.reset();
             onClose();
           } catch (e) {
-            toast({ type: "error", title: t("common.requestFailed"), description: toErrorMessage(e) });
+            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(e) });
           }
         })}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldShell label={t("measurement.customerLabel")} error={form.formState.errors.customerId}>
+          <FieldShell label="Học viên" error={form.formState.errors.customerId}>
             {customers.length ? (
               <Controller
                 control={form.control}
@@ -224,7 +230,7 @@ function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
                 render={({ field }) => (
                   <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("measurement.customerPlaceholder")} />
+                      <SelectValue placeholder="Chọn học viên" />
                     </SelectTrigger>
                     <SelectContent>
                       {customers.map((c) => (
@@ -238,7 +244,7 @@ function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
               <Input type="number" {...form.register("customerId", { valueAsNumber: true })} />
             )}
           </FieldShell>
-          <FieldShell label={t("measurement.date")} error={form.formState.errors.measurementDate}>
+          <FieldShell label="Ngày đo" error={form.formState.errors.measurementDate}>
             <Controller
               control={form.control}
               name="measurementDate"
@@ -250,16 +256,16 @@ function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {metricFields.map((f) => (
-            <FieldShell key={f} label={`${t(`measurement.fields.${f}`)} (${metricUnit[f]})`} error={form.formState.errors[f]}>
+            <FieldShell key={f} label={`${metricFieldLabels[f]} (${metricUnit[f]})`} error={form.formState.errors[f]}>
               <Input type="number" step="any" {...form.register(f, { valueAsNumber: true })} />
             </FieldShell>
           ))}
         </div>
-        <FieldShell label={t("measurement.notes")} error={form.formState.errors.notes}>
+        <FieldShell label="Ghi chú" error={form.formState.errors.notes}>
           <Textarea {...form.register("notes")} />
         </FieldShell>
         <Button disabled={mutation.isPending}>
-          <Ruler className="size-4" />{t("measurement.submit")}
+          <Ruler className="size-4" />Lưu chỉ số
         </Button>
       </form>
     </Dialog>

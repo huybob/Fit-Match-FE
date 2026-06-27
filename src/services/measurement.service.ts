@@ -1,30 +1,31 @@
-import { axiosClient } from "@/core/http/axios-client";
-import { unwrapApiData } from "@/core/http/api-response";
-import type { components } from "@/services/generated/api-contracts";
+import { api } from "@/services/api";
+import type {
+  BodyMeasurementRequest,
+  Measurement,
+  MeasurementPage,
+} from "@/types/Measurement";
 
-type S = components["schemas"];
-export type Measurement = S["BodyMeasurementResponse"];
-export type BodyMeasurementRequest = S["BodyMeasurementRequest"];
+export type {
+  BodyMeasurementRequest,
+  Measurement,
+  MeasurementPage,
+} from "@/types/Measurement";
 
 export const measurementService = {
   async getMine(page = 0) {
-    const response = await axiosClient.get<S["ApiResponsePagedResponseBodyMeasurementResponse"]>(
-      "/training/measurements/me",
-      { params: { page, size: 20 } },
-    );
-    return unwrapApiData(response.data);
+    return api.get<MeasurementPage>("/training/measurements/me", {
+      params: { page, size: 20 },
+    });
   },
   async getByCustomer(customerId: number) {
-    const response = await axiosClient.get<S["ApiResponseListBodyMeasurementResponse"]>(
+    return api.get<Measurement[]>(
       `/training/measurements/customer/${customerId}`,
     );
-    return unwrapApiData(response.data);
   },
   async create(payload: BodyMeasurementRequest) {
-    const response = await axiosClient.post<S["ApiResponseBodyMeasurementResponse"]>(
+    return api.post<Measurement, BodyMeasurementRequest>(
       "/training/measurements",
       payload,
     );
-    return unwrapApiData(response.data);
   },
 };

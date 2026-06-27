@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
@@ -72,7 +71,6 @@ function AuthDivider({ label }: { label: string }) {
 // ─── Login ────────────────────────────────────────────────────────────────────
 
 export function LoginForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
@@ -85,7 +83,7 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
       const user = await login(values);
-      toast({ type: "success", title: t("auth.loginSuccess") });
+      toast({ type: "success", title: "Đăng nhập thành công" });
       router.replace(getHomeRouteForRole(user.role));
     } catch (error) {
       const code = getErrorCode(error);
@@ -100,7 +98,7 @@ export function LoginForm() {
       }
       toast({
         type: "error",
-        title: t("common.error"),
+        title: "Có lỗi xảy ra",
         description: toErrorMessage(error),
       });
     }
@@ -169,7 +167,7 @@ export function LoginForm() {
           className="w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-medium rounded-lg"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? t("common.loading") : "Đăng nhập"}
+          {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
         </Button>
       </form>
 
@@ -197,7 +195,6 @@ export function LoginForm() {
 // ─── Register ─────────────────────────────────────────────────────────────────
 
 export function RegisterForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const registerAccount = useAuthStore((state) => state.register);
   const [showPassword, setShowPassword] = useState(false);
@@ -233,7 +230,7 @@ export function RegisterForm() {
     } catch (error) {
       toast({
         type: "error",
-        title: t("common.error"),
+        title: "Có lỗi xảy ra",
         description: toErrorMessage(error),
       });
     }
@@ -379,7 +376,7 @@ export function RegisterForm() {
           className="w-full h-12 bg-[#004ac6] hover:bg-[#003a9e] text-white text-base font-normal rounded-lg gap-2"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? t("common.loading") : "Đăng ký →"}
+          {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng ký →"}
         </Button>
       </form>
 
@@ -674,7 +671,6 @@ export function ResendVerificationForm() {
 // ─── Change Password ──────────────────────────────────────────────────────────
 
 export function ChangePasswordForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof changePasswordSchema>>({
     resolver: zodResolver(changePasswordSchema),
@@ -685,12 +681,12 @@ export function ChangePasswordForm() {
     try {
       await authService.changePassword(values);
       form.reset();
-      toast({ type: "success", title: t("auth.passwordChanged") });
+      toast({ type: "success", title: "Đổi mật khẩu thành công" });
     } catch (error) {
       toast({
         type:
           getErrorCode(error) === "INVALID_CREDENTIALS" ? "warning" : "error",
-        title: t("common.error"),
+        title: "Có lỗi xảy ra",
         description: toErrorMessage(error),
       });
     }
@@ -699,7 +695,7 @@ export function ChangePasswordForm() {
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldShell
-        label={t("auth.currentPassword")}
+        label="Mật khẩu hiện tại"
         error={form.formState.errors.oldPassword}
       >
         <Input
@@ -709,7 +705,7 @@ export function ChangePasswordForm() {
         />
       </FieldShell>
       <FieldShell
-        label={t("auth.newPassword")}
+        label="Mật khẩu mới"
         error={form.formState.errors.newPassword}
       >
         <Input
@@ -719,7 +715,7 @@ export function ChangePasswordForm() {
         />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? t("common.loading") : t("common.save")}
+        {form.formState.isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
       </Button>
     </form>
   );

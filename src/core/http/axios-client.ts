@@ -2,10 +2,10 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "@/core/auth/token-storage";
 import { env } from "@/core/config/env";
 import { HttpError } from "@/core/http/http-error";
-import type { components } from "@/services/generated/api-contracts";
-import { ApiErrorResponse } from "@/shared/types/api-response.type";
+import type { AuthResponse } from "@/types/Auth";
+import { ApiErrorResponse, ApiResponse } from "@/shared/types/api-response.type";
 
-type RefreshResponse = components["schemas"]["ApiResponseAuthResponse"];
+type RefreshResponse = ApiResponse<AuthResponse>;
 type RetryRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 let refreshRequest: Promise<string> | null = null;

@@ -1,11 +1,10 @@
-import { axiosClient } from "@/core/http/axios-client";
-import type { components } from "@/services/generated/api-contracts";
+import { api } from "@/services/api";
+import type { ApiResponse } from "@/shared/types/api-response.type";
 
-export type HealthResponse = components["schemas"]["ApiResponseMapStringString"];
+export type HealthResponse = ApiResponse<Record<string, string>>;
 
 export const healthService = {
   async getHealth(): Promise<HealthResponse> {
-    const response = await axiosClient.get<HealthResponse>("/health");
-    return response.data;
+    return api.raw<HealthResponse>("/health");
   },
 };

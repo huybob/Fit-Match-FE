@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +28,6 @@ export function ConfirmDialog({
   destructive?: boolean;
   onConfirm: () => void;
 }) {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -50,7 +48,7 @@ export function ConfirmDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
           <AlertDialogAction
             className={cn(destructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
             onClick={() => {
@@ -58,7 +56,7 @@ export function ConfirmDialog({
               setOpen(false);
             }}
           >
-            {t("common.confirm")}
+            Xác nhận
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

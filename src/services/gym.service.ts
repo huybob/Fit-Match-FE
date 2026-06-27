@@ -1,21 +1,34 @@
-import { axiosClient } from "@/core/http/axios-client";
-import { unwrapApiData } from "@/core/http/api-response";
-import type { components } from "@/services/generated/api-contracts";
+import { api } from "@/services/api";
+import type {
+  BranchPage,
+  BranchRequest,
+  FacilityPage,
+  FacilityRequest,
+  Gym,
+  GymBranch,
+  GymFacility,
+  GymPage,
+  GymPartnership,
+  GymRequest,
+  PartnershipActionRequest,
+  PartnershipPage,
+} from "@/types/Gym";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-type S = components["schemas"];
-export type Gym = S["GymResponse"];
-export type GymRequest = S["GymRequest"];
-export type GymPage = S["PagedResponseGymResponse"];
-export type GymBranch = S["BranchResponse"];
-export type BranchRequest = S["BranchRequest"];
-export type BranchPage = S["PagedResponseBranchResponse"];
-export type GymFacility = S["FacilityResponse"];
-export type FacilityRequest = S["FacilityRequest"];
-export type FacilityPage = S["PagedResponseFacilityResponse"];
-export type GymPartnership = S["PartnershipResponse"];
-export type PartnershipPage = S["PagedResponsePartnershipResponse"];
-export type PartnershipActionRequest = S["PartnershipActionRequest"];
+export type {
+  BranchPage,
+  BranchRequest,
+  FacilityPage,
+  FacilityRequest,
+  Gym,
+  GymBranch,
+  GymFacility,
+  GymPage,
+  GymPartnership,
+  GymRequest,
+  PartnershipActionRequest,
+  PartnershipPage,
+} from "@/types/Gym";
 
 export type GymSearchParams = Partial<PaginationParams> & {
   city?: string;
@@ -34,127 +47,86 @@ function upload(file: File) {
 
 export const gymService = {
   async search(params: GymSearchParams = {}) {
-    const response = await axiosClient.get<
-      S["ApiResponsePagedResponseGymResponse"]
-    >("/gyms", { params: { ...page, ...params } });
-    return unwrapApiData(response.data);
+    return api.get<GymPage>("/gyms", { params: { ...page, ...params } });
   },
   async getDetail(id: number) {
-    const response = await axiosClient.get<S["ApiResponseGymResponse"]>(
-      `/gyms/${id}`,
-    );
-    return unwrapApiData(response.data);
+    return api.get<Gym>(`/gyms/${id}`);
   },
   async getMine(params: PaginationParams = page) {
-    const response = await axiosClient.get<
-      S["ApiResponsePagedResponseGymResponse"]
-    >("/gyms/me", { params });
-    return unwrapApiData(response.data);
+    return api.get<GymPage>("/gyms/me", { params });
   },
   async create(payload: GymRequest) {
-    const response = await axiosClient.post<S["ApiResponseGymResponse"]>(
-      "/gyms",
-      payload,
-    );
-    return unwrapApiData(response.data);
+    return api.post<Gym, GymRequest>("/gyms", payload);
   },
   async update(id: number, payload: GymRequest) {
-    const response = await axiosClient.put<S["ApiResponseGymResponse"]>(
-      `/gyms/${id}`,
-      payload,
-    );
-    return unwrapApiData(response.data);
+    return api.put<Gym, GymRequest>(`/gyms/${id}`, payload);
   },
   async close(id: number) {
-    await axiosClient.put(`/gyms/${id}/close`);
+    await api.putRaw(`/gyms/${id}/close`);
   },
   async reopen(id: number) {
-    await axiosClient.put(`/gyms/${id}/reopen`);
+    await api.putRaw(`/gyms/${id}/reopen`);
   },
   async uploadLogo(id: number, file: File) {
-    const response = await axiosClient.post<S["ApiResponseGymResponse"]>(
-      `/gyms/${id}/logo`,
-      upload(file),
-    );
-    return unwrapApiData(response.data);
+    return api.post<Gym, FormData>(`/gyms/${id}/logo`, upload(file));
   },
   async uploadCover(id: number, file: File) {
-    const response = await axiosClient.post<S["ApiResponseGymResponse"]>(
-      `/gyms/${id}/cover`,
-      upload(file),
-    );
-    return unwrapApiData(response.data);
+    return api.post<Gym, FormData>(`/gyms/${id}/cover`, upload(file));
   },
   async getBranches(gymId: number, params: PaginationParams = page) {
-    const response = await axiosClient.get<
-      S["ApiResponsePagedResponseBranchResponse"]
-    >(`/gyms/${gymId}/branches`, { params });
-    return unwrapApiData(response.data);
+    return api.get<BranchPage>(`/gyms/${gymId}/branches`, { params });
   },
   async createBranch(gymId: number, payload: BranchRequest) {
-    const response = await axiosClient.post<S["ApiResponseBranchResponse"]>(
+    return api.post<GymBranch, BranchRequest>(
       `/gyms/${gymId}/branches`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async updateBranch(gymId: number, id: number, payload: BranchRequest) {
-    const response = await axiosClient.put<S["ApiResponseBranchResponse"]>(
+    return api.put<GymBranch, BranchRequest>(
       `/gyms/${gymId}/branches/${id}`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async deleteBranch(gymId: number, id: number) {
-    await axiosClient.delete(`/gyms/${gymId}/branches/${id}`);
+    await api.deleteRaw(`/gyms/${gymId}/branches/${id}`);
   },
   async getFacilities(gymId: number, params: PaginationParams = page) {
-    const response = await axiosClient.get<
-      S["ApiResponsePagedResponseFacilityResponse"]
-    >(`/gyms/${gymId}/facilities`, { params });
-    return unwrapApiData(response.data);
+    return api.get<FacilityPage>(`/gyms/${gymId}/facilities`, { params });
   },
   async createFacility(gymId: number, payload: FacilityRequest) {
-    const response = await axiosClient.post<S["ApiResponseFacilityResponse"]>(
+    return api.post<GymFacility, FacilityRequest>(
       `/gyms/${gymId}/facilities`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async updateFacility(gymId: number, id: number, payload: FacilityRequest) {
-    const response = await axiosClient.put<S["ApiResponseFacilityResponse"]>(
+    return api.put<GymFacility, FacilityRequest>(
       `/gyms/${gymId}/facilities/${id}`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async deleteFacility(gymId: number, id: number) {
-    await axiosClient.delete(`/gyms/${gymId}/facilities/${id}`);
+    await api.deleteRaw(`/gyms/${gymId}/facilities/${id}`);
   },
   async getPartnerships(status?: string) {
-    const response = await axiosClient.get<
-      S["ApiResponsePagedResponsePartnershipResponse"]
-    >("/pt/partnerships/me", { params: { ...page, status } });
-    return unwrapApiData(response.data);
+    return api.get<PartnershipPage>("/pt/partnerships/me", {
+      params: { ...page, status },
+    });
   },
   async approvePartnership(id: number, payload: PartnershipActionRequest) {
-    const response = await axiosClient.put<S["ApiResponsePartnershipResponse"]>(
+    return api.put<GymPartnership, PartnershipActionRequest>(
       `/pt/partnerships/${id}/approve`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async rejectPartnership(id: number, payload: PartnershipActionRequest) {
-    const response = await axiosClient.put<S["ApiResponsePartnershipResponse"]>(
+    return api.put<GymPartnership, PartnershipActionRequest>(
       `/pt/partnerships/${id}/reject`,
       payload,
     );
-    return unwrapApiData(response.data);
   },
   async endPartnership(id: number) {
-    const response = await axiosClient.put<S["ApiResponsePartnershipResponse"]>(
-      `/pt/partnerships/${id}/end`,
-    );
-    return unwrapApiData(response.data);
+    return api.put<GymPartnership>(`/pt/partnerships/${id}/end`);
   },
 };

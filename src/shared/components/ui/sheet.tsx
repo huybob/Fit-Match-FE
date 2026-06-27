@@ -4,7 +4,6 @@ import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { cn } from "@/shared/utils/cn.util";
 
 const Sheet = SheetPrimitive.Root;
@@ -53,7 +52,6 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = "right", className, children, ...props }, ref) => {
-  const { t } = useTranslation();
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -65,11 +63,11 @@ const SheetContent = React.forwardRef<
       >
         {children}
         <SheetPrimitive.Close
-          aria-label={t("common.close")}
+          aria-label="Đóng"
           className="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-zinc-500 transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
         >
           <X className="size-5" />
-          <span className="sr-only">{t("common.close")}</span>
+          <span className="sr-only">Đóng</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>

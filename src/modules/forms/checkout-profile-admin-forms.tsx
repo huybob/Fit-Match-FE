@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { Controller } from "react-hook-form";
@@ -24,7 +23,6 @@ import {
 } from "./schemas";
 
 export function CheckoutForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof checkoutSchema>>({
     resolver: zodResolver(checkoutSchema),
@@ -35,19 +33,19 @@ export function CheckoutForm() {
     <form
       className="space-y-4"
       onSubmit={form.handleSubmit(() =>
-        toast({ type: "success", title: t("checkout.success") }),
+        toast({ type: "success", title: "Thanh toán thành công" }),
       )}
     >
-      <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
+      <FieldShell label="Tên" error={form.formState.errors.name}>
         <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell label={t("auth.email")} error={form.formState.errors.email}>
+      <FieldShell label="Email" error={form.formState.errors.email}>
         <Input type="email" {...form.register("email")} />
       </FieldShell>
-      <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
+      <FieldShell label="Số điện thoại" error={form.formState.errors.phone}>
         <Input {...form.register("phone")} />
       </FieldShell>
-      <FieldShell label={t("checkout.payment")} error={form.formState.errors.method}>
+      <FieldShell label="Phương thức thanh toán" error={form.formState.errors.method}>
         <Controller
           control={form.control}
           name="method"
@@ -63,13 +61,12 @@ export function CheckoutForm() {
           )}
         />
       </FieldShell>
-      <Button className="w-full">{t("common.checkout")}</Button>
+      <Button className="w-full">Thanh toán</Button>
     </form>
   );
 }
 
 export function ProfileForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -84,25 +81,24 @@ export function ProfileForm() {
     <form
       className="space-y-4"
       onSubmit={form.handleSubmit(() =>
-        toast({ type: "success", title: t("profile.updateSuccess") }),
+        toast({ type: "success", title: "Cập nhật hồ sơ thành công" }),
       )}
     >
-      <FieldShell label={t("auth.name")} error={form.formState.errors.name}>
+      <FieldShell label="Tên" error={form.formState.errors.name}>
         <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell label={t("auth.phone")} error={form.formState.errors.phone}>
+      <FieldShell label="Số điện thoại" error={form.formState.errors.phone}>
         <Input {...form.register("phone")} />
       </FieldShell>
-      <FieldShell label={t("common.goal")} error={form.formState.errors.goal}>
+      <FieldShell label="Mục tiêu" error={form.formState.errors.goal}>
         <Input {...form.register("goal")} />
       </FieldShell>
-      <Button>{t("common.save")}</Button>
+      <Button>Lưu thay đổi</Button>
     </form>
   );
 }
 
 export function AdminPackageForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.input<typeof adminPackageSchema>>({
     resolver: zodResolver(adminPackageSchema),
@@ -118,19 +114,19 @@ export function AdminPackageForm() {
     <form
       className="grid gap-4 md:grid-cols-2"
       onSubmit={form.handleSubmit(() =>
-        toast({ type: "success", title: t("admin.saved") }),
+        toast({ type: "success", title: "Đã lưu thay đổi" }),
       )}
     >
-      <FieldShell label={t("common.name")} error={form.formState.errors.name}>
+      <FieldShell label="Tên" error={form.formState.errors.name}>
         <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell label={t("common.price")} error={form.formState.errors.price}>
+      <FieldShell label="Giá" error={form.formState.errors.price}>
         <Input type="number" {...form.register("price")} />
       </FieldShell>
-      <FieldShell label={t("common.duration")} error={form.formState.errors.duration}>
+      <FieldShell label="Thời lượng" error={form.formState.errors.duration}>
         <Input {...form.register("duration")} />
       </FieldShell>
-      <FieldShell label={t("common.type")} error={form.formState.errors.type}>
+      <FieldShell label="Loại" error={form.formState.errors.type}>
         <Controller
           control={form.control}
           name="type"
@@ -146,13 +142,12 @@ export function AdminPackageForm() {
           )}
         />
       </FieldShell>
-      <Button className="md:col-span-2">{t("common.save")}</Button>
+      <Button className="md:col-span-2">Lưu thay đổi</Button>
     </form>
   );
 }
 
 export function AdminTrainerForm() {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const form = useForm<z.input<typeof adminTrainerSchema>>({
     resolver: zodResolver(adminTrainerSchema),
@@ -163,22 +158,22 @@ export function AdminTrainerForm() {
     <form
       className="grid gap-4 md:grid-cols-2"
       onSubmit={form.handleSubmit(() =>
-        toast({ type: "success", title: t("admin.saved") }),
+        toast({ type: "success", title: "Đã lưu thay đổi" }),
       )}
     >
-      <FieldShell label={t("common.name")} error={form.formState.errors.name}>
+      <FieldShell label="Tên" error={form.formState.errors.name}>
         <Input {...form.register("name")} />
       </FieldShell>
-      <FieldShell label={t("common.specialty")} error={form.formState.errors.specialty}>
+      <FieldShell label="Chuyên môn" error={form.formState.errors.specialty}>
         <Input {...form.register("specialty")} />
       </FieldShell>
-      <FieldShell label={t("common.experience")} error={form.formState.errors.experience}>
+      <FieldShell label="Kinh nghiệm" error={form.formState.errors.experience}>
         <Input type="number" {...form.register("experience")} />
       </FieldShell>
-      <FieldShell label={t("common.price")} error={form.formState.errors.price}>
+      <FieldShell label="Giá" error={form.formState.errors.price}>
         <Input type="number" {...form.register("price")} />
       </FieldShell>
-      <Button className="md:col-span-2">{t("common.save")}</Button>
+      <Button className="md:col-span-2">Lưu thay đổi</Button>
     </form>
   );
 }
