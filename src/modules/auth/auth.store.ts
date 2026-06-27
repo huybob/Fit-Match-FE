@@ -14,6 +14,7 @@ interface AuthState {
   register: (payload: RegisterRequest) => Promise<AuthUser>;
   logout: () => Promise<void>;
   clearSession: () => void;
+  updateUser: (user: AuthUser) => void;
 }
 
 function saveAuthTokens(response: AuthResponse) {
@@ -89,4 +90,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     tokenStorage.clear();
     set({ user: null, status: "unauthenticated" });
   },
+
+  updateUser: (user) => set({ user }),
 }));

@@ -21,18 +21,38 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
-export interface UpdateProfileRequest {
+export interface EmergencyContact {
   name?: string;
+  relationship?: string;
+  phone?: string;
+}
+
+export interface FitnessPreferences {
+  styles?: string[];
+  frequency?: string;
+  equipmentAccess?: string;
+  injuries?: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName?: string;
   email?: string;
   phone?: string;
   avatarUrl?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  location?: string;
+  height?: number;
+  weight?: number;
+  mainGoal?: string;
+  emergencyContact?: EmergencyContact;
+  fitnessPreferences?: FitnessPreferences;
   [key: string]: unknown;
 }
 
 export interface AuthUser {
   id?: number;
   username?: string;
-  name?: string;
+  fullName?: string;
   email?: string;
   emailVerified?: boolean;
   phone?: string;
@@ -41,6 +61,13 @@ export interface AuthUser {
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  location?: string;
+  height?: number;
+  weight?: number;
+  mainGoal?: string;
+  emergencyContact?: EmergencyContact;
+  fitnessPreferences?: FitnessPreferences;
   [key: string]: unknown;
 }
 
