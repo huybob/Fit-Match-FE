@@ -6,6 +6,7 @@ export type LoginRequest = components["schemas"]["LoginRequest"];
 export type RegisterRequest = components["schemas"]["RegisterRequest"];
 export type RefreshTokenRequest = components["schemas"]["RefreshTokenRequest"];
 export type ChangePasswordRequest = components["schemas"]["ChangePasswordRequest"];
+export type UpdateProfileRequest = components["schemas"]["UpdateProfileRequest"];
 export type AuthResponse = components["schemas"]["AuthResponse"];
 export type AuthUser = components["schemas"]["UserResponse"];
 type ApiAuthResponse = components["schemas"]["ApiResponseAuthResponse"];
@@ -22,8 +23,29 @@ export const authService = {
     return unwrapApiData(response.data);
   },
 
+  async verifyEmail(token: string): Promise<void> {
+    await axiosClient.post("/auth/verify-email", { token });
+  },
+
+  async resendVerification(email: string): Promise<void> {
+    await axiosClient.post("/auth/resend-verification", { email });
+  },
+
+  async forgotPassword(email: string): Promise<void> {
+    await axiosClient.post("/auth/forgot-password", { email });
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await axiosClient.post("/auth/reset-password", { token, newPassword });
+  },
+
   async getProfile(): Promise<AuthUser> {
     const response = await axiosClient.get<ApiUserResponse>("/user/profile");
+    return unwrapApiData(response.data);
+  },
+
+  async updateProfile(payload: UpdateProfileRequest): Promise<AuthUser> {
+    const response = await axiosClient.put<ApiUserResponse>("/user/profile", payload);
     return unwrapApiData(response.data);
   },
 

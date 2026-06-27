@@ -1,12 +1,12 @@
 "use client";
 
 import { AuthPageShell } from "@/shared/components/common/auth-page-shell";
-import { ForgotPasswordForm } from "@/modules/forms/auth-forms";
+import { ResendVerificationForm } from "@/modules/forms/auth-forms";
 
-export default function ForgotPasswordPage() {
+export default function ResendVerificationPage() {
   return (
     <AuthPageShell variant="login">
-      <ForgotPasswordForm />
+      <ResendVerificationForm />
     </AuthPageShell>
   );
 }

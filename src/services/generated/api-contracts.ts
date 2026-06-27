@@ -1508,6 +1508,7 @@ export interface components {
             role?: "ROLE_CUSTOMER" | "ROLE_PT" | "ROLE_GYM_OPERATOR" | "ROLE_ADMIN";
             /** @enum {string} */
             status?: "ACTIVE" | "INACTIVE" | "BANNED";
+            emailVerified?: boolean;
             /** Format: date-time */
             createdAt?: string;
             /** Format: date-time */

@@ -25,6 +25,31 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(6, "New password must be at least 6 characters").max(100),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Email không hợp lệ"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(100),
+    confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email("Email không hợp lệ"),
+});
+
+export const updateProfileSchema = z.object({
+  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  phone: z
+    .union([z.literal(""), z.string().regex(/^[0-9+\-() ]{7,20}$/, "Số điện thoại không hợp lệ")])
+    .optional(),
+});
+
 export const bookingSchema = z.object({
   trainerId: z.string().min(1, "Trainer is required"),
   date: z.string().min(1, "Date is required"),
