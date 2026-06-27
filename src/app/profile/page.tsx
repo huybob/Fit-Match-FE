@@ -216,21 +216,6 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
             className="h-11 border-[#e2e8f0] rounded-lg bg-gray-50 text-base text-[#191b23]"
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Giới tính</label>
-          <select className="w-full h-11 border border-[#e2e8f0] rounded-lg px-3 text-base text-[#191b23] bg-white">
-            <option>Nam</option>
-            <option>Nữ</option>
-            <option>Khác</option>
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Địa điểm</label>
-          <Input
-            placeholder="TP. Hồ Chí Minh"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base text-[#191b23]"
-          />
-        </div>
       </div>
 
       <div className="mt-6 flex justify-end">
