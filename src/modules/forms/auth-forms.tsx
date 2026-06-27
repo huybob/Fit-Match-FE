@@ -24,6 +24,27 @@ import {
   resetPasswordSchema,
 } from "./schemas";
 
+function BackToLoginLink({ className }: { className?: string }) {
+  const router = useRouter();
+  const { status } = useAuthStore();
+  const base = "text-[#004ac6] hover:underline";
+  const cls = className ? `${base} ${className}` : base;
+
+  if (status === "authenticated") {
+    return (
+      <button onClick={() => router.back()} className={cls}>
+        ← Quay lại
+      </button>
+    );
+  }
+
+  return (
+    <Link href="/login" className={cls}>
+      ← Quay lại đăng nhập
+    </Link>
+  );
+}
+
 function GoogleIcon() {
   return (
     <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -259,9 +280,7 @@ export function RegisterForm() {
           </Link>
         </p>
         <p className="text-sm text-[#475569]">
-          <Link href="/login" className="text-[#004ac6] hover:underline">
-            Quay lại đăng nhập
-          </Link>
+          <BackToLoginLink />
         </p>
       </div>
     );
@@ -441,12 +460,7 @@ export function ForgotPasswordForm() {
             sẽ gửi link đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra cả hộp thư spam.
           </p>
         </div>
-        <Link
-          href="/login"
-          className="inline-block text-sm text-[#004ac6] hover:underline font-medium"
-        >
-          ← Quay lại đăng nhập
-        </Link>
+        <BackToLoginLink className="inline-block text-sm font-medium" />
       </div>
     );
   }
@@ -484,9 +498,7 @@ export function ForgotPasswordForm() {
         </Button>
       </form>
       <p className="text-center text-sm text-[#475569]">
-        <Link href="/login" className="text-[#004ac6] hover:underline">
-          ← Quay lại đăng nhập
-        </Link>
+        <BackToLoginLink />
       </p>
     </div>
   );
@@ -620,9 +632,7 @@ export function ResendVerificationForm() {
             24 giờ.
           </p>
         </div>
-        <Link href="/login" className="inline-block text-sm text-[#004ac6] hover:underline">
-          ← Quay lại đăng nhập
-        </Link>
+        <BackToLoginLink className="inline-block text-sm" />
       </div>
     );
   }
@@ -660,9 +670,7 @@ export function ResendVerificationForm() {
         </Button>
       </form>
       <p className="text-center text-sm text-[#475569]">
-        <Link href="/login" className="text-[#004ac6] hover:underline">
-          ← Quay lại đăng nhập
-        </Link>
+        <BackToLoginLink />
       </p>
     </div>
   );
