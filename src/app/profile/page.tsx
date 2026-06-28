@@ -451,7 +451,6 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
     try {
       const updated = await authService.updateProfile({
         fitnessPreferences: {
-          styles: fp?.styles,
           frequency,
           equipmentAccess,
           injuries,
@@ -482,20 +481,7 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
           Lưu
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-6">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-900">Phong cách yêu thích</p>
-          <div className="flex flex-wrap gap-2">
-            {(fp?.styles?.length ? fp.styles : ["HIIT", "Cử tạ"]).map((s) => (
-              <span key={s} className="px-3 py-1 rounded-full bg-[#dbeafe] text-[#004ac6] text-xs font-medium">
-                {s}
-              </span>
-            ))}
-            <button className="px-3 py-1 rounded-full border border-[#004ac6] text-[#004ac6] text-xs font-medium hover:bg-blue-50">
-              + Thêm
-            </button>
-          </div>
-        </div>
+      <div className="grid grid-cols-3 gap-6">
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-900">Tần suất</p>
           <div className="space-y-2">
