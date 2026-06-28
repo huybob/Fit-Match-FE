@@ -51,6 +51,12 @@ export const authService = {
     return api.put<AuthUser, UpdateProfileRequest>("/user/profile", payload);
   },
 
+  async uploadAvatar(file: File): Promise<AuthUser> {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post<AuthUser, FormData>("/user/profile/avatar", form);
+  },
+
   async logout(): Promise<void> {
     await api.postRaw("/auth/logout");
   },

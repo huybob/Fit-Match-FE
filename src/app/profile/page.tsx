@@ -89,10 +89,30 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
 }
 
 function ProfileHeader({ user }: { user: AuthUser }) {
+  const { toast } = useToast();
+  const { updateUser } = useAuthStore();
+  const [uploading, setUploading] = useState(false);
+
   const displayName = user.fullName ?? user.username ?? "";
   const initials = displayName
     ? displayName.split(" ").slice(0, 2).map((n) => n[0]?.toUpperCase() ?? "").join("")
     : "U";
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const updated = await authService.uploadAvatar(file);
+      updateUser(updated);
+      toast({ type: "success", title: "Cập nhật ảnh đại diện thành công!" });
+    } catch (error) {
+      toast({ type: "error", title: "Upload thất bại", description: toErrorMessage(error) });
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   return (
     <section className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
@@ -105,9 +125,19 @@ function ProfileHeader({ user }: { user: AuthUser }) {
               <span className="text-3xl font-bold text-white">{initials}</span>
             )}
           </div>
-          <button className="absolute bottom-1 right-1 bg-[#004ac6] rounded-full p-2 shadow-md hover:bg-[#003a9e] transition-colors">
-            <Camera className="size-3.5 text-white" />
-          </button>
+          <label className="absolute bottom-1 right-1 bg-[#004ac6] rounded-full p-2 shadow-md hover:bg-[#003a9e] transition-colors cursor-pointer">
+            {uploading ? (
+              <Loader2 className="size-3.5 text-white animate-spin" />
+            ) : (
+              <Camera className="size-3.5 text-white" />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </label>
         </div>
 
         <div className="flex-1 min-w-0">
