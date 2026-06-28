@@ -24,6 +24,7 @@ import { authService } from "@/services/auth.service";
 import { useToast } from "@/lib/toast-provider";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import type { AuthUser } from "@/services/auth.service";
 
@@ -442,6 +443,7 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
   const { updateUser } = useAuthStore();
   const fp = user.fitnessPreferences;
   const [styles, setStyles] = useState<string[]>(fp?.styles ?? []);
+  const [styleDialogOpen, setStyleDialogOpen] = useState(false);
   const [styleInput, setStyleInput] = useState("");
   const [frequency, setFrequency] = useState(fp?.frequency ?? "4-5");
   const [equipmentAccess, setEquipmentAccess] = useState(fp?.equipmentAccess ?? "gym");
@@ -452,6 +454,7 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
     const val = styleInput.trim();
     if (val && !styles.includes(val)) setStyles((prev) => [...prev, val]);
     setStyleInput("");
+    setStyleDialogOpen(false);
   }
 
   function removeStyle(s: string) {
@@ -500,22 +503,40 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
               </span>
             ))}
           </div>
-          <div className="flex gap-2">
-            <input
+          <button
+            onClick={() => { setStyleInput(""); setStyleDialogOpen(true); }}
+            className="px-3 h-8 rounded-lg border border-[#004ac6] text-[#004ac6] text-xs font-medium hover:bg-blue-50"
+          >
+            + Thêm
+          </button>
+        </div>
+
+        <Dialog
+          open={styleDialogOpen}
+          title="Thêm phong cách tập luyện"
+          onClose={() => setStyleDialogOpen(false)}
+        >
+          <div className="space-y-4">
+            <Input
+              autoFocus
               value={styleInput}
               onChange={(e) => setStyleInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStyle(); } }}
-              placeholder="VD: HIIT, Yoga..."
-              className="flex-1 h-8 border border-[#e2e8f0] rounded-lg px-3 text-sm text-[#191b23] focus:outline-none focus:border-[#2563eb]"
+              placeholder="VD: HIIT, Yoga, Cử tạ..."
+              className="h-11"
             />
-            <button
-              onClick={addStyle}
-              className="px-3 h-8 rounded-lg border border-[#004ac6] text-[#004ac6] text-xs font-medium hover:bg-blue-50"
-            >
-              + Thêm
-            </button>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setStyleDialogOpen(false)}>Hủy</Button>
+              <Button
+                onClick={addStyle}
+                disabled={!styleInput.trim()}
+                className="bg-[#004ac6] hover:bg-[#003a9e] text-white"
+              >
+                Thêm
+              </Button>
+            </div>
           </div>
-        </div>
+        </Dialog>
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-900">Tần suất</p>
           <div className="space-y-2">
