@@ -441,20 +441,28 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const fp = user.fitnessPreferences;
+  const [styles, setStyles] = useState<string[]>(fp?.styles ?? []);
+  const [styleInput, setStyleInput] = useState("");
   const [frequency, setFrequency] = useState(fp?.frequency ?? "4-5");
   const [equipmentAccess, setEquipmentAccess] = useState(fp?.equipmentAccess ?? "gym");
   const [injuries, setInjuries] = useState(fp?.injuries ?? "");
   const [saving, setSaving] = useState(false);
 
+  function addStyle() {
+    const val = styleInput.trim();
+    if (val && !styles.includes(val)) setStyles((prev) => [...prev, val]);
+    setStyleInput("");
+  }
+
+  function removeStyle(s: string) {
+    setStyles((prev) => prev.filter((x) => x !== s));
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
       const updated = await authService.updateProfile({
-        fitnessPreferences: {
-          frequency,
-          equipmentAccess,
-          injuries,
-        },
+        fitnessPreferences: { styles, frequency, equipmentAccess, injuries },
       });
       updateUser(updated);
       toast({ type: "success", title: "Cập nhật sở thích tập luyện thành công!" });
@@ -481,7 +489,33 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
           Lưu
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-4 gap-6">
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-900">Phong cách yêu thích</p>
+          <div className="flex flex-wrap gap-2">
+            {styles.map((s) => (
+              <span key={s} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#dbeafe] text-[#004ac6] text-xs font-medium">
+                {s}
+                <button onClick={() => removeStyle(s)} className="hover:text-red-500 leading-none">×</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={styleInput}
+              onChange={(e) => setStyleInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStyle(); } }}
+              placeholder="VD: HIIT, Yoga..."
+              className="flex-1 h-8 border border-[#e2e8f0] rounded-lg px-3 text-sm text-[#191b23] focus:outline-none focus:border-[#2563eb]"
+            />
+            <button
+              onClick={addStyle}
+              className="px-3 h-8 rounded-lg border border-[#004ac6] text-[#004ac6] text-xs font-medium hover:bg-blue-50"
+            >
+              + Thêm
+            </button>
+          </div>
+        </div>
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-900">Tần suất</p>
           <div className="space-y-2">
