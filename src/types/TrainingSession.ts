@@ -14,6 +14,9 @@ export interface TrainingSession {
   status?: string;
   notes?: string;
   feedback?: string;
+  workoutPlanName?: string;
+  caloriesBurned?: number;
+  rating?: number;
   [key: string]: unknown;
 }
 
@@ -30,6 +33,7 @@ export interface UpdateSessionRequest {
   actualStartTime?: string;
   actualEndTime?: string;
   notes?: string;
+  caloriesBurned?: number;
 }
 
 export interface FeedbackRequest {

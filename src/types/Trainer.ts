@@ -68,6 +68,7 @@ export interface Certificate {
   issuingOrg?: string;
   issuedDate?: string;
   issueDate?: string;
+  expiryDate?: string;
   fileUrls?: string[];
   [key: string]: unknown;
 }
@@ -87,6 +88,7 @@ export interface Partnership {
   gymName?: string;
   ptProfileId?: number;
   ptName?: string;
+  requestMessage?: string;
   status?: string;
   [key: string]: unknown;
 }

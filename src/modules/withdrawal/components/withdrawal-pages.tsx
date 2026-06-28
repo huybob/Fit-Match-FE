@@ -49,12 +49,14 @@ const statusVariant: Record<WithdrawalStatus, React.ComponentProps<typeof Badge>
   PENDING: "warning",
   APPROVED: "success",
   REJECTED: "destructive",
+  PAID: "success",
 };
 
 const withdrawalStatusLabels: Record<WithdrawalStatus, string> = {
   PENDING: "Đang chờ",
   APPROVED: "Đã chấp nhận",
   REJECTED: "Đã từ chối",
+  PAID: "Đã thanh toán",
 };
 
 const scopeTitles: Record<"pt" | "admin", string> = {

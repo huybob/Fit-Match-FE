@@ -10,6 +10,9 @@ export interface Withdrawal {
   status?: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
   notes?: string;
   rejectReason?: string;
+  rejectionReason?: string;
+  ptName?: string;
+  approvedByName?: string;
   createdAt?: string;
   updatedAt?: string;
   [key: string]: unknown;
