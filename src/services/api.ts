@@ -24,6 +24,12 @@ export const api = {
     config?: AxiosRequestConfig,
   ) => unwrap<TData>(axiosClient.put<ApiResponse<TData>>(url, body, config)),
 
+  patch: <TData, TBody = unknown>(
+    url: string,
+    body?: TBody,
+    config?: AxiosRequestConfig,
+  ) => unwrap<TData>(axiosClient.patch<ApiResponse<TData>>(url, body, config)),
+
   delete: <TData>(url: string, config?: AxiosRequestConfig) =>
     unwrap<TData>(axiosClient.delete<ApiResponse<TData>>(url, config)),
 
