@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { AuthGuard } from "@/modules/auth/auth-guard";
 import {
   LayoutDashboard,
   Users,
@@ -456,12 +457,6 @@ function UserManagementContent() {
   );
 }
 
-import { AuthGuard } from "@/modules/auth/auth-guard";
-
 export default function AdminUsersPage() {
-  return (
-    <AuthGuard roles={["ROLE_ADMIN"]}>
-      <UserManagementContent />
-    </AuthGuard>
-  );
+  return <UserManagementContent />;
 }

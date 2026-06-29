@@ -57,6 +57,10 @@ export const authService = {
     return api.post<AuthUser, FormData>("/user/profile/avatar", form);
   },
 
+  async deactivateAccount(password: string): Promise<void> {
+    await api.postRaw("/user/deactivate", { password });
+  },
+
   async logout(): Promise<void> {
     await api.postRaw("/auth/logout");
   },

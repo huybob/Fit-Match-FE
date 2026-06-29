@@ -321,18 +321,25 @@ function LoginHistoryCard() {
 
 function DangerZoneCard() {
   const { toast } = useToast();
+  const { logout } = useAuthStore();
+  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleDisable() {
+    if (!password) return;
     setLoading(true);
     try {
-      toast({ type: "warning", title: "Tính năng đang phát triển", description: "Vô hiệu hóa tài khoản sẽ được hỗ trợ sớm." });
+      await authService.deactivateAccount(password);
+      toast({ type: "success", title: "Tài khoản đã được vô hiệu hóa" });
+      await logout();
+      router.replace("/login");
+    } catch (error) {
+      toast({ type: "error", title: "Thất bại", description: toErrorMessage(error) });
     } finally {
       setLoading(false);
-      setConfirming(false);
-      setConfirmText("");
     }
   }
 
@@ -365,25 +372,35 @@ function DangerZoneCard() {
         </div>
       ) : (
         <div className="mt-5 space-y-3 rounded-xl bg-red-50 border border-red-200 p-4 max-w-md">
-          <p className="text-sm font-medium text-red-700">
-            Nhập <span className="font-bold font-mono tracking-wide">VÔ HIỆU HÓA</span> để xác nhận:
-          </p>
-          <Input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="VÔ HIỆU HÓA"
-            className="h-10 border-red-200 rounded-lg text-sm"
-          />
+          <p className="text-sm font-medium text-red-700">Nhập mật khẩu để xác nhận vô hiệu hóa tài khoản:</p>
+          <div className="relative">
+            <Input
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mật khẩu của bạn"
+              className="h-10 border-red-200 rounded-lg text-sm pr-10"
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={handleDisable}
-              disabled={confirmText !== "VÔ HIỆU HÓA" || loading}
+              disabled={!password || loading}
               className="h-9 bg-red-600 hover:bg-red-700 text-white px-4 text-sm gap-1.5"
             >
               {loading && <Loader2 className="size-3.5 animate-spin" />} Xác nhận vô hiệu hóa
             </Button>
             <Button
-              onClick={() => { setConfirming(false); setConfirmText(""); }}
+              onClick={() => { setConfirming(false); setPassword(""); }}
               className="h-9 border border-[#e2e8f0] bg-white text-[#475569] hover:bg-gray-50 px-4 text-sm shadow-none"
             >
               Hủy
