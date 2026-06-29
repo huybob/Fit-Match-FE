@@ -15,7 +15,6 @@ import {
 import { appRoutes } from "@/constants/ecommerce.constant";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
-import { useUnreadCount } from "@/modules/notification/hooks/use-notification";
 import { Button } from "@/shared/components/ui/button";
 import { MotionPage } from "@/shared/components/common/motion-page";
 import { cn } from "@/shared/utils/cn.util";
@@ -52,7 +51,6 @@ function SiteHeader() {
   const { user, status, logout } = useAuthStore();
   const canUseNotifications = status === "authenticated" && ["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"].includes(user?.role ?? "");
   const canUseCustomerCommerce = status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
-  const unread = useUnreadCount(canUseNotifications);
   const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -105,11 +103,6 @@ function SiteHeader() {
               className="relative inline-flex size-9 items-center justify-center rounded-md bg-gray-50 text-gray-600 ring-1 ring-gray-200"
             >
               <Bell className="size-4" />
-              {!!unread.data?.unread && (
-                <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-[#2563EB] px-1 text-[10px] font-black text-white">
-                  {unread.data.unread}
-                </span>
-              )}
             </Link>
           )}
 

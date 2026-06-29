@@ -1,1 +1,19 @@
-"use client";import{useMutation,useQuery,useQueryClient}from"@tanstack/react-query";import{notificationService}from"@/services/notification.service";import{notificationKeys}from"../query-keys";export function useNotifications(page:number){return useQuery({queryKey:notificationKeys.list(page),queryFn:()=>notificationService.list(page)});}export function useUnreadCount(enabled=true){return useQuery({queryKey:notificationKeys.count(),queryFn:notificationService.count,enabled,refetchInterval:60000});}export function useReadNotification(){const c=useQueryClient();return useMutation({mutationFn:notificationService.read,onSuccess:()=>c.invalidateQueries({queryKey:notificationKeys.all})});}export function useReadAllNotifications(){const c=useQueryClient();return useMutation({mutationFn:notificationService.readAll,onSuccess:()=>c.invalidateQueries({queryKey:notificationKeys.all})});}
+"use client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { notificationService } from "@/services/notification.service";
+import { notificationKeys } from "../query-keys";
+
+export function useNotificationPreferences() {
+  return useQuery({
+    queryKey: notificationKeys.preferences(),
+    queryFn: notificationService.getPreferences,
+  });
+}
+
+export function useUpdateNotificationPreferences() {
+  const c = useQueryClient();
+  return useMutation({
+    mutationFn: notificationService.updatePreferences,
+    onSuccess: () => c.invalidateQueries({ queryKey: notificationKeys.all }),
+  });
+}
