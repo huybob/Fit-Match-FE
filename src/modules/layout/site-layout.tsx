@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { appRoutes } from "@/constants/ecommerce.constant";
 import { useAuthStore } from "@/modules/auth/auth.store";
-import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { Button } from "@/shared/components/ui/button";
 import { MotionPage } from "@/shared/components/common/motion-page";
 import { cn } from "@/shared/utils/cn.util";
@@ -155,14 +154,7 @@ function SiteHeader() {
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/reviews">Đánh giá</Link>
                     </>
                   )}
-                  {getHomeRouteForRole(user.role) !== appRoutes.profile && (
-                    <Link
-                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50"
-                      href={getHomeRouteForRole(user.role)}
-                    >
-                      Khu vực quản lý
-                    </Link>
-                  )}
+                  {/* Khu vực quản lý — tạm ẩn */}
                   <Link
                     className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50"
                     href="/change-password"
@@ -249,11 +241,7 @@ function SiteHeader() {
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">Đánh giá</Link>
                   </>
                 )}
-                {getHomeRouteForRole(user.role) !== appRoutes.profile && (
-                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={getHomeRouteForRole(user.role)}>
-                    Khu vực quản lý
-                  </Link>
-                )}
+                {/* Khu vực quản lý — tạm ẩn */}
                 <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/change-password">
                   Đổi mật khẩu
                 </Link>
