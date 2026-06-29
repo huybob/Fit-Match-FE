@@ -124,7 +124,7 @@ function SiteHeader() {
               </Button>
               {isUserOpen && (
                 <div className="absolute right-0 top-11 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
-                  {user.role === "ROLE_CUSTOMER" && (
+                  {(user.role === "ROLE_CUSTOMER" || user.role === "ROLE_ADMIN") && (
                     <Link
                       className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50"
                       href={appRoutes.profile}
@@ -228,7 +228,7 @@ function SiteHeader() {
                 <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-gray-400">
                   {user.username}
                 </p>
-                {user.role === "ROLE_CUSTOMER" && (
+                {(user.role === "ROLE_CUSTOMER" || user.role === "ROLE_ADMIN") && (
                   <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
                     Hồ sơ
                   </Link>
