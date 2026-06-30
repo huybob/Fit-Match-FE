@@ -96,3 +96,30 @@ export type GymPage = PageResponse<Gym>;
 export type BranchPage = PageResponse<GymBranch>;
 export type FacilityPage = PageResponse<GymFacility>;
 export type PartnershipPage = PageResponse<GymPartnership>;
+
+export type GymVerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
+
+export interface GymDocumentDto {
+  documentType: string;
+  fileUrl: string;
+}
+
+export interface SubmitGymRegistrationRequest {
+  gymName: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  documents: GymDocumentDto[];
+}
+
+export interface GymVerificationStatusResponse {
+  verificationStatus?: GymVerificationStatus;
+  gymName?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  documents?: GymDocumentDto[];
+  rejectionReason?: string;
+}

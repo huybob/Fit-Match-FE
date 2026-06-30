@@ -11,7 +11,7 @@ interface AuthState {
   status: AuthStatus;
   initialize: () => Promise<void>;
   login: (payload: LoginRequest) => Promise<AuthUser>;
-  register: (payload: RegisterRequest) => Promise<AuthUser>;
+  register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   clearSession: () => void;
   updateUser: (user: AuthUser) => void;
@@ -64,15 +64,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (payload) => {
-    set({ status: "loading" });
     try {
-      saveAuthTokens(await authService.register(payload));
-      const user = await authService.getProfile();
-      set({ user, status: "authenticated" });
-      return user;
+      await authService.register(payload);
     } catch (error) {
-      tokenStorage.clear();
-      set({ user: null, status: "unauthenticated" });
       throw error;
     }
   },

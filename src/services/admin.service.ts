@@ -4,6 +4,7 @@ import type {
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
+  PtDocumentDto,
   PtVerificationPage,
   PtVerificationResponse,
   RejectRequest,
@@ -13,7 +14,7 @@ import type {
 } from "@/types/Admin";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage };
+export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto };
 
 export interface AdminUserSearchParams extends PaginationParams {
   keyword?: string;

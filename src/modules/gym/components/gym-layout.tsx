@@ -9,7 +9,7 @@ import { RoleWorkspaceShell } from "@/shared/components/common/role-workspace-sh
 export function GymLayout({ children }: { children: ReactNode }) {
   const path = usePathname();
 
-  if (path === "/gym") {
+  if (path === "/gym" || path === "/gym/verification") {
     return <AuthGuard roles={["ROLE_GYM_OPERATOR"]}>{children}</AuthGuard>;
   }
 

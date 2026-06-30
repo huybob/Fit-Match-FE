@@ -6,12 +6,15 @@ import type {
   FacilityRequest,
   Gym,
   GymBranch,
+  GymDocumentDto,
   GymFacility,
   GymPage,
   GymPartnership,
   GymRequest,
+  GymVerificationStatusResponse,
   PartnershipActionRequest,
   PartnershipPage,
+  SubmitGymRegistrationRequest,
 } from "@/types/Gym";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
@@ -22,12 +25,15 @@ export type {
   FacilityRequest,
   Gym,
   GymBranch,
+  GymDocumentDto,
   GymFacility,
   GymPage,
   GymPartnership,
   GymRequest,
+  GymVerificationStatusResponse,
   PartnershipActionRequest,
   PartnershipPage,
+  SubmitGymRegistrationRequest,
 } from "@/types/Gym";
 
 export type GymSearchParams = Partial<PaginationParams> & {
@@ -129,4 +135,13 @@ export const gymService = {
   async endPartnership(id: number) {
     return api.put<GymPartnership>(`/pt/partnerships/${id}/end`);
   },
+
+  getVerificationStatus: () =>
+    api.get<GymVerificationStatusResponse>("/gym/verification-status"),
+
+  submitRegistration: (payload: SubmitGymRegistrationRequest) =>
+    api.postRaw("/gym/registration", payload),
+
+  resubmitRegistration: (payload: SubmitGymRegistrationRequest) =>
+    api.putRaw("/gym/registration/resubmit", payload),
 };

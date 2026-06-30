@@ -76,10 +76,10 @@ const statusLabel: Record<UserStatus, string> = {
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuthStore();
   return (
-    <aside className="w-56 shrink-0 bg-[#1a1f37] flex flex-col min-h-screen">
-      <div className="px-5 py-5 border-b border-white/10">
-        <p className="text-base font-bold text-white leading-tight">FitMatch</p>
-        <p className="text-xs text-white/50 mt-0.5">Admin Console</p>
+    <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
+      <div className="px-5 py-5 border-b border-gray-100">
+        <p className="text-base font-bold text-[#0f172a] leading-tight">FitMatch</p>
+        <p className="text-xs text-gray-400 mt-0.5">Admin Console</p>
       </div>
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
         {adminLinks.map(({ href, label, icon: Icon, active }) => (
@@ -87,7 +87,7 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
             key={href}
             href={href}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              active ? "bg-[#2563eb] text-white" : "text-white/60 hover:text-white hover:bg-white/10"
+              active ? "bg-[#2563eb] text-white" : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
             }`}
           >
             <Icon className="size-4 shrink-0" />
@@ -95,19 +95,19 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
           </Link>
         ))}
       </nav>
-      <div className="px-4 py-4 border-t border-white/10">
+      <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 mb-3">
           <div className="size-8 rounded-full bg-[#2563eb] flex items-center justify-center text-xs font-bold text-white shrink-0">
             {(user?.fullName ?? user?.username ?? "A")[0]?.toUpperCase()}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user?.fullName ?? user?.username ?? "Admin"}</p>
-            <p className="text-xs text-white/40 truncate">Senior Admin</p>
+            <p className="text-sm font-medium text-[#0f172a] truncate">{user?.fullName ?? user?.username ?? "Admin"}</p>
+            <p className="text-xs text-gray-400 truncate">Senior Admin</p>
           </div>
         </div>
         <button
           onClick={onLogout}
-          className="flex items-center gap-2 text-xs text-white/50 hover:text-white/80 transition-colors"
+          className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors"
         >
           <LogOut className="size-3.5" /> Đăng xuất
         </button>

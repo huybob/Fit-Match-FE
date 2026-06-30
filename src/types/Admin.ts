@@ -45,6 +45,11 @@ export type AuditLogPage = PageResponse<AuditLogResponse>;
 
 export type PtVerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
 
+export interface PtDocumentDto {
+  documentType: string;
+  fileUrl: string;
+}
+
 export interface PtVerificationResponse {
   id?: number;
   username?: string;
@@ -56,7 +61,7 @@ export interface PtVerificationResponse {
   verificationStatus?: PtVerificationStatus;
   rejectionReason?: string;
   active?: boolean;
-  documents?: string[];
+  documents?: PtDocumentDto[];
   email?: string;
   avatarUrl?: string;
   createdAt?: string;

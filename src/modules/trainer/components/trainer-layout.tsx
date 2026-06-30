@@ -24,7 +24,7 @@ import { RoleWorkspaceShell } from "@/shared/components/common/role-workspace-sh
 export function TrainerLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/trainer") {
+  if (pathname === "/trainer" || pathname === "/trainer/verification") {
     return <AuthGuard roles={["ROLE_PT"]}>{children}</AuthGuard>;
   }
 

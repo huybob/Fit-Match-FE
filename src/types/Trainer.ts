@@ -106,3 +106,47 @@ export type ServicePage = PageResponse<TrainerService>;
 export type AvailabilityPage = PageResponse<Availability>;
 export type CertificatePage = PageResponse<Certificate>;
 export type PartnershipPage = PageResponse<Partnership>;
+
+export type PtVerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
+
+export interface PtDocumentDto {
+  documentType: string;
+  fileUrl: string;
+}
+
+export interface SubmitPtRegistrationRequest {
+  displayName: string;
+  bio?: string;
+  serviceArea?: string;
+  specialization?: string;
+  experienceYears?: number;
+  documents: PtDocumentDto[];
+}
+
+export interface PtVerificationStatusResponse {
+  verificationStatus?: PtVerificationStatus;
+  displayName?: string;
+  bio?: string;
+  serviceArea?: string;
+  specialization?: string;
+  experienceYears?: number;
+  documents?: PtDocumentDto[];
+  rejectionReason?: string;
+}
+
+export interface CertificationRequest {
+  name: string;
+  issuingOrganization?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
+
+export interface CertificationResponse {
+  id?: number;
+  name?: string;
+  issuingOrganization?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
