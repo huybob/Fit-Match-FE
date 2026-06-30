@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Bell, Search, Plus, CheckCircle2,
+  ShieldCheck, Bell, Search, Plus, CheckCircle2,
   Clock, Circle, Trash2, ExternalLink, AlertCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
