@@ -1,16 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard, ShieldCheck, Building2, GitBranch,
-  CalendarCheck2, DollarSign, Banknote, Settings, LogOut,
   Bell, Search, CheckCircle2, Clock, AlertCircle, Circle,
   MapPin, Plus, Pencil,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
-import { useRouter } from "next/navigation";
 import { gymService } from "@/services/gym.service";
 import type {
   SubmitGymRegistrationRequest,
@@ -19,17 +15,6 @@ import type {
 } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
-
-const gymLinks = [
-  { href: "/gym", label: "Bảng điều hành", icon: LayoutDashboard },
-  { href: "/gym/verification", label: "Xác minh", icon: ShieldCheck, active: true },
-  { href: "/gym/gyms", label: "Cơ sở", icon: Building2 },
-  { href: "/gym/gyms", label: "Chi nhánh", icon: GitBranch },
-  { href: "/gym/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
-  { href: "/gym/revenue", label: "Doanh thu", icon: DollarSign },
-  { href: "/gym/withdrawals", label: "Rút tiền", icon: Banknote },
-  { href: "/gym/settings", label: "Cài đặt", icon: Settings },
-];
 
 const STATUS_STEPS = [
   { label: "Thông tin doanh nghiệp" },
@@ -51,8 +36,7 @@ function statusStepIndex(s?: GymVerificationStatus) {
 }
 
 export default function GymVerificationPage() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -120,11 +104,6 @@ export default function GymVerificationPage() {
     });
   }
 
-  async function handleLogout() {
-    await logout();
-    router.replace("/login");
-  }
-
   const verificationStatus = status?.verificationStatus;
   const stepIdx = statusStepIndex(verificationStatus);
   const isPending = verificationStatus === "PENDING";
@@ -139,54 +118,7 @@ export default function GymVerificationPage() {
   const branchPct = 0;
 
   return (
-    <div className="flex min-h-screen bg-[#f1f5f9]">
-      {/* ── Sidebar ── */}
-      <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-        <div className="px-5 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
-              <Building2 className="size-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#0f172a] leading-tight">FitMatch</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">Gym Operator Workspace</p>
-            </div>
-          </div>
-        </div>
-
-        {/* User info at top */}
-        <div className="px-4 py-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
-              {initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-[#0f172a] truncate">{displayName}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">Gym Operator</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-          {gymLinks.map(({ href, label, icon: Icon, active }) => (
-            <Link key={label} href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
-                active ? "bg-[#2563eb] text-white" : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
-              }`}
-            >
-              <Icon className="size-4 shrink-0" />{label}
-            </Link>
-          ))}
-        </nav>
-        <div className="px-4 py-4 border-t border-gray-100">
-          <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
-            <LogOut className="size-3.5" /> Đăng xuất
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between shrink-0 shadow-sm">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400" />
@@ -545,7 +477,6 @@ export default function GymVerificationPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

@@ -1,16 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  LayoutDashboard, ShieldCheck, BriefcaseBusiness, Package,
-  CalendarDays, CalendarCheck2, Banknote, WalletCards, Settings,
-  Bell, Search, LogOut, Plus, Dumbbell, CheckCircle2,
+  Bell, Search, Plus, CheckCircle2,
   Clock, Circle, Trash2, ExternalLink, AlertCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
-import { useRouter } from "next/navigation";
 import { trainerService } from "@/services/trainer.service";
 import type {
   SubmitPtRegistrationRequest,
@@ -21,18 +17,6 @@ import type {
 } from "@/types/Trainer";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
-
-const ptLinks = [
-  { href: "/trainer", label: "Bảng điều hành", icon: LayoutDashboard },
-  { href: "/trainer/verification", label: "Xác minh", icon: ShieldCheck, active: true },
-  { href: "/trainer/services", label: "Dịch vụ", icon: BriefcaseBusiness },
-  { href: "/trainer/packages", label: "Gói tập", icon: Package },
-  { href: "/trainer/availability", label: "Lịch", icon: CalendarDays },
-  { href: "/trainer/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
-  { href: "/trainer/payments", label: "Doanh thu", icon: WalletCards },
-  { href: "/trainer/withdrawals", label: "Rút tiền", icon: Banknote },
-  { href: "/trainer/profile", label: "Cài đặt", icon: Settings },
-];
 
 const SPECIALIZATIONS = ["Gym & Fitness", "Yoga", "Kickboxing", "Pilates", "Swimming", "Boxing", "Zumba"];
 const EXP_OPTIONS = [
@@ -57,8 +41,7 @@ function statusStepIndex(s?: PtVerificationStatus) {
 }
 
 export default function TrainerVerificationPage() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -160,11 +143,6 @@ export default function TrainerVerificationPage() {
     });
   }
 
-  async function handleLogout() {
-    await logout();
-    router.replace("/login");
-  }
-
   const verificationStatus = status?.verificationStatus;
   const stepIdx = statusStepIndex(verificationStatus);
   const isPending = verificationStatus === "PENDING";
@@ -174,49 +152,7 @@ export default function TrainerVerificationPage() {
   const initial = (user?.fullName ?? user?.username ?? "T")[0]?.toUpperCase();
 
   return (
-    <div className="flex min-h-screen bg-[#f1f5f9]">
-      {/* ── Sidebar ── */}
-      <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-        <div className="px-5 pt-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
-              <Dumbbell className="size-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#0f172a] leading-tight">FitMatch</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">Trainer Hub</p>
-            </div>
-          </div>
-        </div>
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-          {ptLinks.map(({ href, label, icon: Icon, active }) => (
-            <Link key={label} href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
-                active ? "bg-[#2563eb] text-white" : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
-              }`}
-            >
-              <Icon className="size-4 shrink-0" />{label}
-            </Link>
-          ))}
-        </nav>
-        <div className="px-4 py-4 border-t border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              {initial}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-[#0f172a] truncate">{user?.fullName ?? user?.username}</p>
-              <p className="text-[10px] text-gray-400">Professional PT</p>
-            </div>
-            <button onClick={handleLogout} title="Đăng xuất" className="text-gray-400 hover:text-gray-700 transition-colors">
-              <LogOut className="size-3.5" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* ── Main ── */}
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+    <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Top bar */}
         <header className="bg-white border-b border-gray-100 px-6 h-14 flex items-center justify-between shrink-0 shadow-sm">
           <div className="relative">
@@ -582,7 +518,6 @@ export default function TrainerVerificationPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }
