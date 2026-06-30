@@ -42,3 +42,28 @@ export interface AuditLogResponse {
 
 export type AdminUserPage = PageResponse<AdminUserResponse>;
 export type AuditLogPage = PageResponse<AuditLogResponse>;
+
+export type PtVerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
+
+export interface PtVerificationResponse {
+  id?: number;
+  username?: string;
+  displayName?: string;
+  bio?: string;
+  serviceArea?: string;
+  specialization?: string;
+  experienceYears?: number;
+  verificationStatus?: PtVerificationStatus;
+  rejectionReason?: string;
+  active?: boolean;
+  documents?: string[];
+  email?: string;
+  avatarUrl?: string;
+  createdAt?: string;
+}
+
+export interface RejectRequest {
+  reason: string;
+}
+
+export type PtVerificationPage = PageResponse<PtVerificationResponse>;

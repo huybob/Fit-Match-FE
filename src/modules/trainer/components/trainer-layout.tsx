@@ -23,6 +23,11 @@ import { RoleWorkspaceShell } from "@/shared/components/common/role-workspace-sh
 
 export function TrainerLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
+  if (pathname === "/trainer") {
+    return <AuthGuard roles={["ROLE_PT"]}>{children}</AuthGuard>;
+  }
+
   const links = [
     {
       label: "Lịch đặt",

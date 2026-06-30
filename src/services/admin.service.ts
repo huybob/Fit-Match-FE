@@ -4,13 +4,16 @@ import type {
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
+  PtVerificationPage,
+  PtVerificationResponse,
+  RejectRequest,
   UpdateUserStatusRequest,
   UserRole,
   UserStatus,
 } from "@/types/Admin";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole };
+export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage };
 
 export interface AdminUserSearchParams extends PaginationParams {
   keyword?: string;
@@ -33,4 +36,16 @@ export const adminService = {
 
   getAuditLogs: (params: PaginationParams & { action?: string; targetType?: string; actor?: string; from?: string; to?: string }) =>
     api.get<AuditLogPage>("/admin/audit-logs", { params }),
+
+  listPtVerifications: (params: PaginationParams & { status?: string }) =>
+    api.get<PtVerificationPage>("/admin/pt-verifications", { params }),
+
+  getPtVerification: (id: number) =>
+    api.get<PtVerificationResponse>(`/admin/pt-verifications/${id}`),
+
+  approvePtVerification: (id: number) =>
+    api.postRaw(`/admin/pt-verifications/${id}/approve`),
+
+  rejectPtVerification: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/pt-verifications/${id}/reject`, payload),
 };
