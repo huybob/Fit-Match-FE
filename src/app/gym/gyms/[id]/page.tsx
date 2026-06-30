@@ -1,9 +1,7 @@
-import { GymManagePage } from "@/modules/gym/components/gym-workspace-pages";
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  return <GymManagePage gymId={Number(id)} />;
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
 }

@@ -1,5 +1,7 @@
-import { MeasurementsPage } from "@/modules/measurement/components/measurement-pages";
-
-export default function TrainerMeasurementsRoute() {
-  return <MeasurementsPage scope="pt" />;
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
 }

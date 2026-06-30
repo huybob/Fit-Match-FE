@@ -19,7 +19,7 @@ export function AuthGuard({ children, roles }: { children: ReactNode; roles?: Us
   if (status === "idle" || status === "loading") {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-lime-500" aria-label="Loading session" />
+        <Loader2 className="size-8 animate-spin text-gray-400" aria-label="Loading session" />
       </div>
     );
   }

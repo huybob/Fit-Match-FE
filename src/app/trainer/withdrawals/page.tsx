@@ -1,5 +1,7 @@
-import { WithdrawalsPage } from "@/modules/withdrawal/components/withdrawal-pages";
-
-export default function TrainerWithdrawalsRoute() {
-  return <WithdrawalsPage scope="pt" />;
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
 }

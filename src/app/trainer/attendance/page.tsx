@@ -1,2 +1,7 @@
-import { AttendancePage } from "@/modules/attendance/components/attendance-pages";
-export default function TrainerAttendanceRoute() { return <AttendancePage scope="pt"/>; }
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
+}

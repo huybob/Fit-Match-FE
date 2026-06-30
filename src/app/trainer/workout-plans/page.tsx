@@ -1,2 +1,7 @@
-import { WorkoutPlansPage } from "@/modules/workout-plan/components/workout-plan-pages";
-export default function TrainerWorkoutPlansRoute() { return <WorkoutPlansPage scope="pt" />; }
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
+}

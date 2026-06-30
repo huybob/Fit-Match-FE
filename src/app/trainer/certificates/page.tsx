@@ -1,2 +1,7 @@
-import { TrainerCertificatesPage } from "@/modules/trainer/components/trainer-workspace-pages";
-export default function Page() { return <TrainerCertificatesPage />; }
+export default function Page() {
+  return (
+    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
+      Tính năng đang phát triển
+    </div>
+  );
+}
