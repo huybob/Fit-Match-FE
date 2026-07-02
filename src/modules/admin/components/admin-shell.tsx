@@ -31,7 +31,6 @@ const roleLabels: Record<string, string> = {
 };
 
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
-  const { user } = useAuthStore();
   const pathname = usePathname();
   return (
     <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
@@ -54,15 +53,6 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
         })}
       </nav>
       <div className="px-4 py-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="size-8 rounded-full bg-[#2563eb] flex items-center justify-center text-xs font-bold text-white shrink-0">
-            {(user?.fullName ?? user?.username ?? "A")[0]?.toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-[#0f172a] truncate">{user?.fullName ?? user?.username ?? "Admin"}</p>
-            <p className="text-xs text-gray-400 truncate">{roleLabels[user?.role ?? ""] ?? "Quản trị viên"}</p>
-          </div>
-        </div>
         <button onClick={onLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
           <LogOut className="size-3.5" /> Đăng xuất
         </button>
