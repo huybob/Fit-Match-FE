@@ -1,34 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import {
-  LayoutDashboard, Users, ShieldCheck, DollarSign, Tag,
-  Heart, BarChart3, FileText, ClipboardList, LogOut,
-  Search, Bell, ChevronLeft, ChevronRight, CheckCircle,
+  ShieldCheck, ChevronLeft, ChevronRight, CheckCircle,
   XCircle, Eye, Clock, ArrowLeft, Loader2, FileCheck, User,
   Building2, MapPin, Phone,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/modules/auth/auth.store";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
 import type { PtVerificationResponse, GymVerificationResponse } from "@/types/Admin";
 import { Button } from "@/shared/components/ui/button";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
-
-const adminLinks = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/verification", label: "Verification", icon: ShieldCheck, active: true },
-  { href: "/admin/revenue", label: "Revenue", icon: DollarSign },
-  { href: "/admin/vouchers", label: "Vouchers", icon: Tag },
-  { href: "/admin/loyalty", label: "Loyalty", icon: Heart },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/cms", label: "CMS", icon: FileText },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList },
-];
 
 const statusLabel: Record<string, string> = {
   NOT_SUBMITTED: "Chưa nộp",
@@ -43,43 +26,6 @@ const statusStyle: Record<string, string> = {
   APPROVED: "bg-green-100 text-green-700",
   REJECTED: "bg-red-100 text-red-600",
 };
-
-function AdminSidebar({ onLogout }: { onLogout: () => void }) {
-  const { user } = useAuthStore();
-  return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-      <Link href="/" className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors">
-        <p className="text-base font-bold text-[#0f172a] leading-tight">FitMatch</p>
-        <p className="text-xs text-gray-400 mt-0.5">Admin Console</p>
-      </Link>
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
-        {adminLinks.map(({ href, label, icon: Icon, active }) => (
-          <Link key={href} href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              active ? "bg-[#2563eb] text-white" : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
-            }`}
-          >
-            <Icon className="size-4 shrink-0" />{label}
-          </Link>
-        ))}
-      </nav>
-      <div className="px-4 py-4 border-t border-gray-100">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="size-8 rounded-full bg-[#2563eb] flex items-center justify-center text-xs font-bold text-white shrink-0">
-            {(user?.fullName ?? user?.username ?? "A")[0]?.toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-[#0f172a] truncate">{user?.fullName ?? user?.username ?? "Admin"}</p>
-            <p className="text-xs text-gray-400 truncate">Admin User</p>
-          </div>
-        </div>
-        <button onClick={onLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
-          <LogOut className="size-3.5" /> Đăng xuất
-        </button>
-      </div>
-    </aside>
-  );
-}
 
 // ──────────────────────────────────────────────
 // Detail view
@@ -796,55 +742,31 @@ function GymVerificationQueue() {
 // Page
 // ──────────────────────────────────────────────
 export default function AdminVerificationPage() {
-  const { logout } = useAuthStore();
-  const router = useRouter();
   const [tab, setTab] = useState<"pt" | "gym">("pt");
 
-  async function handleLogout() {
-    await logout();
-    router.replace("/login");
-  }
-
   return (
-    <div className="flex min-h-screen bg-[#f8f9fc]">
-      <AdminSidebar onLogout={handleLogout} />
-      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin Console</span>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400" />
-              <input className="pl-9 pr-4 h-8 text-sm bg-gray-100 border-0 rounded-lg focus:outline-none w-52 placeholder:text-gray-400" placeholder="Search applicants..." />
-            </div>
-            <button className="size-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-              <Bell className="size-4" />
-            </button>
-          </div>
-        </header>
+    <>
+      {/* PT / Gym tabs */}
+      <div className="bg-white border-b border-gray-200 px-6 flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => setTab("pt")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            tab === "pt" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <ShieldCheck className="size-4" /> Huấn luyện viên
+        </button>
+        <button
+          onClick={() => setTab("gym")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+            tab === "gym" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Building2 className="size-4" /> Phòng gym
+        </button>
+      </div>
 
-        {/* PT / Gym tabs */}
-        <div className="bg-white border-b border-gray-200 px-6 flex items-center gap-1 shrink-0">
-          <button
-            onClick={() => setTab("pt")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-              tab === "pt" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <ShieldCheck className="size-4" /> Huấn luyện viên
-          </button>
-          <button
-            onClick={() => setTab("gym")}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
-              tab === "gym" ? "border-[#2563eb] text-[#2563eb]" : "border-transparent text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            <Building2 className="size-4" /> Phòng gym
-          </button>
-        </div>
-
-        {tab === "pt" ? <VerificationQueue /> : <GymVerificationQueue />}
-      </main>
-    </div>
+      {tab === "pt" ? <VerificationQueue /> : <GymVerificationQueue />}
+    </>
   );
 }

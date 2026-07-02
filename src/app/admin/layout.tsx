@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { AuthGuard } from "@/modules/auth/auth-guard";
+import { AdminShell } from "@/modules/admin/components/admin-shell";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  return <AuthGuard roles={["ROLE_ADMIN"]}>{children}</AuthGuard>;
+  return <AdminShell>{children}</AdminShell>;
 }
