@@ -17,6 +17,8 @@ import type {
 } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { FileUpload } from "@/shared/components/common/file-upload";
+import { Input } from "@/shared/components/ui/input";
 
 const STATUS_STEPS = [
   { label: "Thông tin doanh nghiệp" },
@@ -238,65 +240,59 @@ export default function GymVerificationPage() {
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                       Tên phòng tập (Thương hiệu) <span className="text-red-500">*</span>
                     </label>
-                    <input
+                    <Input
                       value={gymName}
                       onChange={e => setGymName(e.target.value)}
                       placeholder="FitMatch Premium Gym"
                       disabled={isPending || isApproved}
-                      className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb]/20 disabled:bg-gray-50"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1.5">Mã số doanh nghiệp</label>
-                      <input
+                      <Input
                         value={businessCode}
                         onChange={e => setBusinessCode(e.target.value)}
                         placeholder="Vd: 0101234567"
                         disabled={isPending || isApproved}
-                        className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] disabled:bg-gray-50"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1.5">Mã số thuế</label>
-                      <input
+                      <Input
                         value={taxCode}
                         onChange={e => setTaxCode(e.target.value)}
                         placeholder="Nhập mã số thuế"
                         disabled={isPending || isApproved}
-                        className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] disabled:bg-gray-50"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-600 mb-1.5">Người đại diện pháp luật</label>
-                    <input
+                    <Input
                       value={legalRep}
                       onChange={e => setLegalRep(e.target.value)}
                       placeholder="Họ và tên người đại diện"
                       disabled={isPending || isApproved}
-                      className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] disabled:bg-gray-50"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1.5">Địa chỉ</label>
-                      <input
+                      <Input
                         value={address}
                         onChange={e => setAddress(e.target.value)}
                         placeholder="Số nhà, tên đường..."
                         disabled={isPending || isApproved}
-                        className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] disabled:bg-gray-50"
                       />
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1.5">Thành phố</label>
-                      <input
+                      <Input
                         value={city}
                         onChange={e => setCity(e.target.value)}
                         placeholder="TP. Hồ Chí Minh"
                         disabled={isPending || isApproved}
-                        className="w-full h-10 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-[#2563eb] disabled:bg-gray-50"
                       />
                     </div>
                   </div>
@@ -317,22 +313,21 @@ export default function GymVerificationPage() {
                     <label className="block text-xs font-semibold text-gray-600 mb-2">
                       Giấy phép kinh doanh (Bản gốc/Công chứng) <span className="text-red-500">*</span>
                     </label>
-                    <div className={`border-2 border-dashed rounded-xl p-6 text-center ${
+                    <div className={`border-2 border-dashed rounded-xl p-6 ${
                       documents[0]?.fileUrl ? "border-[#2563eb]/40 bg-blue-50" : "border-gray-200 bg-gray-50"
                     }`}>
                       <div className="flex flex-col items-center gap-2 mb-3">
                         <div className="size-10 rounded-full bg-gray-100 flex items-center justify-center">
                           <ShieldCheck className="size-5 text-gray-400" />
                         </div>
-                        <p className="text-xs font-semibold text-gray-600">Tải lên hoặc kéo thả tệp</p>
                         <p className="text-[10px] text-gray-400">PDF, JPG, PNG (Tối đa 10MB)</p>
                       </div>
-                      <input
+                      <FileUpload
                         value={documents[0]?.fileUrl ?? ""}
-                        onChange={e => updateDoc(0, e.target.value)}
-                        placeholder="Hoặc dán URL tài liệu..."
+                        onChange={url => updateDoc(0, url)}
+                        folder="documents"
+                        label="Tải giấy phép lên"
                         disabled={isPending || isApproved}
-                        className="w-full h-8 px-3 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-[#2563eb] bg-white disabled:bg-gray-100 text-center"
                       />
                     </div>
                   </div>
@@ -343,20 +338,15 @@ export default function GymVerificationPage() {
                       const info = DOC_TYPES[i + 1];
                       return (
                         <div key={i} className={`border border-dashed border-gray-200 rounded-xl p-4 ${doc.fileUrl ? "border-[#2563eb]/40 bg-blue-50" : "bg-gray-50"}`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="size-7 rounded-lg bg-gray-100 flex items-center justify-center">
-                              <ShieldCheck className="size-3.5 text-gray-400" />
-                            </div>
-                            <p className="text-xs font-semibold text-gray-600 flex-1">
-                              {doc.fileUrl ? doc.fileUrl.split("/").pop()?.slice(0, 20) + "..." : info?.label ?? "Tài liệu"}
-                            </p>
-                          </div>
-                          <input
+                          <p className="text-xs font-semibold text-gray-600 mb-2">
+                            {info?.label ?? "Tài liệu"}
+                          </p>
+                          <FileUpload
                             value={doc.fileUrl}
-                            onChange={e => updateDoc(i + 1, e.target.value)}
-                            placeholder={doc.fileUrl ? "" : "Click để tải lên"}
+                            onChange={url => updateDoc(i + 1, url)}
+                            folder="documents"
+                            label="Tải lên"
                             disabled={isPending || isApproved}
-                            className="w-full h-7 px-2.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-[#2563eb] bg-white disabled:bg-gray-100"
                           />
                         </div>
                       );
