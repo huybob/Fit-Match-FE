@@ -20,7 +20,7 @@ const SelectTrigger = React.forwardRef<
     data-slot="select-trigger"
     data-size={size}
     className={cn(
-      "flex w-full items-center justify-between gap-2 rounded-xl border border-input bg-card/90 px-3.5 text-sm font-semibold text-foreground shadow-sm outline-none transition hover:border-[#b9bda8] focus:border-[#88d900] focus:ring-4 focus:ring-ring/20 data-[placeholder]:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 data-[size=default]:h-11 data-[size=sm]:h-9",
+      "flex w-full items-center justify-between gap-2 rounded-xl border border-input bg-card/90 px-3.5 text-sm font-semibold text-foreground shadow-sm outline-none transition hover:border-ring/50 focus:border-ring focus:ring-4 focus:ring-ring/20 data-[placeholder]:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 data-[size=default]:h-11 data-[size=sm]:h-9",
       "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
       className,
     )}
