@@ -32,9 +32,9 @@ export function TrainerSidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
+    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen">
       {/* Brand — click to go back home */}
-      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0">
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
             <Dumbbell className="size-4 text-white" />
@@ -66,7 +66,7 @@ export function TrainerSidebar() {
       </nav>
 
       {/* CTA + User info */}
-      <div className="px-4 py-4 border-t border-gray-100">
+      <div className="px-4 py-4 border-t border-gray-100 shrink-0">
         <Link href="/trainer/bookings"
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-semibold transition-colors mb-4">
           <Plus className="size-3.5" /> Tạo buổi tập mới

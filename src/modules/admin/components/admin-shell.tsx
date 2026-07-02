@@ -33,12 +33,12 @@ const roleLabels: Record<string, string> = {
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-      <Link href="/" className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen">
+      <Link href="/" className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0">
         <p className="text-base font-bold text-[#0f172a] leading-tight">FitMatch</p>
         <p className="text-xs text-gray-400 mt-0.5">Admin Console</p>
       </Link>
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
         {adminLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
           return (
@@ -52,7 +52,7 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
           );
         })}
       </nav>
-      <div className="px-4 py-4 border-t border-gray-100">
+      <div className="px-4 py-4 border-t border-gray-100 shrink-0">
         <button onClick={onLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
           <LogOut className="size-3.5" /> Đăng xuất
         </button>
@@ -128,7 +128,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <AuthGuard roles={["ROLE_ADMIN"]}>
-      <div className="flex min-h-screen bg-[#f8f9fc]">
+      <div className="flex h-screen overflow-hidden bg-[#f8f9fc]">
         <AdminSidebar onLogout={handleLogout} />
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <AdminHeader onLogout={handleLogout} />

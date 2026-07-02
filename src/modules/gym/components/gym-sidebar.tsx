@@ -49,9 +49,9 @@ export function GymSidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
+    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen">
       {/* Brand — click to go back home */}
-      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0">
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
             <Building2 className="size-4 text-white" />
@@ -64,7 +64,7 @@ export function GymSidebar() {
       </Link>
 
       {/* User info — top below brand */}
-      <div className="px-4 py-4 border-b border-gray-100">
+      <div className="px-4 py-4 border-b border-gray-100 shrink-0">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
             {initial}
@@ -96,7 +96,7 @@ export function GymSidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="px-4 py-4 border-t border-gray-100">
+      <div className="px-4 py-4 border-t border-gray-100 shrink-0">
         <button onClick={handleLogout}
           className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
           <LogOut className="size-3.5" /> Đăng xuất
