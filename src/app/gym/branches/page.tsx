@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Search, Plus, Pencil, Ban, GitBranch, MapPin, Phone, Loader2 } from "lucide-react";
-import { useAuthStore } from "@/modules/auth/auth.store";
 import { gymService } from "@/services/gym.service";
 import type { BranchInput, BranchResponse } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
@@ -11,14 +10,11 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { WorkspaceUserMenu } from "@/shared/components/common/workspace-user-menu";
 
 export default function GymBranchesPage() {
-  const { user } = useAuthStore();
   const { toast } = useToast();
   const qc = useQueryClient();
-
-  const displayName = user?.fullName ?? user?.username ?? "Gym";
-  const initial = displayName[0]?.toUpperCase() ?? "G";
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<BranchResponse | null>(null);
@@ -87,10 +83,7 @@ export default function GymBranchesPage() {
             <Bell className="size-4" />
           </button>
           <div className="w-px h-5 bg-gray-200 mx-1" />
-          <div className="flex items-center gap-2.5 pl-1">
-            <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">{initial}</div>
-            <span className="text-sm font-semibold text-gray-700">{displayName}</span>
-          </div>
+          <WorkspaceUserMenu />
         </div>
       </header>
 

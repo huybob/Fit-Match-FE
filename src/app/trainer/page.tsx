@@ -6,6 +6,7 @@ import {
   Clock, Dumbbell, DollarSign, CheckCheck, Timer,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { WorkspaceUserMenu } from "@/shared/components/common/workspace-user-menu";
 
 const stats = [
   {
@@ -104,12 +105,7 @@ export default function TrainerDashboardPage() {
               <span className="absolute top-1 right-1 size-1.5 rounded-full bg-red-500" />
             </button>
             <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
-                {(user?.fullName ?? user?.username ?? "T")[0]?.toUpperCase()}
-              </div>
-              <span className="text-sm font-semibold text-gray-700">{user?.fullName ?? user?.username}</span>
-            </div>
+            <WorkspaceUserMenu />
           </div>
         </header>
 

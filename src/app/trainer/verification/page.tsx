@@ -6,7 +6,6 @@ import {
   ShieldCheck, Bell, Search, Plus, CheckCircle2,
   Clock, Circle, Trash2, AlertCircle, Pencil,
 } from "lucide-react";
-import { useAuthStore } from "@/modules/auth/auth.store";
 import { trainerService } from "@/services/trainer.service";
 import type {
   SubmitPtRegistrationRequest,
@@ -24,6 +23,7 @@ import { DatePicker } from "@/shared/components/ui/date-picker";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/shared/components/ui/select";
+import { WorkspaceUserMenu } from "@/shared/components/common/workspace-user-menu";
 
 const SPECIALIZATIONS = ["Gym & Fitness", "Yoga", "Kickboxing", "Pilates", "Swimming", "Boxing", "Zumba"];
 const EXP_OPTIONS = [
@@ -48,7 +48,6 @@ function statusStepIndex(s?: PtVerificationStatus) {
 }
 
 export default function TrainerVerificationPage() {
-  const { user } = useAuthStore();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -207,8 +206,6 @@ export default function TrainerVerificationPage() {
   const isApproved = verificationStatus === "APPROVED";
   const isRejected = verificationStatus === "REJECTED";
 
-  const initial = (user?.fullName ?? user?.username ?? "T")[0]?.toUpperCase();
-
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Top bar */}
@@ -222,12 +219,7 @@ export default function TrainerVerificationPage() {
               <Bell className="size-4" />
             </button>
             <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
-                {initial}
-              </div>
-              <span className="text-sm font-semibold text-gray-700">{user?.fullName ?? user?.username}</span>
-            </div>
+            <WorkspaceUserMenu />
           </div>
         </header>
 

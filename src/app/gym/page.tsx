@@ -7,6 +7,7 @@ import {
   FileText, XCircle, Clock,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { WorkspaceUserMenu } from "@/shared/components/common/workspace-user-menu";
 
 const stats = [
   {
@@ -89,9 +90,7 @@ function BarChart() {
 
 export default function GymDashboardPage() {
   const { user } = useAuthStore();
-
   const displayName = user?.fullName ?? user?.username ?? "Gym";
-  const initial = displayName[0]?.toUpperCase() ?? "G";
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -107,12 +106,7 @@ export default function GymDashboardPage() {
               <span className="absolute top-1 right-1 size-1.5 rounded-full bg-red-500" />
             </button>
             <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                {initial}
-              </div>
-              <span className="text-sm font-semibold text-gray-700">{displayName}</span>
-            </div>
+            <WorkspaceUserMenu />
           </div>
         </header>
 

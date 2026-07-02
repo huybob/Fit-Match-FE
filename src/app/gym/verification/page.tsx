@@ -8,7 +8,6 @@ import {
   Bell, Search, CheckCircle2, Clock, AlertCircle, Circle,
   MapPin, Plus, Pencil,
 } from "lucide-react";
-import { useAuthStore } from "@/modules/auth/auth.store";
 import { gymService } from "@/services/gym.service";
 import type {
   SubmitGymRegistrationRequest,
@@ -19,6 +18,7 @@ import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { FileUpload } from "@/shared/components/common/file-upload";
 import { Input } from "@/shared/components/ui/input";
+import { WorkspaceUserMenu } from "@/shared/components/common/workspace-user-menu";
 
 const STATUS_STEPS = [
   { label: "Thông tin doanh nghiệp" },
@@ -40,7 +40,6 @@ function statusStepIndex(s?: GymVerificationStatus) {
 }
 
 export default function GymVerificationPage() {
-  const { user } = useAuthStore();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -113,8 +112,6 @@ export default function GymVerificationPage() {
   const isPending = verificationStatus === "PENDING";
   const isApproved = verificationStatus === "APPROVED";
   const isRejected = verificationStatus === "REJECTED";
-  const displayName = user?.fullName ?? user?.username ?? "Gym";
-  const initial = displayName[0]?.toUpperCase() ?? "G";
 
   const docFilled = documents.filter(d => d.fileUrl.trim()).length;
   const profilePct = gymName ? 100 : 0;
@@ -133,12 +130,7 @@ export default function GymVerificationPage() {
               <Bell className="size-4" />
             </button>
             <div className="w-px h-5 bg-gray-200 mx-1" />
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                {initial}
-              </div>
-              <span className="text-sm font-semibold text-gray-700">{displayName}</span>
-            </div>
+            <WorkspaceUserMenu />
           </div>
         </header>
 
