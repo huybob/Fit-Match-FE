@@ -23,6 +23,13 @@ const adminLinks = [
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList },
 ];
 
+const roleLabels: Record<string, string> = {
+  ROLE_ADMIN: "Quản trị viên",
+  ROLE_PT: "Huấn luyện viên",
+  ROLE_GYM_OPERATOR: "Chủ phòng gym",
+  ROLE_CUSTOMER: "Khách hàng",
+};
+
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuthStore();
   const pathname = usePathname();
@@ -53,7 +60,7 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-[#0f172a] truncate">{user?.fullName ?? user?.username ?? "Admin"}</p>
-            <p className="text-xs text-gray-400 truncate">Admin User</p>
+            <p className="text-xs text-gray-400 truncate">{roleLabels[user?.role ?? ""] ?? "Quản trị viên"}</p>
           </div>
         </div>
         <button onClick={onLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
@@ -68,6 +75,7 @@ function AdminHeader({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuthStore();
   const [open, setOpen] = useState(false);
   const label = user?.fullName ?? user?.username ?? "Admin";
+  const role = roleLabels[user?.role ?? ""] ?? "Quản trị viên";
   const initial = label[0]?.toUpperCase() ?? "A";
 
   return (
@@ -85,10 +93,13 @@ function AdminHeader({ onLogout }: { onLogout: () => void }) {
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2 pl-1 pr-2 h-9 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2.5 pl-1.5 pr-2 h-11 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">{initial}</div>
-            <span className="text-sm font-semibold text-gray-700">{label}</span>
+            <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">{initial}</div>
+            <div className="text-left leading-tight">
+              <p className="text-sm font-semibold text-gray-700">{label}</p>
+              <p className="text-[11px] text-gray-400">{role}</p>
+            </div>
             <ChevronDown className="size-4 text-gray-400" />
           </button>
           {open && (
