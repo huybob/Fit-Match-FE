@@ -123,3 +123,49 @@ export interface GymVerificationStatusResponse {
   documents?: GymDocumentDto[];
   rejectionReason?: string;
 }
+
+// ── Gym operator workspace — flat endpoints scoped to the authenticated operator ──
+
+export interface BranchResponse {
+  id?: number;
+  name?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  active?: boolean;
+}
+
+export interface BranchInput {
+  name: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+}
+
+export interface FacilityResponse {
+  id?: number;
+  name?: string;
+  description?: string;
+  active?: boolean;
+}
+
+export interface FacilityInput {
+  name: string;
+  description?: string;
+}
+
+export interface GymServiceResponse {
+  id?: number;
+  name?: string;
+  description?: string;
+  price?: number;
+  durationMinutes?: number;
+  active?: boolean;
+}
+
+export interface GymServiceInput {
+  name: string;
+  description?: string;
+  price: number;
+  durationMinutes?: number;
+}

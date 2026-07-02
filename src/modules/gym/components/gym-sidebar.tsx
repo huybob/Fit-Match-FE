@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  LayoutDashboard, ShieldCheck, Building2, GitBranch,
+  LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
   CalendarCheck2, DollarSign, Banknote, Settings, LogOut,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -11,8 +11,9 @@ import { useAuthStore } from "@/modules/auth/auth.store";
 const gymLinks = [
   { href: "/gym", label: "Bảng điều hành", icon: LayoutDashboard },
   { href: "/gym/verification", label: "Xác minh", icon: ShieldCheck },
-  { href: "/gym/gyms", label: "Cơ sở", icon: Building2 },
+  { href: "/gym/facilities", label: "Cơ sở vật chất", icon: Dumbbell },
   { href: "/gym/branches", label: "Chi nhánh", icon: GitBranch },
+  { href: "/gym/services", label: "Dịch vụ", icon: Sparkles },
   { href: "/gym/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
   { href: "/gym/revenue", label: "Doanh thu", icon: DollarSign },
   { href: "/gym/withdrawals", label: "Rút tiền", icon: Banknote },

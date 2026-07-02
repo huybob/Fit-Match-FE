@@ -1,9 +1,13 @@
 import { api } from "@/services/api";
 import type {
+  BranchInput,
   BranchPage,
   BranchRequest,
+  BranchResponse,
+  FacilityInput,
   FacilityPage,
   FacilityRequest,
+  FacilityResponse,
   Gym,
   GymBranch,
   GymDocumentDto,
@@ -11,6 +15,8 @@ import type {
   GymPage,
   GymPartnership,
   GymRequest,
+  GymServiceInput,
+  GymServiceResponse,
   GymVerificationStatusResponse,
   PartnershipActionRequest,
   PartnershipPage,
@@ -19,10 +25,14 @@ import type {
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type {
+  BranchInput,
   BranchPage,
   BranchRequest,
+  BranchResponse,
+  FacilityInput,
   FacilityPage,
   FacilityRequest,
+  FacilityResponse,
   Gym,
   GymBranch,
   GymDocumentDto,
@@ -30,6 +40,8 @@ export type {
   GymPage,
   GymPartnership,
   GymRequest,
+  GymServiceInput,
+  GymServiceResponse,
   GymVerificationStatusResponse,
   PartnershipActionRequest,
   PartnershipPage,
@@ -144,4 +156,29 @@ export const gymService = {
 
   resubmitRegistration: (payload: SubmitGymRegistrationRequest) =>
     api.putRaw("/gym/registration/resubmit", payload),
+
+  // ── Operator workspace: branches (UC-50..52) ──
+  listOwnBranches: () => api.get<BranchResponse[]>("/gym/branches"),
+  getOwnBranch: (id: number) => api.get<BranchResponse>(`/gym/branches/${id}`),
+  addBranch: (payload: BranchInput) =>
+    api.post<BranchResponse, BranchInput>("/gym/branches", payload),
+  editBranch: (id: number, payload: BranchInput) =>
+    api.put<BranchResponse, BranchInput>(`/gym/branches/${id}`, payload),
+  deactivateBranch: (id: number) => api.deleteRaw(`/gym/branches/${id}`),
+
+  // ── Operator workspace: facilities (UC-47..49) ──
+  listOwnFacilities: () => api.get<FacilityResponse[]>("/gym/facilities"),
+  addFacility: (payload: FacilityInput) =>
+    api.post<FacilityResponse, FacilityInput>("/gym/facilities", payload),
+  editFacility: (id: number, payload: FacilityInput) =>
+    api.put<FacilityResponse, FacilityInput>(`/gym/facilities/${id}`, payload),
+  deactivateFacility: (id: number) => api.deleteRaw(`/gym/facilities/${id}`),
+
+  // ── Operator workspace: services (UC-53..55) ──
+  listOwnServices: () => api.get<GymServiceResponse[]>("/gym/services"),
+  addService: (payload: GymServiceInput) =>
+    api.post<GymServiceResponse, GymServiceInput>("/gym/services", payload),
+  editService: (id: number, payload: GymServiceInput) =>
+    api.put<GymServiceResponse, GymServiceInput>(`/gym/services/${id}`, payload),
+  deactivateService: (id: number) => api.deleteRaw(`/gym/services/${id}`),
 };
