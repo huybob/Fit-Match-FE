@@ -77,10 +77,10 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const { user } = useAuthStore();
   return (
     <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-      <div className="px-5 py-5 border-b border-gray-100">
+      <Link href="/" className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors">
         <p className="text-base font-bold text-[#0f172a] leading-tight">FitMatch</p>
         <p className="text-xs text-gray-400 mt-0.5">Admin Console</p>
-      </div>
+      </Link>
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
         {adminLinks.map(({ href, label, icon: Icon, active }) => (
           <Link

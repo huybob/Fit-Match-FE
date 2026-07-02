@@ -3,13 +3,13 @@
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { getHomeRouteForRole, UserRole } from "./auth-routing";
+import { getHomeRouteForRole, roleSatisfies, UserRole } from "./auth-routing";
 import { useAuthStore } from "./auth.store";
 
 export function AuthGuard({ children, roles }: { children: ReactNode; roles?: UserRole[] }) {
   const router = useRouter();
   const { status, user } = useAuthStore();
-  const forbidden = status === "authenticated" && roles && (!user?.role || !roles.includes(user.role));
+  const forbidden = status === "authenticated" && roles && !roles.some((r) => roleSatisfies(user?.role, r));
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");

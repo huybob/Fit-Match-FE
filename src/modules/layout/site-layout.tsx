@@ -34,6 +34,14 @@ function useVisibleNavItems() {
     : navItems.filter(([, href]) => href !== appRoutes.booking);
 }
 
+// Role-specific workspace entry shown in the account dropdown.
+function workspaceEntryFor(role?: string) {
+  if (role === "ROLE_ADMIN") return { href: "/admin", label: "Trang quản trị" };
+  if (role === "ROLE_PT") return { href: "/trainer", label: "Khu vực huấn luyện viên" };
+  if (role === "ROLE_GYM_OPERATOR") return { href: "/gym", label: "Khu vực phòng gym" };
+  return null;
+}
+
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <div className="fit-shell flex min-h-screen flex-col text-gray-900">
@@ -123,12 +131,20 @@ function SiteHeader() {
               </Button>
               {isUserOpen && (
                 <div className="absolute right-0 top-11 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
-                  {(user.role === "ROLE_CUSTOMER" || user.role === "ROLE_ADMIN") && (
+                  <Link
+                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50"
+                    href={appRoutes.profile}
+                    onClick={() => setIsUserOpen(false)}
+                  >
+                    Hồ sơ
+                  </Link>
+                  {workspaceEntryFor(user.role) && (
                     <Link
-                      className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50"
-                      href={appRoutes.profile}
+                      className="block rounded-md px-3 py-2 text-sm font-semibold text-[#2563EB] hover:bg-blue-50"
+                      href={workspaceEntryFor(user.role)!.href}
+                      onClick={() => setIsUserOpen(false)}
                     >
-                      Hồ sơ
+                      {workspaceEntryFor(user.role)!.label}
                     </Link>
                   )}
                   {user.role === "ROLE_CUSTOMER" && (
@@ -215,9 +231,12 @@ function SiteHeader() {
                 <p className="px-3 py-2 text-xs font-black uppercase tracking-wide text-gray-400">
                   {user.username}
                 </p>
-                {(user.role === "ROLE_CUSTOMER" || user.role === "ROLE_ADMIN") && (
-                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile}>
-                    Hồ sơ
+                <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile} onClick={() => setIsMenuOpen(false)}>
+                  Hồ sơ
+                </Link>
+                {workspaceEntryFor(user.role) && (
+                  <Link className="block rounded-md px-3 py-2 text-sm font-semibold text-[#2563EB]" href={workspaceEntryFor(user.role)!.href} onClick={() => setIsMenuOpen(false)}>
+                    {workspaceEntryFor(user.role)!.label}
                   </Link>
                 )}
                 {canUseNotifications && (

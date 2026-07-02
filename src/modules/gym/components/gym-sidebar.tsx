@@ -34,8 +34,8 @@ export function GymSidebar() {
 
   return (
     <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col min-h-screen">
-      {/* Brand */}
-      <div className="px-5 pt-6 pb-4 border-b border-gray-100">
+      {/* Brand — click to go back home */}
+      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors">
         <div className="flex items-center gap-3">
           <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
             <Building2 className="size-4 text-white" />
@@ -45,7 +45,7 @@ export function GymSidebar() {
             <p className="text-[10px] text-gray-400 mt-0.5">Gym Operator Workspace</p>
           </div>
         </div>
-      </div>
+      </Link>
 
       {/* User info — top below brand */}
       <div className="px-4 py-4 border-b border-gray-100">
