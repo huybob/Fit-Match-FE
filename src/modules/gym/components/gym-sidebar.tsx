@@ -6,7 +6,12 @@ import {
   CalendarCheck2, DollarSign, Banknote, Settings, LogOut,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { gymService } from "@/services/gym.service";
+
+// Links available before the gym is approved (submit + track verification only).
+const ALWAYS_AVAILABLE = new Set(["/gym", "/gym/verification"]);
 
 const gymLinks = [
   { href: "/gym", label: "Bảng điều hành", icon: LayoutDashboard },
@@ -27,6 +32,16 @@ export function GymSidebar() {
 
   const displayName = user?.fullName ?? user?.username ?? "Gym";
   const initial = displayName[0]?.toUpperCase() ?? "G";
+
+  const { data: status } = useQuery({
+    queryKey: ["gym-verification-status"],
+    queryFn: gymService.getVerificationStatus,
+  });
+  const approved = status?.verificationStatus === "APPROVED";
+  // Until approved, only expose the dashboard + verification entries.
+  const visibleLinks = approved
+    ? gymLinks
+    : gymLinks.filter((l) => ALWAYS_AVAILABLE.has(l.href));
 
   async function handleLogout() {
     await logout();
@@ -63,7 +78,7 @@ export function GymSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-        {gymLinks.map(({ href, label, icon: Icon }) => {
+        {visibleLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/gym" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
