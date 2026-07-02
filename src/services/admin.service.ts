@@ -4,6 +4,8 @@ import type {
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
+  GymVerificationPage,
+  GymVerificationResponse,
   PtDocumentDto,
   PtVerificationPage,
   PtVerificationResponse,
@@ -14,7 +16,7 @@ import type {
 } from "@/types/Admin";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto };
+export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto, GymVerificationResponse, GymVerificationPage };
 
 export interface AdminUserSearchParams extends PaginationParams {
   keyword?: string;
@@ -49,4 +51,16 @@ export const adminService = {
 
   rejectPtVerification: (id: number, payload: RejectRequest) =>
     api.postRaw(`/admin/pt-verifications/${id}/reject`, payload),
+
+  listGymVerifications: (params: PaginationParams & { status?: string }) =>
+    api.get<GymVerificationPage>("/admin/gym-verifications", { params }),
+
+  getGymVerification: (id: number) =>
+    api.get<GymVerificationResponse>(`/admin/gym-verifications/${id}`),
+
+  approveGymVerification: (id: number) =>
+    api.postRaw(`/admin/gym-verifications/${id}/approve`),
+
+  rejectGymVerification: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/gym-verifications/${id}/reject`, payload),
 };

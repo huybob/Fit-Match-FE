@@ -72,3 +72,19 @@ export interface RejectRequest {
 }
 
 export type PtVerificationPage = PageResponse<PtVerificationResponse>;
+
+export interface GymVerificationResponse {
+  id?: number;
+  username?: string;
+  gymName?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  verificationStatus?: PtVerificationStatus;
+  rejectionReason?: string;
+  active?: boolean;
+  documents?: PtDocumentDto[];
+}
+
+export type GymVerificationPage = PageResponse<GymVerificationResponse>;
