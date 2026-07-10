@@ -1,16 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Search, UserRound, MapPin } from "lucide-react";
+import { Award, Search, UserRound, MapPin, Heart } from "lucide-react";
 import { FormEvent, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { marketplaceService } from "@/services/marketplace.service";
+import { favoritesService } from "@/services/favorites.service";
+import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { toErrorMessage } from "@/shared/utils/error.util";
+
+function useFavorites() {
+  const { user, status } = useAuthStore();
+  const isCustomer = status === "authenticated" && user?.role === "ROLE_CUSTOMER";
+  const qc = useQueryClient();
+  const favQuery = useQuery({
+    queryKey: ["favorites", "pts"],
+    queryFn: favoritesService.list,
+    enabled: isCustomer,
+  });
+  const ids = new Set((favQuery.data ?? []).map((p) => p.id));
+  const toggle = useMutation({
+    mutationFn: ({ id, fav }: { id: number; fav: boolean }) =>
+      fav ? favoritesService.remove(id) : favoritesService.add(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["favorites", "pts"] }),
+  });
+  return { isCustomer, ids, toggle };
+}
 
 export function TrainersDirectoryPage() {
   const [filters, setFilters] = useState({ keyword: "", specialization: "", serviceArea: "" });
@@ -19,6 +39,7 @@ export function TrainersDirectoryPage() {
     queryKey: ["marketplace", "pts", params],
     queryFn: () => marketplaceService.searchPts(params),
   });
+  const { isCustomer, ids, toggle } = useFavorites();
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -58,10 +79,20 @@ export function TrainersDirectoryPage() {
                     <div className="grid size-12 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
                       <UserRound className="size-6" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h2 className="truncate text-lg font-black">{pt.displayName}</h2>
                       {pt.specialization && <p className="truncate text-sm text-muted-foreground">{pt.specialization}</p>}
                     </div>
+                    {isCustomer && pt.id != null && (
+                      <button
+                        onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
+                        disabled={toggle.isPending}
+                        aria-label="Yêu thích"
+                        className="shrink-0 text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <Heart className={`size-5 ${ids.has(pt.id) ? "fill-red-500 text-red-500" : ""}`} />
+                      </button>
+                    )}
                   </div>
                   {pt.serviceArea && (
                     <p className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
@@ -90,6 +121,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
     queryKey: ["marketplace", "pt", userId],
     queryFn: () => marketplaceService.getPt(userId),
   });
+  const { isCustomer, ids, toggle } = useFavorites();
 
   if (query.isLoading)
     return (
@@ -119,10 +151,20 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
               <h1 className="text-3xl font-black">{pt.displayName}</h1>
               {pt.specialization && <p className="mt-1 font-bold text-blue-100">{pt.specialization}</p>}
               <p className="mt-2 text-blue-100">{pt.bio || "Chưa có mô tả"}</p>
-              <div className="mt-4 flex flex-wrap gap-3 text-sm font-bold">
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold">
                 <span>{pt.experienceYears ?? 0} năm kinh nghiệm</span>
                 {pt.serviceArea && <span>· {pt.serviceArea}</span>}
               </div>
+              {isCustomer && pt.id != null && (
+                <button
+                  onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
+                  disabled={toggle.isPending}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25 transition-colors"
+                >
+                  <Heart className={`size-4 ${ids.has(pt.id) ? "fill-red-400 text-red-400" : ""}`} />
+                  {ids.has(pt.id) ? "Đã yêu thích" : "Yêu thích"}
+                </button>
+              )}
             </div>
           </div>
         </section>

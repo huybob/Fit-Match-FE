@@ -149,6 +149,9 @@ function SiteHeader() {
                   )}
                   {user.role === "ROLE_CUSTOMER" && (
                     <>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/favorites">
+                        PT yêu thích
+                      </Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/bookings">
                         Lịch đặt
                       </Link>
@@ -246,6 +249,7 @@ function SiteHeader() {
                 )}
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/favorites">PT yêu thích</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">Lịch đặt</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/sessions">Buổi tập</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/workout-plans">Giáo án</Link>
