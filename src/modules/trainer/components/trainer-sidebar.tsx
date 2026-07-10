@@ -2,23 +2,14 @@
 
 import Link from "next/link";
 import {
-  LayoutDashboard, ShieldCheck, BriefcaseBusiness, Package,
-  CalendarDays, CalendarCheck2, Banknote, WalletCards, Settings,
-  LogOut, Plus, Dumbbell,
+  UserRound, LogOut, Dumbbell,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/modules/auth/auth.store";
 
+// PTs are managed by their Gym; the PT workspace is a lean self-service (profile + certifications).
 const ptLinks = [
-  { href: "/trainer", label: "Bảng điều hành", icon: LayoutDashboard },
-  { href: "/trainer/verification", label: "Xác minh", icon: ShieldCheck },
-  { href: "/trainer/services", label: "Dịch vụ", icon: BriefcaseBusiness },
-  { href: "/trainer/packages", label: "Gói tập", icon: Package },
-  { href: "/trainer/availability", label: "Lịch", icon: CalendarDays },
-  { href: "/trainer/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
-  { href: "/trainer/payments", label: "Doanh thu", icon: WalletCards },
-  { href: "/trainer/withdrawals", label: "Rút tiền", icon: Banknote },
-  { href: "/trainer/profile", label: "Cài đặt", icon: Settings },
+  { href: "/trainer", label: "Hồ sơ của tôi", icon: UserRound },
 ];
 
 export function TrainerSidebar() {
@@ -65,12 +56,8 @@ export function TrainerSidebar() {
         })}
       </nav>
 
-      {/* CTA + User info */}
+      {/* User info */}
       <div className="px-4 py-4 border-t border-gray-100 shrink-0">
-        <Link href="/trainer/bookings"
-          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-semibold transition-colors mb-4">
-          <Plus className="size-3.5" /> Tạo buổi tập mới
-        </Link>
         <div className="flex items-center gap-3">
           <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
             {(user?.fullName ?? user?.username ?? "T")[0]?.toUpperCase()}

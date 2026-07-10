@@ -156,26 +156,15 @@ export const trainerService = {
     await api.deleteRaw(`/pt/certificates/me/${id}`);
   },
 
-  getVerificationStatus: () =>
-    api.get<PtVerificationStatusResponse>("/pt/verification-status"),
+  // ── PT self-service (UC-007) — PT is created/managed by its Gym ──
+  getMyProfilePreview: () =>
+    api.get<PtVerificationStatusResponse>("/pt/profile/preview"),
 
-  submitRegistration: (payload: SubmitPtRegistrationRequest) =>
-    api.postRaw("/pt/registration", payload),
-
-  resubmitRegistration: (payload: SubmitPtRegistrationRequest) =>
-    api.putRaw("/pt/registration/resubmit", payload),
+  updateMyLimitedProfile: (payload: UpdatePtProfileRequest) =>
+    api.putRaw("/pt/profile", payload),
 
   listCertifications: () =>
     api.get<CertificationResponse[]>("/pt/certifications"),
-
-  addCertification: (payload: CertificationRequest) =>
-    api.post<CertificationResponse, CertificationRequest>("/pt/certifications", payload),
-
-  updateCertification: (id: number, payload: CertificationRequest) =>
-    api.put<CertificationResponse, CertificationRequest>(`/pt/certifications/${id}`, payload),
-
-  deleteCertification: (id: number) =>
-    api.deleteRaw(`/pt/certifications/${id}`),
 
   getMyPartnerships: (
     params: PaginationParams & { status?: string } = defaultPage,
