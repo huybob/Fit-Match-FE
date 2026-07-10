@@ -6,7 +6,7 @@ import { ReactNode, useState } from "react";
 import {
   LayoutDashboard, Users, ShieldCheck, DollarSign, Tag,
   Heart, BarChart3, FileText, ClipboardList, LogOut,
-  Search, Bell, ChevronDown, UserCircle,
+  Search, Bell, ChevronDown, UserCircle, Database,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { AuthGuard } from "@/modules/auth/auth-guard";
@@ -20,6 +20,7 @@ const adminLinks = [
   { href: "/admin/loyalty", label: "Loyalty", icon: Heart },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/cms", label: "CMS", icon: FileText },
+  { href: "/admin/master-data", label: "Master Data", icon: Database },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList },
 ];
 

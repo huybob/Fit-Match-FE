@@ -100,3 +100,27 @@ export interface GymVerificationResponse {
 }
 
 export type GymVerificationPage = PageResponse<GymVerificationResponse>;
+
+// ── Master data (UC-078) ──
+export interface ServiceCategoryResponse {
+  id?: number;
+  name?: string;
+  description?: string;
+  active?: boolean;
+}
+export interface ServiceCategoryRequest {
+  name: string;
+  description?: string;
+  active?: boolean;
+}
+export interface SystemConfigResponse {
+  id?: number;
+  configKey?: string;
+  configValue?: string;
+  description?: string;
+}
+export interface SystemConfigRequest {
+  configKey: string;
+  configValue: string;
+  description?: string;
+}

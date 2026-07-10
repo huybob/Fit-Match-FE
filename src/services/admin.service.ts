@@ -7,6 +7,10 @@ import type {
   GymVerificationPage,
   GymVerificationResponse,
   PtDocumentDto,
+  ServiceCategoryRequest,
+  ServiceCategoryResponse,
+  SystemConfigRequest,
+  SystemConfigResponse,
   PtVerificationPage,
   PtVerificationResponse,
   RejectRequest,
@@ -79,4 +83,16 @@ export const adminService = {
 
   reactivatePt: (id: number) =>
     api.postRaw(`/admin/pts/${id}/reactivate`),
+
+  // ── Master data (UC-078) ──
+  listServiceCategories: () =>
+    api.get<ServiceCategoryResponse[]>("/admin/master-data/service-categories"),
+  createServiceCategory: (payload: ServiceCategoryRequest) =>
+    api.post<ServiceCategoryResponse, ServiceCategoryRequest>("/admin/master-data/service-categories", payload),
+  updateServiceCategory: (id: number, payload: ServiceCategoryRequest) =>
+    api.put<ServiceCategoryResponse, ServiceCategoryRequest>(`/admin/master-data/service-categories/${id}`, payload),
+  listSystemConfigs: () =>
+    api.get<SystemConfigResponse[]>("/admin/master-data/system-configs"),
+  upsertSystemConfig: (payload: SystemConfigRequest) =>
+    api.put<SystemConfigResponse, SystemConfigRequest>("/admin/master-data/system-configs", payload),
 };
