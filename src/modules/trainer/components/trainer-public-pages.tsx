@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Search, UserRound, MapPin, Heart } from "lucide-react";
+import { Award, Search, UserRound, MapPin, Heart, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SiteLayout } from "@/modules/layout/site-layout";
@@ -32,8 +32,19 @@ function useFavorites() {
   return { isCustomer, ids, toggle };
 }
 
+const SPECIALIZATIONS = [
+  "Thể hình (Bodybuilding)",
+  "Giảm cân",
+  "HIIT",
+  "Yoga & Linh hoạt",
+  "Sức mạnh & Thể lực",
+  "Phục hồi",
+];
+
 export function TrainersDirectoryPage() {
-  const [filters, setFilters] = useState({ keyword: "", specialization: "", serviceArea: "" });
+  const [keyword, setKeyword] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [serviceArea, setServiceArea] = useState("");
   const [params, setParams] = useState<{ keyword?: string; specialization?: string; serviceArea?: string }>({});
   const query = useQuery({
     queryKey: ["marketplace", "pts", params],
@@ -41,76 +52,128 @@ export function TrainersDirectoryPage() {
   });
   const { isCustomer, ids, toggle } = useFavorites();
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
+  function apply(event?: FormEvent) {
+    event?.preventDefault();
     setParams({
-      keyword: filters.keyword || undefined,
-      specialization: filters.specialization || undefined,
-      serviceArea: filters.serviceArea || undefined,
+      keyword: keyword || undefined,
+      specialization: specialization || undefined,
+      serviceArea: serviceArea || undefined,
     });
   }
+  function clearAll() {
+    setKeyword(""); setSpecialization(""); setServiceArea(""); setParams({});
+  }
+
+  const items = query.data?.content ?? [];
+  const total = query.data?.totalElements ?? items.length;
 
   return (
     <SiteLayout>
-      <main className="mx-auto max-w-7xl px-4 py-12">
-        <p className="text-sm font-black uppercase tracking-widest text-[#2563eb]">Khám phá huấn luyện viên</p>
-        <h1 className="mt-3 text-4xl font-black">Danh sách huấn luyện viên</h1>
-        <p className="mt-4 max-w-2xl text-muted-foreground">So sánh PT theo chuyên môn, khu vực và kinh nghiệm.</p>
-        <form className="mt-8 grid gap-3 rounded-xl border border-border bg-card p-5 shadow-sm sm:grid-cols-4" onSubmit={submit}>
-          <Input aria-label="Từ khóa" placeholder="Từ khóa" value={filters.keyword}
-            onChange={(e) => setFilters({ ...filters, keyword: e.target.value })} />
-          <Input aria-label="Chuyên môn" placeholder="Chuyên môn" value={filters.specialization}
-            onChange={(e) => setFilters({ ...filters, specialization: e.target.value })} />
-          <Input aria-label="Khu vực" placeholder="Khu vực" value={filters.serviceArea}
-            onChange={(e) => setFilters({ ...filters, serviceArea: e.target.value })} />
-          <Button className="shrink-0" type="submit"><Search className="size-4" /> Tìm kiếm</Button>
-        </form>
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          {/* Filter sidebar */}
+          <aside className="w-full shrink-0 lg:w-72">
+            <form onSubmit={apply} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-[#0f172a]">Bộ lọc</h2>
+                <button type="button" onClick={clearAll} className="text-xs font-semibold text-[#2563eb] hover:underline">Xóa tất cả</button>
+              </div>
 
-        <section className="mt-8">
-          {query.isLoading ? (
-            <LoadingSkeleton />
-          ) : query.isError ? (
-            <EmptyState title="Không thể tải danh sách" description={toErrorMessage(query.error)} />
-          ) : query.data?.content?.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {query.data.content.map((pt) => (
-                <article key={pt.id} className="rounded-xl border border-border bg-card p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="grid size-12 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-                      <UserRound className="size-6" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="truncate text-lg font-black">{pt.displayName}</h2>
-                      {pt.specialization && <p className="truncate text-sm text-muted-foreground">{pt.specialization}</p>}
-                    </div>
-                    {isCustomer && pt.id != null && (
-                      <button
-                        onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
-                        disabled={toggle.isPending}
-                        aria-label="Yêu thích"
-                        className="shrink-0 text-gray-300 hover:text-red-500 transition-colors"
-                      >
-                        <Heart className={`size-5 ${ids.has(pt.id) ? "fill-red-500 text-red-500" : ""}`} />
-                      </button>
-                    )}
-                  </div>
-                  {pt.serviceArea && (
-                    <p className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="size-4" />{pt.serviceArea}
-                    </p>
-                  )}
-                  <p className="mt-2 line-clamp-2 text-sm">{pt.bio || "Chưa có mô tả"}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm font-bold">{pt.experienceYears ?? 0} năm KN</span>
-                    <Link className="font-black text-[#2563eb]" href={`/trainers/${pt.id}`}>Xem chi tiết</Link>
-                  </div>
-                </article>
-              ))}
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-1.5">Từ khóa</p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400" />
+                  <Input className="pl-9 h-10" placeholder="Tên hoặc chuyên môn..." value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Chuyên môn</p>
+                <div className="space-y-1.5">
+                  {SPECIALIZATIONS.map((s) => (
+                    <label key={s} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={specialization === s}
+                        onChange={() => setSpecialization(specialization === s ? "" : s)}
+                        className="size-4 accent-[#2563eb]"
+                      />
+                      {s}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-1.5">Địa điểm</p>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400" />
+                  <Input className="pl-9 h-10" placeholder="Nhập thành phố / khu vực..." value={serviceArea} onChange={(e) => setServiceArea(e.target.value)} />
+                </div>
+              </div>
+
+              <Button type="submit" className="mt-5 w-full gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white">
+                <Search className="size-4" /> Áp dụng
+              </Button>
+            </form>
+          </aside>
+
+          {/* Results */}
+          <section className="min-w-0 flex-1">
+            <div className="mb-5">
+              <h1 className="text-2xl font-bold text-[#0f172a]">Huấn luyện viên cá nhân</h1>
+              <p className="text-sm text-gray-500 mt-0.5">Đang hiển thị {total} chuyên gia trong khu vực của bạn.</p>
             </div>
-          ) : (
-            <EmptyState title="Không tìm thấy huấn luyện viên" description="Thử thay đổi bộ lọc tìm kiếm." />
-          )}
-        </section>
+
+            {query.isLoading ? (
+              <LoadingSkeleton />
+            ) : query.isError ? (
+              <EmptyState title="Không thể tải danh sách" description={toErrorMessage(query.error)} />
+            ) : items.length ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {items.map((pt) => (
+                  <article key={pt.id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    <div className="relative grid h-40 place-items-center bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+                      <UserRound className="size-14 opacity-90" />
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                        <ShieldCheck className="size-3" /> Xác thực
+                      </span>
+                      {isCustomer && pt.id != null && (
+                        <button
+                          onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
+                          disabled={toggle.isPending}
+                          aria-label="Yêu thích"
+                          className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-white/90 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Heart className={`size-4 ${ids.has(pt.id) ? "fill-red-500 text-red-500" : ""}`} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h2 className="text-base font-bold text-[#0f172a]">{pt.displayName}</h2>
+                      {pt.specialization && <p className="text-xs font-semibold text-[#2563eb] mt-0.5">{pt.specialization}</p>}
+                      <p className="mt-1 text-[11px] text-gray-400">{pt.experienceYears ?? 0} năm kinh nghiệm</p>
+                      <p className="mt-2 line-clamp-2 text-sm text-gray-600">{pt.bio || "Chưa có mô tả"}</p>
+                      {pt.serviceArea && (
+                        <p className="mt-2 flex items-center gap-1 text-xs text-gray-400">
+                          <MapPin className="size-3.5" />{pt.serviceArea}
+                        </p>
+                      )}
+                      <Link
+                        href={`/trainers/${pt.id}`}
+                        className="mt-4 flex items-center justify-center gap-2 h-9 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-semibold transition-colors"
+                      >
+                        Xem chi tiết
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="Không tìm thấy huấn luyện viên" description="Thử thay đổi bộ lọc tìm kiếm." />
+            )}
+          </section>
+        </div>
       </main>
     </SiteLayout>
   );
