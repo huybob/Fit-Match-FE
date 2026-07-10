@@ -25,6 +25,8 @@ const adminLinks = [
 
 const roleLabels: Record<string, string> = {
   ROLE_ADMIN: "Quản trị viên",
+  ROLE_MODERATOR: "Kiểm duyệt viên",
+  ROLE_FINANCE_ADMIN: "Quản trị tài chính",
   ROLE_PT: "Huấn luyện viên",
   ROLE_GYM_OPERATOR: "Chủ phòng gym",
   ROLE_CUSTOMER: "Khách hàng",

@@ -32,6 +32,8 @@ const roleLabels: Record<string, string> = {
   ROLE_PT: "PT",
   ROLE_GYM_OPERATOR: "Gym Admin",
   ROLE_ADMIN: "Admin",
+  ROLE_MODERATOR: "Moderator",
+  ROLE_FINANCE_ADMIN: "Finance Admin",
 };
 
 const statusVariant: Record<UserStatus, "success" | "destructive" | "warning"> = {
@@ -92,6 +94,8 @@ function RoleChangeDialog({
             <SelectItem value="ROLE_PT">PT (Personal Trainer)</SelectItem>
             <SelectItem value="ROLE_GYM_OPERATOR">Gym Admin</SelectItem>
             <SelectItem value="ROLE_ADMIN">Admin</SelectItem>
+            <SelectItem value="ROLE_MODERATOR">Moderator</SelectItem>
+            <SelectItem value="ROLE_FINANCE_ADMIN">Finance Admin</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex justify-end gap-2">
@@ -226,6 +230,8 @@ function UserManagementContent() {
                   <SelectItem value="ROLE_PT">PT</SelectItem>
                   <SelectItem value="ROLE_GYM_OPERATOR">Gym Admin</SelectItem>
                   <SelectItem value="ROLE_ADMIN">Admin</SelectItem>
+                  <SelectItem value="ROLE_MODERATOR">Moderator</SelectItem>
+                  <SelectItem value="ROLE_FINANCE_ADMIN">Finance Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,7 +1,13 @@
 import type { PageResponse } from "@/shared/types/api-response.type";
 
 export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED";
-export type UserRole = "ROLE_CUSTOMER" | "ROLE_PT" | "ROLE_GYM_OPERATOR" | "ROLE_ADMIN";
+export type UserRole =
+  | "ROLE_CUSTOMER"
+  | "ROLE_PT"
+  | "ROLE_GYM_OPERATOR"
+  | "ROLE_ADMIN"
+  | "ROLE_MODERATOR"
+  | "ROLE_FINANCE_ADMIN";
 
 export interface AdminUserResponse {
   id?: number;
