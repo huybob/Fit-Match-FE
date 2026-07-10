@@ -9,6 +9,7 @@ import {
   Shield,
   Ban,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
@@ -121,8 +122,11 @@ function ActionsMenu({
   onRoleChange: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [reason, setReason] = useState("");
   const { toast } = useToast();
   const client = useQueryClient();
+  const isPt = user.role === "ROLE_PT";
 
   const toggleStatus = useMutation({
     mutationFn: () =>
@@ -132,6 +136,26 @@ function ActionsMenu({
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["admin", "users"] });
       toast({ type: "success", title: user.status === "BANNED" ? "Đã mở khóa" : "Đã khóa tài khoản" });
+      setOpen(false);
+    },
+    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+  });
+
+  const suspendPt = useMutation({
+    mutationFn: () => adminService.suspendPt(user.id!, { reason }),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast({ type: "success", title: "Đã đình chỉ PT" });
+      setSuspendOpen(false);
+    },
+    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+  });
+
+  const reactivatePt = useMutation({
+    mutationFn: () => adminService.reactivatePt(user.id!),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast({ type: "success", title: "Đã gỡ đình chỉ PT" });
       setOpen(false);
     },
     onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
@@ -168,9 +192,45 @@ function ActionsMenu({
                 <><Ban className="size-3.5" /> Khóa tài khoản</>
               )}
             </button>
+            {isPt && (
+              <>
+                <div className="my-1 h-px bg-gray-100" />
+                <button
+                  onClick={() => { setOpen(false); setReason(""); setSuspendOpen(true); }}
+                  className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                >
+                  <Ban className="size-3.5" /> Đình chỉ PT
+                </button>
+                <button
+                  onClick={() => reactivatePt.mutate()}
+                  disabled={reactivatePt.isPending}
+                  className="flex items-center gap-2.5 w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-50"
+                >
+                  <CheckCircle className="size-3.5" /> Gỡ đình chỉ PT
+                </button>
+              </>
+            )}
           </div>
         </>
       )}
+
+      <Dialog open={suspendOpen} title={`Đình chỉ PT: ${user.fullName ?? user.username}`} onClose={() => setSuspendOpen(false)}>
+        <div className="space-y-3">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            placeholder="Nhập lý do đình chỉ..."
+            className="w-full text-sm border border-gray-200 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-red-200"
+          />
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setSuspendOpen(false)} className="bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-none">Hủy</Button>
+            <Button onClick={() => suspendPt.mutate()} disabled={!reason.trim() || suspendPt.isPending} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
+              {suspendPt.isPending && <Loader2 className="size-4 animate-spin" />} Xác nhận đình chỉ
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }
