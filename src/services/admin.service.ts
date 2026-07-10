@@ -63,4 +63,20 @@ export const adminService = {
 
   rejectGymVerification: (id: number, payload: RejectRequest) =>
     api.postRaw(`/admin/gym-verifications/${id}/reject`, payload),
+
+  suspendGymVerification: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/gym-verifications/${id}/suspend`, payload),
+
+  reactivateGymVerification: (id: number) =>
+    api.postRaw(`/admin/gym-verifications/${id}/reactivate`),
+
+  requestGymInfo: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/gym-verifications/${id}/request-info`, payload),
+
+  // ── Admin PT management (UC-021) ──
+  suspendPt: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/pts/${id}/suspend`, payload),
+
+  reactivatePt: (id: number) =>
+    api.postRaw(`/admin/pts/${id}/reactivate`),
 };

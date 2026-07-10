@@ -49,7 +49,13 @@ export interface AuditLogResponse {
 export type AdminUserPage = PageResponse<AdminUserResponse>;
 export type AuditLogPage = PageResponse<AuditLogResponse>;
 
-export type PtVerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
+export type PtVerificationStatus =
+  | "NOT_SUBMITTED"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "REQUIRES_INFO"
+  | "SUSPENDED";
 
 export interface PtDocumentDto {
   documentType: string;

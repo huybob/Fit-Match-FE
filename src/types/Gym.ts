@@ -170,6 +170,14 @@ export interface GymServiceInput {
   durationMinutes?: number;
 }
 
+export interface UpdateGymProfileInput {
+  gymName?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+}
+
 // ── Gym-managed PTs (UC-019..021) ──
 
 export type GymPtStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";

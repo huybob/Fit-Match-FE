@@ -29,6 +29,7 @@ import type {
   PtDocResponse,
   PtStatusInput,
   SubmitGymRegistrationRequest,
+  UpdateGymProfileInput,
   UpdateGymPtInput,
 } from "@/types/Gym";
 import type { PaginationParams } from "@/shared/types/pagination.type";
@@ -165,6 +166,12 @@ export const gymService = {
 
   resubmitRegistration: (payload: SubmitGymRegistrationRequest) =>
     api.putRaw("/gym/registration/resubmit", payload),
+
+  // ── Gym profile (UC-44, UC-018) ──
+  updateProfile: (payload: UpdateGymProfileInput) =>
+    api.putRaw("/gym/profile", payload),
+  setVisibility: (visible: boolean) =>
+    api.putRaw("/gym/profile/visibility", { visible }),
 
   // ── Operator workspace: branches (UC-50..52) ──
   listOwnBranches: () => api.get<BranchResponse[]>("/gym/branches"),

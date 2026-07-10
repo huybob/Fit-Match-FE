@@ -18,6 +18,8 @@ const statusLabel: Record<string, string> = {
   PENDING: "Đang chờ",
   APPROVED: "Đã duyệt",
   REJECTED: "Từ chối",
+  REQUIRES_INFO: "Cần bổ sung",
+  SUSPENDED: "Đình chỉ",
 };
 
 const statusStyle: Record<string, string> = {
@@ -25,6 +27,8 @@ const statusStyle: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
   APPROVED: "bg-green-100 text-green-700",
   REJECTED: "bg-red-100 text-red-600",
+  REQUIRES_INFO: "bg-amber-100 text-amber-700",
+  SUSPENDED: "bg-red-100 text-red-600",
 };
 
 // ──────────────────────────────────────────────
@@ -406,33 +410,34 @@ function VerificationQueue() {
 function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void }) {
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [rejectReason, setRejectReason] = useState("");
-  const [showReject, setShowReject] = useState(false);
+  const [reason, setReason] = useState("");
+  const [mode, setMode] = useState<null | "reject" | "request" | "suspend">(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "gym-verif", id],
     queryFn: () => adminService.getGymVerification(id),
   });
 
-  const approve = useMutation({
-    mutationFn: () => adminService.approveGymVerification(id),
-    onSuccess: () => {
-      toast({ type: "success", title: "Đã duyệt hồ sơ Gym" });
-      qc.invalidateQueries({ queryKey: ["admin", "gym-verifications"] });
-      onBack();
-    },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) }),
-  });
+  const done = (title: string) => {
+    toast({ type: "success", title });
+    qc.invalidateQueries({ queryKey: ["admin", "gym-verifications"] });
+    onBack();
+  };
+  const fail = (e: unknown) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) });
 
-  const reject = useMutation({
-    mutationFn: () => adminService.rejectGymVerification(id, { reason: rejectReason }),
-    onSuccess: () => {
-      toast({ type: "success", title: "Đã từ chối hồ sơ Gym" });
-      qc.invalidateQueries({ queryKey: ["admin", "gym-verifications"] });
-      onBack();
-    },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) }),
-  });
+  const approve = useMutation({ mutationFn: () => adminService.approveGymVerification(id), onSuccess: () => done("Đã duyệt hồ sơ Gym"), onError: fail });
+  const reactivate = useMutation({ mutationFn: () => adminService.reactivateGymVerification(id), onSuccess: () => done("Đã kích hoạt lại Gym"), onError: fail });
+  const reject = useMutation({ mutationFn: () => adminService.rejectGymVerification(id, { reason }), onSuccess: () => done("Đã từ chối hồ sơ Gym"), onError: fail });
+  const requestInfo = useMutation({ mutationFn: () => adminService.requestGymInfo(id, { reason }), onSuccess: () => done("Đã yêu cầu bổ sung hồ sơ"), onError: fail });
+  const suspend = useMutation({ mutationFn: () => adminService.suspendGymVerification(id, { reason }), onSuccess: () => done("Đã đình chỉ Gym"), onError: fail });
+
+  const reasonPending = reject.isPending || requestInfo.isPending || suspend.isPending;
+  function submitReason() {
+    if (!reason.trim()) { toast({ type: "warning", title: "Vui lòng nhập lý do" }); return; }
+    if (mode === "reject") reject.mutate();
+    else if (mode === "request") requestInfo.mutate();
+    else if (mode === "suspend") suspend.mutate();
+  }
 
   if (isLoading) return (
     <div className="flex-1 flex items-center justify-center">
@@ -441,7 +446,8 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
   );
 
   const gym = data;
-  const isPending = gym?.verificationStatus === "PENDING";
+  const st = gym?.verificationStatus ?? "PENDING";
+  const canReview = st === "PENDING" || st === "REQUIRES_INFO";
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -527,57 +533,56 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="text-sm font-semibold text-[#191b23] mb-4">Hành động</h2>
-            {isPending ? (
-              <div className="space-y-3">
-                <Button
-                  onClick={() => approve.mutate()}
-                  disabled={approve.isPending}
-                  className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  {approve.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
-                  Duyệt hồ sơ
-                </Button>
-                {!showReject ? (
-                  <Button
-                    onClick={() => setShowReject(true)}
-                    className="w-full gap-2 border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 shadow-none"
-                  >
-                    <XCircle className="size-4" /> Từ chối
+            <div className="mb-3">
+              <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusStyle[st]}`}>{statusLabel[st]}</span>
+            </div>
+
+            {mode ? (
+              <div className="space-y-2">
+                <textarea
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  placeholder={mode === "request" ? "Nội dung cần bổ sung..." : "Nhập lý do..."}
+                  rows={3}
+                  className="w-full text-sm border border-gray-200 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={submitReason} disabled={!reason.trim() || reasonPending}
+                    className="flex-1 gap-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs h-9">
+                    {reasonPending && <Loader2 className="size-3.5 animate-spin" />} Xác nhận
                   </Button>
-                ) : (
-                  <div className="space-y-2">
-                    <textarea
-                      value={rejectReason}
-                      onChange={e => setRejectReason(e.target.value)}
-                      placeholder="Nhập lý do từ chối..."
-                      rows={3}
-                      className="w-full text-sm border border-gray-200 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-red-200"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => reject.mutate()}
-                        disabled={!rejectReason.trim() || reject.isPending}
-                        className="flex-1 gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs h-9"
-                      >
-                        {reject.isPending && <Loader2 className="size-3.5 animate-spin" />}
-                        Xác nhận từ chối
-                      </Button>
-                      <Button
-                        onClick={() => { setShowReject(false); setRejectReason(""); }}
-                        className="flex-1 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-none text-xs h-9"
-                      >
-                        Hủy
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  <Button onClick={() => { setMode(null); setReason(""); }}
+                    className="flex-1 border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 shadow-none text-xs h-9">Hủy</Button>
+                </div>
               </div>
             ) : (
-              <div className={`flex items-center gap-2 p-3 rounded-lg ${
-                gym?.verificationStatus === "APPROVED" ? "bg-green-50 text-green-700" : "bg-gray-50 text-gray-500"
-              }`}>
-                {gym?.verificationStatus === "APPROVED" ? <CheckCircle className="size-4" /> : <XCircle className="size-4" />}
-                <span className="text-sm font-medium">{statusLabel[gym?.verificationStatus ?? "PENDING"]}</span>
+              <div className="space-y-3">
+                {canReview && (
+                  <>
+                    <Button onClick={() => approve.mutate()} disabled={approve.isPending} className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white">
+                      {approve.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />} Duyệt hồ sơ
+                    </Button>
+                    <Button onClick={() => { setReason(""); setMode("request"); }} className="w-full gap-2 border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 shadow-none">
+                      <Clock className="size-4" /> Yêu cầu bổ sung
+                    </Button>
+                    <Button onClick={() => { setReason(""); setMode("reject"); }} className="w-full gap-2 border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 shadow-none">
+                      <XCircle className="size-4" /> Từ chối
+                    </Button>
+                  </>
+                )}
+                {st === "APPROVED" && (
+                  <Button onClick={() => { setReason(""); setMode("suspend"); }} className="w-full gap-2 border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 shadow-none">
+                    <XCircle className="size-4" /> Đình chỉ Gym
+                  </Button>
+                )}
+                {st === "SUSPENDED" && (
+                  <Button onClick={() => reactivate.mutate()} disabled={reactivate.isPending} className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white">
+                    {reactivate.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />} Kích hoạt lại
+                  </Button>
+                )}
+                {st === "REJECTED" && (
+                  <p className="text-sm text-gray-500">Hồ sơ đã bị từ chối.</p>
+                )}
               </div>
             )}
           </div>
