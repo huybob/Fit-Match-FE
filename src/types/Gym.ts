@@ -169,3 +169,75 @@ export interface GymServiceInput {
   price: number;
   durationMinutes?: number;
 }
+
+// ── Gym-managed PTs (UC-019..021) ──
+
+export type GymPtStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED";
+
+export interface GymPtResponse {
+  id?: number;
+  username?: string;
+  email?: string;
+  displayName?: string;
+  bio?: string;
+  specialization?: string;
+  serviceArea?: string;
+  experienceYears?: number;
+  status?: GymPtStatus;
+  suspensionReason?: string;
+  gymProfileId?: number;
+}
+
+export type GymPtPage = PageResponse<GymPtResponse>;
+
+export interface CreateGymPtInput {
+  username: string;
+  email: string;
+  password: string;
+  phone?: string;
+  displayName: string;
+  bio?: string;
+  specialization?: string;
+  serviceArea?: string;
+  experienceYears?: number;
+}
+
+export interface UpdateGymPtInput {
+  displayName?: string;
+  bio?: string;
+  specialization?: string;
+  serviceArea?: string;
+  experienceYears?: number;
+}
+
+export interface PtStatusInput {
+  status: GymPtStatus;
+}
+
+export interface PtCertInput {
+  name: string;
+  issuingOrganization?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
+
+export interface PtCertResponse {
+  id?: number;
+  name?: string;
+  issuingOrganization?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
+
+export interface PtDocInput {
+  documentType: string;
+  fileUrl: string;
+}
+
+export interface PtDocResponse {
+  id?: number;
+  documentType?: string;
+  fileUrl?: string;
+}

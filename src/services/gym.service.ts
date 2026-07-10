@@ -4,6 +4,7 @@ import type {
   BranchPage,
   BranchRequest,
   BranchResponse,
+  CreateGymPtInput,
   FacilityInput,
   FacilityPage,
   FacilityRequest,
@@ -14,13 +15,21 @@ import type {
   GymFacility,
   GymPage,
   GymPartnership,
+  GymPtPage,
+  GymPtResponse,
   GymRequest,
   GymServiceInput,
   GymServiceResponse,
   GymVerificationStatusResponse,
   PartnershipActionRequest,
   PartnershipPage,
+  PtCertInput,
+  PtCertResponse,
+  PtDocInput,
+  PtDocResponse,
+  PtStatusInput,
   SubmitGymRegistrationRequest,
+  UpdateGymPtInput,
 } from "@/types/Gym";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
@@ -181,4 +190,31 @@ export const gymService = {
   editService: (id: number, payload: GymServiceInput) =>
     api.put<GymServiceResponse, GymServiceInput>(`/gym/services/${id}`, payload),
   deactivateService: (id: number) => api.deleteRaw(`/gym/services/${id}`),
+
+  // ── Operator workspace: PT management (UC-019..021) ──
+  listPts: (params: PaginationParams = page) =>
+    api.get<GymPtPage>("/gym/pts", { params }),
+  getPt: (id: number) => api.get<GymPtResponse>(`/gym/pts/${id}`),
+  createPt: (payload: CreateGymPtInput) =>
+    api.post<GymPtResponse, CreateGymPtInput>("/gym/pts", payload),
+  updatePt: (id: number, payload: UpdateGymPtInput) =>
+    api.put<GymPtResponse, UpdateGymPtInput>(`/gym/pts/${id}`, payload),
+  updatePtStatus: (id: number, payload: PtStatusInput) =>
+    api.patch<GymPtResponse, PtStatusInput>(`/gym/pts/${id}/status`, payload),
+
+  listPtCerts: (ptId: number) =>
+    api.get<PtCertResponse[]>(`/gym/pts/${ptId}/certifications`),
+  addPtCert: (ptId: number, payload: PtCertInput) =>
+    api.post<PtCertResponse, PtCertInput>(`/gym/pts/${ptId}/certifications`, payload),
+  updatePtCert: (ptId: number, certId: number, payload: PtCertInput) =>
+    api.put<PtCertResponse, PtCertInput>(`/gym/pts/${ptId}/certifications/${certId}`, payload),
+  deletePtCert: (ptId: number, certId: number) =>
+    api.deleteRaw(`/gym/pts/${ptId}/certifications/${certId}`),
+
+  listPtDocs: (ptId: number) =>
+    api.get<PtDocResponse[]>(`/gym/pts/${ptId}/documents`),
+  addPtDoc: (ptId: number, payload: PtDocInput) =>
+    api.post<PtDocResponse, PtDocInput>(`/gym/pts/${ptId}/documents`, payload),
+  deletePtDoc: (ptId: number, docId: number) =>
+    api.deleteRaw(`/gym/pts/${ptId}/documents/${docId}`),
 };

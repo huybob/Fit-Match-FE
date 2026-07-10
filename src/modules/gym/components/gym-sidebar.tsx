@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
-  CalendarCheck2, DollarSign, Banknote, Settings, LogOut,
+  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ const gymLinks = [
   { href: "/gym/verification", label: "Xác minh", icon: ShieldCheck },
   { href: "/gym/facilities", label: "Cơ sở vật chất", icon: Dumbbell },
   { href: "/gym/branches", label: "Chi nhánh", icon: GitBranch },
+  { href: "/gym/pts", label: "Huấn luyện viên", icon: Users },
   { href: "/gym/services", label: "Dịch vụ", icon: Sparkles },
   { href: "/gym/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
   { href: "/gym/revenue", label: "Doanh thu", icon: DollarSign },
