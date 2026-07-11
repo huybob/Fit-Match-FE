@@ -28,66 +28,7 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import type { AuthUser } from "@/services/auth.service";
 
-const sidebarLinks = [
-  { href: "/", label: "Bảng điều khiển", icon: LayoutDashboard },
-  { href: "/profile/bookings", label: "Lịch đặt", icon: Calendar },
-  { href: "/profile/sessions", label: "Yêu thích", icon: Heart },
-  { href: "/profile", label: "Hồ sơ", icon: User, active: true },
-  { href: "/change-password", label: "Bảo mật", icon: Shield },
-];
-
-function Sidebar({ onLogout }: { onLogout: () => void }) {
-  return (
-    <aside className="w-64 shrink-0 bg-[#f3f3fe] border border-[#e2e8f0] rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
-      <div className="pb-4">
-        <p className="text-2xl font-semibold text-[#004ac6] leading-tight">
-          FitMatch<br />Workspace
-        </p>
-        <p className="text-sm font-medium text-[#505f76] mt-1">Quản lý hành trình thể hình</p>
-      </div>
-
-      <nav className="flex-1 flex flex-col gap-1">
-        {sidebarLinks.map(({ href, label, icon: Icon, active }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              active
-                ? "bg-[#2563eb] text-white"
-                : "text-[#505f76] hover:bg-white/60"
-            }`}
-          >
-            <Icon className="size-4 shrink-0" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="mt-4 pb-4">
-        <Button className="w-full bg-[#004ac6] hover:bg-[#003a9e] text-white text-sm font-medium rounded-lg h-9">
-          Đặt buổi tập mới
-        </Button>
-      </div>
-
-      <div className="border-t border-[#e2e8f0] pt-4 flex flex-col gap-1">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#505f76] hover:bg-white/60"
-        >
-          <Settings className="size-4" />
-          Cài đặt
-        </Link>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#dc2626] hover:bg-red-50 w-full text-left"
-        >
-          <LogOut className="size-4" />
-          Đăng xuất
-        </button>
-      </div>
-    </aside>
-  );
-}
+import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
 
 function ProfileHeader({ user }: { user: AuthUser }) {
   const { toast } = useToast();
@@ -586,20 +527,14 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
 }
 
 export default function UserProfilePage() {
-  const { user, logout } = useAuthStore();
-  const router = useRouter();
-
-  async function handleLogout() {
-    await logout();
-    router.replace("/login");
-  }
+  const { user } = useAuthStore();
 
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex gap-6 px-20 py-6">
-        <Sidebar onLogout={handleLogout} />
+        <ProfileSidebar />
 
         <main className="flex-1 min-w-0 flex flex-col gap-6">
           <ProfileHeader user={user} />
