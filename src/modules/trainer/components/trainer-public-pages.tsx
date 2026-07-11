@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Search, UserRound, MapPin, Heart, ShieldCheck } from "lucide-react";
+import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SiteLayout } from "@/modules/layout/site-layout";
@@ -202,52 +202,127 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
     );
 
   const pt = query.data;
+  const initials = (pt.displayName ?? "PT").split(" ").slice(-2).map((w) => w[0]?.toUpperCase()).join("");
+  const certCount = pt.certifications?.length ?? 0;
+  const fav = pt.id != null && ids.has(pt.id);
+
   return (
     <SiteLayout>
-      <main className="mx-auto max-w-4xl space-y-8 px-4 py-10">
-        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 text-white shadow-xl sm:p-8">
+      <main className="mx-auto max-w-5xl px-4 py-8">
+        <Link href="/trainers" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#2563eb]">
+          <ArrowLeft className="size-4" /> Quay lại danh sách
+        </Link>
+
+        {/* Hero */}
+        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-6 text-white shadow-xl shadow-blue-900/10 sm:p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="grid size-24 place-items-center rounded-full bg-white/15 text-3xl font-black">
-              <UserRound className="size-10" />
+            <div className="grid size-24 shrink-0 place-items-center rounded-2xl bg-white/15 text-3xl font-black ring-1 ring-white/20">
+              {initials || <UserRound className="size-10" />}
             </div>
-            <div>
-              <h1 className="text-3xl font-black">{pt.displayName}</h1>
-              {pt.specialization && <p className="mt-1 font-bold text-blue-100">{pt.specialization}</p>}
-              <p className="mt-2 text-blue-100">{pt.bio || "Chưa có mô tả"}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold">
-                <span>{pt.experienceYears ?? 0} năm kinh nghiệm</span>
-                {pt.serviceArea && <span>· {pt.serviceArea}</span>}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-black">{pt.displayName}</h1>
+                <BadgeCheck className="size-6 text-blue-200" />
               </div>
-              {isCustomer && pt.id != null && (
-                <button
-                  onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
-                  disabled={toggle.isPending}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-sm font-bold hover:bg-white/25 transition-colors"
-                >
-                  <Heart className={`size-4 ${ids.has(pt.id) ? "fill-red-400 text-red-400" : ""}`} />
-                  {ids.has(pt.id) ? "Đã yêu thích" : "Yêu thích"}
-                </button>
+              {pt.specialization && (
+                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-bold">
+                  <Briefcase className="size-3.5" /> {pt.specialization}
+                </span>
               )}
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-blue-100">
+                <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" /> {pt.experienceYears ?? 0} năm kinh nghiệm</span>
+                {pt.serviceArea && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" /> {pt.serviceArea}</span>}
+                <span className="inline-flex items-center gap-1.5"><Award className="size-4" /> {certCount} chứng chỉ</span>
+              </div>
             </div>
+            {isCustomer && pt.id != null && (
+              <button
+                onClick={() => toggle.mutate({ id: pt.id!, fav })}
+                disabled={toggle.isPending}
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-[#2563eb] hover:bg-blue-50 transition-colors"
+              >
+                <Heart className={`size-4 ${fav ? "fill-red-500 text-red-500" : ""}`} />
+                {fav ? "Đã yêu thích" : "Yêu thích"}
+              </button>
+            )}
           </div>
         </section>
 
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 text-2xl font-black"><Award className="size-6" /> Chứng chỉ</h2>
-          {pt.certifications?.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {pt.certifications.map((cert) => (
-                <article key={cert.id} className="rounded-xl border border-border p-5">
-                  <h3 className="font-black">{cert.name}</h3>
-                  {cert.issuingOrganization && <p className="mt-1 text-sm text-muted-foreground">{cert.issuingOrganization}</p>}
-                  <p className="mt-3 text-xs font-bold">{cert.issueDate || "Chưa có ngày cấp"}</p>
-                </article>
-              ))}
+        {/* Stats strip */}
+        <div className="mt-5 grid grid-cols-3 gap-4">
+          {[
+            { icon: CalendarDays, label: "Kinh nghiệm", value: `${pt.experienceYears ?? 0} năm` },
+            { icon: MapPin, label: "Khu vực", value: pt.serviceArea || "—" },
+            { icon: Award, label: "Chứng chỉ", value: `${certCount}` },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-gray-400">
+                <s.icon className="size-4" /><span className="text-[11px] font-semibold uppercase tracking-wide">{s.label}</span>
+              </div>
+              <p className="mt-1.5 truncate text-lg font-bold text-[#0f172a]">{s.value}</p>
             </div>
-          ) : (
-            <EmptyState title="Chưa có chứng chỉ" description="Huấn luyện viên này chưa có chứng chỉ nào." />
-          )}
-        </section>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-3">
+          {/* About */}
+          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
+            <h2 className="text-lg font-bold text-[#0f172a]">Giới thiệu</h2>
+            <p className="mt-3 leading-relaxed text-gray-600 whitespace-pre-line">{pt.bio || "Huấn luyện viên chưa cập nhật phần giới thiệu."}</p>
+
+            <h2 className="mt-8 flex items-center gap-2 text-lg font-bold text-[#0f172a]"><Award className="size-5 text-[#2563eb]" /> Chứng chỉ &amp; bằng cấp</h2>
+            {certCount ? (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {pt.certifications!.map((cert) => (
+                  <article key={cert.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-100 text-[#2563eb]"><ShieldCheck className="size-4.5" /></div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-[#0f172a]">{cert.name}</h3>
+                        {cert.issuingOrganization && <p className="text-sm text-gray-500">{cert.issuingOrganization}</p>}
+                        <p className="mt-1 text-xs text-gray-400">
+                          {cert.issueDate ? `Cấp: ${cert.issueDate}` : ""}{cert.expiryDate ? ` · HH: ${cert.expiryDate}` : ""}
+                        </p>
+                        {cert.credentialUrl && (
+                          <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#2563eb] hover:underline">
+                            <ExternalLink className="size-3" /> Xem chứng chỉ
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-gray-400">Chưa có chứng chỉ được công bố.</p>
+            )}
+          </section>
+
+          {/* Summary / contact card */}
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-[#0f172a]">Thông tin nhanh</h3>
+              <dl className="mt-3 space-y-3 text-sm">
+                <div className="flex items-center justify-between"><dt className="text-gray-400">Chuyên môn</dt><dd className="font-semibold text-[#0f172a]">{pt.specialization || "—"}</dd></div>
+                <div className="flex items-center justify-between"><dt className="text-gray-400">Kinh nghiệm</dt><dd className="font-semibold text-[#0f172a]">{pt.experienceYears ?? 0} năm</dd></div>
+                <div className="flex items-center justify-between"><dt className="text-gray-400">Khu vực</dt><dd className="font-semibold text-[#0f172a]">{pt.serviceArea || "—"}</dd></div>
+              </dl>
+            </div>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+              <p className="text-sm font-semibold text-[#0f172a]">Quan tâm huấn luyện viên này?</p>
+              <p className="mt-1 text-xs text-gray-500">Lưu vào yêu thích để dễ dàng theo dõi và liên hệ qua phòng gym.</p>
+              {isCustomer && pt.id != null && (
+                <button
+                  onClick={() => toggle.mutate({ id: pt.id!, fav })}
+                  disabled={toggle.isPending}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-bold text-white hover:bg-[#1d4ed8] transition-colors"
+                >
+                  <Heart className={`size-4 ${fav ? "fill-white" : ""}`} /> {fav ? "Bỏ yêu thích" : "Thêm yêu thích"}
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
       </main>
     </SiteLayout>
   );
