@@ -28,11 +28,13 @@ export interface Booking {
 }
 
 export interface CreateBookingRequest {
-  branchId: number;
-  ptServiceId: number;
-  bookingDate: string;
-  startTime: string;
-  notes?: string;
+  serviceId?: number;
+  packageId?: number;
+  branchId?: number;
+  ptId?: number;
+  startAt?: string;
+  endAt?: string;
+  note?: string;
 }
 
 export interface BookingActionRequest {

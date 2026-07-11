@@ -25,8 +25,8 @@ import {
 import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/shared/utils/cn.util";
 import { toErrorMessage } from "@/shared/utils/error.util";
-import { useSearchGyms, useGymBranches } from "@/modules/gym/hooks/use-gym";
-import { useGetPublicTrainer, useGetPublicTrainerServices } from "@/modules/trainer/hooks/use-trainer";
+import { useQuery } from "@tanstack/react-query";
+import { marketplaceService } from "@/services/marketplace.service";
 import { useBookingAction, useBookings, useCreateBooking } from "../hooks/use-booking";
 import { createBookingSchema } from "../schemas";
 
@@ -281,19 +281,16 @@ function Info({ label, value }: { label: string; value?: string }) {
 }
 
 function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const language = "vi";
   const { toast } = useToast();
   const create = useCreateBooking();
-  const [ptUserId, setPtUserId] = useState(0);
-  const [gymId, setGymId] = useState(0);
-  const trainer = useGetPublicTrainer(ptUserId);
-  const profileId = trainer.data?.id ?? 0;
-  const services = useGetPublicTrainerServices(profileId);
-  const gyms = useSearchGyms({ size: 50 });
-  const branches = useGymBranches(gymId);
+  const pts = useQuery({
+    queryKey: ["marketplace", "pts", "booking"],
+    queryFn: () => marketplaceService.searchPts({ size: 100 }),
+    enabled: open,
+  });
   const form = useForm<z.infer<typeof createBookingSchema>>({
     resolver: zodResolver(createBookingSchema),
-    defaultValues: { branchId: 0, ptServiceId: 0, bookingDate: new Date().toISOString().slice(0, 10), startTime: "08:00", notes: "" },
+    defaultValues: { ptId: 0, bookingDate: new Date().toISOString().slice(0, 10), startTime: "08:00", endTime: "09:00", note: "" },
   });
 
   return (
@@ -302,11 +299,14 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={form.handleSubmit(async (values) => {
           try {
-            await create.mutateAsync({ ...values, startTime: `${values.startTime}:00` });
-            toast({ type: "success", title: "Đã tạo bản nháp lịch đặt", description: "Hãy gửi yêu cầu để xác nhận lịch đặt." });
+            await create.mutateAsync({
+              ptId: values.ptId,
+              startAt: `${values.bookingDate}T${values.startTime}:00`,
+              endAt: `${values.bookingDate}T${values.endTime}:00`,
+              note: values.note || undefined,
+            });
+            toast({ type: "success", title: "Đã tạo lịch đặt (nháp)", description: "Phòng gym sẽ xác nhận lịch của bạn." });
             form.reset();
-            setPtUserId(0);
-            setGymId(0);
             onClose();
           } catch (error) {
             toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
@@ -314,88 +314,31 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
         })}
       >
         <div className="sm:col-span-2">
-          <FieldShell label="ID huấn luyện viên">
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                min={1}
-                placeholder="Nhập ID người dùng của PT"
-                onChange={(e) => setPtUserId(Number(e.target.value) || 0)}
-              />
-              {trainer.isFetching && <span className="self-center text-xs text-muted-foreground">Đang xử lý...</span>}
-            </div>
+          <FieldShell label="Huấn luyện viên" error={form.formState.errors.ptId}>
+            <Controller
+              control={form.control}
+              name="ptId"
+              render={({ field }) => (
+                <Select
+                  value={field.value ? String(field.value) : ""}
+                  onValueChange={(v) => field.onChange(Number(v))}
+                  disabled={!pts.data?.content?.length}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={pts.isFetching ? "Đang tải..." : "Chọn huấn luyện viên"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pts.data?.content?.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.displayName}{p.specialization ? ` · ${p.specialization}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </FieldShell>
-          {trainer.isError && <p className="mt-1 text-sm text-destructive">Không tìm thấy huấn luyện viên</p>}
-          {trainer.data && (
-            <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm">
-              <strong>{trainer.data.username}</strong> · {trainer.data.bio || "Chưa có mô tả"}
-            </div>
-          )}
         </div>
-
-        <FieldShell label="Dịch vụ" error={form.formState.errors.ptServiceId}>
-          <Controller
-            control={form.control}
-            name="ptServiceId"
-            render={({ field }) => (
-              <Select
-                value={String(field.value)}
-                onValueChange={(v) => field.onChange(Number(v))}
-                disabled={!services.data?.content?.length}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={services.isFetching ? "Đang xử lý..." : "Chọn dịch vụ"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {services.data?.content?.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name} · {new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(s.price ?? 0)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
-
-        <FieldShell label="Phòng gym">
-          <Select
-            value={String(gymId)}
-            onValueChange={(v) => { setGymId(Number(v)); form.setValue("branchId", 0); }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={gyms.isFetching ? "Đang xử lý..." : "Chọn phòng gym"} />
-            </SelectTrigger>
-            <SelectContent>
-              {gyms.data?.content?.map((g) => (
-                <SelectItem key={g.id} value={String(g.id)}>{g.name} · {g.city}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FieldShell>
-
-        <FieldShell label="Chi nhánh" error={form.formState.errors.branchId}>
-          <Controller
-            control={form.control}
-            name="branchId"
-            render={({ field }) => (
-              <Select
-                value={String(field.value)}
-                onValueChange={(v) => field.onChange(Number(v))}
-                disabled={!branches.data?.content?.length}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={branches.isFetching ? "Đang xử lý..." : "Chọn chi nhánh"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {branches.data?.content?.map((b) => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.name} · {b.address}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
 
         <FieldShell label="Ngày tập" error={form.formState.errors.bookingDate}>
           <Controller
@@ -409,16 +352,19 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
         <FieldShell label="Giờ bắt đầu" error={form.formState.errors.startTime}>
           <Input type="time" {...form.register("startTime")} />
         </FieldShell>
+        <FieldShell label="Giờ kết thúc" error={form.formState.errors.endTime}>
+          <Input type="time" {...form.register("endTime")} />
+        </FieldShell>
 
         <div className="sm:col-span-2">
-          <FieldShell label="Ghi chú" error={form.formState.errors.notes}>
-            <Textarea {...form.register("notes")} />
+          <FieldShell label="Ghi chú" error={form.formState.errors.note}>
+            <Textarea {...form.register("note")} placeholder="Mục tiêu, yêu cầu đặc biệt..." />
           </FieldShell>
         </div>
 
         <Button className="sm:col-span-2" disabled={create.isPending}>
           <CalendarCheck2 className="size-4" />
-          {create.isPending ? "Đang xử lý..." : "Lưu bản nháp"}
+          {create.isPending ? "Đang xử lý..." : "Tạo lịch đặt"}
         </Button>
       </form>
     </Dialog>
