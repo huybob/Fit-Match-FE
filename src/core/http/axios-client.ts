@@ -64,7 +64,11 @@ axiosClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiErrorResponse>) => {
     const request = error.config as RetryRequestConfig | undefined;
-    const isAuthEndpoint = request?.url?.startsWith("/auth/");
+    // F-1 (audit 2026-07-17): chỉ loại các endpoint cấp/làm mới phiên khỏi refresh-retry.
+    // Trước đây loại cả /auth/change-password (endpoint cần Bearer) — token hết hạn
+    // đúng lúc đổi mật khẩu sẽ fail thẳng thay vì được refresh.
+    const NO_REFRESH_ENDPOINTS = ["/auth/login", "/auth/refresh", "/auth/register"];
+    const isAuthEndpoint = NO_REFRESH_ENDPOINTS.some((path) => request?.url?.startsWith(path));
 
     if (error.response?.status === 401 && request && !request._retry && !isAuthEndpoint && tokenStorage.get()?.refreshToken) {
       request._retry = true;
