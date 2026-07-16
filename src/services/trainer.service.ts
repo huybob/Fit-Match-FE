@@ -3,6 +3,9 @@ import type {
   Availability,
   AvailabilityPage,
   AvailabilityRequest,
+  AvailabilitySlotDto,
+  BlockedTimeRequest,
+  BlockedTimeResponse,
   Certificate,
   CertificatePage,
   CertificateRequest,
@@ -26,6 +29,9 @@ export type {
   Availability,
   AvailabilityPage,
   AvailabilityRequest,
+  AvailabilitySlotDto,
+  BlockedTimeRequest,
+  BlockedTimeResponse,
   Certificate,
   CertificatePage,
   CertificateRequest,
@@ -165,6 +171,21 @@ export const trainerService = {
 
   listCertifications: () =>
     api.get<CertificationResponse[]>("/pt/certifications"),
+
+  // ── Weekly availability (UC-028) — contract BE hiện tại: /pt/availability ──
+  getWeeklyAvailability: () =>
+    api.get<AvailabilitySlotDto[]>("/pt/availability"),
+  updateWeeklyAvailability: (slots: AvailabilitySlotDto[]) =>
+    api.put<AvailabilitySlotDto[], { slots: AvailabilitySlotDto[] }>(
+      "/pt/availability", { slots }),
+
+  // ── Blocked times cá nhân (UC-029) — bỏ trống ptId/branchId ──
+  listBlockedTimes: () =>
+    api.get<BlockedTimeResponse[]>("/pt/blocked-times"),
+  createBlockedTime: (payload: Omit<BlockedTimeRequest, "ptId" | "branchId">) =>
+    api.post<BlockedTimeResponse, Omit<BlockedTimeRequest, "ptId" | "branchId">>(
+      "/pt/blocked-times", payload),
+  deleteBlockedTime: (id: number) => api.deleteRaw(`/pt/blocked-times/${id}`),
 
   getMyPartnerships: (
     params: PaginationParams & { status?: string } = defaultPage,

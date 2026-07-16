@@ -160,6 +160,11 @@ export interface GymServiceResponse {
   description?: string;
   price?: number;
   durationMinutes?: number;
+  categoryId?: number;
+  categoryName?: string;
+  eligibilityNotes?: string;
+  bookingRules?: BookingRulesDto;
+  status?: CatalogStatus;
   active?: boolean;
 }
 
@@ -248,4 +253,105 @@ export interface PtDocResponse {
   id?: number;
   documentType?: string;
   fileUrl?: string;
+}
+
+// ── Catalog lifecycle & booking rules (UC-026/027) ──
+
+/** PUBLISHED / HIDDEN / PAUSED / ARCHIVED; ARCHIVED là trạng thái cuối. */
+export type CatalogStatus = "PUBLISHED" | "HIDDEN" | "PAUSED" | "ARCHIVED";
+
+export interface BookingRulesDto {
+  /** 0-100; null = trả đủ khi checkout. */
+  depositPercent?: number | null;
+  freeCancellationHours?: number | null;
+  minNoticeHours?: number | null;
+}
+
+// ── Branch operating hours (UC-017) ──
+
+export interface OperatingHourDto {
+  /** 1 (Thứ 2) .. 7 (Chủ nhật), không trùng ngày. */
+  dayOfWeek: number;
+  /** "HH:mm"; bỏ trống khi closed = true. */
+  openTime?: string | null;
+  closeTime?: string | null;
+  closed?: boolean;
+}
+
+// ── Gym media (UC-016) ──
+
+export interface GymMediaRequest {
+  /** URL lấy từ POST /files/upload. */
+  url: string;
+  caption?: string;
+  /** null = ảnh chung của Gym. */
+  branchId?: number | null;
+}
+
+export interface GymMediaResponse {
+  id?: number;
+  url?: string;
+  caption?: string;
+  branchId?: number | null;
+}
+
+// ── Gym policies (UC-017) ──
+
+export interface GymPolicyRequest {
+  bookingPolicy?: string;
+  cancellationPolicy?: string;
+  noShowPolicy?: string;
+  houseRules?: string;
+}
+
+export interface GymPolicyResponse extends GymPolicyRequest {
+  id?: number;
+}
+
+// ── PT assignments (UC-022) ──
+
+/** Truyền đúng MỘT trong branchId/serviceId/packageId. */
+export interface PtAssignmentRequest {
+  branchId?: number;
+  serviceId?: number;
+  packageId?: number;
+}
+
+export interface PtAssignmentResponse {
+  id?: number;
+  ptId?: number;
+  branchId?: number | null;
+  branchName?: string | null;
+  serviceId?: number | null;
+  serviceName?: string | null;
+  packageId?: number | null;
+  packageName?: string | null;
+  active?: boolean;
+}
+
+// ── Training packages (UC-025..027) ──
+
+export interface TrainingPackageRequest {
+  name: string;
+  description?: string;
+  price: number;
+  sessionCount: number;
+  validityDays: number;
+  usageConditions?: string;
+  gymServiceId?: number | null;
+}
+
+export interface TrainingPackageResponse {
+  id?: number;
+  name?: string;
+  description?: string;
+  price?: number;
+  sessionCount?: number;
+  validityDays?: number;
+  usageConditions?: string;
+  gymServiceId?: number | null;
+  gymServiceName?: string | null;
+  bookingRules?: BookingRulesDto;
+  status?: CatalogStatus;
+  active?: boolean;
 }

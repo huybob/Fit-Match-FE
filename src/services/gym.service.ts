@@ -1,9 +1,11 @@
 import { api } from "@/services/api";
 import type {
+  BookingRulesDto,
   BranchInput,
   BranchPage,
   BranchRequest,
   BranchResponse,
+  CatalogStatus,
   CreateGymPtInput,
   FacilityInput,
   FacilityPage,
@@ -13,32 +15,48 @@ import type {
   GymBranch,
   GymDocumentDto,
   GymFacility,
+  GymMediaRequest,
+  GymMediaResponse,
   GymPage,
   GymPartnership,
+  GymPolicyRequest,
+  GymPolicyResponse,
   GymPtPage,
   GymPtResponse,
   GymRequest,
   GymServiceInput,
   GymServiceResponse,
   GymVerificationStatusResponse,
+  OperatingHourDto,
   PartnershipActionRequest,
   PartnershipPage,
+  PtAssignmentRequest,
+  PtAssignmentResponse,
   PtCertInput,
   PtCertResponse,
   PtDocInput,
   PtDocResponse,
   PtStatusInput,
   SubmitGymRegistrationRequest,
+  TrainingPackageRequest,
+  TrainingPackageResponse,
   UpdateGymProfileInput,
   UpdateGymPtInput,
 } from "@/types/Gym";
+import type {
+  AvailabilitySlotDto,
+  BlockedTimeRequest,
+  BlockedTimeResponse,
+} from "@/types/Trainer";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type {
+  BookingRulesDto,
   BranchInput,
   BranchPage,
   BranchRequest,
   BranchResponse,
+  CatalogStatus,
   FacilityInput,
   FacilityPage,
   FacilityRequest,
@@ -47,16 +65,30 @@ export type {
   GymBranch,
   GymDocumentDto,
   GymFacility,
+  GymMediaRequest,
+  GymMediaResponse,
   GymPage,
   GymPartnership,
+  GymPolicyRequest,
+  GymPolicyResponse,
   GymRequest,
   GymServiceInput,
   GymServiceResponse,
   GymVerificationStatusResponse,
+  OperatingHourDto,
   PartnershipActionRequest,
   PartnershipPage,
+  PtAssignmentRequest,
+  PtAssignmentResponse,
   SubmitGymRegistrationRequest,
+  TrainingPackageRequest,
+  TrainingPackageResponse,
 } from "@/types/Gym";
+export type {
+  AvailabilitySlotDto,
+  BlockedTimeRequest,
+  BlockedTimeResponse,
+} from "@/types/Trainer";
 
 export type GymSearchParams = Partial<PaginationParams> & {
   city?: string;
@@ -224,4 +256,66 @@ export const gymService = {
     api.post<PtDocResponse, PtDocInput>(`/gym/pts/${ptId}/documents`, payload),
   deletePtDoc: (ptId: number, docId: number) =>
     api.deleteRaw(`/gym/pts/${ptId}/documents/${docId}`),
+
+  // ── PT weekly availability (UC-028) ──
+  getPtAvailability: (ptId: number) =>
+    api.get<AvailabilitySlotDto[]>(`/gym/pts/${ptId}/availability`),
+  updatePtAvailability: (ptId: number, slots: AvailabilitySlotDto[]) =>
+    api.put<AvailabilitySlotDto[], { slots: AvailabilitySlotDto[] }>(
+      `/gym/pts/${ptId}/availability`, { slots }),
+
+  // ── PT assignments (UC-022) ──
+  listPtAssignments: (ptId: number) =>
+    api.get<PtAssignmentResponse[]>(`/gym/pts/${ptId}/assignments`),
+  addPtAssignment: (ptId: number, payload: PtAssignmentRequest) =>
+    api.post<PtAssignmentResponse, PtAssignmentRequest>(`/gym/pts/${ptId}/assignments`, payload),
+  removePtAssignment: (ptId: number, assignmentId: number) =>
+    api.deleteRaw(`/gym/pts/${ptId}/assignments/${assignmentId}`),
+
+  // ── Blocked times for PT/branch (UC-029) ──
+  listBlockedTimes: (params: { ptId?: number; branchId?: number }) =>
+    api.get<BlockedTimeResponse[]>("/gym/blocked-times", { params }),
+  createBlockedTime: (payload: BlockedTimeRequest) =>
+    api.post<BlockedTimeResponse, BlockedTimeRequest>("/gym/blocked-times", payload),
+  deleteBlockedTime: (id: number) => api.deleteRaw(`/gym/blocked-times/${id}`),
+
+  // ── Branch operating hours (UC-017) ──
+  getOperatingHours: (branchId: number) =>
+    api.get<OperatingHourDto[]>(`/gym/branches/${branchId}/operating-hours`),
+  updateOperatingHours: (branchId: number, hours: OperatingHourDto[]) =>
+    api.put<OperatingHourDto[], { hours: OperatingHourDto[] }>(
+      `/gym/branches/${branchId}/operating-hours`, { hours }),
+
+  // ── Gym media (UC-016) ──
+  listMedia: (branchId?: number) =>
+    api.get<GymMediaResponse[]>("/gym/media", { params: { branchId } }),
+  addMedia: (payload: GymMediaRequest) =>
+    api.post<GymMediaResponse, GymMediaRequest>("/gym/media", payload),
+  deleteMedia: (id: number) => api.deleteRaw(`/gym/media/${id}`),
+
+  // ── Gym policies (UC-017) ──
+  getPolicies: () => api.get<GymPolicyResponse>("/gym/policies"),
+  savePolicies: (payload: GymPolicyRequest) =>
+    api.put<GymPolicyResponse, GymPolicyRequest>("/gym/policies", payload),
+
+  // ── Services: booking rules & catalog status (UC-026/027) ──
+  updateServiceBookingRules: (id: number, payload: BookingRulesDto) =>
+    api.put<GymServiceResponse, BookingRulesDto>(`/gym/services/${id}/booking-rules`, payload),
+  updateServiceCatalogStatus: (id: number, status: CatalogStatus) =>
+    api.patch<GymServiceResponse, { status: CatalogStatus }>(
+      `/gym/services/${id}/catalog-status`, { status }),
+
+  // ── Training packages (UC-025..027) ──
+  listPackages: () => api.get<TrainingPackageResponse[]>("/gym/packages"),
+  getPackage: (id: number) => api.get<TrainingPackageResponse>(`/gym/packages/${id}`),
+  createPackage: (payload: TrainingPackageRequest) =>
+    api.post<TrainingPackageResponse, TrainingPackageRequest>("/gym/packages", payload),
+  updatePackage: (id: number, payload: TrainingPackageRequest) =>
+    api.put<TrainingPackageResponse, TrainingPackageRequest>(`/gym/packages/${id}`, payload),
+  deactivatePackage: (id: number) => api.deleteRaw(`/gym/packages/${id}`),
+  updatePackageBookingRules: (id: number, payload: BookingRulesDto) =>
+    api.put<TrainingPackageResponse, BookingRulesDto>(`/gym/packages/${id}/booking-rules`, payload),
+  updatePackageCatalogStatus: (id: number, status: CatalogStatus) =>
+    api.patch<TrainingPackageResponse, { status: CatalogStatus }>(
+      `/gym/packages/${id}/catalog-status`, { status }),
 };

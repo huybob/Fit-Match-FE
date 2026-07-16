@@ -124,3 +124,26 @@ export interface SystemConfigRequest {
   configValue: string;
   description?: string;
 }
+
+// ── Commission & platform economics (UC-072) ──
+export interface CommissionConfigRequest {
+  /** 0-100. */
+  commissionPercent?: number;
+  /** 0-100. */
+  platformFeePercent?: number;
+  settlementHoldDays?: number;
+}
+export interface CommissionConfigResponse extends CommissionConfigRequest {
+  id?: number;
+}
+
+// ── Refund processing (UC-055/056) ──
+export interface AdminRefundCreateRequest {
+  bookingId: number;
+  reason?: string;
+}
+export interface RefundDecisionRequest {
+  /** Bỏ trống = hoàn toàn bộ; duyệt một phần thì phần còn lại vào pending settlement. */
+  approvedAmount?: number | null;
+  note?: string;
+}

@@ -134,3 +134,42 @@ export interface RefundRequest {
 
 export type BookingPage = PageResponse<Booking>;
 export type RefundPage = PageResponse<RefundRequest>;
+
+// ── Waitlist (UC-044) ──
+
+/** Truyền đúng MỘT trong serviceId/packageId. */
+export interface WaitlistRequest {
+  serviceId?: number | null;
+  packageId?: number | null;
+  /** ISO datetime khung giờ mong muốn. */
+  preferredStart?: string;
+  note?: string;
+}
+
+export interface WaitlistEntry {
+  id: number;
+  customerUsername?: string;
+  serviceId?: number | null;
+  serviceName?: string | null;
+  packageId?: number | null;
+  packageName?: string | null;
+  preferredStart?: string;
+  note?: string;
+  active?: boolean;
+}
+
+// ── Availability pre-check (UC-030) ──
+
+/** Cần ít nhất một trong ptId/branchId. */
+export interface AvailabilityCheckRequest {
+  ptId?: number | null;
+  branchId?: number | null;
+  /** ISO datetime. */
+  startAt: string;
+  endAt: string;
+}
+
+export interface AvailabilityCheckResponse {
+  available: boolean;
+  reasons: string[];
+}
