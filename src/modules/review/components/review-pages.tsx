@@ -260,7 +260,7 @@ function ReviewDialog({
                   <SelectContent>
                     {completed.map((b) => (
                       <SelectItem key={b.id} value={String(b.id)}>
-                        #{b.id} · {b.ptServiceName ?? ""} · {b.ptName ?? ""} · {b.bookingDate}
+                        #{b.id} · {b.serviceName ?? b.packageName ?? ""} · {b.ptDisplayName ?? ""} · {b.startAt ?? ""}
                       </SelectItem>
                     ))}
                   </SelectContent>

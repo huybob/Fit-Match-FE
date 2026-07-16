@@ -5,20 +5,32 @@ import {
   withdrawalService,
   type WithdrawalStatus,
   type WithdrawalRequestDto,
-  type RejectWithdrawalRequest,
 } from "@/services/withdrawal.service";
 import { withdrawalKeys } from "../query-keys";
 
 const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
   c.invalidateQueries({ queryKey: withdrawalKeys.all });
 
-export function useWithdrawals(scope: "pt" | "admin", status?: WithdrawalStatus) {
+export function useWithdrawals(scope: "gym" | "admin", status?: WithdrawalStatus) {
   return useQuery({
     queryKey: withdrawalKeys.list(scope, status),
     queryFn: () =>
-      scope === "pt"
+      scope === "gym"
         ? withdrawalService.getMine(status)
         : withdrawalService.getAll(status),
+  });
+}
+
+/** UC-061: số dư ví gym. */
+export function useGymWallet() {
+  return useQuery({ queryKey: withdrawalKeys.wallet, queryFn: withdrawalService.getWallet });
+}
+
+/** UC-061: sổ cái ví gym. */
+export function useGymWalletTransactions(page: number) {
+  return useQuery({
+    queryKey: [...withdrawalKeys.wallet, "transactions", page],
+    queryFn: () => withdrawalService.getWalletTransactions({ page, size: 20 }),
   });
 }
 
@@ -26,23 +38,26 @@ export function useCreateWithdrawal() {
   const c = useQueryClient();
   return useMutation({
     mutationFn: (payload: WithdrawalRequestDto) => withdrawalService.create(payload),
-    onSuccess: refresh(c),
+    onSuccess: () => {
+      refresh(c)();
+      c.invalidateQueries({ queryKey: withdrawalKeys.wallet });
+    },
   });
 }
 
-export function useApproveWithdrawal() {
+export function useWithdrawalDecision() {
   const c = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => withdrawalService.approve(id),
-    onSuccess: refresh(c),
-  });
-}
-
-export function useRejectWithdrawal() {
-  const c = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: RejectWithdrawalRequest }) =>
-      withdrawalService.reject(id, payload),
+    mutationFn: ({ id, decision, note }: {
+      id: number;
+      decision: "approve" | "reject" | "markPaid";
+      note?: string;
+    }) =>
+      decision === "approve"
+        ? withdrawalService.approve(id, note)
+        : decision === "reject"
+          ? withdrawalService.reject(id, note ?? "")
+          : withdrawalService.markPaid(id, note),
     onSuccess: refresh(c),
   });
 }

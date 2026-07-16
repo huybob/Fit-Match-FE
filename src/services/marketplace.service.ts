@@ -44,6 +44,61 @@ export interface PtSearchParams {
   size?: number;
 }
 
+/** Booking rules công khai của dịch vụ/gói (UC-026). */
+export interface PublicBookingRules {
+  depositPercent?: number;
+  freeCancellationHours?: number;
+  minNoticeHours?: number;
+}
+
+export interface PublicOperatingHour {
+  dayOfWeek?: number;
+  openTime?: string;
+  closeTime?: string;
+  closed?: boolean;
+}
+
+export interface PublicBranch {
+  id?: number;
+  name?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  amenities?: string;
+  capacity?: number;
+  operatingHours?: PublicOperatingHour[];
+}
+
+export interface PublicGymService {
+  id?: number;
+  name?: string;
+  description?: string;
+  price?: number;
+  durationMinutes?: number;
+  categoryName?: string;
+  eligibilityNotes?: string;
+  bookingRules?: PublicBookingRules;
+}
+
+export interface PublicTrainingPackage {
+  id?: number;
+  name?: string;
+  description?: string;
+  price?: number;
+  sessionCount?: number;
+  validityDays?: number;
+  usageConditions?: string;
+  gymServiceId?: number;
+  gymServiceName?: string;
+  bookingRules?: PublicBookingRules;
+}
+
+export interface PublicGymMedia {
+  id?: number;
+  url?: string;
+  [key: string]: unknown;
+}
+
 export const marketplaceService = {
   searchGyms: (params: GymSearchParams = {}) =>
     api.get<PageResponse<GymPublicProfile>>("/marketplace/gyms", {
@@ -57,4 +112,18 @@ export const marketplaceService = {
     }),
   getPt: (id: number) =>
     api.get<PtPublicProfile>(`/marketplace/pts/${id}`),
+
+  // UC-009: catalog công khai của một gym — phục vụ trang chi tiết & tạo booking.
+  getGymBranches: (id: number) =>
+    api.get<PublicBranch[]>(`/marketplace/gyms/${id}/branches`),
+  getGymServices: (id: number) =>
+    api.get<PublicGymService[]>(`/marketplace/gyms/${id}/services`),
+  getGymPackages: (id: number) =>
+    api.get<PublicTrainingPackage[]>(`/marketplace/gyms/${id}/packages`),
+  getGymMedia: (id: number) =>
+    api.get<PublicGymMedia[]>(`/marketplace/gyms/${id}/media`),
+  getGymPts: (id: number, params: { page?: number; size?: number } = {}) =>
+    api.get<PageResponse<PtPublicProfile>>(`/marketplace/gyms/${id}/pts`, {
+      params: { page: 0, size: 50, ...params },
+    }),
 };

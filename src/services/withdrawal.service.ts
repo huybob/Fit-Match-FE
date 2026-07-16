@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import type {
-  RejectWithdrawalRequest,
+  Wallet,
+  WalletTransactionPage,
   Withdrawal,
   WithdrawalPage,
   WithdrawalRequestDto,
@@ -8,32 +9,42 @@ import type {
 } from "@/types/Withdrawal";
 
 export type {
-  RejectWithdrawalRequest,
+  Wallet,
+  WalletTransaction,
+  WalletTransactionPage,
   Withdrawal,
   WithdrawalPage,
   WithdrawalRequestDto,
   WithdrawalStatus,
 } from "@/types/Withdrawal";
 
-async function list(path: string, status?: WithdrawalStatus) {
-  return api.get<WithdrawalPage>(path, {
-    params: { page: 0, size: 20, status },
-  });
-}
-
+/**
+ * Contract BE: gym dùng /gym/wallet/**; admin/finance dùng /admin/withdrawals.
+ * Duyệt 2 bước: approve -> (chuyển khoản thủ công) -> mark-paid; reject trả tiền về available.
+ */
 export const withdrawalService = {
-  getMine: (status?: WithdrawalStatus) => list("/withdrawals/me", status),
-  getAll: (status?: WithdrawalStatus) => list("/withdrawals", status),
-  async create(payload: WithdrawalRequestDto) {
-    return api.post<Withdrawal, WithdrawalRequestDto>("/withdrawals", payload);
-  },
-  async approve(id: number) {
-    return api.put<Withdrawal>(`/withdrawals/${id}/approve`);
-  },
-  async reject(id: number, payload: RejectWithdrawalRequest) {
-    return api.put<Withdrawal, RejectWithdrawalRequest>(
-      `/withdrawals/${id}/reject`,
-      payload,
-    );
-  },
+  // ---- Gym (UC-061/062) ----
+  getWallet: () => api.get<Wallet>("/gym/wallet"),
+  getWalletTransactions: (params: { page?: number; size?: number } = {}) =>
+    api.get<WalletTransactionPage>("/gym/wallet/transactions", {
+      params: { page: 0, size: 20, ...params },
+    }),
+  getMine: (status?: WithdrawalStatus) =>
+    api.get<WithdrawalPage>("/gym/wallet/withdrawals", {
+      params: { page: 0, size: 20, status },
+    }),
+  create: (payload: WithdrawalRequestDto) =>
+    api.post<Withdrawal, WithdrawalRequestDto>("/gym/wallet/withdrawals", payload),
+
+  // ---- Admin / Finance (UC-062) ----
+  getAll: (status?: WithdrawalStatus) =>
+    api.get<WithdrawalPage>("/admin/withdrawals", {
+      params: { page: 0, size: 20, status },
+    }),
+  approve: (id: number, note?: string) =>
+    api.post<Withdrawal, { note?: string }>(`/admin/withdrawals/${id}/approve`, { note }),
+  reject: (id: number, note: string) =>
+    api.post<Withdrawal, { note: string }>(`/admin/withdrawals/${id}/reject`, { note }),
+  markPaid: (id: number, note?: string) =>
+    api.post<Withdrawal, { note?: string }>(`/admin/withdrawals/${id}/mark-paid`, { note }),
 };

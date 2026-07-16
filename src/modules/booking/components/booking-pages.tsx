@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, UserRound } from "lucide-react";
+import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, QrCode, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,71 +23,85 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { cn } from "@/shared/utils/cn.util";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { useQuery } from "@tanstack/react-query";
 import { marketplaceService } from "@/services/marketplace.service";
-import { useBookingAction, useBookings, useCreateBooking } from "../hooks/use-booking";
+import {
+  BookingAction,
+  BookingScope,
+  useBookingAction,
+  useBookingPayment,
+  useBookings,
+  useCreateBooking,
+} from "../hooks/use-booking";
 import { createBookingSchema } from "../schemas";
 
-type Scope = "customer" | "pt" | "gym";
-type BookingAction = "submit" | "confirm" | "checkIn" | "complete" | "noShow" | "cancel";
-const statuses: BookingStatus[] = ["DRAFT", "PENDING", "CONFIRMED", "CHECKED_IN", "COMPLETED", "CANCELLED", "NO_SHOW"];
+const statuses: BookingStatus[] = [
+  "DRAFT",
+  "PENDING_PAYMENT",
+  "PENDING_GYM",
+  "CONFIRMED",
+  "REJECTED",
+  "CANCELLED",
+  "NO_SHOW",
+  "COMPLETED",
+];
 
 const scopeTitles: Record<string, string> = {
   customerTitle: "Đặt lịch của tôi",
-  ptTitle: "Lịch đặt của khách",
+  ptTitle: "Lịch được phân công",
   gymTitle: "Lịch đặt tại phòng gym",
-  customerDescription: "Xem và quản lý các lịch đặt của bạn.",
-  ptDescription: "Xem và quản lý các lịch đặt từ khách hàng.",
-  gymDescription: "Xem và quản lý các lịch đặt tại phòng gym.",
+  customerDescription: "Đặt dịch vụ/gói tập, thanh toán VietQR và theo dõi trạng thái.",
+  ptDescription: "Các buổi tập bạn được gym phân công (chỉ xem).",
+  gymDescription: "Nhận/từ chối yêu cầu, gán PT, xác nhận hoàn tất buổi tập.",
 };
 
-const bookingStatusLabels: Record<string, string> = {
+const bookingStatusLabels: Record<BookingStatus, string> = {
   DRAFT: "Bản nháp",
-  PENDING: "Đang chờ",
+  PENDING_PAYMENT: "Chờ thanh toán",
+  PENDING_GYM: "Chờ gym xác nhận",
   CONFIRMED: "Đã xác nhận",
-  CHECKED_IN: "Đã check-in",
-  COMPLETED: "Hoàn thành",
+  REJECTED: "Gym từ chối",
   CANCELLED: "Đã hủy",
   NO_SHOW: "Vắng mặt",
+  COMPLETED: "Hoàn thành",
 };
 
-const actionSuccessLabels: Record<string, string> = {
-  submit: "Đã gửi yêu cầu đặt lịch",
-  confirm: "Đã xác nhận lịch đặt",
-  checkIn: "Đã check-in",
-  complete: "Đã hoàn thành buổi tập",
-  noShow: "Đã đánh dấu vắng mặt",
+const actionSuccessLabels: Record<BookingAction, string> = {
+  checkout: "Đã gửi yêu cầu — vui lòng thanh toán nếu có phí",
   cancel: "Đã hủy lịch đặt",
+  refund: "Đã gửi yêu cầu hoàn tiền",
+  accept: "Đã nhận lịch đặt",
+  reject: "Đã từ chối lịch đặt",
+  noShow: "Đã đánh dấu vắng mặt",
+  complete: "Đã xác nhận hoàn tất buổi tập",
 };
 
-function dateText(value: string | undefined, language: string) {
-  return value ? new Intl.DateTimeFormat(language === "vi" ? "vi-VN" : "en-US", { dateStyle: "medium" }).format(new Date(`${value}T00:00:00`)) : "—";
+function dateTimeText(value?: string) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
-function timeText(value?: string | { hour?: number; minute?: number }) {
-  if (typeof value === "string") return value.slice(0, 5);
-  return value ? `${String(value.hour ?? 0).padStart(2, "0")}:${String(value.minute ?? 0).padStart(2, "0")}` : "—";
-}
-function money(value: number | undefined, language: string) {
-  return new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value ?? 0);
+function money(value?: number) {
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value ?? 0);
 }
 function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badge>["variant"] {
   if (status === "COMPLETED") return "success";
-  if (status === "CANCELLED" || status === "NO_SHOW") return "destructive";
-  if (status === "CONFIRMED" || status === "CHECKED_IN") return "info";
-  if (status === "PENDING") return "warning";
+  if (status === "REJECTED" || status === "CANCELLED" || status === "NO_SHOW") return "destructive";
+  if (status === "CONFIRMED") return "info";
+  if (status === "PENDING_PAYMENT" || status === "PENDING_GYM") return "warning";
   return "default";
 }
+function itemName(booking: Booking) {
+  return booking.serviceName ?? booking.packageName ?? "Dịch vụ không tên";
+}
 
-export function BookingWorkspacePage({ scope }: { scope: Scope }) {
-  const language = "vi";
+export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const [status, setStatus] = useState<BookingStatus | "">("");
-  const [date, setDate] = useState("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
-  const query = useBookings(scope, { status: status || undefined, date: scope === "customer" ? undefined : date || undefined, page, size: 10 });
+  const [payingId, setPayingId] = useState<number | null>(null);
+  const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
 
   return (
@@ -123,18 +137,12 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
             </SelectContent>
           </Select>
         </div>
-        {scope !== "customer" && (
-          <div className="grid gap-1.5">
-            <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">Ngày tập</span>
-            <DatePicker value={date} onChange={(v) => { setDate(v); setPage(0); }} />
-          </div>
-        )}
       </section>
 
       {query.isLoading ? <LoadingSkeleton /> : query.isError ? (
         <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có lịch đặt" description="Bạn chưa có lịch đặt nào. Hãy tạo lịch đặt mới để bắt đầu." />
+        <EmptyState title="Chưa có lịch đặt" description={scope === "customer" ? "Bạn chưa có lịch đặt nào. Hãy tạo lịch đặt mới để bắt đầu." : "Chưa có lịch đặt nào ở trạng thái này."} />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {items.map((booking) => (
@@ -147,17 +155,17 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">#{booking.id}</p>
-                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{booking.ptServiceName ?? "Dịch vụ không tên"}</h2>
+                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{itemName(booking)}</h2>
                 </div>
                 <Badge variant={statusVariant(booking.status)}>
-                  {booking.status ? (bookingStatusLabels[booking.status] ?? booking.status) : "—"}
+                  {bookingStatusLabels[booking.status] ?? booking.status}
                 </Badge>
               </div>
               <div className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{dateText(booking.bookingDate, language)} · {timeText(booking.startTime)}</span>
-                <span className="flex items-center gap-2"><UserRound className="size-4 text-primary" />{scope === "customer" ? booking.ptName : booking.customerName}</span>
+                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{dateTimeText(booking.startAt)}</span>
+                <span className="flex items-center gap-2"><UserRound className="size-4 text-primary" />{scope === "customer" ? (booking.ptDisplayName ?? "Chưa gán PT") : booking.customerUsername}</span>
                 <span className="flex items-center gap-2"><MapPin className="size-4 text-blue-500" />{booking.branchName ?? booking.gymName}</span>
-                <strong className="text-foreground">{money(booking.price, language)}</strong>
+                <strong className="text-foreground">{money(booking.totalAmount)}</strong>
               </div>
             </button>
           ))}
@@ -176,38 +184,73 @@ export function BookingWorkspacePage({ scope }: { scope: Scope }) {
         </div>
       )}
 
-      <BookingDetailDialog booking={selected} scope={scope} onClose={() => setSelected(null)} />
-      <CreateBookingDialog open={creating} onClose={() => setCreating(false)} />
+      <BookingDetailDialog
+        booking={selected}
+        scope={scope}
+        onClose={() => setSelected(null)}
+        onPay={(id) => { setSelected(null); setPayingId(id); }}
+      />
+      {scope === "customer" && (
+        <CreateBookingDialog
+          open={creating}
+          onClose={() => setCreating(false)}
+          onCheckedOut={(id, payable) => { setCreating(false); if (payable > 0) setPayingId(id); }}
+        />
+      )}
+      <PaymentDialog bookingId={payingId} onClose={() => setPayingId(null)} />
     </div>
   );
 }
 
-function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | null; scope: Scope; onClose: () => void }) {
-  const language = "vi";
+function BookingDetailDialog({ booking, scope, onClose, onPay }: {
+  booking: Booking | null;
+  scope: BookingScope;
+  onClose: () => void;
+  onPay: (id: number) => void;
+}) {
   const { toast } = useToast();
-  const action = useBookingAction();
-  const [confirming, setConfirming] = useState<{ action: BookingAction; message?: string } | null>(null);
+  const action = useBookingAction(scope);
+  const [confirming, setConfirming] = useState<{ action: BookingAction; label: string; message?: string; requireMessage?: boolean } | null>(null);
   if (!booking) return null;
 
   const bookingId = booking.id;
-  const actions: Array<{ action: BookingAction; label: string; message?: string }> = [];
-  if (scope === "customer" && booking.status === "DRAFT") actions.push({ action: "submit", label: "Gửi yêu cầu" });
-  if (scope === "customer" && ["DRAFT", "PENDING", "CONFIRMED"].includes(booking.status ?? "")) actions.push({ action: "cancel", label: "Hủy lịch" });
-  if ((scope === "pt" || scope === "gym") && booking.status === "PENDING") actions.push({ action: "confirm", label: "Xác nhận" });
-  if (scope === "pt" && booking.status === "CONFIRMED") {
-    actions.push({ action: "checkIn", label: "Check-in" });
-    actions.push({ action: "noShow", label: "Vắng mặt" });
-    actions.push({ action: "cancel", label: "Hủy lịch" });
+  const status = booking.status;
+  const actions: Array<{ action: BookingAction; label: string; requireMessage?: boolean }> = [];
+  if (scope === "customer") {
+    if (status === "DRAFT") actions.push({ action: "checkout", label: "Gửi yêu cầu & thanh toán" });
+    if (["DRAFT", "PENDING_PAYMENT", "PENDING_GYM", "CONFIRMED"].includes(status)) {
+      actions.push({ action: "cancel", label: "Hủy lịch" });
+    }
+    if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status)) {
+      actions.push({ action: "refund", label: "Yêu cầu hoàn tiền", requireMessage: true });
+    }
   }
-  if (scope === "pt" && booking.status === "CHECKED_IN") actions.push({ action: "complete", label: "Hoàn thành" });
+  if (scope === "gym") {
+    if (status === "PENDING_GYM") {
+      actions.push({ action: "accept", label: "Nhận lịch" });
+      actions.push({ action: "reject", label: "Từ chối", requireMessage: true });
+    }
+    if (status === "CONFIRMED") {
+      actions.push({ action: "complete", label: "Hoàn tất buổi tập" });
+      actions.push({ action: "noShow", label: "Khách vắng mặt" });
+      actions.push({ action: "cancel", label: "Hủy lịch", requireMessage: true });
+    }
+  }
 
   async function run() {
     if (!confirming || !bookingId) return;
+    if (confirming.requireMessage && !confirming.message?.trim()) {
+      toast({ type: "warning", title: "Vui lòng nhập lý do" });
+      return;
+    }
     try {
       await action.mutateAsync({ id: bookingId, action: confirming.action, message: confirming.message });
       toast({ type: "success", title: actionSuccessLabels[confirming.action] ?? "Thao tác thành công" });
+      const done = confirming.action;
       setConfirming(null);
       onClose();
+      // Sau checkout có phí -> mở QR thanh toán ngay.
+      if (done === "checkout" && (booking?.payableAmount ?? 0) > 0) onPay(bookingId);
     } catch (error) {
       toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
     }
@@ -217,30 +260,37 @@ function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | n
     <Dialog open title="Chi tiết lịch đặt" onClose={onClose}>
       <div className="rounded-2xl bg-muted/50 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xl font-black">{booking.ptServiceName}</h3>
-          <Badge variant={statusVariant(booking.status)}>
-            {booking.status ? (bookingStatusLabels[booking.status] ?? booking.status) : "—"}
-          </Badge>
+          <h3 className="text-xl font-black">{itemName(booking)}</h3>
+          <Badge variant={statusVariant(status)}>{bookingStatusLabels[status] ?? status}</Badge>
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <Info label="Khách hàng" value={booking.customerName} />
-          <Info label="Huấn luyện viên" value={booking.ptName} />
+          <Info label="Khách hàng" value={booking.customerUsername} />
+          <Info label="Huấn luyện viên" value={booking.ptDisplayName ?? "Chưa gán"} />
           <Info label="Địa điểm" value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
-          <Info label="Lịch tập" value={`${dateText(booking.bookingDate, language)} · ${timeText(booking.startTime)}–${timeText(booking.endTime)}`} />
-          <Info label="Thời lượng" value={`${booking.durationMinutes ?? 0} phút`} />
-          <Info label="Giá" value={money(booking.price, language)} />
+          <Info label="Lịch tập" value={`${dateTimeText(booking.startAt)} → ${dateTimeText(booking.endAt)}`} />
+          <Info label="Tổng tiền" value={money(booking.totalAmount)} />
+          <Info label="Phải thanh toán" value={money(booking.payableAmount)} />
         </dl>
-        {booking.notes && (
-          <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm">{booking.notes}</p>
+        {booking.statusReason && (
+          <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm text-muted-foreground">{booking.statusReason}</p>
+        )}
+        {booking.customerNote && (
+          <p className="mt-2 rounded-xl border border-border bg-card p-3 text-sm">{booking.customerNote}</p>
         )}
       </div>
+
+      {scope === "customer" && status === "PENDING_PAYMENT" && (
+        <Button className="mt-4 w-full" variant="outline" onClick={() => bookingId && onPay(bookingId)}>
+          <QrCode className="size-4" />Xem mã QR thanh toán
+        </Button>
+      )}
 
       {!!actions.length && (
         <div className="mt-5 flex flex-wrap gap-2">
           {actions.map((item) => (
             <Button
               key={item.action}
-              variant={item.action === "cancel" || item.action === "noShow" ? "destructive" : "default"}
+              variant={["cancel", "noShow", "reject"].includes(item.action) ? "destructive" : "default"}
               onClick={() => setConfirming(item)}
             >
               {item.label}
@@ -251,20 +301,59 @@ function BookingDetailDialog({ booking, scope, onClose }: { booking: Booking | n
 
       {confirming && (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="font-black">Bạn có chắc muốn thực hiện thao tác này?</p>
-          {["cancel", "confirm"].includes(confirming.action) && (
+          <p className="font-black">{confirming.label} — bạn chắc chắn?</p>
+          {(confirming.requireMessage || ["cancel", "reject", "refund"].includes(confirming.action)) && (
             <Textarea
               className="mt-3"
               maxLength={500}
-              placeholder="Ghi chú (không bắt buộc)"
+              placeholder={confirming.requireMessage ? "Lý do (bắt buộc)" : "Lý do (không bắt buộc)"}
               value={confirming.message ?? ""}
               onChange={(e) => setConfirming({ ...confirming, message: e.target.value })}
             />
           )}
           <div className="mt-3 flex gap-2">
-            <Button disabled={action.isPending} onClick={() => void run()}>Xác nhận</Button>
+            <Button disabled={action.isPending} onClick={() => void run()}>
+              {action.isPending ? "Đang xử lý..." : "Xác nhận"}
+            </Button>
             <Button variant="outline" onClick={() => setConfirming(null)}>Hủy</Button>
           </div>
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
+/** UC-052: hiển thị VietQR để khách chuyển khoản; Casso tự đối soát (UC-053). */
+function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClose: () => void }) {
+  const query = useBookingPayment(bookingId ?? 0, bookingId !== null);
+  if (bookingId === null) return null;
+  const order = query.data;
+
+  return (
+    <Dialog open title="Thanh toán VietQR" onClose={onClose}>
+      {query.isLoading ? (
+        <LoadingSkeleton />
+      ) : query.isError || !order ? (
+        <EmptyState title="Không tải được đơn thanh toán" description={toErrorMessage(query.error)} />
+      ) : (
+        <div className="grid gap-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Quét mã bằng app ngân hàng và giữ nguyên nội dung chuyển khoản
+            <strong className="mx-1 text-foreground">{order.refCode}</strong>
+            để hệ thống tự đối soát.
+          </p>
+          {order.qrContent && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={order.qrContent} alt="VietQR" className="mx-auto w-64 max-w-full rounded-xl border border-border" />
+          )}
+          <div className="grid gap-1 text-sm">
+            <span>Số tiền: <strong>{money(order.amount)}</strong></span>
+            <span>Trạng thái: <strong>{order.status}</strong></span>
+            {order.expiresAt && <span className="text-muted-foreground">Hết hạn: {dateTimeText(order.expiresAt)}</span>}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sau khi chuyển khoản, trạng thái sẽ tự cập nhật trong vài phút. Bạn có thể đóng cửa sổ này.
+          </p>
         </div>
       )}
     </Dialog>
@@ -280,18 +369,58 @@ function Info({ label, value }: { label: string; value?: string }) {
   );
 }
 
-function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** UC-031/032/035: chọn gym -> dịch vụ/gói (+PT/chi nhánh) -> tạo nháp -> checkout. */
+function CreateBookingDialog({ open, onClose, onCheckedOut }: {
+  open: boolean;
+  onClose: () => void;
+  onCheckedOut: (bookingId: number, payable: number) => void;
+}) {
   const { toast } = useToast();
   const create = useCreateBooking();
-  const pts = useQuery({
-    queryKey: ["marketplace", "pts", "booking"],
-    queryFn: () => marketplaceService.searchPts({ size: 100 }),
-    enabled: open,
-  });
+  const checkoutAction = useBookingAction("customer");
+
   const form = useForm<z.infer<typeof createBookingSchema>>({
     resolver: zodResolver(createBookingSchema),
-    defaultValues: { ptId: 0, bookingDate: new Date().toISOString().slice(0, 10), startTime: "08:00", endTime: "09:00", note: "" },
+    defaultValues: {
+      gymId: 0,
+      itemType: "service",
+      itemId: 0,
+      bookingDate: new Date().toISOString().slice(0, 10),
+      startTime: "08:00",
+      endTime: "09:00",
+      note: "",
+    },
   });
+  const gymId = form.watch("gymId");
+  const itemType = form.watch("itemType");
+
+  const gyms = useQuery({
+    queryKey: ["marketplace", "gyms", "booking"],
+    queryFn: () => marketplaceService.searchGyms({ size: 100 }),
+    enabled: open,
+  });
+  const services = useQuery({
+    queryKey: ["marketplace", "gym", gymId, "services"],
+    queryFn: () => marketplaceService.getGymServices(gymId),
+    enabled: open && gymId > 0,
+  });
+  const packages = useQuery({
+    queryKey: ["marketplace", "gym", gymId, "packages"],
+    queryFn: () => marketplaceService.getGymPackages(gymId),
+    enabled: open && gymId > 0,
+  });
+  const branches = useQuery({
+    queryKey: ["marketplace", "gym", gymId, "branches"],
+    queryFn: () => marketplaceService.getGymBranches(gymId),
+    enabled: open && gymId > 0,
+  });
+  const pts = useQuery({
+    queryKey: ["marketplace", "gym", gymId, "pts"],
+    queryFn: () => marketplaceService.getGymPts(gymId),
+    enabled: open && gymId > 0,
+  });
+
+  const catalogItems = itemType === "service" ? (services.data ?? []) : (packages.data ?? []);
 
   return (
     <Dialog open={open} title="Tạo lịch đặt" onClose={onClose}>
@@ -299,39 +428,45 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={form.handleSubmit(async (values) => {
           try {
-            await create.mutateAsync({
+            const booking = await create.mutateAsync({
+              serviceId: values.itemType === "service" ? values.itemId : undefined,
+              packageId: values.itemType === "package" ? values.itemId : undefined,
+              branchId: values.branchId,
               ptId: values.ptId,
               startAt: `${values.bookingDate}T${values.startTime}:00`,
               endAt: `${values.bookingDate}T${values.endTime}:00`,
               note: values.note || undefined,
             });
-            toast({ type: "success", title: "Đã tạo lịch đặt (nháp)", description: "Phòng gym sẽ xác nhận lịch của bạn." });
+            // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
+            const checked = await checkoutAction.mutateAsync({ id: booking.id, action: "checkout" });
+            const payable = (checked as Booking).payableAmount ?? 0;
+            toast({
+              type: "success",
+              title: payable > 0 ? "Đã tạo lịch — vui lòng thanh toán VietQR" : "Đã gửi yêu cầu cho phòng gym",
+            });
             form.reset();
-            onClose();
+            onCheckedOut(booking.id, payable);
           } catch (error) {
             toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
           }
         })}
       >
         <div className="sm:col-span-2">
-          <FieldShell label="Huấn luyện viên" error={form.formState.errors.ptId}>
+          <FieldShell label="Phòng gym" error={form.formState.errors.gymId}>
             <Controller
               control={form.control}
-              name="ptId"
+              name="gymId"
               render={({ field }) => (
                 <Select
                   value={field.value ? String(field.value) : ""}
-                  onValueChange={(v) => field.onChange(Number(v))}
-                  disabled={!pts.data?.content?.length}
+                  onValueChange={(v) => { field.onChange(Number(v)); form.setValue("itemId", 0); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={pts.isFetching ? "Đang tải..." : "Chọn huấn luyện viên"} />
+                    <SelectValue placeholder={gyms.isFetching ? "Đang tải..." : "Chọn phòng gym"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {pts.data?.content?.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.displayName}{p.specialization ? ` · ${p.specialization}` : ""}
-                      </SelectItem>
+                    {gyms.data?.content?.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>{g.gymName}{g.city ? ` · ${g.city}` : ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -340,13 +475,98 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
           </FieldShell>
         </div>
 
+        <FieldShell label="Loại" error={form.formState.errors.itemType}>
+          <Controller
+            control={form.control}
+            name="itemType"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="service">Dịch vụ buổi lẻ</SelectItem>
+                  <SelectItem value="package">Gói tập</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FieldShell>
+
+        <FieldShell label={itemType === "service" ? "Dịch vụ" : "Gói tập"} error={form.formState.errors.itemId}>
+          <Controller
+            control={form.control}
+            name="itemId"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(v) => field.onChange(Number(v))}
+                disabled={!gymId || !catalogItems.length}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={!gymId ? "Chọn gym trước" : (services.isFetching || packages.isFetching) ? "Đang tải..." : catalogItems.length ? "Chọn" : "Gym chưa công bố mục nào"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {catalogItems.map((item) => (
+                    <SelectItem key={item.id} value={String(item.id)}>
+                      {item.name} · {money(item.price)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FieldShell>
+
+        <FieldShell label="Chi nhánh (tùy chọn)" error={form.formState.errors.branchId}>
+          <Controller
+            control={form.control}
+            name="branchId"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
+                disabled={!gymId || !branches.data?.length}
+              >
+                <SelectTrigger><SelectValue placeholder="Không chọn" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Không chọn</SelectItem>
+                  {branches.data?.map((b) => (
+                    <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FieldShell>
+
+        <FieldShell label="Huấn luyện viên (tùy chọn)" error={form.formState.errors.ptId}>
+          <Controller
+            control={form.control}
+            name="ptId"
+            render={({ field }) => (
+              <Select
+                value={field.value ? String(field.value) : ""}
+                onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
+                disabled={!gymId || !pts.data?.content?.length}
+              >
+                <SelectTrigger><SelectValue placeholder="Gym tự phân công" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Gym tự phân công</SelectItem>
+                  {pts.data?.content?.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.displayName}{p.specialization ? ` · ${p.specialization}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </FieldShell>
+
         <FieldShell label="Ngày tập" error={form.formState.errors.bookingDate}>
           <Controller
             control={form.control}
             name="bookingDate"
-            render={({ field }) => (
-              <DatePicker value={field.value} onChange={field.onChange} />
-            )}
+            render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
           />
         </FieldShell>
         <FieldShell label="Giờ bắt đầu" error={form.formState.errors.startTime}>
@@ -362,9 +582,9 @@ function CreateBookingDialog({ open, onClose }: { open: boolean; onClose: () => 
           </FieldShell>
         </div>
 
-        <Button className="sm:col-span-2" disabled={create.isPending}>
+        <Button className="sm:col-span-2" disabled={create.isPending || checkoutAction.isPending}>
           <CalendarCheck2 className="size-4" />
-          {create.isPending ? "Đang xử lý..." : "Tạo lịch đặt"}
+          {create.isPending || checkoutAction.isPending ? "Đang xử lý..." : "Đặt lịch & thanh toán"}
         </Button>
       </form>
     </Dialog>
