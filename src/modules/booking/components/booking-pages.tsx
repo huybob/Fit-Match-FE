@@ -26,6 +26,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { useQuery } from "@tanstack/react-query";
 import { marketplaceService } from "@/services/marketplace.service";
+import { useOpenDispute } from "@/modules/dispute/hooks/use-dispute";
 import {
   BookingAction,
   BookingScope,
@@ -212,8 +213,28 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
 }) {
   const { toast } = useToast();
   const action = useBookingAction(scope);
+  const openDispute = useOpenDispute();
   const [confirming, setConfirming] = useState<{ action: BookingAction; label: string; message?: string; requireMessage?: boolean } | null>(null);
+  const [disputeReason, setDisputeReason] = useState<string | null>(null);
   if (!booking) return null;
+
+  // UC-063: mở tranh chấp cho booking đã phát sinh dịch vụ/tiền.
+  const canDispute = ["CONFIRMED", "COMPLETED", "NO_SHOW", "REJECTED", "CANCELLED"].includes(booking.status);
+
+  async function submitDispute() {
+    if (!bookingId || !disputeReason?.trim()) {
+      toast({ type: "warning", title: "Nhập lý do tranh chấp" });
+      return;
+    }
+    try {
+      await openDispute.mutateAsync({ bookingId, reason: disputeReason.trim() });
+      toast({ type: "success", title: "Đã mở tranh chấp", description: "Điều phối viên sẽ xử lý; tiền (nếu có) được tạm giữ." });
+      setDisputeReason(null);
+      onClose();
+    } catch (e) {
+      toast({ type: "error", title: "Không mở được tranh chấp", description: toErrorMessage(e) });
+    }
+  }
 
   const bookingId = booking.id;
   const status = booking.status;
@@ -304,6 +325,35 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
               {item.label}
             </Button>
           ))}
+        </div>
+      )}
+
+      {canDispute && disputeReason === null && (
+        <button
+          type="button"
+          onClick={() => setDisputeReason("")}
+          className="mt-3 text-sm font-semibold text-destructive hover:underline"
+        >
+          Mở tranh chấp / khiếu nại
+        </button>
+      )}
+
+      {disputeReason !== null && (
+        <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+          <p className="font-black">Mở tranh chấp cho booking #{bookingId}</p>
+          <Textarea
+            className="mt-3"
+            maxLength={1000}
+            placeholder="Mô tả vấn đề (dịch vụ, thanh toán, điểm danh...)"
+            value={disputeReason}
+            onChange={(e) => setDisputeReason(e.target.value)}
+          />
+          <div className="mt-3 flex gap-2">
+            <Button variant="destructive" disabled={openDispute.isPending} onClick={() => void submitDispute()}>
+              {openDispute.isPending ? "Đang gửi..." : "Gửi tranh chấp"}
+            </Button>
+            <Button variant="outline" onClick={() => setDisputeReason(null)}>Hủy</Button>
+          </div>
         </div>
       )}
 
