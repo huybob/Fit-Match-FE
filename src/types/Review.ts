@@ -1,23 +1,26 @@
 import type { PageResponse } from "@/shared/types/api-response.type";
 
+export type ReviewStatus = "VISIBLE" | "HIDDEN" | "REMOVED";
+export type ReportStatus = "OPEN" | "RESOLVED" | "DISMISSED";
+
+/** ReviewResponse của BE (UC-069). */
 export interface Review {
-  id?: number;
+  id: number;
   bookingId?: number;
-  customerId?: number;
   customerName?: string;
-  customerAvatar?: string;
-  ptProfileId?: number;
-  ptName?: string;
   gymId?: number;
   gymName?: string;
-  rating?: number;
+  serviceId?: number;
+  serviceName?: string;
+  ptProfileId?: number;
+  ptName?: string;
+  rating: number;
   comment?: string;
-  repliedById?: number;
-  repliedByName?: string;
+  status: ReviewStatus;
   reply?: string;
+  repliedByName?: string;
   repliedAt?: string;
   createdAt?: string;
-  updatedAt?: string;
 }
 
 export interface ReviewRequest {
@@ -30,4 +33,25 @@ export interface ReplyRequest {
   reply: string;
 }
 
+export interface ReportRequest {
+  reason: string;
+}
+
+export interface ModerateReviewRequest {
+  status: ReviewStatus;
+  note?: string;
+}
+
+/** ReviewReportResponse của BE (UC-070/071). */
+export interface ReviewReport {
+  id: number;
+  status: ReportStatus;
+  reason: string;
+  reportedBy?: string;
+  moderatorNote?: string;
+  createdAt?: string;
+  review: Review;
+}
+
 export type ReviewPage = PageResponse<Review>;
+export type ReviewReportPage = PageResponse<ReviewReport>;

@@ -7,7 +7,6 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
-import { useMyGyms } from "@/modules/gym/hooks/use-gym";
 import { useGetMyTrainerProfile } from "@/modules/trainer/hooks/use-trainer";
 import type { Review } from "@/services/review.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -44,33 +43,15 @@ export function TrainerReviewsPage() {
 }
 
 export function GymReviewsPage() {
-  const q = useMyGyms();
-  const gyms = q.data?.content ?? [];
-  const [id, setId] = useState(0);
-  const current = id || gyms[0]?.id || 0;
-  return (
-    <>
-      <Select
-        value={String(current)}
-        onValueChange={(v) => setId(Number(v))}
-      >
-        <SelectTrigger className="w-72">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {gyms.map((g) => (
-            <SelectItem key={g.id} value={String(g.id)}>
-              {g.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="mt-4">
-        <ReviewPage scope="gym" targetId={current} />
-      </div>
-    </>
-  );
+  // getGymOwn trả review của mọi gym thuộc operator (mọi trạng thái) — không cần chọn gym.
+  return <ReviewPage scope="gym" />;
 }
+
+const reviewStatusLabels: Record<string, string> = {
+  VISIBLE: "Hiển thị",
+  HIDDEN: "Đã ẩn",
+  REMOVED: "Đã gỡ",
+};
 
 const scopeTitles: Record<string, string> = {
   customer: "Đánh giá của tôi",
@@ -142,6 +123,11 @@ function ReviewPage({
                   {r.rating}/5
                 </span>
               </div>
+              {scope === "gym" && r.status !== "VISIBLE" && (
+                <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                  {reviewStatusLabels[r.status] ?? r.status}
+                </span>
+              )}
               <p className="mt-3 text-sm text-muted-foreground">
                 {r.comment || "Không có nội dung"}
               </p>
