@@ -1,7 +1,6 @@
-export default function Page() {
-  return (
-    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
-      Tính năng đang phát triển
-    </div>
-  );
+import { redirect } from "next/navigation";
+
+// Phase 4 (audit A-14/B-37): route stub của mô hình PT độc lập cũ — chuyển về trang thật.
+export default function LegacyStubRedirect() {
+  redirect("/gym/pts");
 }
