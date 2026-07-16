@@ -16,6 +16,7 @@ export type BookingAction =
   | "checkout"
   | "cancel"
   | "refund"
+  | "checkIn"
   | "accept"
   | "reject"
   | "noShow"
@@ -62,6 +63,15 @@ export function useCreateBooking() {
   });
 }
 
+/** UC-051: gói tập đã mua của khách (dùng để đặt buổi tiếp theo miễn phí). */
+export function useMyPackages(enabled = true) {
+  return useQuery({
+    queryKey: [...bookingKeys.all, "my-packages"],
+    queryFn: () => bookingService.myPackages(),
+    enabled,
+  });
+}
+
 export function useRescheduleBooking(scope: BookingScope) {
   const c = useQueryClient();
   return useMutation({
@@ -85,6 +95,12 @@ export function useBookingAction(scope: BookingScope) {
           return bookingService.checkout(id);
         case "refund":
           return bookingService.requestRefund(id, message ?? "");
+        case "checkIn":
+          return scope === "gym"
+            ? bookingService.gymCheckIn(id)
+            : scope === "pt"
+              ? bookingService.ptCheckIn(id)
+              : bookingService.checkIn(id);
         case "accept":
           return bookingService.accept(id, ptId);
         case "reject":

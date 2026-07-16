@@ -25,6 +25,8 @@ export interface Booking {
   packageName?: string;
   ptId?: number;
   ptDisplayName?: string;
+  customerPackageId?: number;
+  checkedInAt?: string;
   startAt?: string;
   endAt?: string;
   status: BookingStatus;
@@ -36,15 +38,51 @@ export interface Booking {
   createdAt?: string;
 }
 
-/** Tạo/cập nhật lựa chọn booking (UC-031/032) — đúng một trong serviceId/packageId. */
+/** Tạo/cập nhật lựa chọn booking (UC-031/032) — đúng một trong serviceId/packageId/customerPackageId. */
 export interface CreateBookingRequest {
   serviceId?: number;
   packageId?: number;
+  customerPackageId?: number;
   branchId?: number;
   ptId?: number;
   startAt?: string;
   endAt?: string;
   note?: string;
+}
+
+/** Hiệu chỉnh điểm danh (UC-050). */
+export interface CorrectAttendanceRequest {
+  checkedInAt?: string;
+  clearCheckIn?: boolean;
+  status?: BookingStatus;
+  reason: string;
+}
+
+export type CustomerPackageStatus = "ACTIVE" | "EXHAUSTED" | "EXPIRED";
+
+/** Gói tập khách đã mua (UC-049/051). */
+export interface CustomerPackage {
+  id: number;
+  packageId?: number;
+  packageName?: string;
+  gymId?: number;
+  gymName?: string;
+  purchaseBookingId?: number;
+  sessionsTotal: number;
+  sessionsUsed: number;
+  sessionsRemaining: number;
+  expiresAt?: string;
+  status: CustomerPackageStatus;
+}
+
+/** Ghi chú buổi tập (UC-048/051). */
+export interface SessionNote {
+  id: number;
+  bookingId: number;
+  note: string;
+  evidenceUrl?: string;
+  author?: string;
+  createdAt?: string;
 }
 
 export interface RescheduleBookingRequest {

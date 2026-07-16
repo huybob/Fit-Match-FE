@@ -5,10 +5,13 @@ import type {
   BookingPage,
   BookingStatus,
   CancelBookingRequest,
+  CorrectAttendanceRequest,
   CreateBookingRequest,
+  CustomerPackage,
   PaymentOrder,
   RefundPage,
   RescheduleBookingRequest,
+  SessionNote,
 } from "@/types/Booking";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
@@ -18,10 +21,13 @@ export type {
   BookingPage,
   BookingStatus,
   CancelBookingRequest,
+  CorrectAttendanceRequest,
   CreateBookingRequest,
+  CustomerPackage,
   PaymentOrder,
   RefundRequest,
   RescheduleBookingRequest,
+  SessionNote,
 } from "@/types/Booking";
 
 export type BookingListParams = Partial<PaginationParams> & {
@@ -59,6 +65,9 @@ export const bookingService = {
     api.post<unknown, { reason: string }>(`/bookings/${id}/refund-request`, { reason }),
   myRefunds: (params?: BookingListParams) =>
     api.get<RefundPage>("/bookings/refunds", { params: { ...defaultPage, ...params } }),
+  checkIn: (id: number) => api.post<Booking>(`/bookings/${id}/check-in`),
+  myPackages: () => api.get<CustomerPackage[]>("/bookings/my-packages"),
+  notes: (id: number) => api.get<SessionNote[]>(`/bookings/${id}/notes`),
 
   // ---- Gym operator (UC-037..039, 041..043, 049) ----
   getGym: (params?: BookingListParams) => list("/gym/bookings", params),
@@ -76,7 +85,18 @@ export const bookingService = {
     api.post<Booking, { reason: string }>(`/gym/bookings/${id}/cancel`, { reason }),
   noShow: (id: number) => api.post<Booking>(`/gym/bookings/${id}/no-show`),
   complete: (id: number) => api.post<Booking>(`/gym/bookings/${id}/complete`),
+  gymCheckIn: (id: number) => api.post<Booking>(`/gym/bookings/${id}/check-in`),
+  correctAttendance: (id: number, payload: CorrectAttendanceRequest) =>
+    api.post<Booking, CorrectAttendanceRequest>(`/gym/bookings/${id}/correct-attendance`, payload),
+  gymNotes: (id: number) => api.get<SessionNote[]>(`/gym/bookings/${id}/notes`),
+  addGymNote: (id: number, note: string, evidenceUrl?: string) =>
+    api.post<SessionNote, { note: string; evidenceUrl?: string }>(
+      `/gym/bookings/${id}/notes`, { note, evidenceUrl }),
 
-  // ---- PT (read-only) ----
+  // ---- PT ----
   getPt: (params?: BookingListParams) => list("/pt/bookings", params),
+  ptCheckIn: (id: number) => api.post<Booking>(`/pt/bookings/${id}/check-in`),
+  addPtNote: (id: number, note: string, evidenceUrl?: string) =>
+    api.post<SessionNote, { note: string; evidenceUrl?: string }>(
+      `/pt/bookings/${id}/notes`, { note, evidenceUrl }),
 };

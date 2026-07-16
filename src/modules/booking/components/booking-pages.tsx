@@ -33,6 +33,7 @@ import {
   useBookingPayment,
   useBookings,
   useCreateBooking,
+  useMyPackages,
 } from "../hooks/use-booking";
 import { createBookingSchema } from "../schemas";
 
@@ -71,6 +72,7 @@ const actionSuccessLabels: Record<BookingAction, string> = {
   checkout: "Đã gửi yêu cầu — vui lòng thanh toán nếu có phí",
   cancel: "Đã hủy lịch đặt",
   refund: "Đã gửi yêu cầu hoàn tiền",
+  checkIn: "Đã check-in",
   accept: "Đã nhận lịch đặt",
   reject: "Đã từ chối lịch đặt",
   noShow: "Đã đánh dấu vắng mặt",
@@ -216,8 +218,10 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   const bookingId = booking.id;
   const status = booking.status;
   const actions: Array<{ action: BookingAction; label: string; requireMessage?: boolean }> = [];
+  const checkedIn = !!booking.checkedInAt;
   if (scope === "customer") {
     if (status === "DRAFT") actions.push({ action: "checkout", label: "Gửi yêu cầu & thanh toán" });
+    if (status === "CONFIRMED" && !checkedIn) actions.push({ action: "checkIn", label: "Check-in" });
     if (["DRAFT", "PENDING_PAYMENT", "PENDING_GYM", "CONFIRMED"].includes(status)) {
       actions.push({ action: "cancel", label: "Hủy lịch" });
     }
@@ -225,12 +229,16 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
       actions.push({ action: "refund", label: "Yêu cầu hoàn tiền", requireMessage: true });
     }
   }
+  if (scope === "pt" && status === "CONFIRMED" && !checkedIn) {
+    actions.push({ action: "checkIn", label: "Check-in cho khách" });
+  }
   if (scope === "gym") {
     if (status === "PENDING_GYM") {
       actions.push({ action: "accept", label: "Nhận lịch" });
       actions.push({ action: "reject", label: "Từ chối", requireMessage: true });
     }
     if (status === "CONFIRMED") {
+      if (!checkedIn) actions.push({ action: "checkIn", label: "Check-in cho khách" });
       actions.push({ action: "complete", label: "Hoàn tất buổi tập" });
       actions.push({ action: "noShow", label: "Khách vắng mặt" });
       actions.push({ action: "cancel", label: "Hủy lịch", requireMessage: true });
@@ -268,8 +276,8 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
           <Info label="Huấn luyện viên" value={booking.ptDisplayName ?? "Chưa gán"} />
           <Info label="Địa điểm" value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
           <Info label="Lịch tập" value={`${dateTimeText(booking.startAt)} → ${dateTimeText(booking.endAt)}`} />
-          <Info label="Tổng tiền" value={money(booking.totalAmount)} />
-          <Info label="Phải thanh toán" value={money(booking.payableAmount)} />
+          <Info label="Tổng tiền" value={booking.customerPackageId ? "Thuộc gói đã mua" : money(booking.totalAmount)} />
+          <Info label="Check-in" value={booking.checkedInAt ? dateTimeText(booking.checkedInAt) : "Chưa check-in"} />
         </dl>
         {booking.statusReason && (
           <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm text-muted-foreground">{booking.statusReason}</p>
@@ -382,6 +390,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   const form = useForm<z.infer<typeof createBookingSchema>>({
     resolver: zodResolver(createBookingSchema),
     defaultValues: {
+      mode: "new",
       gymId: 0,
       itemType: "service",
       itemId: 0,
@@ -391,13 +400,17 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
       note: "",
     },
   });
-  const gymId = form.watch("gymId");
+  const mode = form.watch("mode");
+  const gymId = form.watch("gymId") ?? 0;
   const itemType = form.watch("itemType");
+
+  const myPackages = useMyPackages(open);
+  const usablePackages = (myPackages.data ?? []).filter((p) => p.status === "ACTIVE" && p.sessionsRemaining > 0);
 
   const gyms = useQuery({
     queryKey: ["marketplace", "gyms", "booking"],
     queryFn: () => marketplaceService.searchGyms({ size: 100 }),
-    enabled: open,
+    enabled: open && mode === "new",
   });
   const services = useQuery({
     queryKey: ["marketplace", "gym", gymId, "services"],
@@ -409,15 +422,19 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
     queryFn: () => marketplaceService.getGymPackages(gymId),
     enabled: open && gymId > 0,
   });
+  // Ở chế độ dùng gói, gym được suy ra từ gói đã chọn.
+  const selectedPackage = usablePackages.find((p) => p.id === form.watch("customerPackageId"));
+  const effectiveGymId = mode === "package" ? (selectedPackage?.gymId ?? 0) : gymId;
+
   const branches = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "branches"],
-    queryFn: () => marketplaceService.getGymBranches(gymId),
-    enabled: open && gymId > 0,
+    queryKey: ["marketplace", "gym", effectiveGymId, "branches"],
+    queryFn: () => marketplaceService.getGymBranches(effectiveGymId),
+    enabled: open && effectiveGymId > 0,
   });
   const pts = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "pts"],
-    queryFn: () => marketplaceService.getGymPts(gymId),
-    enabled: open && gymId > 0,
+    queryKey: ["marketplace", "gym", effectiveGymId, "pts"],
+    queryFn: () => marketplaceService.getGymPts(effectiveGymId),
+    enabled: open && effectiveGymId > 0,
   });
 
   const catalogItems = itemType === "service" ? (services.data ?? []) : (packages.data ?? []);
@@ -429,8 +446,9 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
         onSubmit={form.handleSubmit(async (values) => {
           try {
             const booking = await create.mutateAsync({
-              serviceId: values.itemType === "service" ? values.itemId : undefined,
-              packageId: values.itemType === "package" ? values.itemId : undefined,
+              serviceId: values.mode === "new" && values.itemType === "service" ? values.itemId : undefined,
+              packageId: values.mode === "new" && values.itemType === "package" ? values.itemId : undefined,
+              customerPackageId: values.mode === "package" ? values.customerPackageId : undefined,
               branchId: values.branchId,
               ptId: values.ptId,
               startAt: `${values.bookingDate}T${values.startTime}:00`,
@@ -452,22 +470,21 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
         })}
       >
         <div className="sm:col-span-2">
-          <FieldShell label="Phòng gym" error={form.formState.errors.gymId}>
+          <FieldShell label="Hình thức">
             <Controller
               control={form.control}
-              name="gymId"
+              name="mode"
               render={({ field }) => (
                 <Select
-                  value={field.value ? String(field.value) : ""}
-                  onValueChange={(v) => { field.onChange(Number(v)); form.setValue("itemId", 0); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
+                  value={field.value}
+                  onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); form.setValue("customerPackageId", undefined); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder={gyms.isFetching ? "Đang tải..." : "Chọn phòng gym"} />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {gyms.data?.content?.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>{g.gymName}{g.city ? ` · ${g.city}` : ""}</SelectItem>
-                    ))}
+                    <SelectItem value="new">Đặt & thanh toán mới</SelectItem>
+                    <SelectItem value="package" disabled={!usablePackages.length}>
+                      Dùng buổi từ gói đã mua{usablePackages.length ? ` (${usablePackages.length})` : " (không có)"}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -475,46 +492,98 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
           </FieldShell>
         </div>
 
-        <FieldShell label="Loại" error={form.formState.errors.itemType}>
-          <Controller
-            control={form.control}
-            name="itemType"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="service">Dịch vụ buổi lẻ</SelectItem>
-                  <SelectItem value="package">Gói tập</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
+        {mode === "package" ? (
+          <div className="sm:col-span-2">
+            <FieldShell label="Gói đã mua" error={form.formState.errors.customerPackageId}>
+              <Controller
+                control={form.control}
+                name="customerPackageId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ? String(field.value) : ""}
+                    onValueChange={(v) => { field.onChange(Number(v)); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Chọn gói" /></SelectTrigger>
+                    <SelectContent>
+                      {usablePackages.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.packageName} · {p.gymName} · còn {p.sessionsRemaining}/{p.sessionsTotal} buổi
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FieldShell>
+          </div>
+        ) : (
+          <>
+            <div className="sm:col-span-2">
+              <FieldShell label="Phòng gym" error={form.formState.errors.gymId}>
+                <Controller
+                  control={form.control}
+                  name="gymId"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ? String(field.value) : ""}
+                      onValueChange={(v) => { field.onChange(Number(v)); form.setValue("itemId", 0); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={gyms.isFetching ? "Đang tải..." : "Chọn phòng gym"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gyms.data?.content?.map((g) => (
+                          <SelectItem key={g.id} value={String(g.id)}>{g.gymName}{g.city ? ` · ${g.city}` : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FieldShell>
+            </div>
 
-        <FieldShell label={itemType === "service" ? "Dịch vụ" : "Gói tập"} error={form.formState.errors.itemId}>
-          <Controller
-            control={form.control}
-            name="itemId"
-            render={({ field }) => (
-              <Select
-                value={field.value ? String(field.value) : ""}
-                onValueChange={(v) => field.onChange(Number(v))}
-                disabled={!gymId || !catalogItems.length}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={!gymId ? "Chọn gym trước" : (services.isFetching || packages.isFetching) ? "Đang tải..." : catalogItems.length ? "Chọn" : "Gym chưa công bố mục nào"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {catalogItems.map((item) => (
-                    <SelectItem key={item.id} value={String(item.id)}>
-                      {item.name} · {money(item.price)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
+            <FieldShell label="Loại" error={form.formState.errors.itemType}>
+              <Controller
+                control={form.control}
+                name="itemType"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); }}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="service">Dịch vụ buổi lẻ</SelectItem>
+                      <SelectItem value="package">Gói tập</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FieldShell>
+
+            <FieldShell label={itemType === "service" ? "Dịch vụ" : "Gói tập"} error={form.formState.errors.itemId}>
+              <Controller
+                control={form.control}
+                name="itemId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ? String(field.value) : ""}
+                    onValueChange={(v) => field.onChange(Number(v))}
+                    disabled={!gymId || !catalogItems.length}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={!gymId ? "Chọn gym trước" : (services.isFetching || packages.isFetching) ? "Đang tải..." : catalogItems.length ? "Chọn" : "Gym chưa công bố mục nào"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {catalogItems.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name} · {money(item.price)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </FieldShell>
+          </>
+        )}
 
         <FieldShell label="Chi nhánh (tùy chọn)" error={form.formState.errors.branchId}>
           <Controller
