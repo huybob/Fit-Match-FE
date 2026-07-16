@@ -27,6 +27,7 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import { useQuery } from "@tanstack/react-query";
 import { marketplaceService } from "@/services/marketplace.service";
 import { useOpenDispute } from "@/modules/dispute/hooks/use-dispute";
+import { voucherService } from "@/services/voucher.service";
 import {
   BookingAction,
   BookingScope,
@@ -436,6 +437,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   const { toast } = useToast();
   const create = useCreateBooking();
   const checkoutAction = useBookingAction("customer");
+  const [voucherCode, setVoucherCode] = useState("");
 
   const form = useForm<z.infer<typeof createBookingSchema>>({
     resolver: zodResolver(createBookingSchema),
@@ -505,6 +507,14 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
               endAt: `${values.bookingDate}T${values.endTime}:00`,
               note: values.note || undefined,
             });
+            // UC-073: áp voucher (nếu nhập) trước khi checkout; mã sai không chặn đặt lịch.
+            if (values.mode === "new" && voucherCode.trim()) {
+              try {
+                await voucherService.apply(booking.id, voucherCode.trim());
+              } catch (err) {
+                toast({ type: "warning", title: "Không áp được voucher", description: toErrorMessage(err) });
+              }
+            }
             // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
             const checked = await checkoutAction.mutateAsync({ id: booking.id, action: "checkout" });
             const payable = (checked as Booking).payableAmount ?? 0;
@@ -694,6 +704,14 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
         <FieldShell label="Giờ kết thúc" error={form.formState.errors.endTime}>
           <Input type="time" {...form.register("endTime")} />
         </FieldShell>
+
+        {mode === "new" && (
+          <div className="sm:col-span-2">
+            <FieldShell label="Mã giảm giá (tùy chọn)">
+              <Input value={voucherCode} onChange={(e) => setVoucherCode(e.target.value.toUpperCase())} placeholder="VD: SALE10" />
+            </FieldShell>
+          </div>
+        )}
 
         <div className="sm:col-span-2">
           <FieldShell label="Ghi chú" error={form.formState.errors.note}>
