@@ -1,5 +1,6 @@
-import { CartPage } from "@/modules/ecommerce/ecommerce-pages";
+import { redirect } from "next/navigation";
 
-export default function CartRoute() {
-  return <CartPage />;
+// Mô hình giỏ hàng cũ đã bỏ — đặt lịch trực tiếp qua booking (UC-031..035).
+export default function CartRedirect() {
+  redirect("/profile/bookings");
 }

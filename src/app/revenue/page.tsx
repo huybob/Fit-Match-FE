@@ -1,6 +1,6 @@
-import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
-import { AuthGuard } from "@/modules/auth/auth-guard";
+import { redirect } from "next/navigation";
 
-export default function RevenuePage() {
-  return <AuthGuard roles={["ROLE_GYM_OPERATOR"]}><GymWorkspacePage activeSection="revenue" /></AuthGuard>;
+// Màn cũ dùng dữ liệu mock — thay bằng báo cáo thật của gym (UC-076).
+export default function RevenueRedirect() {
+  redirect("/gym/revenue");
 }
