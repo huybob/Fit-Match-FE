@@ -1,12 +1,16 @@
 import { api } from "@/services/api";
 import type {
+  AdminRefundCreateRequest,
   AdminUserPage,
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
+  CommissionConfigRequest,
+  CommissionConfigResponse,
   GymVerificationPage,
   GymVerificationResponse,
   PtDocumentDto,
+  RefundDecisionRequest,
   ServiceCategoryRequest,
   ServiceCategoryResponse,
   SystemConfigRequest,
@@ -18,9 +22,12 @@ import type {
   UserRole,
   UserStatus,
 } from "@/types/Admin";
+import type { RefundPage, RefundRequest, RefundStatus } from "@/types/Booking";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto, GymVerificationResponse, GymVerificationPage };
+export type { AdminRefundCreateRequest, CommissionConfigRequest, CommissionConfigResponse, RefundDecisionRequest } from "@/types/Admin";
+export type { RefundPage, RefundRequest, RefundStatus } from "@/types/Booking";
 
 export interface AdminUserSearchParams extends PaginationParams {
   keyword?: string;
@@ -95,4 +102,20 @@ export const adminService = {
     api.get<SystemConfigResponse[]>("/admin/master-data/system-configs"),
   upsertSystemConfig: (payload: SystemConfigRequest) =>
     api.put<SystemConfigResponse, SystemConfigRequest>("/admin/master-data/system-configs", payload),
+
+  // ── Commission & platform economics (UC-072) ──
+  getCommissionConfig: () =>
+    api.get<CommissionConfigResponse>("/admin/commission-config"),
+  updateCommissionConfig: (payload: CommissionConfigRequest) =>
+    api.put<CommissionConfigResponse, CommissionConfigRequest>("/admin/commission-config", payload),
+
+  // ── Refund processing (UC-055/056) ──
+  listRefunds: (params: PaginationParams & { status?: RefundStatus }) =>
+    api.get<RefundPage>("/admin/refunds", { params }),
+  createRefund: (payload: AdminRefundCreateRequest) =>
+    api.post<RefundRequest, AdminRefundCreateRequest>("/admin/refunds", payload),
+  approveRefund: (id: number, payload?: RefundDecisionRequest) =>
+    api.post<RefundRequest, RefundDecisionRequest>(`/admin/refunds/${id}/approve`, payload ?? {}),
+  rejectRefund: (id: number, payload?: RefundDecisionRequest) =>
+    api.post<RefundRequest, RefundDecisionRequest>(`/admin/refunds/${id}/reject`, payload ?? {}),
 };

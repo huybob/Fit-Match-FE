@@ -1,6 +1,6 @@
-import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
-import { AuthGuard } from "@/modules/auth/auth-guard";
+import { redirect } from "next/navigation";
 
-export default function SchedulePage() {
-  return <AuthGuard roles={["ROLE_GYM_OPERATOR"]}><GymWorkspacePage activeSection="schedule" /></AuthGuard>;
+// Màn lịch cũ dùng mock — chuyển về danh sách booking thật của gym.
+export default function ScheduleRedirect() {
+  redirect("/gym/bookings");
 }

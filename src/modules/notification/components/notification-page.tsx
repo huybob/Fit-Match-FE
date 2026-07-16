@@ -13,6 +13,7 @@ import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import type { UpdateNotificationPreferenceRequest } from "@/types/Notification";
 import { cn } from "@/shared/utils/cn.util";
+import { NotificationInbox } from "./notification-inbox";
 
 const PREFS: {
   key: keyof UpdateNotificationPreferenceRequest;
@@ -51,6 +52,7 @@ export function NotificationPage() {
   const query = useNotificationPreferences();
   const update = useUpdateNotificationPreferences();
 
+  const [tab, setTab] = useState<"inbox" | "settings">("inbox");
   const [values, setValues] = useState<UpdateNotificationPreferenceRequest>({});
 
   useEffect(() => {
@@ -78,13 +80,31 @@ export function NotificationPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6">
         <div className="mb-1 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Cài đặt thông báo</h1>
+        <h1 className="text-3xl font-black">Thông báo</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Tuỳ chỉnh cách FitMatch gửi thông báo đến bạn
+          Xem thông báo và tuỳ chỉnh cách FitMatch gửi thông báo đến bạn
         </p>
       </section>
 
-      {query.isLoading ? (
+      <div className="mb-5 inline-flex rounded-2xl border border-border bg-card p-1">
+        {(["inbox", "settings"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={cn(
+              "rounded-xl px-4 py-2 text-sm font-bold transition",
+              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t === "inbox" ? "Hộp thư" : "Cài đặt"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "inbox" ? (
+        <NotificationInbox />
+      ) : query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState

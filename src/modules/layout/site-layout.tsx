@@ -155,22 +155,10 @@ function SiteHeader() {
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/bookings">
                         Lịch đặt
                       </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/sessions">
-                        Buổi tập
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/workout-plans">
-                        Giáo án
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/attendance">
-                        Điểm danh
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/measurements">
-                        Chỉ số cơ thể
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/payments">
-                        Thanh toán
-                      </Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/reviews">Đánh giá</Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/disputes">Tranh chấp</Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/loyalty">Điểm thưởng</Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/notifications">Thông báo</Link>
                     </>
                   )}
                   {/* Khu vực quản lý — tạm ẩn */}
@@ -251,12 +239,9 @@ function SiteHeader() {
                   <>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/favorites">PT yêu thích</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">Lịch đặt</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/sessions">Buổi tập</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/workout-plans">Giáo án</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/attendance">Điểm danh</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/measurements">Chỉ số cơ thể</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/payments">Thanh toán</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">Đánh giá</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/disputes">Tranh chấp</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/loyalty">Điểm thưởng</Link>
                   </>
                 )}
                 {/* Khu vực quản lý — tạm ẩn */}

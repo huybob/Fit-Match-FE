@@ -110,9 +110,9 @@ function PtMeasurements() {
   const [creating, setCreating] = useState(false);
   const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
   const customers = useMemo(() => {
-    const seen = new Map<number, string>();
+    const seen = new Map<string, string>();
     bookingsQuery.data?.content?.forEach((b) => {
-      if (b.customerId && !seen.has(b.customerId)) seen.set(b.customerId, b.customerName ?? `#${b.customerId}`);
+      if (b.customerUsername && !seen.has(b.customerUsername)) seen.set(b.customerUsername, b.customerUsername);
     });
     return Array.from(seen, ([id, name]) => ({ id, name }));
   }, [bookingsQuery.data]);
@@ -195,9 +195,9 @@ function CreateMeasurementDialog({ open, defaultCustomerId, onClose }: {
   const mutation = useCreateMeasurement();
   const bookingsQuery = useBookings("pt", { page: 0, size: 100 });
   const customers = useMemo(() => {
-    const seen = new Map<number, string>();
+    const seen = new Map<string, string>();
     bookingsQuery.data?.content?.forEach((b) => {
-      if (b.customerId && !seen.has(b.customerId)) seen.set(b.customerId, b.customerName ?? `#${b.customerId}`);
+      if (b.customerUsername && !seen.has(b.customerUsername)) seen.set(b.customerUsername, b.customerUsername);
     });
     return Array.from(seen, ([id, name]) => ({ id, name }));
   }, [bookingsQuery.data]);

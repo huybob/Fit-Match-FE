@@ -154,7 +154,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
   const { toast } = useToast();
   const mutation = useCreatePayment();
   const confirmed = useBookings("customer", { status: "CONFIRMED", page: 0, size: 50 });
-  const checkedIn = useBookings("customer", { status: "CHECKED_IN", page: 0, size: 50 });
+  const checkedIn = useBookings("customer", { status: "COMPLETED", page: 0, size: 50 });
   const payable = [...(confirmed.data?.content ?? []), ...(checkedIn.data?.content ?? [])];
   const loading = confirmed.isLoading || checkedIn.isLoading;
   const fmt = (v: number | undefined) =>
@@ -198,7 +198,7 @@ function CreatePaymentDialog({ open, onClose }: { open: boolean; onClose: () => 
                   <SelectContent>
                     {payable.map((b) => (
                       <SelectItem key={b.id} value={String(b.id)}>
-                        #{b.id} · {b.ptServiceName ?? ""} · {b.bookingDate} · {fmt(b.price)}
+                        #{b.id} · {b.serviceName ?? b.packageName ?? ""} · {b.startAt ?? ""} · {fmt(b.totalAmount)}
                       </SelectItem>
                     ))}
                   </SelectContent>

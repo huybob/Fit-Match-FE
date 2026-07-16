@@ -1,5 +1,6 @@
-import { CheckoutPage } from "@/modules/ecommerce/ecommerce-pages";
+import { redirect } from "next/navigation";
 
-export default function CheckoutRoute() {
-  return <CheckoutPage />;
+// Checkout cũ (mock) đã bỏ — thanh toán VietQR thực hiện trong luồng booking (UC-035/052).
+export default function CheckoutRedirect() {
+  redirect("/profile/bookings");
 }

@@ -1,34 +1,50 @@
 import type { PageResponse } from "@/shared/types/api-response.type";
 
+export type WithdrawalStatus = "PENDING" | "APPROVED" | "REJECTED" | "PAID";
+
+/** WithdrawalResponse của BE (UC-062). */
 export interface Withdrawal {
-  id?: number;
-  userId?: number;
-  amount?: number;
-  bankName?: string;
+  id: number;
+  amount: number;
   bankAccount?: string;
-  bankHolder?: string;
-  status?: "PENDING" | "APPROVED" | "REJECTED" | "PAID";
-  notes?: string;
-  rejectReason?: string;
-  rejectionReason?: string;
-  ptName?: string;
-  approvedByName?: string;
+  bankName?: string;
+  accountHolder?: string;
+  status: WithdrawalStatus;
+  reviewNote?: string;
+  requestedBy?: string;
   createdAt?: string;
   updatedAt?: string;
-  [key: string]: unknown;
 }
 
+/** Gym gửi yêu cầu rút tiền (tiền được giữ chỗ ngay khi tạo). */
 export interface WithdrawalRequestDto {
   amount: number;
-  bankName: string;
   bankAccount: string;
-  bankHolder: string;
-  notes?: string;
+  bankName: string;
+  accountHolder: string;
 }
 
-export interface RejectWithdrawalRequest {
-  reason: string;
+/** Ví gym 4 bucket (UC-061). */
+export interface Wallet {
+  id: number;
+  heldBalance: number;
+  pendingBalance: number;
+  availableBalance: number;
+  frozenBalance: number;
+}
+
+export interface WalletTransaction {
+  id: number;
+  type: string;
+  amount: number;
+  bookingId?: number;
+  description?: string;
+  heldAfter: number;
+  pendingAfter: number;
+  availableAfter: number;
+  frozenAfter: number;
+  createdAt?: string;
 }
 
 export type WithdrawalPage = PageResponse<Withdrawal>;
-export type WithdrawalStatus = NonNullable<Withdrawal["status"]>;
+export type WalletTransactionPage = PageResponse<WalletTransaction>;

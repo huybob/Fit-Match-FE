@@ -1,7 +1,11 @@
-export default function Page() {
+"use client";
+
+import { GymReviewsPage } from "@/modules/review/components/review-pages";
+
+export default function GymReviewsRoute() {
   return (
-    <div className="flex items-center justify-center py-20 text-sm text-gray-400">
-      Tính năng đang phát triển
-    </div>
+    <main className="flex-1 min-w-0 overflow-y-auto p-6">
+      <GymReviewsPage />
+    </main>
   );
 }

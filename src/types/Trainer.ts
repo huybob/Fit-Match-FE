@@ -150,3 +150,32 @@ export interface CertificationResponse {
   expiryDate?: string;
   credentialUrl?: string;
 }
+
+// ── Weekly availability & blocked times (UC-028/029) ──
+
+export interface AvailabilitySlotDto {
+  /** 1 (Thứ 2) .. 7 (Chủ nhật). */
+  dayOfWeek: number;
+  /** "HH:mm". */
+  startTime: string;
+  endTime: string;
+}
+
+/** Gym truyền đúng MỘT trong ptId/branchId; PT tự tạo thì bỏ trống cả hai. */
+export interface BlockedTimeRequest {
+  ptId?: number | null;
+  branchId?: number | null;
+  /** ISO datetime. */
+  startAt: string;
+  endAt: string;
+  reason?: string;
+}
+
+export interface BlockedTimeResponse {
+  id?: number;
+  ptId?: number | null;
+  branchId?: number | null;
+  startAt?: string;
+  endAt?: string;
+  reason?: string;
+}

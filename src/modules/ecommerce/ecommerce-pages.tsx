@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CmsBanners } from "@/modules/cms/cms-banners";
+import { RealGymsSection, RealTrainersSection } from "./real-sections";
 import {
   ArrowRight,
   BookOpen,
@@ -69,11 +71,11 @@ export function HomePage() {
   return (
     <SiteLayout>
       <Hero />
+      <CmsBanners />
       <StatsStrip />
-      <TrainerSection />
-      <GymSection />
+      <RealTrainersSection />
+      <RealGymsSection />
       <TestimonialsSection />
-      <BlogSection />
     </SiteLayout>
   );
 }

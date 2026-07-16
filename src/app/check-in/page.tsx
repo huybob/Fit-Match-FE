@@ -1,6 +1,6 @@
-import { GymWorkspacePage } from "@/modules/gym-workspace/components/gym-workspace-page";
-import { AuthGuard } from "@/modules/auth/auth-guard";
+import { redirect } from "next/navigation";
 
-export default function CheckInPage() {
-  return <AuthGuard roles={["ROLE_GYM_OPERATOR"]}><GymWorkspacePage activeSection="check-in" /></AuthGuard>;
+// Check-in giờ thực hiện trên chi tiết booking (UC-046) — chuyển về màn booking của gym.
+export default function CheckInRedirect() {
+  redirect("/gym/bookings");
 }

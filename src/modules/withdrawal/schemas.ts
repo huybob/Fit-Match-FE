@@ -1,14 +1,13 @@
 import { z } from "zod";
 
-// Bám rule DTO WithdrawalRequestDto: amount/bankName/bankAccount/bankHolder bắt buộc, notes optional.
+// Bám DTO BE WithdrawalCreateRequest: amount/bankAccount/bankName/accountHolder bắt buộc.
 export const createWithdrawalSchema = z.object({
-  amount: z.number().positive(),
-  bankName: z.string().min(1).max(100),
-  bankAccount: z.string().min(4).max(50),
-  bankHolder: z.string().min(1).max(100),
-  notes: z.string().max(500).optional(),
+  amount: z.number().positive({ message: "Số tiền phải lớn hơn 0" }),
+  bankName: z.string().min(1, { message: "Chọn ngân hàng" }).max(100),
+  bankAccount: z.string().min(4, { message: "Số tài khoản không hợp lệ" }).max(50),
+  accountHolder: z.string().min(1, { message: "Nhập chủ tài khoản" }).max(150),
 });
 
 export const rejectWithdrawalSchema = z.object({
-  reason: z.string().min(1).max(500),
+  note: z.string().min(1, { message: "Nhập lý do" }).max(500),
 });
