@@ -157,6 +157,7 @@ function SiteHeader() {
                       </Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/reviews">Đánh giá</Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/disputes">Tranh chấp</Link>
+                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/profile/loyalty">Điểm thưởng</Link>
                       <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-gray-50" href="/notifications">Thông báo</Link>
                     </>
                   )}
@@ -240,6 +241,7 @@ function SiteHeader() {
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">Lịch đặt</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">Đánh giá</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/disputes">Tranh chấp</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/loyalty">Điểm thưởng</Link>
                   </>
                 )}
                 {/* Khu vực quản lý — tạm ẩn */}

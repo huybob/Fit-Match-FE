@@ -28,6 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { marketplaceService } from "@/services/marketplace.service";
 import { useOpenDispute } from "@/modules/dispute/hooks/use-dispute";
 import { voucherService } from "@/services/voucher.service";
+import { loyaltyService } from "@/services/loyalty.service";
 import {
   BookingAction,
   BookingScope,
@@ -438,6 +439,8 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   const create = useCreateBooking();
   const checkoutAction = useBookingAction("customer");
   const [voucherCode, setVoucherCode] = useState("");
+  const [pointsToUse, setPointsToUse] = useState("");
+  const loyalty = useQuery({ queryKey: ["loyalty", "balance-mini"], queryFn: () => loyaltyService.balance(), enabled: open });
 
   const form = useForm<z.infer<typeof createBookingSchema>>({
     resolver: zodResolver(createBookingSchema),
@@ -507,12 +510,18 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
               endAt: `${values.bookingDate}T${values.endTime}:00`,
               note: values.note || undefined,
             });
-            // UC-073: áp voucher (nếu nhập) trước khi checkout; mã sai không chặn đặt lịch.
+            // UC-073: áp giảm giá (voucher hoặc điểm — loại trừ nhau) trước checkout; lỗi không chặn đặt lịch.
             if (values.mode === "new" && voucherCode.trim()) {
               try {
                 await voucherService.apply(booking.id, voucherCode.trim());
               } catch (err) {
                 toast({ type: "warning", title: "Không áp được voucher", description: toErrorMessage(err) });
+              }
+            } else if (values.mode === "new" && Number(pointsToUse) > 0) {
+              try {
+                await loyaltyService.apply(booking.id, Number(pointsToUse));
+              } catch (err) {
+                toast({ type: "warning", title: "Không dùng được điểm", description: toErrorMessage(err) });
               }
             }
             // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
@@ -706,11 +715,22 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
         </FieldShell>
 
         {mode === "new" && (
-          <div className="sm:col-span-2">
+          <>
             <FieldShell label="Mã giảm giá (tùy chọn)">
-              <Input value={voucherCode} onChange={(e) => setVoucherCode(e.target.value.toUpperCase())} placeholder="VD: SALE10" />
+              <Input value={voucherCode} onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); if (e.target.value) setPointsToUse(""); }} placeholder="VD: SALE10" />
             </FieldShell>
-          </div>
+            <FieldShell label={`Dùng điểm (còn ${loyalty.data?.pointsBalance ?? 0})`}>
+              <Input
+                type="number"
+                min={0}
+                max={loyalty.data?.pointsBalance ?? 0}
+                value={pointsToUse}
+                onChange={(e) => { setPointsToUse(e.target.value); if (e.target.value) setVoucherCode(""); }}
+                placeholder="0"
+                disabled={!!voucherCode.trim() || !(loyalty.data?.pointsBalance)}
+              />
+            </FieldShell>
+          </>
         )}
 
         <div className="sm:col-span-2">
