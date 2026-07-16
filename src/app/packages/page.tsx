@@ -1,5 +1,5 @@
-import { PackagesPage } from "@/modules/ecommerce/ecommerce-pages";
+import { PackagesPublicPage } from "@/modules/gym/components/package-public-pages";
 
 export default function PackagesRoute() {
-  return <PackagesPage />;
+  return <PackagesPublicPage />;
 }

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, QrCode, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
@@ -106,8 +106,22 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const [selected, setSelected] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
   const [payingId, setPayingId] = useState<number | null>(null);
+  const [initialSelection, setInitialSelection] = useState<{ gymId?: number; packageId?: number }>();
   const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
+
+  // Deep-link từ trang gói tập: /profile/bookings?create=1&gymId=..&packageId=..
+  useEffect(() => {
+    if (scope !== "customer") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") !== "1") return;
+    setInitialSelection({
+      gymId: Number(params.get("gymId")) || undefined,
+      packageId: Number(params.get("packageId")) || undefined,
+    });
+    setCreating(true);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, [scope]);
 
   return (
     <div>
@@ -198,6 +212,7 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
       {scope === "customer" && (
         <CreateBookingDialog
           open={creating}
+          initial={initialSelection}
           onClose={() => setCreating(false)}
           onCheckedOut={(id, payable) => { setCreating(false); if (payable > 0) setPayingId(id); }}
         />
@@ -430,8 +445,9 @@ function Info({ label, value }: { label: string; value?: string }) {
 }
 
 /** UC-031/032/035: chọn gym -> dịch vụ/gói (+PT/chi nhánh) -> tạo nháp -> checkout. */
-function CreateBookingDialog({ open, onClose, onCheckedOut }: {
+function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
   open: boolean;
+  initial?: { gymId?: number; packageId?: number };
   onClose: () => void;
   onCheckedOut: (bookingId: number, payable: number) => void;
 }) {
@@ -458,6 +474,16 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   const mode = form.watch("mode");
   const gymId = form.watch("gymId") ?? 0;
   const itemType = form.watch("itemType");
+
+  // Prefill khi mở từ trang chi tiết gói tập.
+  useEffect(() => {
+    if (!open || !initial) return;
+    if (initial.gymId) form.setValue("gymId", initial.gymId);
+    if (initial.packageId) {
+      form.setValue("itemType", "package");
+      form.setValue("itemId", initial.packageId);
+    }
+  }, [open, initial, form]);
 
   const myPackages = useMyPackages(open);
   const usablePackages = (myPackages.data ?? []).filter((p) => p.status === "ACTIVE" && p.sessionsRemaining > 0);
