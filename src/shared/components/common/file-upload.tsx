@@ -88,13 +88,13 @@ export function FileUpload({
       />
 
       {value ? (
-        <div className="flex items-center gap-2.5 rounded-lg border border-gray-200 bg-white px-3 py-2">
+        <div className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2">
           {isImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imgSrc}
               alt="preview"
-              className="size-11 rounded-lg object-cover border border-gray-200 shrink-0 bg-gray-50"
+              className="size-11 rounded-lg object-cover border border-border shrink-0 bg-muted/40"
             />
           ) : (
             <div className="size-11 rounded-lg bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0">
@@ -103,7 +103,7 @@ export function FileUpload({
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-emerald-700">Đã tải lên</p>
-            <p className="text-[11px] text-gray-500 truncate">{displayName}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{displayName}</p>
           </div>
           {!disabled && (
             <div className="flex items-center gap-2.5 shrink-0">
@@ -111,7 +111,7 @@ export function FileUpload({
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={uploading}
-                className="text-[11px] text-[#2563eb] font-semibold hover:underline disabled:opacity-50"
+                className="text-[11px] text-primary font-semibold hover:underline disabled:opacity-50"
               >
                 {uploading ? "Đang tải..." : "Đổi tệp"}
               </button>
@@ -130,7 +130,7 @@ export function FileUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={disabled || uploading}
-          className="flex items-center justify-center gap-2 w-full h-9 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:border-[#2563eb] hover:text-[#2563eb] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 w-full h-9 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:border-[#2563eb] hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading ? (
             <>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, UserCircle, Home, LogOut } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { ThemeSwitch } from "@/shared/components/common/theme-switch";
 
 /**
  * Account dropdown for workspace top bars (gym / trainer).
@@ -25,27 +26,31 @@ export function WorkspaceUserMenu() {
   }
 
   return (
-    <div className="relative">
+    <div className="flex items-center gap-1">
+      <ThemeSwitch />
+      <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2.5 pl-1 pr-2 h-9 rounded-lg hover:bg-gray-100 transition-colors"
+        aria-label="Menu tài khoản"
+        aria-expanded={open}
+        className="flex items-center gap-2.5 pl-1 pr-2 h-9 rounded-lg hover:bg-muted transition-colors"
       >
         <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
           {initial}
         </div>
-        <span className="text-sm font-semibold text-gray-700">{label}</span>
-        <ChevronDown className="size-4 text-gray-400" />
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+        <ChevronDown className="size-4 text-muted-foreground" />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
+          <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-border bg-card p-2 shadow-xl">
             <Link href="/profile" onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/40">
               <UserCircle className="size-4" /> Hồ sơ
             </Link>
             <Link href="/" onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/40">
               <Home className="size-4" /> Về trang chủ
             </Link>
             <button onClick={handleLogout}
@@ -55,6 +60,7 @@ export function WorkspaceUserMenu() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
