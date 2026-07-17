@@ -1,20 +1,23 @@
 import { api } from "@/services/api";
 import type {
-  AdminRefundCreateRequest,
+  Booking,
+  BookingHistoryEntry,
+  BookingStatus,
+  CorrectAttendanceRequest,
+  RefundRequest,
+  RefundStatus,
+} from "@/types/Booking";
+import type { PageResponse } from "@/shared/types/api-response.type";
+import type {
   AdminUserPage,
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
-  CommissionConfigRequest,
-  CommissionConfigResponse,
   GymVerificationPage,
   GymVerificationResponse,
   PtDocumentDto,
-  RefundDecisionRequest,
   ServiceCategoryRequest,
   ServiceCategoryResponse,
-  SystemConfigRequest,
-  SystemConfigResponse,
   PtVerificationPage,
   PtVerificationResponse,
   RejectRequest,
@@ -22,17 +25,22 @@ import type {
   UserRole,
   UserStatus,
 } from "@/types/Admin";
-import type { RefundPage, RefundRequest, RefundStatus } from "@/types/Booking";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto, GymVerificationResponse, GymVerificationPage };
-export type { AdminRefundCreateRequest, CommissionConfigRequest, CommissionConfigResponse, RefundDecisionRequest } from "@/types/Admin";
-export type { RefundPage, RefundRequest, RefundStatus } from "@/types/Booking";
 
 export interface AdminUserSearchParams extends PaginationParams {
   keyword?: string;
   role?: string;
   status?: string;
+}
+
+/** UC-072 (E-2): cấu hình kinh tế marketplace — mỗi lần lưu BE insert bản ghi mới (giữ lịch sử). */
+export interface CommissionConfig {
+  id?: number;
+  commissionPercent: number;
+  platformFeePercent: number;
+  settlementHoldDays: number;
 }
 
 export const adminService = {
@@ -91,6 +99,39 @@ export const adminService = {
   reactivatePt: (id: number) =>
     api.postRaw(`/admin/pts/${id}/reactivate`),
 
+  // ── Admin bookings (UC-036/040/045/050) ──
+  listBookings: (params: PaginationParams & { status?: BookingStatus }) =>
+    api.get<PageResponse<Booking>>("/admin/bookings", { params }),
+  getBooking: (id: number) =>
+    api.get<Booking>(`/admin/bookings/${id}`),
+  getBookingHistory: (id: number) =>
+    api.get<BookingHistoryEntry[]>(`/admin/bookings/${id}/history`),
+  confirmBookingPayment: (id: number) =>
+    api.post<Booking>(`/admin/bookings/${id}/confirm-payment`),
+  correctBookingAttendance: (id: number, payload: CorrectAttendanceRequest) =>
+    api.post<Booking, CorrectAttendanceRequest>(`/admin/bookings/${id}/correct-attendance`, payload),
+
+  // ── Admin refunds (UC-055/056, D-2) ──
+  listRefunds: (params: PaginationParams & { status?: RefundStatus }) =>
+    api.get<PageResponse<RefundRequest>>("/admin/refunds", { params }),
+  approveRefund: (id: number, payload: { approvedAmount?: number; note?: string }) =>
+    api.post<RefundRequest, { approvedAmount?: number; note?: string }>(
+      `/admin/refunds/${id}/approve`, payload),
+  rejectRefund: (id: number, payload: { note?: string }) =>
+    api.post<RefundRequest, { note?: string }>(`/admin/refunds/${id}/reject`, payload),
+
+  // ── Commission config (UC-072, E-2) ──
+  getCommissionConfig: () =>
+    api.get<CommissionConfig>("/admin/commission-config"),
+  updateCommissionConfig: (payload: CommissionConfig) =>
+    api.put<CommissionConfig, CommissionConfig>("/admin/commission-config", payload),
+
+  // ── Admin wallets (UC-060, D-4) ──
+  freezeWallet: (gymProfileId: number, payload: { amount: number; reason: string }) =>
+    api.postRaw(`/admin/wallets/${gymProfileId}/freeze`, payload),
+  unfreezeWallet: (gymProfileId: number, payload: { amount: number; reason: string }) =>
+    api.postRaw(`/admin/wallets/${gymProfileId}/unfreeze`, payload),
+
   // ── Master data (UC-078) ──
   listServiceCategories: () =>
     api.get<ServiceCategoryResponse[]>("/admin/master-data/service-categories"),
@@ -98,24 +139,5 @@ export const adminService = {
     api.post<ServiceCategoryResponse, ServiceCategoryRequest>("/admin/master-data/service-categories", payload),
   updateServiceCategory: (id: number, payload: ServiceCategoryRequest) =>
     api.put<ServiceCategoryResponse, ServiceCategoryRequest>(`/admin/master-data/service-categories/${id}`, payload),
-  listSystemConfigs: () =>
-    api.get<SystemConfigResponse[]>("/admin/master-data/system-configs"),
-  upsertSystemConfig: (payload: SystemConfigRequest) =>
-    api.put<SystemConfigResponse, SystemConfigRequest>("/admin/master-data/system-configs", payload),
-
-  // ── Commission & platform economics (UC-072) ──
-  getCommissionConfig: () =>
-    api.get<CommissionConfigResponse>("/admin/commission-config"),
-  updateCommissionConfig: (payload: CommissionConfigRequest) =>
-    api.put<CommissionConfigResponse, CommissionConfigRequest>("/admin/commission-config", payload),
-
-  // ── Refund processing (UC-055/056) ──
-  listRefunds: (params: PaginationParams & { status?: RefundStatus }) =>
-    api.get<RefundPage>("/admin/refunds", { params }),
-  createRefund: (payload: AdminRefundCreateRequest) =>
-    api.post<RefundRequest, AdminRefundCreateRequest>("/admin/refunds", payload),
-  approveRefund: (id: number, payload?: RefundDecisionRequest) =>
-    api.post<RefundRequest, RefundDecisionRequest>(`/admin/refunds/${id}/approve`, payload ?? {}),
-  rejectRefund: (id: number, payload?: RefundDecisionRequest) =>
-    api.post<RefundRequest, RefundDecisionRequest>(`/admin/refunds/${id}/reject`, payload ?? {}),
+  // E-8 (quyết định 2026-07-17): system-configs đã gỡ ở BE (V40).
 };
