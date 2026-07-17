@@ -8,16 +8,19 @@ export const loginSchema = z.object({
 export const registerSchema = loginSchema.extend({
   username: z
     .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(50, "Username must not exceed 50 characters")
-    .regex(/^[a-zA-Z0-9._-]+$/, "Username contains invalid characters"),
+    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự")
+    .max(50, "Tên đăng nhập không quá 50 ký tự")
+    .regex(/^[a-zA-Z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ không dấu, số, dấu chấm, gạch dưới, gạch ngang"),
+  // A-5: họ tên hiển thị (có dấu) — tách khỏi username.
+  fullName: z.string().min(2, "Vui lòng nhập họ tên").max(100, "Họ tên không quá 100 ký tự"),
   email: z.string().email("Email is invalid"),
   password: z.string().min(6, "Password must be at least 6 characters").max(100),
   phone: z.union([
     z.literal(""),
     z.string().regex(/^[0-9+\-() ]{7,20}$/, "Phone number is invalid"),
   ]),
-  role: z.enum(["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"]),
+  // UC-001: BE chỉ nhận accountType (CUSTOMER | GYM_OPERATOR); PT do Gym tạo.
+  accountType: z.enum(["CUSTOMER", "GYM_OPERATOR"]),
 });
 
 export const changePasswordSchema = z.object({
@@ -50,38 +53,5 @@ export const updateProfileSchema = z.object({
     .optional(),
 });
 
-export const bookingSchema = z.object({
-  trainerId: z.string().min(1, "Trainer is required"),
-  date: z.string().min(1, "Date is required"),
-  time: z.string().min(1, "Time is required"),
-  type: z.string().min(1, "Training type is required"),
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().min(8, "Phone is required"),
-});
-
-export const checkoutSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Email is invalid"),
-  phone: z.string().min(8, "Phone is required"),
-  method: z.string().min(1, "Payment method is required"),
-});
-
-export const profileSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  phone: z.string().min(8, "Phone is required"),
-  goal: z.string().min(3, "Goal is required"),
-});
-
-export const adminPackageSchema = z.object({
-  name: z.string().min(2, "Package name is required"),
-  price: z.coerce.number().min(1, "Price is required"),
-  duration: z.string().min(1, "Duration is required"),
-  type: z.string().min(1, "Type is required"),
-});
-
-export const adminTrainerSchema = z.object({
-  name: z.string().min(2, "Trainer name is required"),
-  specialty: z.string().min(2, "Specialty is required"),
-  experience: z.coerce.number().min(1, "Experience is required"),
-  price: z.coerce.number().min(1, "Price is required"),
-});
+// Phase 4: các schema mock cũ (booking/checkout/profile/adminPackage/adminTrainer)
+// đã xóa cùng cụm modules/ecommerce — form thật dùng schema trong module tương ứng.

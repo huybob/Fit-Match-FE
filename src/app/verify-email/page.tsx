@@ -26,9 +26,9 @@ function VerifyEmailContent() {
   if (status === "no-token") {
     return (
       <div className="space-y-4 text-center py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Link không hợp lệ</h1>
-        <p className="text-sm text-[#475569]">Không tìm thấy token xác thực trong link.</p>
-        <Link href="/resend-verification" className="text-sm text-[#004ac6] hover:underline">
+        <h1 className="text-2xl font-semibold text-foreground">Link không hợp lệ</h1>
+        <p className="text-sm text-muted-foreground">Không tìm thấy token xác thực trong link.</p>
+        <Link href="/resend-verification" className="text-sm text-primary hover:underline">
           Gửi lại email xác thực
         </Link>
       </div>
@@ -38,8 +38,8 @@ function VerifyEmailContent() {
   if (status === "loading") {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <Loader2 className="size-10 text-[#2563eb] animate-spin" />
-        <p className="text-sm text-[#475569]">Đang xác thực email của bạn...</p>
+        <Loader2 className="size-10 text-primary animate-spin" />
+        <p className="text-sm text-muted-foreground">Đang xác thực email của bạn...</p>
       </div>
     );
   }
@@ -53,14 +53,14 @@ function VerifyEmailContent() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Email đã xác thực!</h2>
-          <p className="mt-2 text-sm text-[#475569]">
+          <h2 className="text-2xl font-semibold text-foreground">Email đã xác thực!</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Tài khoản của bạn đã được kích hoạt thành công. Bạn có thể đăng nhập ngay bây giờ.
           </p>
         </div>
         <Link
           href="/login"
-          className="inline-flex items-center justify-center w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-flex items-center justify-center w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
         >
           Đăng nhập ngay
         </Link>
@@ -76,12 +76,12 @@ function VerifyEmailContent() {
         </div>
       </div>
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900">Xác thực thất bại</h2>
-        <p className="mt-2 text-sm text-[#475569]">
+        <h2 className="text-2xl font-semibold text-foreground">Xác thực thất bại</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
           Link xác thực không hợp lệ hoặc đã hết hạn (24 giờ).
         </p>
       </div>
-      <Link href="/resend-verification" className="text-sm text-[#004ac6] hover:underline">
+      <Link href="/resend-verification" className="text-sm text-primary hover:underline">
         Gửi lại email xác thực
       </Link>
     </div>
@@ -91,7 +91,7 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return (
     <AuthPageShell variant="login">
-      <Suspense fallback={<div className="flex justify-center py-8"><Loader2 className="size-8 animate-spin text-gray-400" /></div>}>
+      <Suspense fallback={<div className="flex justify-center py-8"><Loader2 className="size-8 animate-spin text-muted-foreground" /></div>}>
         <VerifyEmailContent />
       </Suspense>
     </AuthPageShell>

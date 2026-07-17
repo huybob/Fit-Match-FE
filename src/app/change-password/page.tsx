@@ -69,10 +69,10 @@ const mockLoginHistory = [
 
 function Sidebar({ onLogout }: { onLogout: () => void }) {
   return (
-    <aside className="w-64 shrink-0 bg-[#f3f3fe] border border-[#e2e8f0] rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
+    <aside className="w-64 shrink-0 bg-primary/10 border border-border rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
       <div className="pb-4">
-        <p className="text-2xl font-semibold text-[#004ac6] leading-tight">FitMatch<br />Workspace</p>
-        <p className="text-sm font-medium text-[#505f76] mt-1">Quản lý hành trình thể hình</p>
+        <p className="text-2xl font-semibold text-primary leading-tight">FitMatch<br />Workspace</p>
+        <p className="text-sm font-medium text-muted-foreground mt-1">Quản lý hành trình thể hình</p>
       </div>
       <nav className="flex-1 flex flex-col gap-1">
         {sidebarLinks.map(({ href, label, icon: Icon, active }) => (
@@ -80,7 +80,7 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
             key={href}
             href={href}
             className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-              active ? "bg-[#2563eb] text-white" : "text-[#505f76] hover:bg-white/60"
+              active ? "bg-primary text-white" : "text-muted-foreground hover:bg-card/60"
             }`}
           >
             <Icon className="size-4 shrink-0" />
@@ -89,15 +89,15 @@ function Sidebar({ onLogout }: { onLogout: () => void }) {
         ))}
       </nav>
       <div className="mt-4 pb-4">
-        <Button className="w-full bg-[#004ac6] hover:bg-[#003a9e] text-white text-sm font-medium rounded-lg h-9">
+        <Button className="w-full bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg h-9">
           Đặt buổi tập mới
         </Button>
       </div>
-      <div className="border-t border-[#e2e8f0] pt-4 flex flex-col gap-1">
-        <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#505f76] hover:bg-white/60">
+      <div className="border-t border-border pt-4 flex flex-col gap-1">
+        <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-card/60">
           <Settings className="size-4" /> Cài đặt
         </Link>
-        <button onClick={onLogout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#dc2626] hover:bg-red-50 w-full text-left">
+        <button onClick={onLogout} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full text-left">
           <LogOut className="size-4" /> Đăng xuất
         </button>
       </div>
@@ -118,8 +118,8 @@ function SecurityScoreCard({ user }: { user: { emailVerified?: boolean } }) {
   ];
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-[#191b23] mb-5">Điểm Bảo mật</h2>
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground mb-5">Điểm Bảo mật</h2>
       <div className="flex flex-col items-center mb-5">
         <svg width="140" height="140" viewBox="0 0 140 140">
           <circle cx="70" cy="70" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
@@ -145,13 +145,13 @@ function SecurityScoreCard({ user }: { user: { emailVerified?: boolean } }) {
             ) : warn ? (
               <AlertTriangle className="size-3.5 text-orange-400 shrink-0" />
             ) : (
-              <XCircle className="size-3.5 text-gray-300 shrink-0" />
+              <XCircle className="size-3.5 text-muted-foreground/50 shrink-0" />
             )}
-            <span className={ok ? "text-[#475569]" : warn ? "text-orange-600" : "text-gray-400"}>{label}</span>
+            <span className={ok ? "text-muted-foreground" : warn ? "text-orange-600" : "text-muted-foreground"}>{label}</span>
           </div>
         ))}
       </div>
-      <button className="w-full h-9 rounded-lg bg-[#dbeafe] text-[#2563eb] text-sm font-medium hover:bg-blue-200 transition-colors">
+      <button className="w-full h-9 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-blue-200 transition-colors">
         Cải thiện Điểm số
       </button>
     </div>
@@ -166,17 +166,17 @@ function PasswordField({
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-[#475569]">{label}</label>
+      <label className="text-sm font-medium text-muted-foreground">{label}</label>
       <div className="relative">
         <Input
           type={show ? "text" : "password"}
-          className="h-11 border-[#e2e8f0] rounded-lg text-base pr-10"
+          className="h-11 border-border rounded-lg text-base pr-10"
           {...inputProps}
         />
         <button
           type="button" tabIndex={-1}
           onClick={() => setShow((v) => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#475569]"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/70 hover:text-muted-foreground"
         >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
@@ -191,6 +191,7 @@ function ChangePasswordCard() {
   const [success, setSuccess] = useState(false);
   const form = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
+    mode: "onTouched",
     defaultValues: { oldPassword: "", newPassword: "", confirmPassword: "" },
   });
 
@@ -211,13 +212,13 @@ function ChangePasswordCard() {
   }
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
-        <Lock className="size-4 text-gray-600" />
-        <h2 className="text-xl font-semibold text-[#191b23]">Đổi Mật khẩu</h2>
+        <Lock className="size-4 text-muted-foreground" />
+        <h2 className="text-xl font-semibold text-foreground">Đổi Mật khẩu</h2>
       </div>
       {success && (
-        <div className="mb-5 flex items-center gap-2 rounded-lg bg-[#dcfce7] px-4 py-3 text-sm font-medium text-[#16a34a]">
+        <div className="mb-5 flex items-center gap-2 rounded-lg bg-emerald-100 px-4 py-3 text-sm font-medium text-emerald-600">
           <CheckCircle className="size-4 shrink-0" /> Mật khẩu đã được cập nhật thành công.
         </div>
       )}
@@ -247,7 +248,7 @@ function ChangePasswordCard() {
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="bg-[#004ac6] hover:bg-[#003a9e] text-white h-10 px-6 rounded-lg gap-2"
+            className="bg-primary hover:bg-primary/90 text-white h-10 px-6 rounded-lg gap-2"
           >
             {form.formState.isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             Cập nhật Mật khẩu
@@ -264,27 +265,27 @@ function ActiveSessionsCard() {
     toast({ type: "info", title: "Đăng xuất tất cả thiết bị", description: "Tính năng sẽ được hỗ trợ sớm." });
   }
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-semibold text-[#191b23]">Các Phiên Hoạt động</h2>
-        <button onClick={logoutAll} className="text-xs text-[#2563eb] font-medium hover:underline">
+        <h2 className="text-lg font-semibold text-foreground">Các Phiên Hoạt động</h2>
+        <button onClick={logoutAll} className="text-xs text-primary font-medium hover:underline">
           Đăng xuất khỏi tất cả các thiết bị khác
         </button>
       </div>
       <div className="space-y-4">
         {mockSessions.map(({ id, device, location, icon: DevIcon, current }) => (
           <div key={id} className="flex items-center gap-4">
-            <div className="size-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-              <DevIcon className="size-5 text-gray-500" />
+            <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <DevIcon className="size-5 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-[#191b23]">{device}</p>
+                <p className="text-sm font-medium text-foreground">{device}</p>
                 {current && (
                   <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-semibold">HIỆN TẠI</span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 truncate">{location}</p>
+              <p className="text-xs text-muted-foreground truncate">{location}</p>
             </div>
             {!current && (
               <button className="text-xs text-red-500 font-medium hover:underline shrink-0">Đăng xuất</button>
@@ -298,8 +299,8 @@ function ActiveSessionsCard() {
 
 function LoginHistoryCard() {
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-[#191b23] mb-5">Lịch sử Đăng nhập</h2>
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <h2 className="text-lg font-semibold text-foreground mb-5">Lịch sử Đăng nhập</h2>
       <div className="space-y-4">
         {mockLoginHistory.map(({ id, status, title, detail, time }) => (
           <div key={id} className="flex items-start gap-3">
@@ -307,14 +308,14 @@ function LoginHistoryCard() {
               status === "success" ? "bg-green-500" : status === "fail" ? "bg-red-500" : "bg-blue-500"
             }`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[#191b23]">{title}</p>
-              <p className="text-xs text-gray-400">{detail}</p>
+              <p className="text-sm font-medium text-foreground">{title}</p>
+              <p className="text-xs text-muted-foreground">{detail}</p>
             </div>
-            <p className="text-[10px] text-gray-400 shrink-0 text-right leading-tight">{time.split(",")[0]}<br />{time.split(",")[1]}</p>
+            <p className="text-[10px] text-muted-foreground shrink-0 text-right leading-tight">{time.split(",")[0]}<br />{time.split(",")[1]}</p>
           </div>
         ))}
       </div>
-      <button className="mt-4 text-xs text-[#2563eb] font-medium hover:underline">Xem Toàn bộ Nhật ký Hoạt động</button>
+      <button className="mt-4 text-xs text-primary font-medium hover:underline">Xem Toàn bộ Nhật ký Hoạt động</button>
     </div>
   );
 }
@@ -344,12 +345,12 @@ function DangerZoneCard() {
   }
 
   return (
-    <div className="bg-white border border-red-100 rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-red-100 rounded-xl p-6 shadow-sm">
       <div className="flex items-start gap-3 mb-4">
         <AlertTriangle className="size-5 text-red-500 mt-0.5 shrink-0" />
         <div>
-          <h2 className="text-lg font-semibold text-[#191b23]">Vùng Nguy hiểm</h2>
-          <p className="text-sm text-[#64748b] leading-6 mt-1 max-w-2xl">
+          <h2 className="text-lg font-semibold text-foreground">Vùng Nguy hiểm</h2>
+          <p className="text-sm text-muted-foreground leading-6 mt-1 max-w-2xl">
             Những hành động này không thể hoàn tác. Khi bạn vô hiệu hóa hoặc xóa tài khoản, dữ liệu của bạn (bao gồm lịch sử tập luyện và các gói thành viên đã thanh toán) sẽ bị lưu trữ vĩnh viễn hoặc bị xóa bỏ.
           </p>
         </div>
@@ -365,7 +366,7 @@ function DangerZoneCard() {
           </Button>
           <Button
             onClick={() => toast({ type: "warning", title: "Tính năng đang phát triển" })}
-            className="h-10 border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 px-5 font-medium shadow-none"
+            className="h-10 border border-red-200 bg-red-50 text-destructive hover:bg-red-100 px-5 font-medium shadow-none"
           >
             Xóa Vĩnh viễn
           </Button>
@@ -386,7 +387,7 @@ function DangerZoneCard() {
               type="button"
               tabIndex={-1}
               onClick={() => setShowPw((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
             >
               {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
@@ -401,7 +402,7 @@ function DangerZoneCard() {
             </Button>
             <Button
               onClick={() => { setConfirming(false); setPassword(""); }}
-              className="h-9 border border-[#e2e8f0] bg-white text-[#475569] hover:bg-gray-50 px-4 text-sm shadow-none"
+              className="h-9 border border-border bg-card text-muted-foreground hover:bg-muted/40 px-4 text-sm shadow-none"
             >
               Hủy
             </Button>
@@ -422,15 +423,15 @@ function SecurityContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/40">
       <div className="flex gap-6 px-20 py-6">
         <Sidebar onLogout={handleLogout} />
 
         <main className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Header */}
-          <section className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
-            <h1 className="text-2xl font-bold text-[#191b23]">FitMatch</h1>
-            <p className="text-sm text-[#64748b] mt-1">Quản lý bảo mật tài khoản, các phiên hoạt động và lịch sử đăng nhập của bạn.</p>
+          <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
+            <h1 className="text-2xl font-bold text-foreground">FitMatch</h1>
+            <p className="text-sm text-muted-foreground mt-1">Quản lý bảo mật tài khoản, các phiên hoạt động và lịch sử đăng nhập của bạn.</p>
           </section>
 
           {/* Top row: Security score + Change password */}
