@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/modules/auth/auth-guard";
@@ -15,8 +16,8 @@ const typeLabels: Record<LoyaltyTxnType, string> = {
   REFUND: "Hoàn điểm",
 };
 
-const money = (v?: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v ?? 0);
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 
 function timeText(v?: string) {
   return v ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(v)) : "";

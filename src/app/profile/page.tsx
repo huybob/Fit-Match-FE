@@ -57,7 +57,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
   }
 
   return (
-    <section className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex gap-6 items-start">
         <div className="relative shrink-0">
           <div className="size-32 rounded-full border-4 border-white shadow-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">
@@ -67,7 +67,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
               <span className="text-3xl font-bold text-white">{initials}</span>
             )}
           </div>
-          <label className="absolute bottom-1 right-1 bg-[#004ac6] rounded-full p-2 shadow-md hover:bg-[#003a9e] transition-colors cursor-pointer">
+          <label className="absolute bottom-1 right-1 bg-primary rounded-full p-2 shadow-md hover:bg-primary/90 transition-colors cursor-pointer">
             {uploading ? (
               <Loader2 className="size-3.5 text-white animate-spin" />
             ) : (
@@ -83,8 +83,8 @@ function ProfileHeader({ user }: { user: AuthUser }) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold text-gray-900 truncate">{displayName}</h1>
-          <p className="text-sm text-[#475569] mt-1">
+          <h1 className="text-3xl font-bold text-foreground truncate">{displayName}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Thành viên từ{" "}
             {user.createdAt
               ? new Date(user.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })
@@ -92,7 +92,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
           </p>
           <div className="flex gap-2 mt-3 flex-wrap">
             {user.emailVerified ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dcfce7] text-[#16a34a] text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 text-xs font-medium">
                 <CheckCircle className="size-3" />
                 Đã xác thực Email
               </span>
@@ -105,7 +105,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
                 Chưa xác thực email
               </Link>
             )}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#dbeafe] text-[#004ac6] text-xs font-medium">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
               <Star className="size-3" />
               Hạng Elite
             </span>
@@ -127,6 +127,15 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
+    // A-22 (audit 2026-07-17): đổi email làm BE reset emailVerified=false — lần login
+    // sau bị chặn cho tới khi xác thực lại. Trước đây điều này diễn ra âm thầm.
+    const emailChanged = !!email && email !== user.email;
+    if (emailChanged && !window.confirm(
+      "Đổi email sẽ yêu cầu xác thực lại: hệ thống gửi link xác thực tới email MỚI, "
+      + "và bạn không đăng nhập được cho tới khi bấm link đó. Tiếp tục?",
+    )) {
+      return;
+    }
     setSaving(true);
     try {
       const updated = await authService.updateProfile({
@@ -137,7 +146,11 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
         location: location || undefined,
       });
       updateUser(updated);
-      toast({ type: "success", title: "Cập nhật thông tin thành công!" });
+      toast({
+        type: "success",
+        title: "Cập nhật thông tin thành công!",
+        description: emailChanged ? "Kiểm tra hộp thư email mới để xác thực lại tài khoản." : undefined,
+      });
     } catch (error) {
       toast({ type: "error", title: "Cập nhật thất bại", description: toErrorMessage(error) });
     } finally {
@@ -146,42 +159,42 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
-        <User className="size-4 text-gray-600" />
-        <h2 className="text-2xl font-semibold text-[#191b23]">Thông tin cá nhân</h2>
+        <User className="size-4 text-muted-foreground" />
+        <h2 className="text-2xl font-semibold text-foreground">Thông tin cá nhân</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Họ và tên</label>
+          <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
           <Input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Nhập họ và tên"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base text-[#191b23]"
+            className="h-11 border-border rounded-lg text-base text-foreground"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-muted-foreground">Địa chỉ Email</label>
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-11 border-[#e2e8f0] rounded-lg text-base text-[#191b23]"
+            className="h-11 border-border rounded-lg text-base text-foreground"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Số điện thoại</label>
+          <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="h-11 border-[#e2e8f0] rounded-lg text-base text-[#191b23]"
+            className="h-11 border-border rounded-lg text-base text-foreground"
             placeholder="0901 234 567"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Vai trò</label>
+          <label className="text-sm font-medium text-muted-foreground">Vai trò</label>
           <Input
             value={
               {
@@ -192,15 +205,15 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
               }[user.role ?? "ROLE_CUSTOMER"] ?? user.role
             }
             readOnly
-            className="h-11 border-[#e2e8f0] rounded-lg bg-gray-50 text-base text-[#191b23]"
+            className="h-11 border-border rounded-lg bg-muted/40 text-base text-foreground"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Giới tính</label>
+          <label className="text-sm font-medium text-muted-foreground">Giới tính</label>
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value)}
-            className="w-full h-11 border border-[#e2e8f0] rounded-lg px-3 text-base text-[#191b23] bg-white"
+            className="w-full h-11 border border-border rounded-lg px-3 text-base text-foreground bg-card"
           >
             <option value="">Chọn giới tính</option>
             <option value="MALE">Nam</option>
@@ -209,12 +222,12 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
           </select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Địa điểm</label>
+          <label className="text-sm font-medium text-muted-foreground">Địa điểm</label>
           <Input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="TP. Hồ Chí Minh"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base text-[#191b23]"
+            className="h-11 border-border rounded-lg text-base text-foreground"
           />
         </div>
       </div>
@@ -223,7 +236,7 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-[#004ac6] hover:bg-[#003a9e] text-white h-10 px-6 rounded-lg gap-2"
+          className="bg-primary hover:bg-primary/90 text-white h-10 px-6 rounded-lg gap-2"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Lưu thay đổi
@@ -259,7 +272,7 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="bg-[#004ac6] rounded-xl p-6 shadow-md">
+    <div className="bg-primary rounded-xl p-6 shadow-md">
       <div className="flex items-center gap-3 mb-5">
         <Activity className="size-5 text-white" />
         <h2 className="text-lg font-semibold text-white">Chỉ số thể hình</h2>
@@ -272,7 +285,7 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
             value={height}
             onChange={(e) => setHeight(e.target.value)}
             placeholder="—"
-            className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
+            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
           />
         </div>
         <div className="space-y-1">
@@ -282,7 +295,7 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             placeholder="—"
-            className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
+            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
           />
         </div>
         <div className="col-span-2 space-y-1">
@@ -292,14 +305,14 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
             value={mainGoal}
             onChange={(e) => setMainGoal(e.target.value)}
             placeholder="Phát triển cơ bắp..."
-            className="w-full bg-white/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm font-medium border border-white/20 focus:outline-none focus:border-white/60"
+            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm font-medium border border-white/20 focus:outline-none focus:border-white/60"
           />
         </div>
       </div>
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-medium rounded-lg h-9 transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-card/15 hover:bg-card/25 text-white text-sm font-medium rounded-lg h-9 transition-colors"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
         Lưu chỉ số
@@ -333,43 +346,43 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-5">
         <AlertCircle className="size-4 text-amber-500" />
-        <h2 className="text-lg font-semibold text-[#191b23]">Liên hệ khẩn cấp</h2>
+        <h2 className="text-lg font-semibold text-foreground">Liên hệ khẩn cấp</h2>
       </div>
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Tên người liên hệ</label>
+          <label className="text-sm font-medium text-muted-foreground">Tên người liên hệ</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nguyễn Văn B"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base"
+            className="h-11 border-border rounded-lg text-base"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Mối quan hệ</label>
+          <label className="text-sm font-medium text-muted-foreground">Mối quan hệ</label>
           <Input
             value={relationship}
             onChange={(e) => setRelationship(e.target.value)}
             placeholder="Vợ/Chồng"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base"
+            className="h-11 border-border rounded-lg text-base"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#475569]">Số điện thoại</label>
+          <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="0901 234 567"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base"
+            className="h-11 border-border rounded-lg text-base"
           />
         </div>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-[#004ac6] hover:bg-[#003a9e] text-white h-10 rounded-lg gap-2"
+          className="w-full bg-primary hover:bg-primary/90 text-white h-10 rounded-lg gap-2"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Lưu liên hệ
@@ -418,16 +431,16 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
   }
 
   return (
-    <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
-          <Activity className="size-4 text-gray-600" />
-          <h2 className="text-2xl font-semibold text-[#191b23]">Sở thích tập luyện</h2>
+          <Activity className="size-4 text-muted-foreground" />
+          <h2 className="text-2xl font-semibold text-foreground">Sở thích tập luyện</h2>
         </div>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-[#004ac6] hover:bg-[#003a9e] text-white h-9 px-4 rounded-lg gap-2 text-sm"
+          className="bg-primary hover:bg-primary/90 text-white h-9 px-4 rounded-lg gap-2 text-sm"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Lưu
@@ -435,18 +448,18 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
       </div>
       <div className="grid grid-cols-4 gap-6">
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-900">Phong cách yêu thích</p>
+          <p className="text-sm font-medium text-foreground">Phong cách yêu thích</p>
           <div className="flex flex-wrap gap-2">
             {styles.map((s) => (
-              <span key={s} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#dbeafe] text-[#004ac6] text-xs font-medium">
+              <span key={s} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                 {s}
-                <button onClick={() => removeStyle(s)} className="hover:text-red-500 leading-none">×</button>
+                <button onClick={() => removeStyle(s)} className="hover:text-destructive leading-none">×</button>
               </span>
             ))}
           </div>
           <button
             onClick={() => { setStyleInput(""); setStyleDialogOpen(true); }}
-            className="px-3 h-8 rounded-lg border border-[#004ac6] text-[#004ac6] text-xs font-medium hover:bg-blue-50"
+            className="px-3 h-8 rounded-lg border border-[#004ac6] text-primary text-xs font-medium hover:bg-primary/10"
           >
             + Thêm
           </button>
@@ -471,7 +484,7 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
               <Button
                 onClick={addStyle}
                 disabled={!styleInput.trim()}
-                className="bg-[#004ac6] hover:bg-[#003a9e] text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 Thêm
               </Button>
@@ -479,7 +492,7 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
           </div>
         </Dialog>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-900">Tần suất</p>
+          <p className="text-sm font-medium text-foreground">Tần suất</p>
           <div className="space-y-2">
             {[
               { value: "4-5", label: "4-5 ngày/tuần" },
@@ -495,17 +508,17 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
                   onChange={() => setFrequency(value)}
                   className="accent-[#004ac6]"
                 />
-                <span className="text-sm text-[#191b23]">{label}</span>
+                <span className="text-sm text-foreground">{label}</span>
               </label>
             ))}
           </div>
         </div>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-900">Tiếp cận thiết bị</p>
+          <p className="text-sm font-medium text-foreground">Tiếp cận thiết bị</p>
           <select
             value={equipmentAccess}
             onChange={(e) => setEquipmentAccess(e.target.value)}
-            className="w-full h-11 border border-[#e2e8f0] rounded-lg px-3 text-base text-[#191b23] bg-white"
+            className="w-full h-11 border border-border rounded-lg px-3 text-base text-foreground bg-card"
           >
             <option value="gym">Phòng Gym chuyên nghiệp</option>
             <option value="home">Tại nhà</option>
@@ -513,12 +526,12 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
           </select>
         </div>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-900">Chấn thương/Lưu ý</p>
+          <p className="text-sm font-medium text-foreground">Chấn thương/Lưu ý</p>
           <textarea
             value={injuries}
             onChange={(e) => setInjuries(e.target.value)}
             placeholder={"Ví dụ: Đau lưng nhẹ,\ndị ứng hạt..."}
-            className="w-full h-24 border border-[#e2e8f0] rounded-lg p-3 text-base text-[#6b7280] resize-none focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]"
+            className="w-full h-24 border border-border rounded-lg p-3 text-base text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]"
           />
         </div>
       </div>
@@ -532,7 +545,7 @@ export default function UserProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/40">
       <div className="flex gap-6 px-20 py-6">
         <ProfileSidebar />
 

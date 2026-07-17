@@ -27,12 +27,12 @@ export function ProfileSidebar() {
   }
 
   return (
-    <aside className="w-64 shrink-0 bg-[#f3f3fe] border border-[#e2e8f0] rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
+    <aside className="w-64 shrink-0 bg-primary/10 border border-border rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
       <div className="pb-4">
-        <p className="text-2xl font-semibold text-[#004ac6] leading-tight">
+        <p className="text-2xl font-semibold text-primary leading-tight">
           FitMatch<br />Workspace
         </p>
-        <p className="text-sm font-medium text-[#505f76] mt-1">Quản lý hành trình thể hình</p>
+        <p className="text-sm font-medium text-muted-foreground mt-1">Quản lý hành trình thể hình</p>
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">
@@ -43,7 +43,7 @@ export function ProfileSidebar() {
               key={href}
               href={href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                active ? "bg-[#2563eb] text-white" : "text-[#505f76] hover:bg-white/60"
+                active ? "bg-primary text-white" : "text-muted-foreground hover:bg-card/60"
               }`}
             >
               <Icon className="size-4 shrink-0" />
@@ -55,23 +55,23 @@ export function ProfileSidebar() {
 
       <div className="mt-4 pb-4">
         <Link href="/booking">
-          <Button className="w-full bg-[#004ac6] hover:bg-[#003a9e] text-white text-sm font-medium rounded-lg h-9">
+          <Button className="w-full bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg h-9">
             Đặt buổi tập mới
           </Button>
         </Link>
       </div>
 
-      <div className="border-t border-[#e2e8f0] pt-4 flex flex-col gap-1">
+      <div className="border-t border-border pt-4 flex flex-col gap-1">
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#505f76] hover:bg-white/60"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-card/60"
         >
           <Settings className="size-4" />
           Cài đặt
         </Link>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-[#dc2626] hover:bg-red-50 w-full text-left"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full text-left"
         >
           <LogOut className="size-4" />
           Đăng xuất
