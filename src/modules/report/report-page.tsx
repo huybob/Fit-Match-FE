@@ -1,16 +1,20 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { reportService, type OperationalReport } from "@/services/report.service";
+import { PageHeader } from "@/shared/components/common/page-header";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { downloadCsv } from "@/shared/utils/csv.util";
+import { Download } from "lucide-react";
 
-const money = (v?: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v ?? 0);
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 
 const bookingStatusLabels: Record<string, string> = {
   DRAFT: "Nháp",
@@ -48,13 +52,10 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
 
   return (
     <div>
-      <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
-        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Báo cáo vận hành</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Thống kê đặt lịch, dòng tiền và tranh chấp theo khoảng thời gian (UC-076).
-        </p>
-      </section>
+      <PageHeader
+        title="Báo cáo vận hành"
+        description="Thống kê đặt lịch, dòng tiền và tranh chấp theo khoảng thời gian (UC-076)."
+      />
 
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
@@ -66,6 +67,37 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-44" />
         </label>
         <Button onClick={() => setApplied({ from, to })}>Xem báo cáo</Button>
+        {/* E-12: xuất CSV báo cáo đang xem (client-side, BOM UTF-8 cho Excel) */}
+        {r && (
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() =>
+              downloadCsv(
+                `bao-cao-${scope}-${applied.from}_${applied.to}`,
+                ["Chỉ số", "Giá trị"],
+                [
+                  ["Từ ngày", applied.from],
+                  ["Đến ngày", applied.to],
+                  ["Tổng booking", r.totalBookings],
+                  ...Object.entries(r.bookingsByStatus ?? {}).map(
+                    ([k, v]) => [`Booking ${bookingStatusLabels[k] ?? k}`, v] as [string, number],
+                  ),
+                  ["Tiền đã thu (giữ)", r.grossHeld],
+                  ["Đã giải ngân (ròng)", r.releasedNet],
+                  ["Hoa hồng nền tảng", r.commission],
+                  ["Đã hoàn khách", r.refunded],
+                  ["Tổng tranh chấp", r.totalDisputes],
+                  ...Object.entries(r.disputesByStatus ?? {}).map(
+                    ([k, v]) => [`Tranh chấp ${k}`, v] as [string, number],
+                  ),
+                ],
+              )
+            }
+          >
+            <Download className="size-4" /> Xuất CSV
+          </Button>
+        )}
       </div>
 
       {query.isLoading ? (

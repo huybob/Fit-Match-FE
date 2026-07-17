@@ -48,16 +48,18 @@ export function useCreateWithdrawal() {
 export function useWithdrawalDecision() {
   const c = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, decision, note }: {
+    mutationFn: ({ id, decision, note, payoutReference }: {
       id: number;
       decision: "approve" | "reject" | "markPaid";
       note?: string;
+      /** D-11: bắt buộc với markPaid. */
+      payoutReference?: string;
     }) =>
       decision === "approve"
         ? withdrawalService.approve(id, note)
         : decision === "reject"
           ? withdrawalService.reject(id, note ?? "")
-          : withdrawalService.markPaid(id, note),
+          : withdrawalService.markPaid(id, payoutReference ?? "", note),
     onSuccess: refresh(c),
   });
 }

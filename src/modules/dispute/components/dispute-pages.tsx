@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { Paperclip, Plus, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/lib/toast-provider";
@@ -9,9 +10,11 @@ import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { openSecureFile } from "@/shared/utils/secure-file.util";
+import { FileUpload } from "@/shared/components/common/file-upload";
+import { PageHeader } from "@/shared/components/common/page-header";
 import {
   useAddEvidence,
   useDisputeEvidence,
@@ -33,8 +36,8 @@ export function disputeStatusVariant(status: DisputeStatus): React.ComponentProp
   return "warning";
 }
 
-const money = (v?: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v ?? 0);
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 
 /** UC-063/064: màn tranh chấp của các bên (customer/gym/pt). */
 export function MyDisputesPage() {
@@ -44,13 +47,10 @@ export function MyDisputesPage() {
 
   return (
     <div>
-      <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
-        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Tranh chấp / Khiếu nại</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Theo dõi các khiếu nại liên quan đến buổi tập của bạn và gửi bằng chứng (UC-063/064).
-        </p>
-      </section>
+      <PageHeader
+        title="Tranh chấp / Khiếu nại"
+        description="Theo dõi các khiếu nại liên quan đến buổi tập của bạn và gửi bằng chứng (UC-063/064)."
+      />
 
       {query.isLoading ? (
         <LoadingSkeleton />
@@ -139,9 +139,15 @@ function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: 
                 <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{e.submittedBy}</span>
                   {e.fileUrl && (
-                    <a href={e.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                    // D-10/B-6: tệp evidence nằm ở /api/files/documents (cần Bearer) — mở qua blob.
+                    <button
+                      type="button"
+                      onClick={() => openSecureFile(e.fileUrl!).catch((err) =>
+                        toast({ type: "error", title: "Không mở được tệp", description: toErrorMessage(err) }))}
+                      className="flex items-center gap-1 text-primary hover:underline"
+                    >
                       <Paperclip className="size-3" /> Tệp
-                    </a>
+                    </button>
                   )}
                 </div>
               </li>
@@ -154,7 +160,14 @@ function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: 
         <div className="mt-4 space-y-2 rounded-2xl border border-border p-4">
           <p className="text-sm font-black">Gửi bằng chứng mới</p>
           <Textarea placeholder="Mô tả" maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
-          <Input placeholder="URL tệp (tùy chọn) — upload qua /api/files" value={fileUrl} onChange={(e) => setFileUrl(e.target.value)} />
+          {/* D-10 (audit 2026-07-17): upload tệp thật thay ô nhập URL tay — trước đây
+              người dùng thường không có cách nào nộp bằng chứng thực tế. */}
+          <FileUpload
+            value={fileUrl}
+            onChange={setFileUrl}
+            folder="documents"
+            label="Đính kèm ảnh/tài liệu (tùy chọn)"
+          />
           <Button disabled={addEvidence.isPending} onClick={submit}>
             <Plus className="size-4" /> Gửi bằng chứng
           </Button>

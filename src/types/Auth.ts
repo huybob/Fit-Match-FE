@@ -5,11 +5,11 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   username?: string;
-  name?: string;
+  fullName?: string;
   email: string;
   password: string;
   phone?: string;
-  role?: string;
+  accountType?: "CUSTOMER" | "GYM_OPERATOR";
 }
 
 export interface RefreshTokenRequest {
