@@ -1,7 +1,5 @@
 import { api } from "@/services/api";
 import type {
-  AvailabilityCheckRequest,
-  AvailabilityCheckResponse,
   Booking,
   BookingHistoryEntry,
   BookingPage,
@@ -20,8 +18,6 @@ import type {
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type {
-  AvailabilityCheckRequest,
-  AvailabilityCheckResponse,
   Booking,
   BookingHistoryEntry,
   BookingPage,
@@ -50,10 +46,9 @@ function list(path: string, params: BookingListParams = {}) {
 
 /**
  * Contract BE hiện tại:
- * - Customer:  /bookings/my, /bookings/{id}(/history|/payment|/checkout|/selection|/reschedule|/cancel|/refund-request), /bookings/refunds, /bookings/waitlist, /availability/check
- * - Gym:       /gym/bookings, /gym/bookings/{id}(/accept|/reject|/assign-pt|/reschedule|/cancel|/no-show|/complete|/history), /gym/bookings/waitlist
+ * - Customer:  /bookings/my, /bookings/{id}(/history|/payment|/checkout|/selection|/reschedule|/cancel|/refund-request), /bookings/refunds
+ * - Gym:       /gym/bookings, /gym/bookings/{id}(/accept|/reject|/assign-pt|/reschedule|/cancel|/no-show|/complete|/history)
  * - PT:        /pt/bookings (read-only)
- * - Admin:     /admin/bookings, /admin/bookings/{id}(/history|/confirm-payment|/correct-attendance)
  */
 export const bookingService = {
   // ---- Customer (UC-031..045, 055) ----
@@ -77,12 +72,16 @@ export const bookingService = {
   checkIn: (id: number) => api.post<Booking>(`/bookings/${id}/check-in`),
   myPackages: () => api.get<CustomerPackage[]>("/bookings/my-packages"),
   notes: (id: number) => api.get<SessionNote[]>(`/bookings/${id}/notes`),
-  checkAvailability: (payload: AvailabilityCheckRequest) =>
-    api.post<AvailabilityCheckResponse, AvailabilityCheckRequest>("/availability/check", payload),
+
+  // ---- Availability pre-check (UC-030, B-31/C-15) ----
+  checkAvailability: (payload: { ptId?: number; branchId?: number; startAt: string; endAt: string }) =>
+    api.post<{ available: boolean; reasons: string[] }, typeof payload>("/availability/check", payload),
+
+  // ---- Waitlist (UC-044, C-2) ----
   joinWaitlist: (payload: WaitlistRequest) =>
     api.post<WaitlistEntry, WaitlistRequest>("/bookings/waitlist", payload),
-  myWaitlist: () => api.get<WaitlistEntry[]>("/bookings/waitlist"),
   leaveWaitlist: (id: number) => api.deleteRaw(`/bookings/waitlist/${id}`),
+  myWaitlist: () => api.get<WaitlistEntry[]>("/bookings/waitlist"),
 
   // ---- Gym operator (UC-037..039, 041..043, 049) ----
   getGym: (params?: BookingListParams) => list("/gym/bookings", params),
@@ -107,24 +106,12 @@ export const bookingService = {
   addGymNote: (id: number, note: string, evidenceUrl?: string) =>
     api.post<SessionNote, { note: string; evidenceUrl?: string }>(
       `/gym/bookings/${id}/notes`, { note, evidenceUrl }),
-  gymWaitlist: (params: { serviceId?: number; packageId?: number }) =>
-    api.get<WaitlistEntry[]>("/gym/bookings/waitlist", { params }),
 
   // ---- PT ----
   getPt: (params?: BookingListParams) => list("/pt/bookings", params),
   ptCheckIn: (id: number) => api.post<Booking>(`/pt/bookings/${id}/check-in`),
+  ptNotes: (id: number) => api.get<SessionNote[]>(`/pt/bookings/${id}/notes`),
   addPtNote: (id: number, note: string, evidenceUrl?: string) =>
     api.post<SessionNote, { note: string; evidenceUrl?: string }>(
       `/pt/bookings/${id}/notes`, { note, evidenceUrl }),
-
-  // ---- Admin (UC-036, UC-045, UC-050) ----
-  getAdmin: (params?: BookingListParams) => list("/admin/bookings", params),
-  getAdminDetail: (id: number) => api.get<Booking>(`/admin/bookings/${id}`),
-  getAdminHistory: (id: number) =>
-    api.get<BookingHistoryEntry[]>(`/admin/bookings/${id}/history`),
-  confirmPayment: (id: number) =>
-    api.post<Booking>(`/admin/bookings/${id}/confirm-payment`),
-  adminCorrectAttendance: (id: number, payload: CorrectAttendanceRequest) =>
-    api.post<Booking, CorrectAttendanceRequest>(
-      `/admin/bookings/${id}/correct-attendance`, payload),
 };

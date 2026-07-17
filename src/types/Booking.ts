@@ -33,9 +33,34 @@ export interface Booking {
   statusReason?: string;
   customerNote?: string;
   totalAmount?: number;
+  // C-7 (audit 2026-07-17): BE trả 3 field giảm giá nhưng FE type thiếu —
+  // khách áp voucher xong vẫn thấy giá cũ, số hiển thị ≠ số QR phải trả.
+  discountAmount?: number;
+  voucherCode?: string;
+  loyaltyPointsUsed?: number;
   payableAmount?: number;
   lateCancellation?: boolean;
   createdAt?: string;
+}
+
+/** UC-044 (C-2): hàng chờ khi slot bận. */
+export interface WaitlistEntry {
+  id?: number;
+  customerUsername?: string;
+  serviceId?: number;
+  serviceName?: string;
+  packageId?: number;
+  packageName?: string;
+  preferredStart?: string;
+  note?: string;
+  active?: boolean;
+}
+
+export interface WaitlistRequest {
+  serviceId?: number;
+  packageId?: number;
+  preferredStart?: string;
+  note?: string;
 }
 
 /** Tạo/cập nhật lựa chọn booking (UC-031/032) — đúng một trong serviceId/packageId/customerPackageId. */
@@ -134,42 +159,3 @@ export interface RefundRequest {
 
 export type BookingPage = PageResponse<Booking>;
 export type RefundPage = PageResponse<RefundRequest>;
-
-// ── Waitlist (UC-044) ──
-
-/** Truyền đúng MỘT trong serviceId/packageId. */
-export interface WaitlistRequest {
-  serviceId?: number | null;
-  packageId?: number | null;
-  /** ISO datetime khung giờ mong muốn. */
-  preferredStart?: string;
-  note?: string;
-}
-
-export interface WaitlistEntry {
-  id: number;
-  customerUsername?: string;
-  serviceId?: number | null;
-  serviceName?: string | null;
-  packageId?: number | null;
-  packageName?: string | null;
-  preferredStart?: string;
-  note?: string;
-  active?: boolean;
-}
-
-// ── Availability pre-check (UC-030) ──
-
-/** Cần ít nhất một trong ptId/branchId. */
-export interface AvailabilityCheckRequest {
-  ptId?: number | null;
-  branchId?: number | null;
-  /** ISO datetime. */
-  startAt: string;
-  endAt: string;
-}
-
-export interface AvailabilityCheckResponse {
-  available: boolean;
-  reasons: string[];
-}

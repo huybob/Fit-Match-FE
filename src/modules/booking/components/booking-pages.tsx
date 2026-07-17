@@ -1,13 +1,14 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, QrCode, UserRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
-import { Booking, BookingStatus } from "@/services/booking.service";
+import { Booking, BookingStatus, bookingService } from "@/services/booking.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
@@ -24,7 +25,8 @@ import {
 } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { bookingKeys } from "../query-keys";
 import { marketplaceService } from "@/services/marketplace.service";
 import { useOpenDispute } from "@/modules/dispute/hooks/use-dispute";
 import { voucherService } from "@/services/voucher.service";
@@ -37,8 +39,19 @@ import {
   useBookings,
   useCreateBooking,
   useMyPackages,
+  useRescheduleBooking,
 } from "../hooks/use-booking";
 import { createBookingSchema } from "../schemas";
+import { gymService } from "@/services/gym.service";
+import {
+  BookingTimeline,
+  CorrectAttendanceDialog,
+  PriceBreakdown,
+  RefundStatusSection,
+  RescheduleDialog,
+  SessionNotesSection,
+  WaitlistSection,
+} from "./booking-detail-extras";
 
 const statuses: BookingStatus[] = [
   "DRAFT",
@@ -86,9 +99,8 @@ function dateTimeText(value?: string) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
-function money(value?: number) {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value ?? 0);
-}
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badge>["variant"] {
   if (status === "COMPLETED") return "success";
   if (status === "REJECTED" || status === "CANCELLED" || status === "NO_SHOW") return "destructive";
@@ -106,22 +118,8 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const [selected, setSelected] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
   const [payingId, setPayingId] = useState<number | null>(null);
-  const [initialSelection, setInitialSelection] = useState<{ gymId?: number; packageId?: number }>();
   const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
-
-  // Deep-link từ trang gói tập: /profile/bookings?create=1&gymId=..&packageId=..
-  useEffect(() => {
-    if (scope !== "customer") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("create") !== "1") return;
-    setInitialSelection({
-      gymId: Number(params.get("gymId")) || undefined,
-      packageId: Number(params.get("packageId")) || undefined,
-    });
-    setCreating(true);
-    window.history.replaceState(null, "", window.location.pathname);
-  }, [scope]);
 
   return (
     <div>
@@ -140,6 +138,10 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
           )}
         </div>
       </section>
+
+      {/* C-12 + C-2: khách theo dõi hoàn tiền + danh sách chờ ngay trong workspace */}
+      {scope === "customer" && <RefundStatusSection />}
+      {scope === "customer" && <WaitlistSection />}
 
       <section className="mb-5 grid gap-3 rounded-2xl border border-border bg-card/80 p-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
@@ -212,7 +214,6 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
       {scope === "customer" && (
         <CreateBookingDialog
           open={creating}
-          initial={initialSelection}
           onClose={() => setCreating(false)}
           onCheckedOut={(id, payable) => { setCreating(false); if (payable > 0) setPayingId(id); }}
         />
@@ -231,12 +232,39 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   const { toast } = useToast();
   const action = useBookingAction(scope);
   const openDispute = useOpenDispute();
+  const reschedule = useRescheduleBooking(scope);
   const [confirming, setConfirming] = useState<{ action: BookingAction; label: string; message?: string; requireMessage?: boolean } | null>(null);
   const [disputeReason, setDisputeReason] = useState<string | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [correcting, setCorrecting] = useState(false);
+  // C-5 (UC-039): gym chọn PT khi nhận lịch / đổi PT sau khi nhận.
+  const [acceptPtId, setAcceptPtId] = useState("");
+  const [reassignPtId, setReassignPtId] = useState("");
+  const gymPts = useQuery({
+    queryKey: ["gym-pts", "for-booking"],
+    queryFn: () => gymService.listPts({ page: 0, size: 100 }),
+    enabled: scope === "gym" && !!booking,
+  });
+  const activePts = (gymPts.data?.content ?? []).filter((p) => p.status === "ACTIVE");
+  const client = useQueryClient();
+  const reassign = useMutation({
+    mutationFn: ({ id, ptId }: { id: number; ptId: number }) => bookingService.assignPt(id, ptId),
+    onSuccess: () => client.invalidateQueries({ queryKey: bookingKeys.all }),
+  });
   if (!booking) return null;
 
   // UC-063: mở tranh chấp cho booking đã phát sinh dịch vụ/tiền.
-  const canDispute = ["CONFIRMED", "COMPLETED", "NO_SHOW", "REJECTED", "CANCELLED"].includes(booking.status);
+  // D-18 (chốt 2026-07-17, phương án A): chỉ trong DISPUTE_WINDOW_DAYS ngày kể từ
+  // khi buổi kết thúc (endAt) — giữ đồng bộ với app.dispute.open-window-days phía BE.
+  // (Với REJECTED/CANCELLED, BE neo theo thời điểm hủy — FE dùng endAt làm xấp xỉ
+  // thận trọng; nếu FE ẩn nhầm thì cũng chỉ sớm hơn hạn thật, không mở lố.)
+  const DISPUTE_WINDOW_DAYS = 14;
+  const disputeAnchor = booking.endAt ? new Date(booking.endAt).getTime() : Date.now();
+  const withinDisputeWindow =
+    Date.now() <= disputeAnchor + DISPUTE_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const canDispute =
+    ["CONFIRMED", "COMPLETED", "NO_SHOW", "REJECTED", "CANCELLED"].includes(booking.status)
+    && withinDisputeWindow;
 
   async function submitDispute() {
     if (!bookingId || !disputeReason?.trim()) {
@@ -290,7 +318,13 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
       return;
     }
     try {
-      await action.mutateAsync({ id: bookingId, action: confirming.action, message: confirming.message });
+      await action.mutateAsync({
+        id: bookingId,
+        action: confirming.action,
+        message: confirming.message,
+        // C-5: gán PT ngay khi nhận lịch (BE recheck PT thuộc gym + lịch rảnh).
+        ptId: confirming.action === "accept" && acceptPtId ? Number(acceptPtId) : undefined,
+      });
       toast({ type: "success", title: actionSuccessLabels[confirming.action] ?? "Thao tác thành công" });
       const done = confirming.action;
       setConfirming(null);
@@ -317,12 +351,22 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
           <Info label="Tổng tiền" value={booking.customerPackageId ? "Thuộc gói đã mua" : money(booking.totalAmount)} />
           <Info label="Check-in" value={booking.checkedInAt ? dateTimeText(booking.checkedInAt) : "Chưa check-in"} />
         </dl>
+        {/* C-7: breakdown giá — khách thấy đúng số phải trả (khớp QR) */}
+        <PriceBreakdown booking={booking} />
+        {booking.lateCancellation && (
+          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-700">
+            Hủy muộn — theo chính sách, một phần phí có thể không được hoàn lại.
+          </p>
+        )}
         {booking.statusReason && (
           <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm text-muted-foreground">{booking.statusReason}</p>
         )}
         {booking.customerNote && (
           <p className="mt-2 rounded-xl border border-border bg-card p-3 text-sm">{booking.customerNote}</p>
         )}
+        {/* C-11 + C-6: timeline trạng thái + ghi chú buổi tập */}
+        <BookingTimeline bookingId={booking.id} scope={scope} />
+        <SessionNotesSection booking={booking} scope={scope} />
       </div>
 
       {scope === "customer" && status === "PENDING_PAYMENT" && (
@@ -342,6 +386,46 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
               {item.label}
             </Button>
           ))}
+          {/* C-4 (UC-041): dời lịch — customer & gym, trước khi buổi diễn ra */}
+          {scope !== "pt" && ["PENDING_GYM", "CONFIRMED"].includes(status) && (
+            <Button variant="outline" onClick={() => setRescheduling(true)}>Dời lịch</Button>
+          )}
+          {/* C-6 (UC-050): gym hiệu chỉnh bản ghi hoàn tất/vắng mặt */}
+          {scope === "gym" && ["COMPLETED", "NO_SHOW"].includes(status) && (
+            <Button variant="outline" onClick={() => setCorrecting(true)}>Hiệu chỉnh điểm danh</Button>
+          )}
+        </div>
+      )}
+
+      {/* C-5 (UC-039): gym đổi PT cho booking đã nhận */}
+      {scope === "gym" && status === "CONFIRMED" && (
+        <div className="mt-3 flex items-center gap-2">
+          <select
+            value={reassignPtId}
+            onChange={(e) => setReassignPtId(e.target.value)}
+            className="h-9 flex-1 rounded-lg border border-border bg-card px-2 text-sm text-foreground"
+          >
+            <option value="">— Đổi PT phụ trách —</option>
+            {activePts.map((p) => (
+              <option key={p.id} value={p.id}>{p.displayName ?? p.username}</option>
+            ))}
+          </select>
+          <Button
+            variant="outline"
+            disabled={!reassignPtId || reassign.isPending}
+            onClick={async () => {
+              try {
+                await reassign.mutateAsync({ id: booking.id, ptId: Number(reassignPtId) });
+                toast({ type: "success", title: "Đã đổi PT phụ trách" });
+                setReassignPtId("");
+                onClose();
+              } catch (e) {
+                toast({ type: "error", title: "Đổi PT thất bại", description: toErrorMessage(e) });
+              }
+            }}
+          >
+            Gán PT
+          </Button>
         </div>
       )}
 
@@ -377,6 +461,24 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
       {confirming && (
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <p className="font-black">{confirming.label} — bạn chắc chắn?</p>
+          {/* C-5 (UC-039): chọn PT phụ trách ngay khi nhận lịch */}
+          {confirming.action === "accept" && (
+            <div className="mt-3">
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+                PT phụ trách {booking.ptDisplayName ? `(khách đề xuất: ${booking.ptDisplayName})` : "(không bắt buộc)"}
+              </label>
+              <select
+                value={acceptPtId}
+                onChange={(e) => setAcceptPtId(e.target.value)}
+                className="h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground"
+              >
+                <option value="">— Giữ nguyên lựa chọn của khách —</option>
+                {activePts.map((p) => (
+                  <option key={p.id} value={p.id}>{p.displayName ?? p.username}</option>
+                ))}
+              </select>
+            </div>
+          )}
           {(confirming.requireMessage || ["cancel", "reject", "refund"].includes(confirming.action)) && (
             <Textarea
               className="mt-3"
@@ -393,6 +495,27 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
             <Button variant="outline" onClick={() => setConfirming(null)}>Hủy</Button>
           </div>
         </div>
+      )}
+
+      {rescheduling && (
+        <RescheduleDialog
+          booking={booking}
+          pending={reschedule.isPending}
+          onClose={() => setRescheduling(false)}
+          onSubmit={async (startAt, endAt) => {
+            try {
+              await reschedule.mutateAsync({ id: booking.id, startAt, endAt });
+              toast({ type: "success", title: "Đã dời lịch thành công" });
+              setRescheduling(false);
+              onClose();
+            } catch (e) {
+              toast({ type: "error", title: "Dời lịch thất bại", description: toErrorMessage(e) });
+            }
+          }}
+        />
+      )}
+      {correcting && (
+        <CorrectAttendanceDialog booking={booking} onClose={() => { setCorrecting(false); onClose(); }} />
       )}
     </Dialog>
   );
@@ -445,9 +568,8 @@ function Info({ label, value }: { label: string; value?: string }) {
 }
 
 /** UC-031/032/035: chọn gym -> dịch vụ/gói (+PT/chi nhánh) -> tạo nháp -> checkout. */
-function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
+function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   open: boolean;
-  initial?: { gymId?: number; packageId?: number };
   onClose: () => void;
   onCheckedOut: (bookingId: number, payable: number) => void;
 }) {
@@ -456,6 +578,18 @@ function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
   const checkoutAction = useBookingAction("customer");
   const [voucherCode, setVoucherCode] = useState("");
   const [pointsToUse, setPointsToUse] = useState("");
+  // C-2 (UC-044): đề nghị vào danh sách chờ khi slot đã kín (409).
+  const [waitlistOffer, setWaitlistOffer] = useState<{
+    serviceId?: number; packageId?: number; preferredStart: string;
+  } | null>(null);
+  const joinWaitlist = useMutation({
+    mutationFn: () => bookingService.joinWaitlist(waitlistOffer!),
+    onSuccess: () => {
+      toast({ type: "success", title: "Đã vào danh sách chờ", description: "Xem tại mục 'Danh sách chờ của tôi'." });
+      setWaitlistOffer(null);
+    },
+    onError: (e) => toast({ type: "error", title: "Không vào được danh sách chờ", description: toErrorMessage(e) }),
+  });
   const loyalty = useQuery({ queryKey: ["loyalty", "balance-mini"], queryFn: () => loyaltyService.balance(), enabled: open });
 
   const form = useForm<z.infer<typeof createBookingSchema>>({
@@ -474,16 +608,27 @@ function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
   const mode = form.watch("mode");
   const gymId = form.watch("gymId") ?? 0;
   const itemType = form.watch("itemType");
-
-  // Prefill khi mở từ trang chi tiết gói tập.
-  useEffect(() => {
-    if (!open || !initial) return;
-    if (initial.gymId) form.setValue("gymId", initial.gymId);
-    if (initial.packageId) {
-      form.setValue("itemType", "package");
-      form.setValue("itemId", initial.packageId);
-    }
-  }, [open, initial, form]);
+  // B-31/C-15 (UC-030): pre-check slot ngay khi chọn giờ — trước đây khách chỉ biết
+  // slot bận sau khi submit và nhận 409, để lại DRAFT rác.
+  const watchPtId = form.watch("ptId");
+  const watchBranchId = form.watch("branchId");
+  const watchDate = form.watch("bookingDate");
+  const watchStart = form.watch("startTime");
+  const watchEnd = form.watch("endTime");
+  const precheckEnabled =
+    open && !!(watchPtId || watchBranchId) && !!watchDate && !!watchStart && !!watchEnd && watchStart < watchEnd;
+  const precheck = useQuery({
+    queryKey: ["availability-check", watchPtId, watchBranchId, watchDate, watchStart, watchEnd],
+    queryFn: () =>
+      bookingService.checkAvailability({
+        ptId: watchPtId || undefined,
+        branchId: watchBranchId || undefined,
+        startAt: `${watchDate}T${watchStart}:00`,
+        endAt: `${watchDate}T${watchEnd}:00`,
+      }),
+    enabled: precheckEnabled,
+    staleTime: 15_000,
+  });
 
   const myPackages = useMyPackages(open);
   const usablePackages = (myPackages.data ?? []).filter((p) => p.status === "ACTIVE" && p.sessionsRemaining > 0);
@@ -561,6 +706,15 @@ function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
             onCheckedOut(booking.id, payable);
           } catch (error) {
             toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
+            // C-2 (UC-044): slot kín (409) -> mời vào danh sách chờ với đúng lựa chọn hiện tại.
+            const status = (error as { status?: number })?.status;
+            if (status === 409 && values.mode === "new" && values.itemId) {
+              setWaitlistOffer({
+                serviceId: values.itemType === "service" ? values.itemId : undefined,
+                packageId: values.itemType === "package" ? values.itemId : undefined,
+                preferredStart: `${values.bookingDate}T${values.startTime}:00`,
+              });
+            }
           }
         })}
       >
@@ -764,6 +918,37 @@ function CreateBookingDialog({ open, initial, onClose, onCheckedOut }: {
             <Textarea {...form.register("note")} placeholder="Mục tiêu, yêu cầu đặc biệt..." />
           </FieldShell>
         </div>
+
+        {/* B-31: kết quả pre-check khả dụng cho khung giờ đã chọn */}
+        {precheckEnabled && precheck.data && (
+          precheck.data.available ? (
+            <p className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
+              ✓ Khung giờ này còn trống — có thể đặt.
+            </p>
+          ) : (
+            <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              <p className="font-semibold">Khung giờ này không khả dụng:</p>
+              <ul className="mt-1 list-inside list-disc">
+                {precheck.data.reasons.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+            </div>
+          )
+        )}
+
+        {waitlistOffer && (
+          <div className="sm:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-black text-amber-800">Khung giờ đã kín — vào danh sách chờ?</p>
+            <p className="mt-1 text-xs text-amber-700">
+              Khi có chỗ trống, phòng gym sẽ ưu tiên liên hệ theo thứ tự chờ.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <Button type="button" disabled={joinWaitlist.isPending} onClick={() => joinWaitlist.mutate()}>
+                {joinWaitlist.isPending ? "Đang xử lý..." : "Vào danh sách chờ"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setWaitlistOffer(null)}>Bỏ qua</Button>
+            </div>
+          </div>
+        )}
 
         <Button className="sm:col-span-2" disabled={create.isPending || checkoutAction.isPending}>
           <CalendarCheck2 className="size-4" />
