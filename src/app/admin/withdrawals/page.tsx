@@ -1,12 +1,12 @@
-import { WithdrawalsPage } from "@/modules/withdrawal/components/withdrawal-pages";
-import { SiteLayout } from "@/modules/layout/site-layout";
+"use client";
 
+import { WithdrawalsPage } from "@/modules/withdrawal/components/withdrawal-pages";
+
+// D-15 (audit 2026-07-17): bỏ SiteLayout lồng trong AdminShell (double header/footer).
 export default function AdminWithdrawalsRoute() {
   return (
-    <SiteLayout>
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <WithdrawalsPage scope="admin" />
-      </main>
-    </SiteLayout>
+    <div className="flex-1 overflow-y-auto p-6">
+      <WithdrawalsPage scope="admin" />
+    </div>
   );
 }

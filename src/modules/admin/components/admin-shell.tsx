@@ -4,27 +4,37 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import {
-  LayoutDashboard, Users, ShieldCheck, DollarSign, Tag,
-  Heart, BarChart3, FileText, ClipboardList, LogOut,
-  Search, Bell, ChevronDown, UserCircle, Database,
-  ShieldAlert, Star, Banknote,
+  LayoutDashboard, Users, ShieldCheck, Tag,
+  BarChart3, FileText, ClipboardList, LogOut,
+  ChevronDown, UserCircle, Database,
+  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent,
 } from "lucide-react";
+import { NotificationBell } from "@/modules/notification/components/notification-bell";
+import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { AuthGuard } from "@/modules/auth/auth-guard";
+import { ThemeSwitch } from "@/shared/components/common/theme-switch";
+
+// D-1/E-7 (audit 2026-07-17): sidebar lọc theo role — MODERATOR chỉ thấy mảng kiểm duyệt,
+// FINANCE_ADMIN chỉ thấy mảng tài chính (khớp @PreAuthorize của các Admin*Controller BE).
+const ALL_ADMIN_ROLES = ["ROLE_ADMIN", "ROLE_MODERATOR", "ROLE_FINANCE_ADMIN"] as const;
 
 const adminLinks = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/verification", label: "Verification", icon: ShieldCheck },
-  { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert },
-  { href: "/admin/reviews", label: "Reviews", icon: Star },
-  { href: "/admin/withdrawals", label: "Withdrawals", icon: Banknote },
-  { href: "/admin/vouchers", label: "Vouchers", icon: Tag },
-  { href: "/admin/loyalty", label: "Loyalty", icon: Heart },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/cms", label: "CMS", icon: FileText },
-  { href: "/admin/master-data", label: "Master Data", icon: Database },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/users", label: "Users", icon: Users, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/verification", label: "Verification", icon: ShieldCheck, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
+  { href: "/admin/reviews", label: "Reviews", icon: Star, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
+  { href: "/admin/withdrawals", label: "Withdrawals", icon: Banknote, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
+  { href: "/admin/refunds", label: "Refunds", icon: Undo2, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
+  { href: "/admin/commission", label: "Commission", icon: Percent, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
+  { href: "/admin/vouchers", label: "Vouchers", icon: Tag, roles: ["ROLE_ADMIN"] },
+  // Link Loyalty gỡ tạm (E-16): trang /admin/loyalty chưa tồn tại — thêm lại ở Phase 3.
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
+  { href: "/admin/cms", label: "CMS", icon: FileText, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/master-data", label: "Master Data", icon: Database, roles: ["ROLE_ADMIN"] },
+  { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList, roles: ["ROLE_ADMIN"] },
 ];
 
 const roleLabels: Record<string, string> = {
@@ -38,19 +48,23 @@ const roleLabels: Record<string, string> = {
 
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+  const visibleLinks = adminLinks.filter(({ roles }) =>
+    (roles as readonly string[]).includes(user?.role ?? ""),
+  );
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen">
-      <Link href="/" className="block px-5 py-5 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0">
-        <p className="text-base font-bold text-[#0f172a] leading-tight">FitMatch</p>
-        <p className="text-xs text-gray-400 mt-0.5">Admin Console</p>
+    <aside className="w-56 shrink-0 bg-card border-r border-border flex flex-col h-screen">
+      <Link href="/" className="block px-5 py-5 border-b border-border hover:bg-muted/40 transition-colors shrink-0">
+        <p className="text-base font-bold text-foreground leading-tight">FitMatch</p>
+        <p className="text-xs text-muted-foreground mt-0.5">Admin Console</p>
       </Link>
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-        {adminLinks.map(({ href, label, icon: Icon }) => {
+        {visibleLinks.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                active ? "bg-[#2563eb] text-white" : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
+                active ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
             >
               <Icon className="size-4 shrink-0" />{label}
@@ -58,8 +72,8 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
           );
         })}
       </nav>
-      <div className="px-4 py-4 border-t border-gray-100 shrink-0">
-        <button onClick={onLogout} className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+      <div className="px-4 py-4 border-t border-border shrink-0">
+        <button onClick={onLogout} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <LogOut className="size-3.5" /> Đăng xuất
         </button>
       </div>
@@ -75,39 +89,35 @@ function AdminHeader({ onLogout }: { onLogout: () => void }) {
   const initial = label[0]?.toUpperCase() ?? "A";
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 h-14 flex items-center justify-between shrink-0">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-gray-400" />
-        <input className="pl-9 pr-4 h-8 text-sm bg-gray-100 border-0 rounded-lg focus:outline-none w-56 placeholder:text-gray-400" placeholder="Tìm kiếm..." />
-      </div>
+    <header className="bg-card border-b border-border px-4 sm:px-6 h-14 flex items-center justify-between shrink-0">
+      <p className="text-sm font-bold text-foreground">Admin Console</p>
       <div className="flex items-center gap-2">
-        <button className="relative size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
-          <Bell className="size-4" />
-          <span className="absolute top-1 right-1 size-1.5 rounded-full bg-red-500" />
-        </button>
-        <div className="w-px h-5 bg-gray-200 mx-1" />
+        <ThemeSwitch />
+        {/* E-6: badge số chưa đọc thật — chấm đỏ hardcode cũ luôn sáng bất kể có thông báo */}
+        <NotificationBell className="relative size-8 flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground" />
+        <div className="w-px h-5 bg-muted mx-1" />
         <div className="relative">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="flex items-center gap-2.5 pl-1.5 pr-2 h-11 rounded-lg hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2.5 pl-1.5 pr-2 h-11 rounded-lg hover:bg-muted transition-colors"
           >
             <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">{initial}</div>
             <div className="text-left leading-tight">
-              <p className="text-sm font-semibold text-gray-700">{label}</p>
-              <p className="text-[11px] text-gray-400">{role}</p>
+              <p className="text-sm font-semibold text-foreground">{label}</p>
+              <p className="text-[11px] text-muted-foreground">{role}</p>
             </div>
-            <ChevronDown className="size-4 text-gray-400" />
+            <ChevronDown className="size-4 text-muted-foreground" />
           </button>
           {open && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-              <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-gray-200 bg-white p-2 shadow-xl">
+              <div className="absolute right-0 top-11 z-50 w-52 rounded-lg border border-border bg-card p-2 shadow-xl">
                 <Link href="/profile" onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/40">
                   <UserCircle className="size-4" /> Hồ sơ
                 </Link>
                 <Link href="/" onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/40">
                   <LayoutDashboard className="size-4" /> Về trang chủ
                 </Link>
                 <button onClick={() => { setOpen(false); onLogout(); }}
@@ -133,9 +143,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthGuard roles={["ROLE_ADMIN"]}>
-      <div className="flex h-screen overflow-hidden bg-[#f8f9fc]">
-        <AdminSidebar onLogout={handleLogout} />
+    <AuthGuard roles={[...ALL_ADMIN_ROLES]}>
+      <div className="flex h-screen overflow-hidden bg-muted/30">
+        {/* F-30: mobile dùng drawer, desktop giữ sidebar cố định */}
+        <ResponsiveSidebar>
+          <AdminSidebar onLogout={handleLogout} />
+        </ResponsiveSidebar>
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           <AdminHeader onLogout={handleLogout} />
           {children}

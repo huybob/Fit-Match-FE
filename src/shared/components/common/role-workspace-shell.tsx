@@ -27,21 +27,21 @@ export function RoleWorkspaceShell({
 }) {
   return (
     <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm lg:grid lg:min-h-[680px] lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="border-b border-gray-100 bg-white lg:border-b-0 lg:border-r">
-          <div className="border-b border-gray-100 px-5 py-5">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:grid lg:min-h-[680px] lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="border-b border-border bg-card lg:border-b-0 lg:border-r">
+          <div className="border-b border-border px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#2563eb] text-white">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-white">
                 <Dumbbell className="size-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   FitMatch
                 </p>
-                <p className="truncate text-sm font-bold text-[#0f172a]">{title}</p>
+                <p className="truncate text-sm font-bold text-foreground">{title}</p>
               </div>
             </div>
-            <p className="mt-3 hidden text-xs leading-5 text-gray-400 lg:block">
+            <p className="mt-3 hidden text-xs leading-5 text-muted-foreground lg:block">
               {description}
             </p>
           </div>
@@ -57,14 +57,14 @@ export function RoleWorkspaceShell({
                   className={cn(
                     "group flex min-w-max items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors lg:min-w-0",
                     active
-                      ? "bg-[#2563eb] text-white"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-[#0f172a]",
+                      ? "bg-primary text-white"
+                      : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                   )}
                 >
                   <Icon
                     className={cn(
                       "size-4 shrink-0",
-                      active ? "text-white" : "text-gray-400",
+                      active ? "text-white" : "text-muted-foreground",
                     )}
                   />
                   <span className="truncate">{label}</span>
@@ -74,7 +74,7 @@ export function RoleWorkspaceShell({
           </nav>
         </aside>
 
-        <main className="min-w-0 bg-[#f8f9fc] p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 bg-muted/40 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

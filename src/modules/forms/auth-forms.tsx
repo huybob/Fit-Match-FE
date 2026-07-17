@@ -27,7 +27,7 @@ import {
 function BackToLoginLink({ className }: { className?: string }) {
   const router = useRouter();
   const { status } = useAuthStore();
-  const base = "text-[#004ac6] hover:underline";
+  const base = "text-primary hover:underline";
   const cls = className ? `${base} ${className}` : base;
 
   if (status === "authenticated") {
@@ -45,49 +45,6 @@ function BackToLoginLink({ className }: { className?: string }) {
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-        fill="#EA4335"
-      />
-    </svg>
-  );
-}
-
-function AppleIcon() {
-  return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-    </svg>
-  );
-}
-
-function AuthDivider({ label }: { label: string }) {
-  return (
-    <div className="relative py-2">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-200" />
-      </div>
-      <div className="relative flex justify-center text-xs uppercase">
-        <span className="bg-white px-3 text-gray-400 tracking-widest">{label}</span>
-      </div>
-    </div>
-  );
-}
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +55,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
+    mode: "onTouched",
     defaultValues: { username: "", password: "" },
   });
 
@@ -105,7 +63,10 @@ export function LoginForm() {
     try {
       const user = await login(values);
       toast({ type: "success", title: "Đăng nhập thành công" });
-      router.replace(getHomeRouteForRole(user.role));
+      // F-8: quay lại trang người dùng định vào (chỉ nhận path nội bộ, chống open-redirect).
+      const returnUrl = new URLSearchParams(window.location.search).get("returnUrl");
+      const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
+      router.replace(safeReturn ?? getHomeRouteForRole(user.role));
     } catch (error) {
       const code = getErrorCode(error);
       if (code === "EMAIL_NOT_VERIFIED") {
@@ -128,21 +89,21 @@ export function LoginForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Chào mừng trở lại</h1>
-        <p className="mt-2 text-sm text-[#475569]">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Chào mừng trở lại</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Vui lòng nhập thông tin chi tiết để truy cập tài khoản của bạn.
         </p>
       </div>
 
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-900">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-foreground">Email hoặc tên đăng nhập</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="username"
-              placeholder="ten@congty.com"
-              className="pl-10 h-11 border-[#e2e8f0] rounded-lg"
+              placeholder="ten@congty.com hoặc nguyenvana"
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("username")}
             />
           </div>
@@ -153,26 +114,26 @@ export function LoginForm() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-900">Mật khẩu</label>
+            <label className="text-sm font-medium text-foreground">Mật khẩu</label>
             <Link
               href="/forgot-password"
-              className="text-xs font-medium text-[#004ac6] hover:underline"
+              className="text-xs font-medium text-primary hover:underline"
             >
               Quên mật khẩu?
             </Link>
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="current-password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 pr-10 h-11 border-[#e2e8f0] rounded-lg"
+              className="pl-10 pr-10 h-11 border-border rounded-lg"
               {...form.register("password")}
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
@@ -185,27 +146,18 @@ export function LoginForm() {
         </div>
 
         <Button
-          className="w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-medium rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
         </Button>
       </form>
 
-      <AuthDivider label="HOẶC" />
+      {/* F-37: gỡ nút Google giả (không handler, BE không có OAuth) — thêm lại khi có OAuth thật. */}
 
-      <Button
-        variant="outline"
-        className="w-full h-10 gap-2 border-[#e2e8f0] rounded-lg text-sm font-medium text-gray-900"
-        type="button"
-      >
-        <GoogleIcon />
-        Tiếp tục với Google
-      </Button>
-
-      <p className="text-center text-sm text-[#475569]">
+      <p className="text-center text-sm text-muted-foreground">
         Bạn chưa có tài khoản?{" "}
-        <Link href="/register" className="font-normal text-[#004ac6] hover:underline">
+        <Link href="/register" className="font-normal text-primary hover:underline">
           Đăng ký
         </Link>
       </p>
@@ -224,14 +176,17 @@ export function RegisterForm() {
   const [emailSent, setEmailSent] = useState(false);
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
+    mode: "onTouched",
     defaultValues: {
       username: "",
+      fullName: "",
       email: "",
       phone: "",
       password: "",
-      role: "ROLE_CUSTOMER",
+      accountType: "CUSTOMER",
     },
   });
+  const accountType = form.watch("accountType");
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     if (values.password !== confirmPassword) {
@@ -261,25 +216,25 @@ export function RegisterForm() {
     return (
       <div className="space-y-6 text-center py-4">
         <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-blue-50">
-            <CheckCircle className="size-8 text-[#2563eb]" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle className="size-8 text-primary" />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Kiểm tra email của bạn</h2>
-          <p className="mt-2 text-sm text-[#475569]">
+          <h2 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Chúng tôi đã gửi link xác thực đến{" "}
-            <span className="font-medium text-gray-900">{form.getValues("email")}</span>.
+            <span className="font-medium text-foreground">{form.getValues("email")}</span>.
             Vui lòng kiểm tra hộp thư và nhấn vào link để kích hoạt tài khoản.
           </p>
         </div>
-        <p className="text-sm text-[#475569]">
+        <p className="text-sm text-muted-foreground">
           Không nhận được email?{" "}
-          <Link href="/resend-verification" className="text-[#004ac6] hover:underline font-medium">
+          <Link href="/resend-verification" className="text-primary hover:underline font-medium">
             Gửi lại
           </Link>
         </p>
-        <p className="text-sm text-[#475569]">
+        <p className="text-sm text-muted-foreground">
           <BackToLoginLink />
         </p>
       </div>
@@ -289,32 +244,73 @@ export function RegisterForm() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-3xl font-normal text-gray-900">Tạo tài khoản của bạn</h1>
-        <p className="mt-2 text-base text-[#475569]">Bắt đầu với FitMatch ngay hôm nay.</p>
+        <h1 className="text-3xl font-normal text-foreground">Tạo tài khoản của bạn</h1>
+        <p className="mt-2 text-base text-muted-foreground">Bắt đầu với FitMatch ngay hôm nay.</p>
       </div>
 
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-base text-gray-900">Họ và Tên</label>
-          <Input
-            autoComplete="name"
-            placeholder="Nguyễn Văn A"
-            className="h-11 border-[#e2e8f0] rounded-lg text-base"
-            {...form.register("username")}
-          />
-          {form.formState.errors.username && (
-            <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
-          )}
+          <label className="text-base text-foreground">Loại tài khoản</label>
+          <div className="grid grid-cols-2 gap-4">
+            {(
+              [
+                { value: "CUSTOMER", label: "Khách hàng", hint: "Tìm và đặt lịch tập" },
+                { value: "GYM_OPERATOR", label: "Chủ phòng tập", hint: "Đăng ký & vận hành phòng tập" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => form.setValue("accountType", option.value)}
+                aria-pressed={accountType === option.value}
+                className={`rounded-lg border p-3 text-left transition-colors ${
+                  accountType === option.value
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <span className="block text-base font-medium text-foreground">{option.label}</span>
+                <span className="block text-xs text-muted-foreground">{option.hint}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-base text-gray-900">Địa chỉ Email</label>
+            <label className="text-base text-foreground">Họ và Tên</label>
+            <Input
+              autoComplete="name"
+              placeholder="Nguyễn Văn A"
+              className="h-11 border-border rounded-lg text-base"
+              {...form.register("fullName")}
+            />
+            {form.formState.errors.fullName && (
+              <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-base text-foreground">Tên đăng nhập</label>
+            <Input
+              autoComplete="username"
+              placeholder="nguyenvana"
+              className="h-11 border-border rounded-lg text-base"
+              {...form.register("username")}
+            />
+            {form.formState.errors.username && (
+              <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-base text-foreground">Địa chỉ Email</label>
             <Input
               autoComplete="email"
               type="email"
               placeholder="ten@congty.com"
-              className="h-11 border-[#e2e8f0] rounded-lg text-base"
+              className="h-11 border-border rounded-lg text-base"
               {...form.register("email")}
             />
             {form.formState.errors.email && (
@@ -322,30 +318,30 @@ export function RegisterForm() {
             )}
           </div>
           <div className="space-y-1.5">
-            <label className="text-base text-gray-900">Số điện thoại</label>
+            <label className="text-base text-foreground">Số điện thoại</label>
             <Input
               autoComplete="tel"
               placeholder="0901 234 567"
-              className="h-11 border-[#e2e8f0] rounded-lg text-base"
+              className="h-11 border-border rounded-lg text-base"
               {...form.register("phone")}
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-base text-gray-900">Mật khẩu</label>
+          <label className="text-base text-foreground">Mật khẩu</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 pr-10 h-11 border-[#e2e8f0] rounded-lg text-base"
+              className="pl-10 pr-10 h-11 border-border rounded-lg text-base"
               {...form.register("password")}
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -357,14 +353,14 @@ export function RegisterForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-base text-gray-900">Xác nhận mật khẩu</label>
+          <label className="text-base text-foreground">Xác nhận mật khẩu</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 h-11 border-[#e2e8f0] rounded-lg text-base"
+              className="pl-10 h-11 border-border rounded-lg text-base"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
@@ -378,13 +374,13 @@ export function RegisterForm() {
             onChange={(e) => setTerms(e.target.checked)}
             className="mt-0.5 size-4 accent-[#004ac6]"
           />
-          <span className="text-base text-[#475569]">
+          <span className="text-base text-muted-foreground">
             Tôi đồng ý với{" "}
-            <Link href="#" className="text-[#004ac6] hover:underline">
+            <Link href="#" className="text-primary hover:underline">
               Điều khoản Dịch vụ
             </Link>{" "}
             và{" "}
-            <Link href="#" className="text-[#004ac6] hover:underline">
+            <Link href="#" className="text-primary hover:underline">
               Chính sách Bảo mật
             </Link>
             .
@@ -392,29 +388,18 @@ export function RegisterForm() {
         </label>
 
         <Button
-          className="w-full h-12 bg-[#004ac6] hover:bg-[#003a9e] text-white text-base font-normal rounded-lg gap-2"
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-normal rounded-lg gap-2"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng ký →"}
         </Button>
       </form>
 
-      <AuthDivider label="HOẶC ĐĂNG KÝ BẰNG" />
+      {/* F-37: gỡ nút Google/Apple giả (không handler, BE không có OAuth). */}
 
-      <div className="grid grid-cols-2 gap-4">
-        <Button variant="outline" type="button" className="h-11 gap-2 border-[#e2e8f0] rounded-lg text-base font-normal">
-          <GoogleIcon />
-          Google
-        </Button>
-        <Button variant="outline" type="button" className="h-11 gap-2 border-[#e2e8f0] rounded-lg text-base font-normal">
-          <AppleIcon />
-          Apple
-        </Button>
-      </div>
-
-      <p className="text-center text-base text-[#475569] pt-4">
+      <p className="text-center text-base text-muted-foreground pt-4">
         Đã có tài khoản?{" "}
-        <Link href="/login" className="text-[#004ac6] hover:underline">
+        <Link href="/login" className="text-primary hover:underline">
           Đăng nhập
         </Link>
       </p>
@@ -430,6 +415,7 @@ export function ForgotPasswordForm() {
   const [sentEmail, setSentEmail] = useState("");
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onTouched",
     defaultValues: { email: "" },
   });
 
@@ -449,14 +435,14 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-6 text-center py-4">
         <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-blue-50">
-            <Mail className="size-8 text-[#2563eb]" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+            <Mail className="size-8 text-primary" />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Kiểm tra email của bạn</h2>
-          <p className="mt-2 text-sm text-[#475569]">
-            Nếu <span className="font-medium text-gray-900">{sentEmail}</span> đã đăng ký, chúng tôi
+          <h2 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Nếu <span className="font-medium text-foreground">{sentEmail}</span> đã đăng ký, chúng tôi
             sẽ gửi link đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra cả hộp thư spam.
           </p>
         </div>
@@ -468,21 +454,21 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Quên mật khẩu?</h1>
-        <p className="mt-2 text-sm text-[#475569]">
+        <h1 className="text-2xl font-semibold text-foreground">Quên mật khẩu?</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Nhập địa chỉ email bạn đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu.
         </p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-900">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="email"
               type="email"
               placeholder="ten@congty.com"
-              className="pl-10 h-11 border-[#e2e8f0] rounded-lg"
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("email")}
             />
           </div>
@@ -491,13 +477,13 @@ export function ForgotPasswordForm() {
           )}
         </div>
         <Button
-          className="w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? "Đang gửi..." : "Gửi link đặt lại mật khẩu"}
         </Button>
       </form>
-      <p className="text-center text-sm text-[#475569]">
+      <p className="text-center text-sm text-muted-foreground">
         <BackToLoginLink />
       </p>
     </div>
@@ -512,6 +498,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
+    mode: "onTouched",
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
 
@@ -522,13 +509,15 @@ export function ResetPasswordForm({ token }: { token: string }) {
       router.replace("/login");
     } catch (error) {
       const code = getErrorCode(error);
+      // A-16 (audit 2026-07-17): BE trả VERIFICATION_TOKEN_INVALID cho cả token sai
+      // lẫn hết hạn (không có mã TOKEN_EXPIRED riêng) — gộp thông điệp cho khớp.
+      const tokenInvalid = code === "VERIFICATION_TOKEN_INVALID" || code === "TOKEN_EXPIRED";
       toast({
         type: "error",
-        title: code === "TOKEN_EXPIRED" ? "Link đã hết hạn" : "Đặt lại mật khẩu thất bại",
-        description:
-          code === "TOKEN_EXPIRED"
-            ? "Vui lòng yêu cầu gửi lại link đặt lại mật khẩu."
-            : toErrorMessage(error),
+        title: tokenInvalid ? "Link không hợp lệ hoặc đã hết hạn" : "Đặt lại mật khẩu thất bại",
+        description: tokenInvalid
+          ? "Vui lòng yêu cầu gửi lại link đặt lại mật khẩu."
+          : toErrorMessage(error),
       });
     }
   }
@@ -536,24 +525,24 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Đặt lại mật khẩu</h1>
-        <p className="mt-2 text-sm text-[#475569]">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+        <h1 className="text-2xl font-semibold text-foreground">Đặt lại mật khẩu</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Nhập mật khẩu mới cho tài khoản của bạn.</p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-900">Mật khẩu mới</label>
+          <label className="text-sm font-medium text-foreground">Mật khẩu mới</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="Tối thiểu 6 ký tự"
-              className="pl-10 pr-10 h-11 border-[#e2e8f0] rounded-lg"
+              className="pl-10 pr-10 h-11 border-border rounded-lg"
               {...form.register("newPassword")}
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -564,14 +553,14 @@ export function ResetPasswordForm({ token }: { token: string }) {
           )}
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-900">Xác nhận mật khẩu</label>
+          <label className="text-sm font-medium text-foreground">Xác nhận mật khẩu</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="Nhập lại mật khẩu"
-              className="pl-10 h-11 border-[#e2e8f0] rounded-lg"
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("confirmPassword")}
             />
           </div>
@@ -580,7 +569,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           )}
         </div>
         <Button
-          className="w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? "Đang lưu..." : "Đặt lại mật khẩu"}
@@ -598,6 +587,7 @@ export function ResendVerificationForm() {
   const [sentEmail, setSentEmail] = useState("");
   const form = useForm<z.infer<typeof resendVerificationSchema>>({
     resolver: zodResolver(resendVerificationSchema),
+    mode: "onTouched",
     defaultValues: { email: "" },
   });
 
@@ -620,15 +610,15 @@ export function ResendVerificationForm() {
     return (
       <div className="space-y-6 text-center py-4">
         <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-blue-50">
-            <CheckCircle className="size-8 text-[#2563eb]" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle className="size-8 text-primary" />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Email đã được gửi!</h2>
-          <p className="mt-2 text-sm text-[#475569]">
+          <h2 className="text-2xl font-semibold text-foreground">Email đã được gửi!</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Chúng tôi đã gửi link xác thực đến{" "}
-            <span className="font-medium text-gray-900">{sentEmail}</span>. Link có hiệu lực trong
+            <span className="font-medium text-foreground">{sentEmail}</span>. Link có hiệu lực trong
             24 giờ.
           </p>
         </div>
@@ -640,21 +630,21 @@ export function ResendVerificationForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Gửi lại email xác thực</h1>
-        <p className="mt-2 text-sm text-[#475569]">
+        <h1 className="text-2xl font-semibold text-foreground">Gửi lại email xác thực</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Nhập email đã đăng ký để nhận lại link xác thực tài khoản.
         </p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-900">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 pointer-events-none" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="email"
               type="email"
               placeholder="ten@congty.com"
-              className="pl-10 h-11 border-[#e2e8f0] rounded-lg"
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("email")}
             />
           </div>
@@ -663,13 +653,13 @@ export function ResendVerificationForm() {
           )}
         </div>
         <Button
-          className="w-full h-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
           disabled={form.formState.isSubmitting}
         >
           {form.formState.isSubmitting ? "Đang gửi..." : "Gửi lại email xác thực"}
         </Button>
       </form>
-      <p className="text-center text-sm text-[#475569]">
+      <p className="text-center text-sm text-muted-foreground">
         <BackToLoginLink />
       </p>
     </div>
@@ -682,6 +672,7 @@ export function ChangePasswordForm() {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof changePasswordSchema>>({
     resolver: zodResolver(changePasswordSchema),
+    mode: "onTouched",
     defaultValues: { oldPassword: "", newPassword: "" },
   });
 

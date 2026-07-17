@@ -1,18 +1,6 @@
-import { PackagePublicDetailPage } from "@/modules/gym/components/package-public-pages";
+import { redirect } from "next/navigation";
 
-export default async function PackageDetailRoute({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ gym?: string }>;
-}) {
-  const { id } = await params;
-  const { gym } = await searchParams;
-  return (
-    <PackagePublicDetailPage
-      packageId={Number(id)}
-      gymId={gym ? Number(gym) : undefined}
-    />
-  );
+// P0-5 (audit 2026-07-17): chi tiết gói mock — xem ghi chú tại src/app/packages/page.tsx.
+export default function PackageDetailRoute() {
+  redirect("/gyms");
 }

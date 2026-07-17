@@ -13,11 +13,11 @@ function ResetPasswordContent() {
   if (!token) {
     return (
       <div className="space-y-4 text-center py-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Link không hợp lệ</h1>
-        <p className="text-sm text-[#475569]">
+        <h1 className="text-2xl font-semibold text-foreground">Link không hợp lệ</h1>
+        <p className="text-sm text-muted-foreground">
           Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.
         </p>
-        <Link href="/forgot-password" className="text-sm text-[#004ac6] hover:underline">
+        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
           Yêu cầu link mới
         </Link>
       </div>

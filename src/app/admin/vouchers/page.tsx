@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Tag, ToggleLeft, ToggleRight } from "lucide-react";
@@ -14,8 +15,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
-const money = (v?: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v ?? 0);
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 
 export default function AdminVouchersRoute() {
   const qc = useQueryClient();
@@ -92,6 +93,10 @@ function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose:
     minBookingAmount: voucher?.minBookingAmount,
     maxDiscount: voucher?.maxDiscount,
     usageLimit: voucher?.usageLimit,
+    // E-11 (audit 2026-07-17): thời hạn hiệu lực — FE type/BE DTO/DB đều hỗ trợ
+    // nhưng form thiếu input → voucher hiệu lực vô hạn ngoài ý muốn.
+    validFrom: voucher?.validFrom?.slice(0, 16),
+    validTo: voucher?.validTo?.slice(0, 16),
     active: voucher?.active ?? true,
   });
 
@@ -139,9 +144,27 @@ function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose:
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground sm:col-span-2">
           Giới hạn lượt (bỏ trống = không giới hạn) <Input type="number" value={form.usageLimit ?? ""} onChange={(e) => set({ usageLimit: num(e.target.value) })} />
         </label>
+        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
+          Hiệu lực từ
+          <Input type="datetime-local" value={form.validFrom ?? ""}
+            onChange={(e) => set({ validFrom: e.target.value || undefined })} />
+        </label>
+        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
+          Hiệu lực đến
+          <Input type="datetime-local" value={form.validTo ?? ""}
+            onChange={(e) => set({ validTo: e.target.value || undefined })} />
+        </label>
+        {form.validFrom && form.validTo && form.validFrom >= form.validTo && (
+          <p className="sm:col-span-2 text-xs text-red-500">&quot;Hiệu lực đến&quot; phải sau &quot;Hiệu lực từ&quot;.</p>
+        )}
       </div>
       <div className="mt-4 flex gap-2">
-        <Button disabled={save.isPending || !form.code.trim()} onClick={() => save.mutate()}>Lưu</Button>
+        <Button
+          disabled={save.isPending || !form.code.trim() || (!!form.validFrom && !!form.validTo && form.validFrom >= form.validTo)}
+          onClick={() => save.mutate()}
+        >
+          Lưu
+        </Button>
         <Button variant="outline" onClick={onClose}>Hủy</Button>
       </div>
     </Dialog>

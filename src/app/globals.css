@@ -312,3 +312,37 @@ html {
     border-color: var(--border);
   }
 }
+
+/* A11y: tôn trọng prefers-reduced-motion (WCAG 2.3.3) — tắt animation/transition
+   cho người dùng nhạy cảm chuyển động; giữ nội dung, chỉ bỏ hiệu ứng. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* A11y: focus ring dự phòng cho mọi phần tử tương tác chưa có ring riêng
+   (đảm bảo keyboard user luôn thấy tiêu điểm — WCAG 2.4.7). */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Tránh cắt anchor dưới header sticky khi nhảy tới #id. */
+:target {
+  scroll-margin-top: 96px;
+}

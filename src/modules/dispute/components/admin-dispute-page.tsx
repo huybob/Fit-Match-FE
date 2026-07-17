@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrency } from "@/utils/format.util";
 import { ArrowUpCircle, CheckCircle2, Gavel, Lock, Paperclip, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/lib/toast-provider";
@@ -19,11 +20,12 @@ import {
 } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { PageHeader } from "@/shared/components/common/page-header";
 import { useDisputeDecision, useDisputeEvidence, useDisputeQueue } from "../hooks/use-dispute";
 import { disputeStatusLabels, disputeStatusVariant } from "./dispute-pages";
 
-const money = (v?: number) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(v ?? 0);
+// F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
+const money = (v?: number) => formatCurrency(v ?? 0);
 
 const resolutionLabels: Record<DisputeResolution, string> = {
   REFUND_FULL: "Hoàn toàn bộ cho khách",
@@ -45,13 +47,10 @@ export function AdminDisputesPage() {
 
   return (
     <div>
-      <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
-        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Xử lý tranh chấp</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Xem bằng chứng, quyết định hoàn/giải phóng tiền và đóng/chuyển cấp (UC-065..068).
-        </p>
-      </section>
+      <PageHeader
+        title="Xử lý tranh chấp"
+        description="Xem bằng chứng, quyết định hoàn/giải phóng tiền và đóng/chuyển cấp (UC-065..068)."
+      />
 
       <Select value={status} onValueChange={(v) => setStatus(v as DisputeStatus | "")}>
         <SelectTrigger className="w-64"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
@@ -110,7 +109,20 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
   const [amount, setAmount] = useState<string>("");
   const [note, setNote] = useState("");
 
+  // D-9: chặn hoàn vượt số tiền đang giữ ngay tại client (BE vẫn validate lại).
+  const maxRefund = dispute.frozenAmount ?? 0;
+  const amountInvalid =
+    needsAmount(resolution) && (!amount || Number(amount) <= 0 || Number(amount) > maxRefund);
+
   async function act(action: "review" | "resolve" | "close" | "escalate") {
+    if (action === "resolve" && amountInvalid) {
+      toast({
+        type: "warning",
+        title: "Số tiền hoàn không hợp lệ",
+        description: `Phải trong khoảng 1 – ${money(maxRefund)} (số đang giữ).`,
+      });
+      return;
+    }
     try {
       if (action === "resolve") {
         await decision.mutateAsync({
@@ -140,6 +152,11 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
           Booking #{dispute.bookingId} · {dispute.customerName} → {dispute.gymName}
           {dispute.frozenAmount ? ` · giữ ${money(dispute.frozenAmount)}` : ""}
         </p>
+        {dispute.assignedModerator && (
+          <p className="mt-1 text-xs font-semibold text-primary">
+            Người phụ trách: {dispute.assignedModerator}
+          </p>
+        )}
       </div>
 
       <div className="mt-3">
@@ -177,16 +194,25 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
             </SelectContent>
           </Select>
           {needsAmount(resolution) && (
-            <Input
-              type="number"
-              placeholder={`Số tiền hoàn cho khách (tối đa ${money(dispute.frozenAmount)})`}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <div>
+              <Input
+                type="number"
+                min={1}
+                max={maxRefund}
+                placeholder={`Số tiền hoàn cho khách (tối đa ${money(maxRefund)})`}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              {amountInvalid && amount && (
+                <p className="mt-1 text-xs text-red-500">Tối đa {money(maxRefund)} — số tiền đang giữ của tranh chấp.</p>
+              )}
+            </div>
           )}
           <Textarea placeholder="Ghi chú quyết định" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="flex flex-wrap gap-2">
-            {dispute.status === "OPEN" && (
+            {/* D-20: khớp guard BE — review nhận cả OPEN lẫn ESCALATED (claim case D-12);
+                escalate chỉ từ OPEN/UNDER_REVIEW (ESCALATED bấm lại sẽ 409). */}
+            {(dispute.status === "OPEN" || dispute.status === "ESCALATED") && (
               <Button variant="outline" disabled={decision.isPending} onClick={() => act("review")}>
                 Bắt đầu xem xét
               </Button>
@@ -194,9 +220,11 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
             <Button disabled={decision.isPending} onClick={() => act("resolve")}>
               <CheckCircle2 className="size-4" /> Quyết định & áp dụng
             </Button>
-            <Button variant="destructive" disabled={decision.isPending} onClick={() => act("escalate")}>
-              <ArrowUpCircle className="size-4" /> Chuyển cấp
-            </Button>
+            {dispute.status !== "ESCALATED" && (
+              <Button variant="destructive" disabled={decision.isPending} onClick={() => act("escalate")}>
+                <ArrowUpCircle className="size-4" /> Chuyển cấp
+              </Button>
+            )}
           </div>
         </div>
       )}

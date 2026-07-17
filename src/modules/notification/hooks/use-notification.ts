@@ -19,10 +19,11 @@ export function useUpdateNotificationPreferences() {
 }
 
 // UC-075: hộp thư in-app.
-export function useNotifications() {
+export function useNotifications(page = 0) {
   return useQuery({
-    queryKey: [...notificationKeys.all, "inbox"],
-    queryFn: () => notificationService.list(),
+    // E-20 (audit 2026-07-17): inbox có phân trang — trước đây khóa 20 thông báo mới nhất.
+    queryKey: [...notificationKeys.all, "inbox", page],
+    queryFn: () => notificationService.list({ page }),
   });
 }
 

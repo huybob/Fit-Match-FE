@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Mail, Megaphone, CalendarCheck, Loader2 } from "lucide-react";
+import { Megaphone, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   useNotificationPreferences,
@@ -15,30 +15,15 @@ import type { UpdateNotificationPreferenceRequest } from "@/types/Notification";
 import { cn } from "@/shared/utils/cn.util";
 import { NotificationInbox } from "./notification-inbox";
 
+// E-14 (audit 2026-07-17): gỡ 3 toggle email/push/nhắc nhở — BE lưu nhưng KHÔNG BAO GIỜ
+// đọc khi gửi (chưa có kênh email/push cho notification, chưa có reminder scheduler)
+// → toggle vô hiệu đánh lừa người dùng. Thêm lại khi kênh tương ứng tồn tại (Phase 5).
 const PREFS: {
   key: keyof UpdateNotificationPreferenceRequest;
   label: string;
   desc: string;
   icon: React.ElementType;
 }[] = [
-  {
-    key: "emailEnabled",
-    label: "Email thông báo",
-    desc: "Nhận thông báo qua địa chỉ email đã đăng ký",
-    icon: Mail,
-  },
-  {
-    key: "pushEnabled",
-    label: "Push notification",
-    desc: "Nhận thông báo đẩy trên trình duyệt hoặc thiết bị di động",
-    icon: Bell,
-  },
-  {
-    key: "bookingReminders",
-    label: "Nhắc nhở đặt lịch",
-    desc: "Nhận nhắc nhở trước các buổi tập đã đặt lịch",
-    icon: CalendarCheck,
-  },
   {
     key: "marketingEnabled",
     label: "Thông báo marketing",
@@ -148,7 +133,7 @@ export function NotificationPage() {
                 >
                   <span
                     className={cn(
-                      "pointer-events-none inline-block size-5 rounded-full bg-white shadow-md transition-transform",
+                      "pointer-events-none inline-block size-5 rounded-full bg-card shadow-md transition-transform",
                       enabled ? "translate-x-5" : "translate-x-0",
                     )}
                   />

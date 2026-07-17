@@ -11,6 +11,8 @@ export interface Withdrawal {
   accountHolder?: string;
   status: WithdrawalStatus;
   reviewNote?: string;
+  /** D-11: mã giao dịch chuyển khoản thực tế (bắt buộc khi mark-paid). */
+  payoutReference?: string;
   requestedBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -33,9 +35,21 @@ export interface Wallet {
   frozenBalance: number;
 }
 
+/** WalletTxnType của BE — khớp enum + cột DB (V19/V31). */
+export type WalletTxnType =
+  | "HOLD"
+  | "REFUND"
+  | "MOVE_TO_PENDING"
+  | "RELEASE"
+  | "COMMISSION"
+  | "FREEZE"
+  | "UNFREEZE"
+  | "WITHDRAWAL"
+  | "DISPUTE_HOLD";
+
 export interface WalletTransaction {
   id: number;
-  type: string;
+  type: WalletTxnType | string;
   amount: number;
   bookingId?: number;
   description?: string;

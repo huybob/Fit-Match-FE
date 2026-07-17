@@ -10,21 +10,22 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Thống nhất CTA chính quanh token primary (xanh) — bỏ tàn dư brand lime/đen/cam.
         default:
-          "bg-[#10130f] text-white shadow-sm hover:-translate-y-0.5 hover:bg-[#24291f] hover:shadow-lg hover:shadow-[#10130f]/15 active:translate-y-0 active:scale-[0.98]",
+          "bg-primary text-primary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:scale-[0.98]",
         primary:
-          "bg-primary text-primary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-[#b7ff3d] hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:scale-[0.98]",
+          "bg-primary text-primary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 active:translate-y-0 active:scale-[0.98]",
         accent:
-          "bg-accent text-accent-foreground shadow-sm hover:-translate-y-0.5 hover:bg-[#ff7d3c] hover:shadow-lg hover:shadow-accent/30 active:translate-y-0 active:scale-[0.98]",
+          "bg-accent text-accent-foreground shadow-sm hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/30 active:translate-y-0 active:scale-[0.98]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-lg hover:shadow-destructive/30 active:translate-y-0 active:scale-[0.98]",
+          "bg-destructive text-destructive-foreground shadow-sm hover:-translate-y-0.5 hover:bg-destructive/90 hover:shadow-lg hover:shadow-destructive/30 active:translate-y-0 active:scale-[0.98]",
         outline:
           "border border-border bg-card text-card-foreground shadow-sm hover:bg-muted hover:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-[#e6e8d6]",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/70",
         ghost:
           "text-foreground hover:bg-muted hover:text-foreground",
-        link: "text-foreground underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 py-2",

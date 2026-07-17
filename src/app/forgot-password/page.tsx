@@ -21,6 +21,7 @@ export default function ForgotPasswordPage() {
   const isAuthenticated = status === "authenticated";
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onTouched",
     defaultValues: { email: "" },
   });
 
@@ -35,23 +36,23 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+    <div className="min-h-screen flex flex-col bg-muted/40">
       {/* Minimal Header */}
-      <header className="sticky top-0 z-10 h-16 flex items-center border-b border-[#e2e8f0] bg-white/80 backdrop-blur-md px-20">
+      <header className="sticky top-0 z-10 h-16 flex items-center border-b border-border bg-card/80 backdrop-blur-md px-20">
         <div className="flex w-full max-w-[1440px] mx-auto items-center justify-between">
-          <Link href="/" className="text-sm text-[#004ac6] tracking-tight font-normal">
+          <Link href="/" className="text-sm text-primary tracking-tight font-normal">
             FitMatch
           </Link>
           {isAuthenticated ? (
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-1 text-sm text-[#004ac6] hover:underline"
+              className="flex items-center gap-1 text-sm text-primary hover:underline"
             >
               <ChevronLeft className="size-3.5" />
               Quay lại
             </button>
           ) : (
-            <Link href="/login" className="text-sm text-[#004ac6] hover:underline">
+            <Link href="/login" className="text-sm text-primary hover:underline">
               Quay lại Đăng nhập
             </Link>
           )}
@@ -65,25 +66,25 @@ export default function ForgotPasswordPage() {
         <div className="pointer-events-none absolute -right-[10%] -bottom-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/20 blur-[60px]" />
 
         <div className="relative z-10 w-full max-w-[440px]">
-          <div className="bg-white border border-[#e2e8f0] rounded-xl shadow-md p-[41px] w-full">
+          <div className="bg-card border border-border rounded-xl shadow-md p-[41px] w-full">
             {sent ? (
               /* ── Success state ── */
               <div className="flex flex-col items-center gap-5 text-center">
-                <div className="flex size-14 items-center justify-center rounded-full bg-blue-50">
-                  <CheckCircle className="size-7 text-[#2563eb]" />
+                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10">
+                  <CheckCircle className="size-7 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">Kiểm tra email của bạn</h1>
-                  <p className="mt-2 text-sm text-[#475569]">
+                  <h1 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h1>
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Nếu{" "}
-                    <span className="font-medium text-gray-900">{sentEmail}</span> đã đăng ký, chúng
+                    <span className="font-medium text-foreground">{sentEmail}</span> đã đăng ký, chúng
                     tôi sẽ gửi link đặt lại mật khẩu trong vài phút. Kiểm tra cả thư mục spam.
                   </p>
                 </div>
-                <div className="border-t border-[#e2e8f0] w-full pt-5">
-                  <p className="text-xs text-[#94a3b8]">
+                <div className="border-t border-border w-full pt-5">
+                  <p className="text-xs text-muted-foreground/70">
                     Bạn đã nhớ mật khẩu?{" "}
-                    <Link href="/login" className="text-[#004ac6] hover:underline font-normal">
+                    <Link href="/login" className="text-primary hover:underline font-normal">
                       Đăng nhập
                     </Link>
                   </p>
@@ -94,8 +95,8 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-[23px]">
                 {/* Header */}
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-semibold text-[#0f172a]">Quên mật khẩu?</h1>
-                  <p className="text-sm text-[#475569] leading-relaxed">
+                  <h1 className="text-2xl font-semibold text-foreground">Quên mật khẩu?</h1>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại
                     mật khẩu.
                   </p>
@@ -107,14 +108,14 @@ export default function ForgotPasswordPage() {
                   onSubmit={form.handleSubmit(onSubmit)}
                 >
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-[#0f172a]">Địa chỉ Email</label>
+                    <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-[14px] text-gray-400 pointer-events-none" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-[14px] text-muted-foreground pointer-events-none" />
                       <Input
                         autoComplete="email"
                         type="email"
                         placeholder="vd: alex@FitMatch.com"
-                        className="pl-10 h-11 border-[#e2e8f0] rounded-lg text-base placeholder:text-[#94a3b8]"
+                        className="pl-10 h-11 border-border rounded-lg text-base placeholder:text-muted-foreground/70"
                         {...form.register("email")}
                       />
                     </div>
@@ -124,7 +125,7 @@ export default function ForgotPasswordPage() {
                   </div>
 
                   <Button
-                    className="w-full h-10 bg-[#004ac6] hover:bg-[#003a9e] text-white text-sm font-normal rounded-lg"
+                    className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-normal rounded-lg"
                     disabled={form.formState.isSubmitting}
                   >
                     {form.formState.isSubmitting ? "Đang gửi..." : "Đặt lại mật khẩu"}
@@ -132,10 +133,10 @@ export default function ForgotPasswordPage() {
                 </form>
 
                 {/* Footer link */}
-                <div className="border-t border-[#e2e8f0] pt-[25px] flex justify-center">
-                  <p className="text-xs text-[#94a3b8]">
+                <div className="border-t border-border pt-[25px] flex justify-center">
+                  <p className="text-xs text-muted-foreground/70">
                     Bạn đã nhớ mật khẩu?{" "}
-                    <Link href="/login" className="text-[#004ac6] hover:underline font-normal">
+                    <Link href="/login" className="text-primary hover:underline font-normal">
                       Đăng nhập
                     </Link>
                   </p>
@@ -147,21 +148,21 @@ export default function ForgotPasswordPage() {
       </main>
 
       {/* Footer */}
-      <footer className="shrink-0 border-t border-[#e2e8f0] bg-white py-6 px-20">
+      <footer className="shrink-0 border-t border-border bg-card py-6 px-20">
         <div className="flex w-full max-w-[1440px] mx-auto items-center justify-between">
-          <span className="text-sm text-[#0f172a]">FitMatch</span>
+          <span className="text-sm text-foreground">FitMatch</span>
           <div className="flex gap-6">
-            <Link href="#" className="text-xs font-medium text-[#94a3b8] underline hover:text-gray-600">
+            <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
               Chính sách bảo mật
             </Link>
-            <Link href="#" className="text-xs font-medium text-[#94a3b8] underline hover:text-gray-600">
+            <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
               Điều khoản dịch vụ
             </Link>
-            <Link href="#" className="text-xs font-medium text-[#94a3b8] underline hover:text-gray-600">
+            <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
               Hỗ trợ
             </Link>
           </div>
-          <span className="text-xs font-medium text-[#94a3b8]">
+          <span className="text-xs font-medium text-muted-foreground/70">
             © 2024 FitMatch Marketplace. Bảo lưu mọi quyền.
           </span>
         </div>

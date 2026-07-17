@@ -19,8 +19,11 @@ export default function AdminAuditLogsRoute() {
   const [action, setAction] = useState("");
   const [targetType, setTargetType] = useState("");
   const [actor, setActor] = useState("");
+  // E-19 (audit 2026-07-17): BE + service đã hỗ trợ from/to nhưng UI thiếu input.
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [page, setPage] = useState(0);
-  const [applied, setApplied] = useState<{ action?: string; targetType?: string; actor?: string }>({});
+  const [applied, setApplied] = useState<{ action?: string; targetType?: string; actor?: string; from?: string; to?: string }>({});
 
   const query = useQuery({
     queryKey: ["admin", "audit-logs", applied, page],
@@ -34,6 +37,9 @@ export default function AdminAuditLogsRoute() {
       action: action.trim() || undefined,
       targetType: targetType.trim() || undefined,
       actor: actor.trim() || undefined,
+      // BE nhận ISO DATE_TIME — datetime-local thiếu giây, thêm ":00".
+      from: from ? from + ":00" : undefined,
+      to: to ? to + ":00" : undefined,
     });
   }
 
@@ -59,6 +65,14 @@ export default function AdminAuditLogsRoute() {
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
           Người thực hiện
           <Input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="username" className="w-44" />
+        </label>
+        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
+          Từ
+          <Input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} className="w-52" />
+        </label>
+        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
+          Đến
+          <Input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} className="w-52" />
         </label>
         <Button onClick={apply}>Lọc</Button>
       </div>

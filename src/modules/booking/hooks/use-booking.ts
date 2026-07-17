@@ -52,6 +52,10 @@ export function useBookingPayment(id: number, enabled: boolean) {
     queryKey: [...bookingKeys.detail(id), "payment"],
     queryFn: () => bookingService.getPayment(id),
     enabled: enabled && id > 0,
+    // D-5 (audit 2026-07-17): webhook Casso xác nhận tiền bất đồng bộ — poll 5s khi
+    // đơn còn PENDING để dialog QR tự cập nhật PAID thay vì bắt khách reload tay.
+    refetchInterval: (query) =>
+      query.state.data?.status === "PENDING" ? 5_000 : false,
   });
 }
 

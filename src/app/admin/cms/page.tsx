@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
+import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { useToast } from "@/lib/toast-provider";
 import { cmsService, type CmsContent, type CmsContentRequest, type CmsType } from "@/services/cms.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -66,7 +67,12 @@ export default function AdminCmsRoute() {
               {c.body && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.body}</p>}
               <div className="mt-3 flex gap-2">
                 <Button variant="outline" onClick={() => setEditing(c)}>Sửa</Button>
-                <Button variant="destructive" onClick={() => remove.mutate(c.id)}><Trash2 className="size-4" /></Button>
+                <ConfirmDialog
+                  label="Xóa"
+                  title="Xóa nội dung này?"
+                  description="Nội dung sẽ bị xóa vĩnh viễn khỏi trang công khai."
+                  onConfirm={() => remove.mutate(c.id)}
+                />
               </div>
             </article>
           ))}

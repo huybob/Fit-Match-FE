@@ -2,6 +2,7 @@
 
 import { CheckCheck } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useToast } from "@/lib/toast-provider";
 import type { NotificationCategory, NotificationItem } from "@/services/notification.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -32,11 +33,13 @@ function timeText(value?: string) {
 }
 
 export function NotificationInbox() {
-  const query = useNotifications();
+  const [page, setPage] = useState(0);
+  const query = useNotifications(page);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllRead();
   const { toast } = useToast();
   const items = query.data?.content ?? [];
+  const totalPages = query.data?.totalPages ?? 1;
   const hasUnread = items.some((n) => !n.read);
 
   return (
@@ -68,11 +71,25 @@ export function NotificationInbox() {
       ) : !items.length ? (
         <EmptyState title="Chưa có thông báo" description="Các cập nhật về đặt lịch, thanh toán, tranh chấp... sẽ hiển thị ở đây." />
       ) : (
-        <ul className="space-y-2">
-          {items.map((n) => (
-            <NotificationRow key={n.id} item={n} onOpen={() => !n.read && markRead.mutate(n.id)} />
-          ))}
-        </ul>
+        <>
+          <ul className="space-y-2">
+            {items.map((n) => (
+              <NotificationRow key={n.id} item={n} onOpen={() => !n.read && markRead.mutate(n.id)} />
+            ))}
+          </ul>
+          {/* E-20: phân trang — trước đây chỉ xem được 20 thông báo mới nhất */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((v) => v - 1)}>
+                Trước
+              </Button>
+              <span className="text-sm font-bold">{page + 1} / {totalPages}</span>
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((v) => v + 1)}>
+                Sau
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

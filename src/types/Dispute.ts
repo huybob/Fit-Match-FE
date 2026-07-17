@@ -27,6 +27,8 @@ export interface Dispute {
   refundAmount?: number;
   frozenAmount?: number;
   moderatorNote?: string;
+  /** D-12: moderator đang phụ trách (claim khi bấm "Bắt đầu xem xét"). */
+  assignedModerator?: string;
   resolvedAt?: string;
   createdAt?: string;
 }

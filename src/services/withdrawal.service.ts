@@ -45,6 +45,10 @@ export const withdrawalService = {
     api.post<Withdrawal, { note?: string }>(`/admin/withdrawals/${id}/approve`, { note }),
   reject: (id: number, note: string) =>
     api.post<Withdrawal, { note: string }>(`/admin/withdrawals/${id}/reject`, { note }),
-  markPaid: (id: number, note?: string) =>
-    api.post<Withdrawal, { note?: string }>(`/admin/withdrawals/${id}/mark-paid`, { note }),
+  // D-11: BE bắt buộc payoutReference (mã giao dịch chuyển khoản) để đối soát sao kê.
+  markPaid: (id: number, payoutReference: string, note?: string) =>
+    api.post<Withdrawal, { payoutReference: string; note?: string }>(
+      `/admin/withdrawals/${id}/mark-paid`,
+      { payoutReference, note },
+    ),
 };

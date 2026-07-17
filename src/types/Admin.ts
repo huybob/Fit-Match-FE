@@ -95,6 +95,8 @@ export interface GymVerificationResponse {
   phone?: string;
   verificationStatus?: PtVerificationStatus;
   rejectionReason?: string;
+  /** B-10: ghi chú admin khi request-info/suspend (BE GymProfileResponse.reviewNote). */
+  reviewNote?: string;
   active?: boolean;
   documents?: PtDocumentDto[];
 }
@@ -112,38 +114,4 @@ export interface ServiceCategoryRequest {
   name: string;
   description?: string;
   active?: boolean;
-}
-export interface SystemConfigResponse {
-  id?: number;
-  configKey?: string;
-  configValue?: string;
-  description?: string;
-}
-export interface SystemConfigRequest {
-  configKey: string;
-  configValue: string;
-  description?: string;
-}
-
-// ── Commission & platform economics (UC-072) ──
-export interface CommissionConfigRequest {
-  /** 0-100. */
-  commissionPercent?: number;
-  /** 0-100. */
-  platformFeePercent?: number;
-  settlementHoldDays?: number;
-}
-export interface CommissionConfigResponse extends CommissionConfigRequest {
-  id?: number;
-}
-
-// ── Refund processing (UC-055/056) ──
-export interface AdminRefundCreateRequest {
-  bookingId: number;
-  reason?: string;
-}
-export interface RefundDecisionRequest {
-  /** Bỏ trống = hoàn toàn bộ; duyệt một phần thì phần còn lại vào pending settlement. */
-  approvedAmount?: number | null;
-  note?: string;
 }

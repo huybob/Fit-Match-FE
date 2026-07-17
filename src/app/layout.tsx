@@ -32,8 +32,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="min-h-full bg-white text-zinc-950">
+    <html lang="vi" suppressHydrationWarning>
+      <head>
+        {/* No-flash: áp theme đã lưu / theo hệ điều hành TRƯỚC khi paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('fitmatch.theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className="min-h-full bg-background text-foreground antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

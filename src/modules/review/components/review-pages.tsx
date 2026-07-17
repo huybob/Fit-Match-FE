@@ -1,7 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquareReply, Plus, Star, Trash2 } from "lucide-react";
+import { MessageSquareReply, Plus, Star } from "lucide-react";
+import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -27,6 +28,7 @@ import { useBookings } from "@/modules/booking/hooks/use-booking";
 import {
   useDeleteReview,
   useReplyReview,
+  useReportReview,
   useReviews,
   useSaveReview,
 } from "../hooks/use-review";
@@ -74,6 +76,7 @@ function ReviewPage({
 }) {
   const [editing, setEditing] = useState<Review | null | undefined>();
   const [replying, setReplying] = useState<Review | null>(null);
+  const [reporting, setReporting] = useState<Review | null>(null);
   const query = useReviews(scope, targetId);
   const del = useDeleteReview();
   const { toast } = useToast();
@@ -142,21 +145,27 @@ function ReviewPage({
                     <Button onClick={() => setEditing(r)}>
                       Sửa
                     </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={async () => {
+                    <ConfirmDialog
+                      label="Xóa"
+                      title="Xóa đánh giá này?"
+                      description="Đánh giá sẽ bị gỡ vĩnh viễn. Bạn có thể viết lại sau."
+                      onConfirm={async () => {
                         await del.mutateAsync(r.id!);
                         toast({ type: "success", title: "Đã xóa đánh giá" });
                       }}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+                    />
                   </>
                 ) : (
-                  <Button onClick={() => setReplying(r)}>
-                    <MessageSquareReply className="size-4" />
-                    Phản hồi
-                  </Button>
+                  <>
+                    <Button onClick={() => setReplying(r)}>
+                      <MessageSquareReply className="size-4" />
+                      Phản hồi
+                    </Button>
+                    {/* E-5 (UC-070): gym/PT báo cáo review vi phạm — hook có sẵn, trước đây 0 UI */}
+                    <Button variant="outline" onClick={() => setReporting(r)}>
+                      Báo cáo vi phạm
+                    </Button>
+                  </>
                 )}
               </div>
             </article>
@@ -170,7 +179,50 @@ function ReviewPage({
       {replying && (
         <ReplyDialog review={replying} onClose={() => setReplying(null)} />
       )}
+      {reporting && (
+        <ReportReviewDialog review={reporting} onClose={() => setReporting(null)} />
+      )}
     </div>
+  );
+}
+
+/** E-5 (UC-070): báo cáo review vi phạm — tạo case cho moderation (UC-071). */
+function ReportReviewDialog({ review, onClose }: { review: Review; onClose: () => void }) {
+  const { toast } = useToast();
+  const report = useReportReview();
+  const [reason, setReason] = useState("");
+
+  return (
+    <Dialog open title={`Báo cáo đánh giá của ${review.customerName}`} onClose={onClose}>
+      <p className="text-sm text-muted-foreground">
+        Đánh giá sẽ được kiểm duyệt viên xem xét (ẩn/gỡ nếu vi phạm). Mỗi đánh giá chỉ báo cáo một lần khi đang mở.
+      </p>
+      <Textarea
+        className="mt-3"
+        maxLength={500}
+        rows={3}
+        placeholder="Lý do báo cáo (spam, xúc phạm, sai sự thật...)"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+      />
+      <div className="mt-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <Button
+          disabled={!reason.trim() || report.isPending}
+          onClick={async () => {
+            try {
+              await report.mutateAsync({ id: review.id!, reason: reason.trim() });
+              toast({ type: "success", title: "Đã gửi báo cáo", description: "Kiểm duyệt viên sẽ xem xét." });
+              onClose();
+            } catch (e) {
+              toast({ type: "error", title: "Báo cáo thất bại", description: toErrorMessage(e) });
+            }
+          }}
+        >
+          {report.isPending ? "Đang gửi..." : "Gửi báo cáo"}
+        </Button>
+      </div>
+    </Dialog>
   );
 }
 

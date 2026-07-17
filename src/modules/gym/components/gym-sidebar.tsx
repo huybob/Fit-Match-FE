@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
-  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users,
+  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users, Package,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ const gymLinks = [
   { href: "/gym/branches", label: "Chi nhánh", icon: GitBranch },
   { href: "/gym/pts", label: "Huấn luyện viên", icon: Users },
   { href: "/gym/services", label: "Dịch vụ", icon: Sparkles },
+  { href: "/gym/packages", label: "Gói tập", icon: Package },
   { href: "/gym/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
   { href: "/gym/revenue", label: "Doanh thu", icon: DollarSign },
   { href: "/gym/withdrawals", label: "Rút tiền", icon: Banknote },
@@ -39,6 +40,7 @@ export function GymSidebar() {
     queryFn: gymService.getVerificationStatus,
   });
   const approved = status?.verificationStatus === "APPROVED";
+  const suspended = status?.verificationStatus === "SUSPENDED";
   // Until approved, only expose the dashboard + verification entries.
   const visibleLinks = approved
     ? gymLinks
@@ -50,32 +52,42 @@ export function GymSidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen">
+    <aside className="w-60 shrink-0 bg-card border-r border-border flex flex-col h-screen">
       {/* Brand — click to go back home */}
-      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-gray-100 hover:bg-gray-50 transition-colors shrink-0">
+      <Link href="/" className="block px-5 pt-6 pb-4 border-b border-border hover:bg-muted/40 transition-colors shrink-0">
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-xl bg-[#2563eb] flex items-center justify-center shrink-0">
+          <div className="size-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
             <Building2 className="size-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-[#0f172a] leading-tight">FitMatch</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">Gym Operator Workspace</p>
+            <p className="text-sm font-bold text-foreground leading-tight">FitMatch</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Gym Operator Workspace</p>
           </div>
         </div>
       </Link>
 
       {/* User info — top below brand */}
-      <div className="px-4 py-4 border-b border-gray-100 shrink-0">
+      <div className="px-4 py-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
             {initial}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-[#0f172a] truncate">{displayName}</p>
-            <p className="text-[10px] text-gray-400 mt-0.5">Gym Operator</p>
+            <p className="text-[13px] font-semibold text-foreground truncate">{displayName}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Gym Operator</p>
           </div>
         </div>
       </div>
+
+      {/* B-35: gym SUSPENDED trước đây hiển thị như hồ sơ mới, không banner */}
+      {suspended && (
+        <div className="mx-3 mt-3 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200 shrink-0">
+          <p className="text-[11px] font-bold text-red-700">Phòng tập đang bị đình chỉ</p>
+          <p className="text-[10px] text-red-600 mt-0.5">
+            Nội dung đã bị ẩn khỏi marketplace. Xem lý do tại trang Xác minh.
+          </p>
+        </div>
+      )}
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
@@ -85,8 +97,8 @@ export function GymSidebar() {
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                 active
-                  ? "bg-[#2563eb] text-white"
-                  : "text-gray-500 hover:text-[#0f172a] hover:bg-gray-50"
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
             >
               <Icon className="size-4 shrink-0" />
@@ -97,9 +109,9 @@ export function GymSidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="px-4 py-4 border-t border-gray-100 shrink-0">
+      <div className="px-4 py-4 border-t border-border shrink-0">
         <button onClick={handleLogout}
-          className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-700 transition-colors">
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
           <LogOut className="size-3.5" /> Đăng xuất
         </button>
       </div>

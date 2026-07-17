@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { tokenStorage } from "@/core/auth/token-storage";
+import { queryClient } from "@/core/providers/query-client";
 import { authService, AuthResponse, AuthUser, LoginRequest, RegisterRequest } from "@/services/auth.service";
 
 export type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";
@@ -76,12 +77,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (tokenStorage.get()) await authService.logout();
     } finally {
       tokenStorage.clear();
+      // F-6: xóa cache React Query — tránh user kế tiếp trên cùng tab thấy dữ liệu user cũ.
+      queryClient.clear();
       set({ user: null, status: "unauthenticated" });
     }
   },
 
   clearSession: () => {
     tokenStorage.clear();
+    queryClient.clear();
     set({ user: null, status: "unauthenticated" });
   },
 

@@ -17,6 +17,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { PageHeader } from "@/shared/components/common/page-header";
 import {
   useModerateReview,
   useResolveReport,
@@ -37,13 +38,10 @@ export function ReviewModerationPage() {
 
   return (
     <div>
-      <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
-        <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Kiểm duyệt đánh giá</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Xử lý các báo cáo về đánh giá: ẩn, gỡ hoặc giữ nguyên (UC-071).
-        </p>
-      </section>
+      <PageHeader
+        title="Kiểm duyệt đánh giá"
+        description="Xử lý các báo cáo về đánh giá: ẩn, gỡ hoặc giữ nguyên (UC-071)."
+      />
 
       <Select value={status} onValueChange={(v) => setStatus(v as ReportStatus)}>
         <SelectTrigger className="w-64">
