@@ -73,6 +73,8 @@ export interface PtVerificationResponse {
   verificationStatus?: PtVerificationStatus;
   rejectionReason?: string;
   active?: boolean;
+  /** Bug 14: trạng thái vận hành thật của PT (UC-019/021) — ACTIVE | INACTIVE | SUSPENDED. */
+  status?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
   documents?: PtDocumentDto[];
   email?: string;
   avatarUrl?: string;
