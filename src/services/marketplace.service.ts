@@ -7,7 +7,15 @@ export interface GymPublicProfile {
   description?: string;
   address?: string;
   city?: string;
+  district?: string;
   phone?: string;
+  /** UC-071: điểm đánh giá trung bình + số lượt (review VISIBLE). */
+  averageRating?: number;
+  reviewCount?: number;
+  /** Ảnh đại diện card danh sách (media đầu tiên của gym). */
+  coverUrl?: string;
+  /** Bug 14: badge "Đã xác minh" data-driven (hồ sơ APPROVED). */
+  verified?: boolean;
 }
 
 export interface PublicCertification {
@@ -27,11 +35,23 @@ export interface PtPublicProfile {
   specialization?: string;
   experienceYears?: number;
   certifications?: PublicCertification[];
+  /** UC-071: điểm đánh giá trung bình + số lượt (review VISIBLE). */
+  averageRating?: number;
+  reviewCount?: number;
+  /** Phòng gym quản lý PT — điều hướng sang trang gym. */
+  gymId?: number;
+  gymName?: string;
+  /** Bug 14: badge "Xác thực" data-driven (PT ACTIVE thuộc gym đã duyệt). */
+  verified?: boolean;
 }
 
 export interface GymSearchParams {
   keyword?: string;
   city?: string;
+  district?: string;
+  /** Bug 11: lọc theo khoảng giá gói tập PUBLISHED của gym (VND). */
+  minPrice?: number;
+  maxPrice?: number;
   page?: number;
   size?: number;
 }
@@ -63,6 +83,7 @@ export interface PublicBranch {
   name?: string;
   address?: string;
   city?: string;
+  district?: string;
   phone?: string;
   amenities?: string;
   capacity?: number;
@@ -96,6 +117,9 @@ export interface PublicTrainingPackage {
 export interface PublicGymMedia {
   id?: number;
   url?: string;
+  caption?: string;
+  /** Media gắn với chi nhánh cụ thể; null = ảnh chung của gym. */
+  branchId?: number;
   [key: string]: unknown;
 }
 
