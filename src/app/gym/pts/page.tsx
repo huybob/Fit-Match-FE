@@ -223,6 +223,29 @@ export default function GymPtsPage() {
   const [specialization, setSpecialization] = useState("");
   const [serviceArea, setServiceArea] = useState("");
   const [experienceYears, setExperienceYears] = useState("");
+  // Bug 15: chứng chỉ nhập ngay khi tạo PT (BE yêu cầu PT tồn tại trước nên
+  // gom danh sách ở client, tạo PT xong mới lần lượt gọi addPtCert).
+  const [newCerts, setNewCerts] = useState<PtCertInput[]>([]);
+  const [ncName, setNcName] = useState("");
+  const [ncOrg, setNcOrg] = useState("");
+  const [ncIssue, setNcIssue] = useState("");
+  const [ncExpiry, setNcExpiry] = useState("");
+  const [ncUrl, setNcUrl] = useState("");
+
+  function resetNewCertDraft() {
+    setNcName(""); setNcOrg(""); setNcIssue(""); setNcExpiry(""); setNcUrl("");
+  }
+  function addNewCert() {
+    if (!ncName.trim()) { toast({ type: "warning", title: "Nhập tên chứng chỉ" }); return; }
+    setNewCerts((prev) => [...prev, {
+      name: ncName.trim(),
+      issuingOrganization: ncOrg.trim() || undefined,
+      issueDate: ncIssue || undefined,
+      expiryDate: ncExpiry || undefined,
+      credentialUrl: ncUrl.trim() || undefined,
+    }]);
+    resetNewCertDraft();
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["gym-pts"],
@@ -231,7 +254,7 @@ export default function GymPtsPage() {
   const pts = data?.content ?? [];
 
   const saveMut = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (editing?.id != null) {
         const payload: UpdateGymPtInput = {
           displayName: displayName.trim(),
@@ -253,7 +276,22 @@ export default function GymPtsPage() {
         serviceArea: serviceArea.trim() || undefined,
         experienceYears: experienceYears ? Number(experienceYears) : undefined
       };
-      return gymService.createPt(payload);
+      const created = await gymService.createPt(payload);
+      // Bug 15: BE cần PT tồn tại trước (FK) — tạo xong mới thêm từng chứng chỉ.
+      if (created?.id != null) {
+        for (const cert of newCerts) {
+          try {
+            await gymService.addPtCert(created.id, cert);
+          } catch (e) {
+            toast({
+              type: "warning",
+              title: `Không thêm được chứng chỉ "${cert.name}"`,
+              description: toErrorMessage(e),
+            });
+          }
+        }
+      }
+      return created;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-pts"] });
@@ -277,6 +315,7 @@ export default function GymPtsPage() {
     setEditing(null);
     setUsername(""); setEmail(""); setPassword(""); setPhone("");
     setDisplayName(""); setBio(""); setSpecialization(""); setServiceArea(""); setExperienceYears("");
+    setNewCerts([]); resetNewCertDraft();
     setFormOpen(true);
   }
   function openEdit(pt: GymPtResponse) {
@@ -437,6 +476,51 @@ export default function GymPtsPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Giới thiệu</label>
             <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Kinh nghiệm, phương pháp huấn luyện..." />
           </div>
+
+          {/* Bug 15: thêm chứng chỉ ngay khi tạo PT — trước đây phải tạo xong
+              mới vào "Chứng chỉ & tài liệu", card PT hiển thị "0 chứng chỉ". */}
+          {!editing && (
+            <div className="rounded-lg border border-border p-3">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
+                <Award className="size-3.5 text-primary" /> Chứng chỉ (tùy chọn)
+              </p>
+              {newCerts.length > 0 && (
+                <div className="space-y-1.5 mb-2">
+                  {newCerts.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between rounded-lg border border-border bg-muted/40 p-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{c.name}</p>
+                        {(c.issuingOrganization || c.issueDate) && (
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {c.issuingOrganization}{c.issueDate ? ` · ${c.issueDate}` : ""}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setNewCerts((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="p-1 text-muted-foreground hover:text-red-500 shrink-0"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Input value={ncName} onChange={e => setNcName(e.target.value)} placeholder="Tên chứng chỉ (vd: NASM-CPT)" className="h-9" />
+                <Input value={ncOrg} onChange={e => setNcOrg(e.target.value)} placeholder="Tổ chức cấp" className="h-9" />
+                <div className="grid grid-cols-2 gap-2">
+                  <DatePicker value={ncIssue} onChange={setNcIssue} placeholder="Ngày cấp" className="h-9" />
+                  <DatePicker value={ncExpiry} onChange={setNcExpiry} placeholder="Ngày hết hạn" className="h-9" />
+                </div>
+                <FileUpload value={ncUrl} onChange={setNcUrl} folder="certifications" label="Tải chứng chỉ lên" />
+                <Button onClick={addNewCert} className="h-8 px-4 bg-card border border-border text-primary hover:bg-primary/5 shadow-none text-xs gap-1">
+                  <Plus className="size-3.5" /> Thêm vào danh sách
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-1">
             <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">Hủy</Button>
             <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">

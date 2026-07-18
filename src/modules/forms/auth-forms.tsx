@@ -171,6 +171,7 @@ export function RegisterForm() {
   const { toast } = useToast();
   const registerAccount = useAuthStore((state) => state.register);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [terms, setTerms] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -358,12 +359,20 @@ export function RegisterForm() {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
-              type={showPassword ? "text" : "password"}
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 h-11 border-border rounded-lg text-base"
+              className="pl-10 pr-10 h-11 border-border rounded-lg text-base"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
+              aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              onClick={() => setShowConfirmPassword((v) => !v)}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
         </div>
 
@@ -496,6 +505,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
     mode: "onTouched",
@@ -558,11 +568,19 @@ export function ResetPasswordForm({ token }: { token: string }) {
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="new-password"
-              type={showPassword ? "text" : "password"}
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="Nhập lại mật khẩu"
-              className="pl-10 h-11 border-border rounded-lg"
+              className="pl-10 pr-10 h-11 border-border rounded-lg"
               {...form.register("confirmPassword")}
             />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
+              aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              onClick={() => setShowConfirmPassword((v) => !v)}
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
           {form.formState.errors.confirmPassword && (
             <p className="text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>

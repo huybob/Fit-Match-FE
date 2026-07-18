@@ -3,7 +3,7 @@
 import { formatCurrency } from "@/utils/format.util";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, QrCode, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
@@ -117,9 +117,26 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
+  const [prefill, setPrefill] = useState<{ gymId?: number; packageId?: number }>({});
   const [payingId, setPayingId] = useState<number | null>(null);
   const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
+
+  // Bug 10: deep-link ?create=1&gymId=&packageId= từ trang gym/gói tập ->
+  // tự mở dialog tạo lịch với gym/gói đã chọn sẵn.
+  useEffect(() => {
+    if (scope !== "customer" || typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("create") === "1") {
+      const gymId = Number(sp.get("gymId") ?? "");
+      const packageId = Number(sp.get("packageId") ?? "");
+      setPrefill({
+        gymId: Number.isFinite(gymId) && gymId > 0 ? gymId : undefined,
+        packageId: Number.isFinite(packageId) && packageId > 0 ? packageId : undefined,
+      });
+      setCreating(true);
+    }
+  }, [scope]);
 
   return (
     <div>
@@ -214,6 +231,8 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
       {scope === "customer" && (
         <CreateBookingDialog
           open={creating}
+          initialGymId={prefill.gymId}
+          initialPackageId={prefill.packageId}
           onClose={() => setCreating(false)}
           onCheckedOut={(id, payable) => { setCreating(false); if (payable > 0) setPayingId(id); }}
         />
@@ -521,9 +540,24 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   );
 }
 
+// Bug 8: BE chỉ bật endpoint mô phỏng ở profile local/dev — FE cũng chỉ hiện nút khi dev.
+const DEV_PAYMENT_ENABLED =
+  process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_PAYMENT === "1";
+
 /** UC-052: hiển thị VietQR để khách chuyển khoản; Casso tự đối soát (UC-053). */
 function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClose: () => void }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const query = useBookingPayment(bookingId ?? 0, bookingId !== null);
+  // Bug 8 (dev): mô phỏng ngân hàng xác nhận để test thông luồng gói tháng.
+  const simulate = useMutation({
+    mutationFn: () => bookingService.simulatePayment(bookingId!),
+    onSuccess: () => {
+      toast({ type: "success", title: "Đã mô phỏng thanh toán thành công" });
+      qc.invalidateQueries({ queryKey: bookingKeys.all });
+    },
+    onError: (e) => toast({ type: "error", title: "Không mô phỏng được thanh toán", description: toErrorMessage(e) }),
+  });
   if (bookingId === null) return null;
   const order = query.data;
 
@@ -533,6 +567,30 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
         <LoadingSkeleton />
       ) : query.isError || !order ? (
         <EmptyState title="Không tải được đơn thanh toán" description={toErrorMessage(query.error)} />
+      ) : order.status === "PAID" ? (
+        // Bug 9: kết quả thanh toán hiển thị rõ ràng thay vì chỉ dòng trạng thái thô.
+        <div className="grid gap-3 py-4 text-center">
+          <CalendarCheck2 className="mx-auto size-12 text-emerald-600" />
+          <p className="text-lg font-black text-emerald-600">Thanh toán thành công!</p>
+          <p className="text-sm text-muted-foreground">
+            Đã nhận {money(order.amount)} cho booking #{bookingId}. Yêu cầu đã được chuyển
+            cho phòng gym xác nhận — bạn sẽ nhận thông báo (và email nếu đã bật) khi gym phản hồi.
+          </p>
+          <Button className="mx-auto" onClick={onClose}>Đóng</Button>
+        </div>
+      ) : order.status === "EXPIRED" || order.status === "CANCELLED" ? (
+        <div className="grid gap-3 py-4 text-center">
+          <QrCode className="mx-auto size-12 text-red-500" />
+          <p className="text-lg font-black text-red-600">
+            {order.status === "EXPIRED" ? "Đơn thanh toán đã hết hạn" : "Đơn thanh toán đã bị hủy"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {order.status === "EXPIRED"
+              ? "Booking đã bị hủy vì quá hạn thanh toán; điểm/voucher đã dùng (nếu có) được hoàn lại. Vui lòng tạo lịch đặt mới."
+              : "Đơn đã đóng. Nếu bạn đã chuyển khoản, vui lòng liên hệ hỗ trợ để đối soát."}
+          </p>
+          <Button className="mx-auto" onClick={onClose}>Đóng</Button>
+        </div>
       ) : (
         <div className="grid gap-4 text-center">
           <p className="text-sm text-muted-foreground">
@@ -546,12 +604,22 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
           )}
           <div className="grid gap-1 text-sm">
             <span>Số tiền: <strong>{money(order.amount)}</strong></span>
-            <span>Trạng thái: <strong>{order.status}</strong></span>
+            <span>Trạng thái: <strong>Chờ thanh toán</strong></span>
             {order.expiresAt && <span className="text-muted-foreground">Hết hạn: {dateTimeText(order.expiresAt)}</span>}
           </div>
           <p className="text-xs text-muted-foreground">
             Sau khi chuyển khoản, trạng thái sẽ tự cập nhật trong vài phút. Bạn có thể đóng cửa sổ này.
           </p>
+          {DEV_PAYMENT_ENABLED && (
+            <Button
+              variant="outline"
+              className="mx-auto"
+              disabled={simulate.isPending}
+              onClick={() => simulate.mutate()}
+            >
+              {simulate.isPending ? "Đang mô phỏng..." : "Mô phỏng thanh toán (chỉ môi trường dev)"}
+            </Button>
+          )}
         </div>
       )}
     </Dialog>
@@ -568,10 +636,13 @@ function Info({ label, value }: { label: string; value?: string }) {
 }
 
 /** UC-031/032/035: chọn gym -> dịch vụ/gói (+PT/chi nhánh) -> tạo nháp -> checkout. */
-function CreateBookingDialog({ open, onClose, onCheckedOut }: {
+function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initialPackageId }: {
   open: boolean;
   onClose: () => void;
   onCheckedOut: (bookingId: number, payable: number) => void;
+  /** Bug 10: gym/gói chọn sẵn khi mở từ deep-link trang gym / gói tập. */
+  initialGymId?: number;
+  initialPackageId?: number;
 }) {
   const { toast } = useToast();
   const create = useCreateBooking();
@@ -608,6 +679,19 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
   const mode = form.watch("mode");
   const gymId = form.watch("gymId") ?? 0;
   const itemType = form.watch("itemType");
+
+  // Bug 10: áp prefill từ deep-link mỗi khi dialog mở.
+  useEffect(() => {
+    if (!open) return;
+    if (initialGymId) {
+      form.setValue("gymId", initialGymId);
+    }
+    if (initialPackageId) {
+      form.setValue("itemType", "package");
+      form.setValue("itemId", initialPackageId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialGymId, initialPackageId]);
   // B-31/C-15 (UC-030): pre-check slot ngay khi chọn giờ — trước đây khách chỉ biết
   // slot bận sau khi submit và nhận 409, để lại DRAFT rác.
   const watchPtId = form.watch("ptId");
@@ -696,19 +780,29 @@ function CreateBookingDialog({ open, onClose, onCheckedOut }: {
               }
             }
             // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
-            const checked = await checkoutAction.mutateAsync({ id: booking.id, action: "checkout" });
-            const payable = (checked as Booking).payableAmount ?? 0;
-            toast({
-              type: "success",
-              title: payable > 0 ? "Đã tạo lịch — vui lòng thanh toán VietQR" : "Đã gửi yêu cầu cho phòng gym",
-            });
-            form.reset();
-            onCheckedOut(booking.id, payable);
+            try {
+              const checked = await checkoutAction.mutateAsync({ id: booking.id, action: "checkout" });
+              const payable = (checked as Booking).payableAmount ?? 0;
+              toast({
+                type: "success",
+                title: payable > 0 ? "Đã tạo lịch — vui lòng thanh toán VietQR" : "Đã gửi yêu cầu cho phòng gym",
+              });
+              form.reset();
+              onCheckedOut(booking.id, payable);
+            } catch (checkoutError) {
+              // B-31: checkout lỗi -> hủy nháp vừa tạo để không dồn nháp trùng khung giờ
+              // (trước đây mỗi lần thử lại để lại 1 "Bản nháp" giống hệt).
+              await bookingService.cancel(booking.id, { reason: "Tự hủy nháp do checkout thất bại" }).catch(() => undefined);
+              throw checkoutError;
+            }
           } catch (error) {
-            toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
-            // C-2 (UC-044): slot kín (409) -> mời vào danh sách chờ với đúng lựa chọn hiện tại.
+            toast({ type: "error", title: "Không thể đặt lịch", description: toErrorMessage(error) });
+            // C-2 (UC-044): chỉ mời vào danh sách chờ khi slot thật sự kín/bận (409 do
+            // capacity hoặc PT trùng lịch) — không mời khi lỗi cấu hình giờ hoạt động.
             const status = (error as { status?: number })?.status;
-            if (status === 409 && values.mode === "new" && values.itemId) {
+            const message = toErrorMessage(error);
+            const slotTaken = /kín chỗ|đã có lịch/i.test(message);
+            if (status === 409 && slotTaken && values.mode === "new" && values.itemId) {
               setWaitlistOffer({
                 serviceId: values.itemType === "service" ? values.itemId : undefined,
                 packageId: values.itemType === "package" ? values.itemId : undefined,
