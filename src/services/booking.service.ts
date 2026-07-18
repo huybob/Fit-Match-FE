@@ -61,6 +61,8 @@ export const bookingService = {
     api.put<Booking, CreateBookingRequest>(`/bookings/${id}/selection`, payload),
   checkout: (id: number) => api.post<Booking>(`/bookings/${id}/checkout`),
   getPayment: (id: number) => api.get<PaymentOrder>(`/bookings/${id}/payment`),
+  /** Bug 8 (chỉ dev/local): mô phỏng ngân hàng xác nhận chuyển khoản — BE gated @Profile. */
+  simulatePayment: (id: number) => api.post<PaymentOrder>(`/payments/dev/${id}/simulate`),
   reschedule: (id: number, payload: RescheduleBookingRequest) =>
     api.post<Booking, RescheduleBookingRequest>(`/bookings/${id}/reschedule`, payload),
   cancel: (id: number, payload: CancelBookingRequest = {}) =>

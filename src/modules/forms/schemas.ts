@@ -12,7 +12,12 @@ export const registerSchema = loginSchema.extend({
     .max(50, "Tên đăng nhập không quá 50 ký tự")
     .regex(/^[a-zA-Z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ không dấu, số, dấu chấm, gạch dưới, gạch ngang"),
   // A-5: họ tên hiển thị (có dấu) — tách khỏi username.
-  fullName: z.string().min(2, "Vui lòng nhập họ tên").max(100, "Họ tên không quá 100 ký tự"),
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Họ tên phải có ít nhất 2 ký tự")
+    .max(100, "Họ tên không quá 100 ký tự")
+    .regex(/^\p{L}+(?:[ ]\p{L}+)*$/u, "Họ tên chỉ gồm chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt"),
   email: z.string().email("Email is invalid"),
   password: z.string().min(6, "Password must be at least 6 characters").max(100),
   phone: z.union([

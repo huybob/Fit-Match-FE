@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
+import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, Building2, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { SiteLayout } from "@/modules/layout/site-layout";
@@ -12,6 +12,7 @@ import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import { RatingStars } from "@/shared/components/common/rating-stars";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 function useFavorites() {
@@ -135,9 +136,12 @@ export function TrainersDirectoryPage() {
                   <article key={pt.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                     <div className="relative grid h-40 place-items-center bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
                       <UserRound className="size-14 opacity-90" />
-                      <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                        <ShieldCheck className="size-3" /> Xác thực
-                      </span>
+                      {/* Bug 14: badge data-driven — chỉ hiện khi PT thật sự được xác thực. */}
+                      {pt.verified && (
+                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                          <ShieldCheck className="size-3" /> Xác thực
+                        </span>
+                      )}
                       {isCustomer && pt.id != null && (
                         <button
                           onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
@@ -152,12 +156,23 @@ export function TrainersDirectoryPage() {
                     <div className="p-4">
                       <h2 className="text-base font-bold text-foreground">{pt.displayName}</h2>
                       {pt.specialization && <p className="text-xs font-semibold text-primary mt-0.5">{pt.specialization}</p>}
+                      {/* UC-071: sao đánh giá ngay trên card (bug 5). */}
+                      <div className="mt-1.5"><RatingStars rating={pt.averageRating} count={pt.reviewCount} /></div>
                       <p className="mt-1 text-[11px] text-muted-foreground">{pt.experienceYears ?? 0} năm kinh nghiệm</p>
                       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{pt.bio || "Chưa có mô tả"}</p>
                       {pt.serviceArea && (
                         <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="size-3.5" />{pt.serviceArea}
                         </p>
+                      )}
+                      {/* Bug 3: điều hướng nhanh sang phòng gym quản lý PT. */}
+                      {pt.gymId != null && (
+                        <Link
+                          href={`/gyms/${pt.gymId}`}
+                          className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                        >
+                          <Building2 className="size-3.5" />{pt.gymName || "Xem phòng gym"}
+                        </Link>
                       )}
                       <Link
                         href={`/trainers/${pt.id}`}
@@ -222,7 +237,8 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-black">{pt.displayName}</h1>
-                <BadgeCheck className="size-6 text-blue-200" />
+                {/* Bug 14: tick xác thực data-driven. */}
+                {pt.verified && <BadgeCheck className="size-6 text-blue-200" />}
               </div>
               {pt.specialization && (
                 <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-card/15 px-3 py-1 text-sm font-bold">
@@ -233,6 +249,11 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                 <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" /> {pt.experienceYears ?? 0} năm kinh nghiệm</span>
                 {pt.serviceArea && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" /> {pt.serviceArea}</span>}
                 <span className="inline-flex items-center gap-1.5"><Award className="size-4" /> {certCount} chứng chỉ</span>
+                {pt.gymId != null && (
+                  <Link href={`/gyms/${pt.gymId}`} className="inline-flex items-center gap-1.5 underline-offset-2 hover:underline">
+                    <Building2 className="size-4" /> {pt.gymName || "Phòng gym"}
+                  </Link>
+                )}
               </div>
             </div>
             {isCustomer && pt.id != null && (
@@ -306,7 +327,27 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                 <div className="flex items-center justify-between"><dt className="text-muted-foreground">Chuyên môn</dt><dd className="font-semibold text-foreground">{pt.specialization || "—"}</dd></div>
                 <div className="flex items-center justify-between"><dt className="text-muted-foreground">Kinh nghiệm</dt><dd className="font-semibold text-foreground">{pt.experienceYears ?? 0} năm</dd></div>
                 <div className="flex items-center justify-between"><dt className="text-muted-foreground">Khu vực</dt><dd className="font-semibold text-foreground">{pt.serviceArea || "—"}</dd></div>
+                <div className="flex items-center justify-between"><dt className="text-muted-foreground">Đánh giá</dt><dd><RatingStars rating={pt.averageRating} count={pt.reviewCount} /></dd></div>
+                {pt.gymId != null && (
+                  <div className="flex items-center justify-between">
+                    <dt className="text-muted-foreground">Phòng gym</dt>
+                    <dd>
+                      <Link href={`/gyms/${pt.gymId}`} className="font-semibold text-primary hover:underline">
+                        {pt.gymName || "Xem phòng gym"}
+                      </Link>
+                    </dd>
+                  </div>
+                )}
               </dl>
+              {/* Bug 3: nút điều hướng sang phòng gym để đăng ký PT thuận tiện. */}
+              {pt.gymId != null && (
+                <Link
+                  href={`/gyms/${pt.gymId}`}
+                  className="mt-4 flex items-center justify-center gap-2 h-9 rounded-lg border border-primary text-primary hover:bg-primary/5 text-sm font-semibold transition-colors"
+                >
+                  <Building2 className="size-4" /> Xem phòng gym của PT
+                </Link>
+              )}
             </div>
             <div className="rounded-2xl border border-blue-100 bg-primary/10 p-6">
               <p className="text-sm font-semibold text-foreground">Quan tâm huấn luyện viên này?</p>
