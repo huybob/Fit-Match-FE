@@ -49,6 +49,19 @@ const statusStyle: Record<string, string> = {
   SUSPENDED: "bg-red-100 text-red-600",
 };
 
+// Bug 14: trạng thái vận hành thật của PT (UC-019/021) — nguồn sự thật thay cho
+// verificationStatus (deprecated, kẹt "Đang chờ" với mọi PT do gym tạo).
+const ptStatusLabel: Record<string, string> = {
+  ACTIVE: "Đang hoạt động",
+  INACTIVE: "Gym tạm tắt",
+  SUSPENDED: "Đình chỉ",
+};
+const ptStatusStyle: Record<string, string> = {
+  ACTIVE: "bg-green-100 text-green-700",
+  INACTIVE: "bg-muted text-muted-foreground",
+  SUSPENDED: "bg-red-100 text-red-600",
+};
+
 // ──────────────────────────────────────────────
 // Detail view
 // ──────────────────────────────────────────────
@@ -92,8 +105,9 @@ function VerificationDetail({ id, onBack }: { id: number; onBack: () => void }) 
                   {pt?.experienceYears != null && (
                     <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">{pt.experienceYears} năm kinh nghiệm</span>
                   )}
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusStyle[pt?.verificationStatus ?? "PENDING"]}`}>
-                    {statusLabel[pt?.verificationStatus ?? "PENDING"]}
+                  {/* Bug 14: hiển thị trạng thái vận hành thật thay vì verificationStatus deprecated. */}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ptStatusStyle[pt?.status ?? "INACTIVE"]}`}>
+                    {ptStatusLabel[pt?.status ?? "INACTIVE"]}
                   </span>
                 </div>
               </div>
@@ -147,14 +161,16 @@ function VerificationDetail({ id, onBack }: { id: number; onBack: () => void }) 
         <div className="space-y-4">
           <div className="bg-card rounded-xl border border-border p-5">
             <h2 className="text-sm font-semibold text-foreground mb-4">Trạng thái</h2>
+            {/* Bug 14: nguồn sự thật = trạng thái vận hành (PtStatus). */}
             <div className={`flex items-center gap-2 p-3 rounded-lg ${
-              pt?.verificationStatus === "APPROVED" ? "bg-green-50 text-green-700" : "bg-muted/40 text-muted-foreground"
+              pt?.status === "ACTIVE" ? "bg-green-50 text-green-700" : "bg-muted/40 text-muted-foreground"
             }`}>
-              {pt?.verificationStatus === "APPROVED" ? <CheckCircle className="size-4" /> : <XCircle className="size-4" />}
-              <span className="text-sm font-medium">{statusLabel[pt?.verificationStatus ?? "PENDING"]}</span>
+              {pt?.status === "ACTIVE" ? <CheckCircle className="size-4" /> : <XCircle className="size-4" />}
+              <span className="text-sm font-medium">{ptStatusLabel[pt?.status ?? "INACTIVE"]}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
-              PT được tạo và quản lý bởi phòng tập (UC-019). Nền tảng không duyệt PT độc lập —
+              PT được tạo và quản lý bởi phòng tập (UC-019) — PT &quot;xác thực&quot; khi đang hoạt động
+              dưới một phòng tập đã duyệt. Nền tảng không duyệt PT độc lập —
               can thiệp chất lượng/an toàn thực hiện qua Đình chỉ PT tại trang Users.
             </p>
           </div>
@@ -265,8 +281,9 @@ function VerificationQueue() {
                       <p className="text-xs text-muted-foreground">ID #{pt.id}</p>
                     </td>
                     <td className="py-3">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${statusStyle[pt.verificationStatus ?? "PENDING"]}`}>
-                        {statusLabel[pt.verificationStatus ?? "PENDING"]}
+                      {/* Bug 14: trạng thái vận hành thật (ACTIVE = đã xác thực qua gym). */}
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${ptStatusStyle[pt.status ?? "INACTIVE"]}`}>
+                        {ptStatusLabel[pt.status ?? "INACTIVE"]}
                       </span>
                     </td>
                     <td className="py-3 text-xs text-muted-foreground">

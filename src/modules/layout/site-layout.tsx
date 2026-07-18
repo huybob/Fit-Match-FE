@@ -23,6 +23,9 @@ const navItems = [
   ["Phòng gym", appRoutes.gyms],
   ["Huấn luyện viên", appRoutes.trainers],
   ["Đặt lịch", appRoutes.booking],
+  // Bug 13: FAQ/Blog do CMS quản lý đã có trang nhưng không được link ở đâu cả.
+  ["Blog", appRoutes.blog],
+  ["FAQ", appRoutes.faq],
 ] as const;
 
 function useVisibleNavItems() {

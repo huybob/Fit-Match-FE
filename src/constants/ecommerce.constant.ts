@@ -6,6 +6,9 @@ export const appRoutes = {
   gyms: "/gyms",
   trainers: "/trainers",
   booking: "/booking",
+  // Bug 13: trang CMS công khai — trước đây tồn tại nhưng không có link điều hướng nào.
+  blog: "/blog",
+  faq: "/faq",
   cart: "/cart",
   checkout: "/checkout",
   profile: "/profile",
