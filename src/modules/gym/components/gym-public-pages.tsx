@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { marketplaceService, type GymSearchParams } from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { ReportIssueButton } from "@/modules/report/report-issue-button";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
@@ -69,9 +70,11 @@ export function GymsPublicPage() {
   const [district, setDistrict] = useState("all");
   const [priceFilter, setPriceFilter] = useState<PriceRangeValue>("all");
   const [params, setParams] = useState<GymSearchParams>({});
+  // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
+  const [sort, setSort] = useState("createdAt,desc");
   const query = useQuery({
-    queryKey: ["marketplace", "gyms", params],
-    queryFn: () => marketplaceService.searchGyms(params),
+    queryKey: ["marketplace", "gyms", params, sort],
+    queryFn: () => marketplaceService.searchGyms({ ...params, sort }),
   });
 
   const districts = VN_CITIES.find((c) => c.name === city)?.districts ?? [];
@@ -162,9 +165,19 @@ export function GymsPublicPage() {
 
           {/* Results */}
           <section className="min-w-0 flex-1">
-            <div className="mb-5">
-              <h1 className="text-2xl font-bold text-foreground">Phòng tập trong khu vực của bạn</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Tìm thấy {total} phòng tập{params.city ? ` gần ${params.city}` : ""}.</p>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Phòng tập trong khu vực của bạn</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">Tìm thấy {total} phòng tập{params.city ? ` gần ${params.city}` : ""}.</p>
+              </div>
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger className="h-10 w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt,desc">Mới nhất</SelectItem>
+                  <SelectItem value="gymName,asc">Tên A → Z</SelectItem>
+                  <SelectItem value="gymName,desc">Tên Z → A</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {query.isLoading ? (
@@ -322,6 +335,8 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
               {/* A-19: gỡ badge "Đang mở cửa" hardcode — giờ mở cửa thật hiển thị theo chi nhánh bên dưới */}
               {/* A-11: yêu thích gym ngay từ trang chi tiết */}
               <div className="flex items-center gap-2">
+                {/* UC-070: báo cáo vấn đề dịch vụ/hành vi của gym */}
+                <ReportIssueButton targetType="GYM" targetId={gymId} targetName={g.gymName} />
                 <GymFavoriteButton gymId={gymId} />
                 <Link
                   href={bookingHref}

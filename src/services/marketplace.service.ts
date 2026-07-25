@@ -54,6 +54,8 @@ export interface GymSearchParams {
   maxPrice?: number;
   page?: number;
   size?: number;
+  /** UC-008: Spring Pageable sort, ví dụ "createdAt,desc" | "gymName,asc". */
+  sort?: string;
 }
 
 export interface PtSearchParams {
@@ -62,6 +64,8 @@ export interface PtSearchParams {
   serviceArea?: string;
   page?: number;
   size?: number;
+  /** UC-008: Spring Pageable sort, ví dụ "createdAt,desc" | "displayName,asc". */
+  sort?: string;
 }
 
 /** Booking rules công khai của dịch vụ/gói (UC-026). */

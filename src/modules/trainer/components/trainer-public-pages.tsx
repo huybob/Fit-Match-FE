@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, Building2, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ReportIssueButton } from "@/modules/report/report-issue-button";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { marketplaceService } from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
@@ -13,6 +14,13 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 import { toErrorMessage } from "@/shared/utils/error.util";
 
 function useFavorites() {
@@ -47,9 +55,11 @@ export function TrainersDirectoryPage() {
   const [specialization, setSpecialization] = useState("");
   const [serviceArea, setServiceArea] = useState("");
   const [params, setParams] = useState<{ keyword?: string; specialization?: string; serviceArea?: string }>({});
+  // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
+  const [sort, setSort] = useState("createdAt,desc");
   const query = useQuery({
-    queryKey: ["marketplace", "pts", params],
-    queryFn: () => marketplaceService.searchPts(params),
+    queryKey: ["marketplace", "pts", params, sort],
+    queryFn: () => marketplaceService.searchPts({ ...params, sort }),
   });
   const { isCustomer, ids, toggle } = useFavorites();
 
@@ -121,9 +131,19 @@ export function TrainersDirectoryPage() {
 
           {/* Results */}
           <section className="min-w-0 flex-1">
-            <div className="mb-5">
-              <h1 className="text-2xl font-bold text-foreground">Huấn luyện viên cá nhân</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Đang hiển thị {total} chuyên gia trong khu vực của bạn.</p>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Huấn luyện viên cá nhân</h1>
+                <p className="text-sm text-muted-foreground mt-0.5">Đang hiển thị {total} chuyên gia trong khu vực của bạn.</p>
+              </div>
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger className="h-10 w-52"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt,desc">Mới nhất</SelectItem>
+                  <SelectItem value="displayName,asc">Tên A → Z</SelectItem>
+                  <SelectItem value="experienceYears,desc">Kinh nghiệm nhiều nhất</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {query.isLoading ? (
@@ -360,6 +380,12 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                 >
                   <Heart className={`size-4 ${fav ? "fill-white" : ""}`} /> {fav ? "Bỏ yêu thích" : "Thêm yêu thích"}
                 </button>
+              )}
+              {/* UC-070: báo cáo vấn đề hành vi/chất lượng của PT */}
+              {pt.id != null && (
+                <div className="mt-2">
+                  <ReportIssueButton targetType="PT" targetId={pt.id} targetName={pt.displayName} />
+                </div>
               )}
             </div>
           </aside>

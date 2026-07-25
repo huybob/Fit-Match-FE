@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Tag,
   BarChart3, FileText, ClipboardList, LogOut,
   ChevronDown, UserCircle, Database,
-  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent,
+  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent, Flag,
 } from "lucide-react";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
@@ -26,6 +26,8 @@ const adminLinks = [
   { href: "/admin/bookings", label: "Bookings", icon: CalendarCheck, roles: ["ROLE_ADMIN"] },
   { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
   { href: "/admin/reviews", label: "Reviews", icon: Star, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
+  // UC-070/071: báo cáo vấn đề dịch vụ/hành vi (ngoài review)
+  { href: "/admin/issue-reports", label: "Issue Reports", icon: Flag, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Banknote, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   { href: "/admin/refunds", label: "Refunds", icon: Undo2, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   { href: "/admin/commission", label: "Commission", icon: Percent, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
