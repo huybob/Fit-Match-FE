@@ -30,6 +30,10 @@ import type { AuthUser } from "@/services/auth.service";
 
 import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
 
+// UC-002: cờ bật/tắt khu xác minh SĐT bằng OTP. Tạm tắt cho tới khi chốt kênh SMS
+// thật (Zalo OA cần xác thực DN, SpeedSMS chờ kích hoạt, Twilio trial chặn VN).
+const PHONE_OTP_ENABLED = false;
+
 function ProfileHeader({ user }: { user: AuthUser }) {
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
@@ -192,8 +196,9 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
             className="h-11 border-border rounded-lg text-base text-foreground"
             placeholder="0901 234 567"
           />
-          {/* UC-002: xác minh SĐT bằng OTP — đổi SĐT sẽ phải xác minh lại */}
-          <PhoneVerifyRow user={user} currentInput={phone} />
+          {/* UC-002: xác minh SĐT bằng OTP — TẠM ẨN (chưa chốt kênh SMS thật; BE + UI
+              giữ nguyên, bật lại bằng cách đổi cờ PHONE_OTP_ENABLED = true bên dưới) */}
+          {PHONE_OTP_ENABLED && <PhoneVerifyRow user={user} currentInput={phone} />}
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-muted-foreground">Vai trò</label>
