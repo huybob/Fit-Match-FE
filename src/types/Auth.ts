@@ -56,8 +56,6 @@ export interface AuthUser {
   email?: string;
   emailVerified?: boolean;
   phone?: string;
-  /** UC-002: SĐT đã xác minh OTP. */
-  phoneVerified?: boolean;
   avatarUrl?: string;
   role?: string;
   isActive?: boolean;

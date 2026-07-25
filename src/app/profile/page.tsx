@@ -30,10 +30,6 @@ import type { AuthUser } from "@/services/auth.service";
 
 import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
 
-// UC-002: cờ bật/tắt khu xác minh SĐT bằng OTP. Tạm tắt cho tới khi chốt kênh SMS
-// thật (Zalo OA cần xác thực DN, SpeedSMS chờ kích hoạt, Twilio trial chặn VN).
-const PHONE_OTP_ENABLED = false;
-
 function ProfileHeader({ user }: { user: AuthUser }) {
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
@@ -196,9 +192,6 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
             className="h-11 border-border rounded-lg text-base text-foreground"
             placeholder="0901 234 567"
           />
-          {/* UC-002: xác minh SĐT bằng OTP — TẠM ẨN (chưa chốt kênh SMS thật; BE + UI
-              giữ nguyên, bật lại bằng cách đổi cờ PHONE_OTP_ENABLED = true bên dưới) */}
-          {PHONE_OTP_ENABLED && <PhoneVerifyRow user={user} currentInput={phone} />}
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-muted-foreground">Vai trò</label>
@@ -576,105 +569,3 @@ export default function UserProfilePage() {
   );
 }
 
-/** UC-002: trạng thái xác minh SĐT + dialog nhập OTP (mã gửi qua SMS, dev đọc từ log BE). */
-function PhoneVerifyRow({ user, currentInput }: { user: AuthUser; currentInput: string }) {
-  const { toast } = useToast();
-  const { updateUser } = useAuthStore();
-  const [open, setOpen] = useState(false);
-  const [code, setCode] = useState("");
-  const [sending, setSending] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-
-  // Chỉ hiện khi SĐT trên form khớp SĐT đã lưu (đổi số thì phải Lưu trước rồi mới xác minh)
-  const phoneSaved = !!user.phone && currentInput === user.phone;
-
-  if (!phoneSaved) return null;
-
-  if (user.phoneVerified) {
-    return (
-      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-        <CheckCircle className="size-3.5" /> SĐT đã xác minh
-      </p>
-    );
-  }
-
-  async function requestOtp() {
-    setSending(true);
-    try {
-      await authService.requestPhoneOtp();
-      setCode("");
-      setOpen(true);
-      toast({ type: "success", title: "Đã gửi mã OTP", description: "Mã 6 chữ số có hiệu lực 10 phút." });
-    } catch (error) {
-      toast({ type: "error", title: "Không gửi được OTP", description: toErrorMessage(error) });
-    } finally {
-      setSending(false);
-    }
-  }
-
-  async function verify() {
-    if (!/^\d{6}$/.test(code)) {
-      toast({ type: "warning", title: "Mã OTP gồm 6 chữ số" });
-      return;
-    }
-    setVerifying(true);
-    try {
-      const updated = await authService.verifyPhoneOtp(code);
-      updateUser(updated);
-      setOpen(false);
-      toast({ type: "success", title: "Đã xác minh số điện thoại" });
-    } catch (error) {
-      toast({ type: "error", title: "Xác minh thất bại", description: toErrorMessage(error) });
-    } finally {
-      setVerifying(false);
-    }
-  }
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={requestOtp}
-        disabled={sending}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline disabled:opacity-50"
-      >
-        <AlertCircle className="size-3.5" />
-        {sending ? "Đang gửi mã..." : "Chưa xác minh — gửi mã OTP"}
-      </button>
-
-      <Dialog open={open} title="Xác minh số điện thoại" onClose={() => setOpen(false)}>
-        <p className="text-sm text-muted-foreground">
-          Nhập mã 6 chữ số đã gửi tới <b>{user.phone}</b>. Sai 5 lần sẽ phải xin mã mới.
-        </p>
-        <Input
-          className="mt-3 h-11 text-center text-xl tracking-[0.5em] font-bold"
-          inputMode="numeric"
-          maxLength={6}
-          placeholder="••••••"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-        />
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={requestOtp}
-            disabled={sending}
-            className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
-          >
-            Gửi lại mã
-          </button>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
-            <Button
-              disabled={verifying || code.length !== 6}
-              className="bg-primary text-white hover:bg-primary/90"
-              onClick={verify}
-            >
-              {verifying ? "Đang kiểm tra..." : "Xác minh"}
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-    </>
-  );
-}
