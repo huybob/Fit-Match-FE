@@ -331,6 +331,10 @@ export default function GymPtsPage() {
       if (!username.trim() || !email.trim() || !password) {
         toast({ type: "warning", title: "Nhập tài khoản, email và mật khẩu" }); return;
       }
+      // Khớp rule @StrongPassword phía BE: 8-100 ký tự, có ít nhất 1 chữ và 1 số
+      if (password.length < 8 || password.length > 100 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        toast({ type: "warning", title: "Mật khẩu phải 8-100 ký tự, gồm ít nhất 1 chữ cái và 1 chữ số" }); return;
+      }
     }
     if (!displayName.trim()) { toast({ type: "warning", title: "Nhập tên hiển thị" }); return; }
     saveMut.mutate();
