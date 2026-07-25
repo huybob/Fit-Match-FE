@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Tag,
   BarChart3, FileText, ClipboardList, LogOut,
   ChevronDown, UserCircle, Database,
-  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent, Flag,
+  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent, Flag, BellRing,
 } from "lucide-react";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
@@ -35,6 +35,8 @@ const adminLinks = [
   // Link Loyalty gỡ tạm (E-16): trang /admin/loyalty chưa tồn tại — thêm lại ở Phase 3.
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   { href: "/admin/cms", label: "CMS", icon: FileText, roles: ["ROLE_ADMIN"] },
+  // UC-075: template thông báo theo sự kiện
+  { href: "/admin/notification-templates", label: "Notifications", icon: BellRing, roles: ["ROLE_ADMIN"] },
   { href: "/admin/master-data", label: "Master Data", icon: Database, roles: ["ROLE_ADMIN"] },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ClipboardList, roles: ["ROLE_ADMIN"] },
 ];

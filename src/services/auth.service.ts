@@ -61,6 +61,14 @@ export const authService = {
     await api.postRaw("/user/deactivate", { password });
   },
 
+  // UC-002: xác minh SĐT bằng OTP 6 chữ số (TTL 10 phút, khóa sau 5 lần sai)
+  async requestPhoneOtp(): Promise<void> {
+    await api.postRaw("/user/phone/request-otp");
+  },
+  async verifyPhoneOtp(code: string): Promise<AuthUser> {
+    return api.post<AuthUser, { code: string }>("/user/phone/verify-otp", { code });
+  },
+
   async logout(): Promise<void> {
     await api.postRaw("/auth/logout");
   },

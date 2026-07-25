@@ -174,6 +174,8 @@ export function GymsPublicPage() {
                 <SelectTrigger className="h-10 w-44"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="createdAt,desc">Mới nhất</SelectItem>
+                  {/* UC-008 (V51): sort theo cột denorm avg_rating */}
+                  <SelectItem value="avgRating,desc">Đánh giá cao nhất</SelectItem>
                   <SelectItem value="gymName,asc">Tên A → Z</SelectItem>
                   <SelectItem value="gymName,desc">Tên Z → A</SelectItem>
                 </SelectContent>

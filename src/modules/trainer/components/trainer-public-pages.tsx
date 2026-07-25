@@ -140,6 +140,8 @@ export function TrainersDirectoryPage() {
                 <SelectTrigger className="h-10 w-52"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="createdAt,desc">Mới nhất</SelectItem>
+                  {/* UC-008 (V51): sort theo cột denorm avg_rating */}
+                  <SelectItem value="avgRating,desc">Đánh giá cao nhất</SelectItem>
                   <SelectItem value="displayName,asc">Tên A → Z</SelectItem>
                   <SelectItem value="experienceYears,desc">Kinh nghiệm nhiều nhất</SelectItem>
                 </SelectContent>
