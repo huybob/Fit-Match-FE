@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Calendar, Heart, User, Shield, Settings, LogOut,
+  LayoutDashboard, Calendar, Heart, User, Shield, Bell, LogOut, TrendingUp,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
@@ -11,6 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 const links = [
   { href: "/", label: "Bảng điều khiển", icon: LayoutDashboard },
   { href: "/profile/bookings", label: "Lịch đặt", icon: Calendar },
+  { href: "/profile/measurements", label: "Tiến trình", icon: TrendingUp },
   { href: "/profile/favorites", label: "Yêu thích", icon: Heart },
   { href: "/profile", label: "Hồ sơ", icon: User },
   { href: "/change-password", label: "Bảo mật", icon: Shield },
@@ -62,12 +63,13 @@ export function ProfileSidebar() {
       </div>
 
       <div className="border-t border-border pt-4 flex flex-col gap-1">
+        {/* Sửa link chết /settings (route không tồn tại) → trang thông báo thật */}
         <Link
-          href="/settings"
+          href="/notifications"
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-card/60"
         >
-          <Settings className="size-4" />
-          Cài đặt
+          <Bell className="size-4" />
+          Thông báo
         </Link>
         <button
           onClick={handleLogout}

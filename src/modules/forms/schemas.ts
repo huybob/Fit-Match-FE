@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+// Khớp rule @StrongPassword phía BE: 8-100 ký tự, ít nhất 1 chữ cái và 1 chữ số.
+export const strongPasswordSchema = z
+  .string()
+  .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
+  .max(100, "Mật khẩu không quá 100 ký tự")
+  .regex(/[A-Za-z]/, "Mật khẩu phải chứa ít nhất 1 chữ cái")
+  .regex(/\d/, "Mật khẩu phải chứa ít nhất 1 chữ số");
+
 export const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
@@ -19,18 +27,23 @@ export const registerSchema = loginSchema.extend({
     .max(100, "Họ tên không quá 100 ký tự")
     .regex(/^\p{L}+(?:[ ]\p{L}+)*$/u, "Họ tên chỉ gồm chữ cái và khoảng trắng, không chứa số hoặc ký tự đặc biệt"),
   email: z.string().email("Email is invalid"),
-  password: z.string().min(6, "Password must be at least 6 characters").max(100),
+  password: strongPasswordSchema,
+  confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
   phone: z.union([
     z.literal(""),
     z.string().regex(/^[0-9+\-() ]{7,20}$/, "Phone number is invalid"),
   ]),
   // UC-001: BE chỉ nhận accountType (CUSTOMER | GYM_OPERATOR); PT do Gym tạo.
   accountType: z.enum(["CUSTOMER", "GYM_OPERATOR"]),
+  terms: z.boolean().refine((v) => v === true, "Vui lòng đồng ý điều khoản sử dụng"),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: "Mật khẩu xác nhận không khớp",
+  path: ["confirmPassword"],
 });
 
 export const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters").max(100),
+  newPassword: strongPasswordSchema,
 });
 
 export const forgotPasswordSchema = z.object({
@@ -39,7 +52,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    newPassword: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự").max(100),
+    newPassword: strongPasswordSchema,
     confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {

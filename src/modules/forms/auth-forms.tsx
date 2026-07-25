@@ -5,13 +5,14 @@ import { CheckCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { authService } from "@/services/auth.service";
 import { Button } from "@/shared/components/ui/button";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Input } from "@/shared/components/ui/input";
 import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
 import { FieldShell } from "./form-controls";
@@ -172,8 +173,6 @@ export function RegisterForm() {
   const registerAccount = useAuthStore((state) => state.register);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [terms, setTerms] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -184,24 +183,20 @@ export function RegisterForm() {
       email: "",
       phone: "",
       password: "",
+      confirmPassword: "",
       accountType: "CUSTOMER",
+      terms: false,
     },
   });
   const accountType = form.watch("accountType");
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
-    if (values.password !== confirmPassword) {
-      toast({ type: "error", title: "Mật khẩu xác nhận không khớp" });
-      return;
-    }
-    if (!terms) {
-      toast({ type: "warning", title: "Vui lòng đồng ý điều khoản sử dụng" });
-      return;
-    }
+    // confirmPassword/terms chỉ dùng phía client — không gửi lên BE
+    const { confirmPassword: _confirm, terms: _terms, ...payload } = values;
     try {
       await registerAccount({
-        ...values,
-        phone: values.phone || undefined,
+        ...payload,
+        phone: payload.phone || undefined,
       });
       setEmailSent(true);
     } catch (error) {
@@ -362,8 +357,7 @@ export function RegisterForm() {
               type={showConfirmPassword ? "text" : "password"}
               placeholder="••••••••"
               className="pl-10 pr-10 h-11 border-border rounded-lg text-base"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              {...form.register("confirmPassword")}
             />
             <button
               type="button"
@@ -374,27 +368,40 @@ export function RegisterForm() {
               {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
             </button>
           </div>
+          {form.formState.errors.confirmPassword && (
+            <p className="text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>
+          )}
         </div>
 
-        <label className="flex cursor-pointer items-start gap-3 py-2">
-          <input
-            type="checkbox"
-            checked={terms}
-            onChange={(e) => setTerms(e.target.checked)}
-            className="mt-0.5 size-4 accent-[#004ac6]"
+        <div className="py-2">
+          <Controller
+            control={form.control}
+            name="terms"
+            render={({ field }) => (
+              <label className="flex cursor-pointer items-start gap-3">
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked === true)}
+                  className="mt-0.5"
+                />
+                <span className="text-base text-muted-foreground">
+                  Tôi đồng ý với{" "}
+                  <Link href="#" className="text-primary hover:underline">
+                    Điều khoản Dịch vụ
+                  </Link>{" "}
+                  và{" "}
+                  <Link href="#" className="text-primary hover:underline">
+                    Chính sách Bảo mật
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
           />
-          <span className="text-base text-muted-foreground">
-            Tôi đồng ý với{" "}
-            <Link href="#" className="text-primary hover:underline">
-              Điều khoản Dịch vụ
-            </Link>{" "}
-            và{" "}
-            <Link href="#" className="text-primary hover:underline">
-              Chính sách Bảo mật
-            </Link>
-            .
-          </span>
-        </label>
+          {form.formState.errors.terms && (
+            <p className="mt-1 text-xs text-red-500">{form.formState.errors.terms.message}</p>
+          )}
+        </div>
 
         <Button
           className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-normal rounded-lg gap-2"

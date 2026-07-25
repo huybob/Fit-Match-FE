@@ -28,6 +28,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { authService } from "@/services/auth.service";
+import { strongPasswordSchema } from "@/modules/forms/schemas";
 import { useToast } from "@/lib/toast-provider";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { Button } from "@/shared/components/ui/button";
@@ -37,7 +38,7 @@ import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
 const changePasswordSchema = z
   .object({
     oldPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-    newPassword: z.string().min(6, "Mật khẩu mới tối thiểu 6 ký tự").max(100),
+    newPassword: strongPasswordSchema,
     confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu mới"),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
