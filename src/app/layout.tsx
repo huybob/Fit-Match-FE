@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { getLocale, getMessages } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 import { AppProviders } from "@/core/providers/app-providers";
+import { HTML_LANG, resolveLocale } from "@/i18n/config";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,6 +12,7 @@ export const metadata: Metadata = {
   },
   description:
     "Modern ecommerce interface for gym packages, personal trainers, booking, checkout and member profile.",
+  // Keyword SEO giữ tiếng Việt: đây là từ khoá tìm kiếm thị trường VN, không phải text UI.
   keywords: [
     "quản lý phòng gym",
     "phần mềm fitness",
@@ -26,13 +30,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Locale đọc từ cookie qua request config của next-intl (URL không có prefix).
+  const locale = resolveLocale(await getLocale());
+  const messages = await getMessages();
+
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang={HTML_LANG[locale]} suppressHydrationWarning>
       <head>
         {/* No-flash: áp theme đã lưu / theo hệ điều hành TRƯỚC khi paint. */}
         <script
@@ -42,7 +50,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-background text-foreground antialiased">
-        <AppProviders>{children}</AppProviders>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <AppProviders>{children}</AppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
