@@ -14,11 +14,14 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
+import { useTranslations } from "next-intl";
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
 
 export default function AdminVouchersRoute() {
+  const t = useTranslations();
   const qc = useQueryClient();
   const { toast } = useToast();
   const query = useQuery({ queryKey: ["admin", "vouchers"], queryFn: () => voucherService.list() });
@@ -28,7 +31,7 @@ export default function AdminVouchersRoute() {
   const toggle = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) => voucherService.setActive(id, active),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "vouchers"] }),
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   return (
@@ -36,40 +39,42 @@ export default function AdminVouchersRoute() {
       <section className="mb-6 flex items-end justify-between rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">Voucher / Khuyến mãi</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Cấu hình mã giảm giá áp dụng khi khách đặt lịch (UC-073).</p>
+          <h1 className="text-3xl font-black">{t("admin.vouchers.title")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("admin.vouchers.subtitle")}</p>
         </div>
-        <Button onClick={() => setEditing(null)}><Plus className="size-4" /> Tạo voucher</Button>
+        <Button onClick={() => setEditing(null)}><Plus className="size-4" /> {t("admin.vouchers.create")}</Button>
       </section>
 
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("common.states.errorTitle")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có voucher" description="Tạo voucher đầu tiên để chạy khuyến mãi." />
+        <EmptyState title={t("admin.vouchers.emptyTitle")} description={t("admin.vouchers.emptyDescription")} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((v) => (
             <article key={v.id} className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-lg font-black"><Tag className="size-4 text-accent" />{v.code}</span>
-                <Badge variant={v.active ? "success" : "default"}>{v.active ? "Đang bật" : "Đã tắt"}</Badge>
+                <Badge variant={v.active ? "success" : "default"}>{v.active ? t("common.states.enabled") : t("common.states.disabledState")}</Badge>
               </div>
               {v.description && <p className="mt-1 text-sm text-muted-foreground">{v.description}</p>}
               <p className="mt-3 text-sm">
-                Giảm: <b>{v.discountType === "PERCENT" ? `${v.discountValue}%` : money(v.discountValue)}</b>
-                {v.maxDiscount ? ` (tối đa ${money(v.maxDiscount)})` : ""}
-                {v.minBookingAmount ? ` · đơn tối thiểu ${money(v.minBookingAmount)}` : ""}
+                {t("admin.vouchers.discount")}: <b>{v.discountType === "PERCENT" ? `${v.discountValue}%` : money(v.discountValue)}</b>
+                {v.maxDiscount ? ` (${t("admin.vouchers.maxDiscountShort", { max: money(v.maxDiscount) })})` : ""}
+                {v.minBookingAmount ? ` · ${t("admin.vouchers.minOrderShort", { min: money(v.minBookingAmount) })}` : ""}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Đã dùng {v.usedCount}{v.usageLimit ? `/${v.usageLimit}` : ""} lượt
+                {v.usageLimit
+                  ? t("admin.vouchers.usedCountOf", { used: v.usedCount ?? 0, limit: v.usageLimit })
+                  : t("admin.vouchers.usedCount", { used: v.usedCount ?? 0 })}
               </p>
               <div className="mt-4 flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(v)}>Sửa</Button>
+                <Button variant="outline" onClick={() => setEditing(v)}>{t("common.actions.edit")}</Button>
                 <Button variant="ghost" onClick={() => toggle.mutate({ id: v.id, active: !v.active })}>
                   {v.active ? <ToggleRight className="size-4" /> : <ToggleLeft className="size-4" />}
-                  {v.active ? "Tắt" : "Bật"}
+                  {v.active ? t("common.states.off") : t("common.states.on")}
                 </Button>
               </div>
             </article>
@@ -83,6 +88,7 @@ export default function AdminVouchersRoute() {
 }
 
 function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose: () => void }) {
+  const t = useTranslations();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState<VoucherRequest>({
@@ -104,68 +110,65 @@ function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose:
     mutationFn: () => (voucher ? voucherService.update(voucher.id, form) : voucherService.create(form)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "vouchers"] });
-      toast({ type: "success", title: voucher ? "Đã cập nhật voucher" : "Đã tạo voucher" });
+      toast({ type: "success", title: voucher ? t("admin.vouchers.updated") : t("admin.vouchers.created") });
       onClose();
     },
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   const set = (patch: Partial<VoucherRequest>) => setForm((f) => ({ ...f, ...patch }));
   const num = (s: string) => (s === "" ? undefined : Number(s));
 
   return (
-    <Dialog open title={voucher ? "Sửa voucher" : "Tạo voucher"} onClose={onClose}>
+    <Dialog open title={voucher ? t("admin.vouchers.editTitle") : t("admin.vouchers.create")} onClose={onClose}>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground sm:col-span-2">
-          Mã <Input value={form.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} />
+          {t("admin.vouchers.fieldCode")} <Input value={form.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} />
         </label>
-        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground sm:col-span-2">
-          Mô tả <Input value={form.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
+        <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground sm:col-span-2">{t("common.table.description")}<Input value={form.description ?? ""} onChange={(e) => set({ description: e.target.value })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Loại
+          {t("admin.vouchers.fieldType")}
           <Select value={form.discountType} onValueChange={(v) => set({ discountType: v as DiscountType })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="PERCENT">Phần trăm (%)</SelectItem>
-              <SelectItem value="FIXED">Số tiền cố định</SelectItem>
+              <SelectItem value="PERCENT">{t("admin.vouchers.typePercent")}</SelectItem>
+              <SelectItem value="FIXED">{t("admin.vouchers.typeFixed")}</SelectItem>
             </SelectContent>
           </Select>
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Giá trị <Input type="number" value={form.discountValue} onChange={(e) => set({ discountValue: Number(e.target.value) })} />
+          {t("admin.vouchers.fieldValue")} <Input type="number" value={form.discountValue} onChange={(e) => set({ discountValue: Number(e.target.value) })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Đơn tối thiểu <Input type="number" value={form.minBookingAmount ?? ""} onChange={(e) => set({ minBookingAmount: num(e.target.value) })} />
+          {t("admin.vouchers.fieldMinBooking")} <Input type="number" value={form.minBookingAmount ?? ""} onChange={(e) => set({ minBookingAmount: num(e.target.value) })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Giảm tối đa (cho %) <Input type="number" value={form.maxDiscount ?? ""} onChange={(e) => set({ maxDiscount: num(e.target.value) })} />
+          {t("admin.vouchers.fieldMaxDiscount")} <Input type="number" value={form.maxDiscount ?? ""} onChange={(e) => set({ maxDiscount: num(e.target.value) })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground sm:col-span-2">
-          Giới hạn lượt (bỏ trống = không giới hạn) <Input type="number" value={form.usageLimit ?? ""} onChange={(e) => set({ usageLimit: num(e.target.value) })} />
+          {t("admin.vouchers.fieldUsageLimit")} <Input type="number" value={form.usageLimit ?? ""} onChange={(e) => set({ usageLimit: num(e.target.value) })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Hiệu lực từ
-          <Input type="datetime-local" value={form.validFrom ?? ""}
-            onChange={(e) => set({ validFrom: e.target.value || undefined })} />
+          {t("admin.vouchers.validFrom")}
+          <DateTimePicker value={form.validFrom ?? ""}
+            onChange={(v) => set({ validFrom: v || undefined })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Hiệu lực đến
-          <Input type="datetime-local" value={form.validTo ?? ""}
-            onChange={(e) => set({ validTo: e.target.value || undefined })} />
+          {t("admin.vouchers.validTo")}
+          <DateTimePicker value={form.validTo ?? ""}
+            onChange={(v) => set({ validTo: v || undefined })} />
         </label>
         {form.validFrom && form.validTo && form.validFrom >= form.validTo && (
-          <p className="sm:col-span-2 text-xs text-red-500">&quot;Hiệu lực đến&quot; phải sau &quot;Hiệu lực từ&quot;.</p>
+          <p className="sm:col-span-2 text-xs text-destructive">{t("admin.vouchers.rangeInvalid")}</p>
         )}
       </div>
       <div className="mt-4 flex gap-2">
         <Button
           disabled={save.isPending || !form.code.trim() || (!!form.validFrom && !!form.validTo && form.validFrom >= form.validTo)}
           onClick={() => save.mutate()}
-        >
-          Lưu
-        </Button>
-        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        >{t("common.actions.save")}</Button>
+        <Button variant="outline" onClick={onClose}>{t("common.actions.cancel")}</Button>
       </div>
     </Dialog>
   );

@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, Package, Pencil, Plus, Ruler, Scale, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useMemo } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { DatePicker } from "@/shared/components/ui/date-picker";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { AuthGuard } from "@/modules/auth/auth-guard";
@@ -24,29 +25,50 @@ import { Input } from "@/shared/components/ui/input";
 import { Progress } from "@/shared/components/ui/progress";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
+import { useFormatters } from "@/i18n/use-formatters";
 
 // Khớp validation BE (BodyMeasurementRequest): ngày bắt buộc ≤ hôm nay, chỉ số optional trong khoảng hợp lệ.
 // Input number của RHF trả string — giữ string trong form, convert khi submit (tránh lệch type với zod coerce).
-const numberIn = (min: number, max: number, label: string) =>
+/**
+ * Schema là FACTORY nhận `t` vì message validation phải đi qua i18n, mà t()
+ * chỉ gọi được trong component. Khoảng giá trị giữ nguyên để khớp BE.
+ */
+/**
+ * Schema nhận sẵn CHUỖI đã dịch (không nhận `t`): với hơn 1000 key, union kiểu
+ * của next-intl vượt giới hạn TS khi dùng làm tham số generic (TS2590).
+ * Truyền chuỗi cũng tách schema khỏi i18n. Khoảng giá trị giữ nguyên để khớp BE.
+ */
+export interface MeasurementMessages {
+  pickDate: string;
+  dateNotFuture: string;
+  noteMax: string;
+  /** Message "X phải từ min đến max" đã dựng sẵn cho từng field. */
+  range: Record<"weightKg" | "heightCm" | "bodyFatPercent" | "chestCm" | "waistCm" | "hipCm", string>;
+}
+
+const numberIn = (min: number, max: number, message: string) =>
   z.string().refine(
     (v) => v === "" || (!Number.isNaN(Number(v)) && Number(v) >= min && Number(v) <= max),
-    `${label} phải từ ${min} đến ${max}`,
+    message,
   );
 
-const measurementSchema = z.object({
-  measuredAt: z
-    .string()
-    .min(1, "Chọn ngày đo")
-    .refine((v) => v <= new Date().toISOString().slice(0, 10), "Ngày đo không được ở tương lai"),
-  weightKg: numberIn(20, 400, "Cân nặng (kg)"),
-  heightCm: numberIn(80, 250, "Chiều cao (cm)"),
-  bodyFatPercent: numberIn(1, 70, "Tỷ lệ mỡ (%)"),
-  chestCm: numberIn(30, 250, "Vòng ngực (cm)"),
-  waistCm: numberIn(30, 250, "Vòng eo (cm)"),
-  hipCm: numberIn(30, 250, "Vòng mông (cm)"),
-  note: z.string().max(500, "Ghi chú tối đa 500 ký tự"),
-});
-type MeasurementValues = z.infer<typeof measurementSchema>;
+const buildMeasurementSchema = (m: MeasurementMessages) =>
+  z.object({
+    measuredAt: z
+      .string()
+      .min(1, m.pickDate)
+      .refine((v) => v <= new Date().toISOString().slice(0, 10), m.dateNotFuture),
+    weightKg: numberIn(20, 400, m.range.weightKg),
+    heightCm: numberIn(80, 250, m.range.heightCm),
+    bodyFatPercent: numberIn(1, 70, m.range.bodyFatPercent),
+    chestCm: numberIn(30, 250, m.range.chestCm),
+    waistCm: numberIn(30, 250, m.range.waistCm),
+    hipCm: numberIn(30, 250, m.range.hipCm),
+    note: z.string().max(500, m.noteMax),
+  });
+
+type MeasurementValues = z.infer<ReturnType<typeof buildMeasurementSchema>>;
 
 const emptyValues: MeasurementValues = {
   measuredAt: new Date().toISOString().slice(0, 10),
@@ -73,9 +95,6 @@ function toPayload(v: MeasurementValues): BodyMeasurementInput {
   };
 }
 
-function dateText(v?: string) {
-  return v ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(new Date(v)) : "";
-}
 
 export default function MeasurementsRoute() {
   return (
@@ -90,6 +109,25 @@ export default function MeasurementsRoute() {
 }
 
 function MeasurementsContent() {
+  const t = useTranslations();
+  const fmt = useFormatters();
+  const schema = useMemo(
+    () =>
+      buildMeasurementSchema({
+        pickDate: t("member.measurements.pickDate"),
+        dateNotFuture: t("member.measurements.dateNotFuture"),
+        noteMax: t("member.measurements.noteMax"),
+        range: {
+          weightKg: t("common.validation.between", { field: t("member.measurements.field.weightKg"), min: 20, max: 400 }),
+          heightCm: t("common.validation.between", { field: t("member.measurements.field.heightCm"), min: 80, max: 250 }),
+          bodyFatPercent: t("common.validation.between", { field: t("member.measurements.field.bodyFatPercent"), min: 1, max: 70 }),
+          chestCm: t("common.validation.between", { field: t("member.measurements.field.chestCm"), min: 30, max: 250 }),
+          waistCm: t("common.validation.between", { field: t("member.measurements.field.waistCm"), min: 30, max: 250 }),
+          hipCm: t("common.validation.between", { field: t("member.measurements.field.hipCm"), min: 30, max: 250 }),
+        },
+      }),
+    [t],
+  );
   const { toast } = useToast();
   const qc = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
@@ -106,7 +144,7 @@ function MeasurementsContent() {
   });
 
   const form = useForm<MeasurementValues>({
-    resolver: zodResolver(measurementSchema),
+    resolver: zodResolver(schema),
     mode: "onTouched",
     defaultValues: emptyValues,
   });
@@ -117,21 +155,21 @@ function MeasurementsContent() {
         ? measurementService.update(editing.id, toPayload(values))
         : measurementService.create(toPayload(values)),
     onSuccess: () => {
-      toast({ type: "success", title: editing ? "Đã cập nhật số đo" : "Đã ghi nhận số đo" });
+      toast({ type: "success", title: editing ? t("member.measurements.updated") : t("member.measurements.created") });
       qc.invalidateQueries({ queryKey: ["measurements"] });
       closeForm();
     },
-    onError: (e) => toast({ type: "error", title: "Không lưu được", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("member.measurements.saveFailed"), description: toErrorMessage(e) }),
   });
 
   const deleteMut = useMutation({
     mutationFn: (id: number) => measurementService.remove(id),
     onSuccess: () => {
-      toast({ type: "success", title: "Đã xóa số đo" });
+      toast({ type: "success", title: t("member.measurements.deleted") });
       qc.invalidateQueries({ queryKey: ["measurements"] });
       setDeleting(null);
     },
-    onError: (e) => toast({ type: "error", title: "Không xóa được", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("member.measurements.deleteFailed"), description: toErrorMessage(e) }),
   });
 
   function openCreate() {
@@ -173,11 +211,11 @@ function MeasurementsContent() {
     <div>
       <div className="flex items-start justify-between gap-3">
         <PageHeader
-          title="Tiến trình tập luyện"
-          description="Theo dõi số đo cơ thể và mức sử dụng gói tập của bạn (UC-051)."
+          title={t("member.measurements.title")}
+          description={t("member.measurements.subtitle")}
         />
-        <Button onClick={openCreate} className="shrink-0 gap-2 bg-primary text-white hover:bg-primary/90">
-          <Plus className="size-4" /> Thêm số đo
+        <Button onClick={openCreate} className="shrink-0 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="size-4" /> {t("member.measurements.add")}
         </Button>
       </div>
 
@@ -186,26 +224,30 @@ function MeasurementsContent() {
         <div className="mb-6 grid gap-3 sm:grid-cols-3">
           <StatCard
             icon={<Scale className="size-4 text-primary" />}
-            label="Cân nặng mới nhất"
+            label={t("member.measurements.latestWeight")}
             value={latest.weightKg != null ? `${latest.weightKg} kg` : "—"}
             sub={
               weightDelta == null
-                ? dateText(latest.measuredAt)
-                : `${weightDelta > 0 ? "+" : ""}${weightDelta} kg so với lần trước`
+                ? fmt.date(latest.measuredAt)
+                : t("member.measurements.weightDelta", { delta: `${weightDelta > 0 ? "+" : ""}${weightDelta}` })
             }
-            subClass={weightDelta == null ? undefined : weightDelta > 0 ? "text-amber-600" : "text-emerald-600"}
+            subClass={weightDelta == null ? undefined : weightDelta > 0 ? "text-warning" : "text-success"}
           />
           <StatCard
             icon={<Activity className="size-4 text-primary" />}
             label="BMI"
             value={latest.bmi != null ? String(latest.bmi) : "—"}
-            sub={latest.heightCm != null ? `Chiều cao ${latest.heightCm} cm` : "Cần cân nặng + chiều cao"}
+            sub={
+              latest.heightCm != null
+                ? t("member.measurements.heightValue", { height: latest.heightCm })
+                : t("member.measurements.needWeightHeight")
+            }
           />
           <StatCard
             icon={<Ruler className="size-4 text-primary" />}
-            label="Tỷ lệ mỡ"
+            label={t("member.measurements.bodyFat")}
             value={latest.bodyFatPercent != null ? `${latest.bodyFatPercent}%` : "—"}
-            sub={dateText(latest.measuredAt)}
+            sub={fmt.date(latest.measuredAt)}
           />
         </div>
       )}
@@ -213,7 +255,7 @@ function MeasurementsContent() {
       {/* Gói tập đang dùng */}
       {activePackages.length > 0 && (
         <section className="mb-6">
-          <h2 className="mb-3 text-lg font-black">Gói tập đang sử dụng</h2>
+          <h2 className="mb-3 text-lg font-black">{t("member.measurements.activePackages")}</h2>
           <div className="space-y-3">
             {activePackages.map((p) => {
               const pct = p.sessionsTotal > 0 ? Math.round((p.sessionsUsed / p.sessionsTotal) * 100) : 0;
@@ -222,16 +264,16 @@ function MeasurementsContent() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="flex items-center gap-2 font-bold">
                       <Package className="size-4 text-primary" />
-                      {p.packageName ?? `Gói #${p.packageId ?? p.id}`}
+                      {p.packageName ?? t("member.measurements.packageFallback", { id: p.packageId ?? p.id })}
                       {p.gymName && <span className="text-xs font-normal text-muted-foreground">· {p.gymName}</span>}
                     </p>
                     <p className="text-sm font-bold">
-                      {p.sessionsUsed}/{p.sessionsTotal} buổi
+                      {t("member.measurements.sessionsUsed", { used: p.sessionsUsed ?? 0, total: p.sessionsTotal ?? 0 })}
                     </p>
                   </div>
                   <Progress value={pct} className="mt-2 h-2" />
                   {p.expiresAt && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">Hết hạn: {dateText(p.expiresAt)}</p>
+                    <p className="mt-1.5 text-xs text-muted-foreground">{t("member.measurements.expiresAt")} {fmt.date(p.expiresAt)}</p>
                   )}
                 </div>
               );
@@ -240,16 +282,16 @@ function MeasurementsContent() {
         </section>
       )}
 
-      {/* Lịch sử số đo */}
-      <h2 className="mb-3 text-lg font-black">Lịch sử số đo</h2>
+      {/* {t("member.measurements.history")} */}
+      <h2 className="mb-3 text-lg font-black">{t("member.measurements.history")}</h2>
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được số đo" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("member.measurements.loadError")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
         <EmptyState
-          title="Chưa có số đo nào"
-          description="Ghi nhận số đo đầu tiên để bắt đầu theo dõi tiến trình."
+          title={t("member.measurements.empty")}
+          description={t("member.measurements.emptyHint")}
         />
       ) : (
         <ul className="space-y-2">
@@ -257,25 +299,25 @@ function MeasurementsContent() {
             <li key={m.id} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="font-bold">{dateText(m.measuredAt)}</p>
+                  <p className="font-bold">{fmt.date(m.measuredAt)}</p>
                   <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                    {m.weightKg != null && <span>Cân nặng: <b className="text-foreground">{m.weightKg} kg</b></span>}
+                    {m.weightKg != null && <span>{t("member.measurements.weightShort")} <b className="text-foreground">{m.weightKg} kg</b></span>}
                     {m.bmi != null && <span>BMI: <b className="text-foreground">{m.bmi}</b></span>}
-                    {m.bodyFatPercent != null && <span>Mỡ: <b className="text-foreground">{m.bodyFatPercent}%</b></span>}
-                    {m.chestCm != null && <span>Ngực: <b className="text-foreground">{m.chestCm} cm</b></span>}
+                    {m.bodyFatPercent != null && <span>{t("member.measurements.fatShort")} <b className="text-foreground">{m.bodyFatPercent}%</b></span>}
+                    {m.chestCm != null && <span>{t("member.measurements.chestShort")} <b className="text-foreground">{m.chestCm} cm</b></span>}
                     {m.waistCm != null && <span>Eo: <b className="text-foreground">{m.waistCm} cm</b></span>}
-                    {m.hipCm != null && <span>Mông: <b className="text-foreground">{m.hipCm} cm</b></span>}
+                    {m.hipCm != null && <span>{t("member.measurements.hipShort")} <b className="text-foreground">{m.hipCm} cm</b></span>}
                   </div>
                   {m.note && <p className="mt-1.5 text-sm text-muted-foreground">{m.note}</p>}
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" aria-label="Sửa" onClick={() => openEdit(m)}>
+                  <Button variant="ghost" size="icon" aria-label={t("common.actions.edit")} onClick={() => openEdit(m)}>
                     <Pencil className="size-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label="Xóa"
+                    aria-label={t("common.actions.delete")}
                     className="text-destructive hover:text-destructive"
                     onClick={() => setDeleting(m)}
                   >
@@ -289,55 +331,61 @@ function MeasurementsContent() {
       )}
 
       {/* Form thêm/sửa */}
-      <Dialog open={formOpen} title={editing ? "Sửa số đo" : "Thêm số đo"} onClose={closeForm}>
+      <Dialog open={formOpen} title={editing ? t("member.measurements.editTitle") : t("member.measurements.add")} onClose={closeForm}>
         <form onSubmit={form.handleSubmit((v) => saveMut.mutate(v))} className="space-y-3">
-          <Field label="Ngày đo *" error={form.formState.errors.measuredAt?.message}>
-            <Input type="date" {...form.register("measuredAt")} />
+          <Field label={t("member.measurements.field.measuredAt")} error={form.formState.errors.measuredAt?.message}>
+            <Controller
+              control={form.control}
+              name="measuredAt"
+              render={({ field }) => (
+                <DatePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />
+              )}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Cân nặng (kg)" error={form.formState.errors.weightKg?.message}>
+            <Field label={t("member.measurements.field.weightKg")} error={form.formState.errors.weightKg?.message}>
               <Input type="number" step="0.1" placeholder="72.5" {...form.register("weightKg")} />
             </Field>
-            <Field label="Chiều cao (cm)" error={form.formState.errors.heightCm?.message}>
+            <Field label={t("member.measurements.field.heightCm")} error={form.formState.errors.heightCm?.message}>
               <Input type="number" step="0.1" placeholder="175" {...form.register("heightCm")} />
             </Field>
-            <Field label="Tỷ lệ mỡ (%)" error={form.formState.errors.bodyFatPercent?.message}>
+            <Field label={t("member.measurements.field.bodyFatPercent")} error={form.formState.errors.bodyFatPercent?.message}>
               <Input type="number" step="0.1" placeholder="18" {...form.register("bodyFatPercent")} />
             </Field>
-            <Field label="Vòng ngực (cm)" error={form.formState.errors.chestCm?.message}>
+            <Field label={t("member.measurements.field.chestCm")} error={form.formState.errors.chestCm?.message}>
               <Input type="number" step="0.1" placeholder="98" {...form.register("chestCm")} />
             </Field>
-            <Field label="Vòng eo (cm)" error={form.formState.errors.waistCm?.message}>
+            <Field label={t("member.measurements.field.waistCm")} error={form.formState.errors.waistCm?.message}>
               <Input type="number" step="0.1" placeholder="80" {...form.register("waistCm")} />
             </Field>
-            <Field label="Vòng mông (cm)" error={form.formState.errors.hipCm?.message}>
+            <Field label={t("member.measurements.field.hipCm")} error={form.formState.errors.hipCm?.message}>
               <Input type="number" step="0.1" placeholder="95" {...form.register("hipCm")} />
             </Field>
           </div>
-          <Field label="Ghi chú" error={form.formState.errors.note?.message}>
-            <Textarea rows={2} placeholder="Cảm nhận, mục tiêu..." {...form.register("note")} />
+          <Field label={t("member.measurements.field.note")} error={form.formState.errors.note?.message}>
+            <Textarea rows={2} placeholder={t("member.measurements.notePlaceholder")} {...form.register("note")} />
           </Field>
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" onClick={closeForm}>Hủy</Button>
-            <Button type="submit" disabled={saveMut.isPending} className="bg-primary text-white hover:bg-primary/90">
-              {saveMut.isPending ? "Đang lưu..." : editing ? "Cập nhật" : "Lưu số đo"}
+            <Button type="button" variant="outline" onClick={closeForm}>{t("common.actions.cancel")}</Button>
+            <Button type="submit" disabled={saveMut.isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              {saveMut.isPending ? t("common.states.saving") : editing ? t("common.actions.update") : t("member.measurements.save")}
             </Button>
           </div>
         </form>
       </Dialog>
 
-      <Dialog open={!!deleting} title="Xóa số đo?" onClose={() => setDeleting(null)}>
+      <Dialog open={!!deleting} title={t("member.measurements.deleteTitle")} onClose={() => setDeleting(null)}>
         <p className="text-sm text-muted-foreground">
-          Xóa bản ghi ngày {dateText(deleting?.measuredAt)} — không thể hoàn tác.
+          {t("member.measurements.deleteBody", { date: fmt.date(deleting?.measuredAt) })}
         </p>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setDeleting(null)}>Hủy</Button>
+          <Button variant="outline" onClick={() => setDeleting(null)}>{t("common.actions.cancel")}</Button>
           <Button
             variant="destructive"
             disabled={deleteMut.isPending}
             onClick={() => deleting?.id && deleteMut.mutate(deleting.id)}
           >
-            {deleteMut.isPending ? "Đang xóa..." : "Xóa"}
+            {deleteMut.isPending ? t("common.states.deleting") : t("common.actions.delete")}
           </Button>
         </div>
       </Dialog>
@@ -364,7 +412,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
     <label className="grid gap-1 text-sm font-semibold text-foreground">
       {label}
       {children}
-      {error && <span className="text-xs font-normal text-red-500">{error}</span>}
+      {error && <span className="text-xs font-normal text-destructive">{error}</span>}
     </label>
   );
 }

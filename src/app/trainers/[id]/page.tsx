@@ -1,11 +1,15 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { TrainerPublicDetailPage } from "@/modules/trainer/components/trainer-public-pages";
 
 // Phase 5 (SEO): metadata tĩnh cho trang public — root layout chỉ có title chung.
-export const metadata = {
-  title: "Hồ sơ huấn luyện viên | FitMatch",
-  description: "Kinh nghiệm, chuyên môn, chứng chỉ và đánh giá của huấn luyện viên.",
-};
+export async function generateMetadata() {
+  const t = await getTranslations();
+  return {
+    title: t("meta.trainerDetail.title"),
+    description: t("meta.trainerDetail.description"),
+  };
+}
 
 
 export default async function TrainerDetailRoute({

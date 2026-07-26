@@ -18,9 +18,11 @@ import { Input } from "@/shared/components/ui/input";
 import { Switch } from "@/shared/components/ui/switch";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
 
 /** UC-075: quản trị template thông báo — tắt/thiếu template thì hệ thống dùng văn bản mặc định. */
 export default function AdminNotificationTemplatesPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<NotificationTemplate | null>(null);
@@ -43,20 +45,20 @@ export default function AdminNotificationTemplatesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "notification-templates"] });
       setEditing(null);
-      toast({ type: "success", title: "Đã lưu template" });
+      toast({ type: "success", title: t("admin.notificationTemplates.savedTitle") });
     },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) }),
   });
 
-  function openEdit(t: NotificationTemplate) {
-    setEditing(t);
-    setTitle(t.title ?? "");
-    setBody(t.body ?? "");
-    setEnabled(t.enabled ?? true);
+  function openEdit(tpl: NotificationTemplate) {
+    setEditing(tpl);
+    setTitle(tpl.title ?? "");
+    setBody(tpl.body ?? "");
+    setEnabled(tpl.enabled ?? true);
   }
   function submit() {
     if (!title.trim() || !body.trim()) {
-      toast({ type: "warning", title: "Nhập tiêu đề và nội dung" });
+      toast({ type: "warning", title: t("admin.notificationTemplates.missingFields") });
       return;
     }
     save.mutate();
@@ -67,38 +69,38 @@ export default function AdminNotificationTemplatesPage() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <PageHeader
-        title="Template thông báo"
-        description="Nội dung thông báo theo sự kiện (UC-075). Placeholder dạng {key} được thay lúc gửi; tắt template thì dùng văn bản mặc định của hệ thống."
+        title={t("admin.notificationTemplates.title")}
+        description={t("admin.notificationTemplates.subtitle")}
       />
 
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được template" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("admin.notificationTemplates.loadError")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có template" description="Template được seed bằng migration." />
+        <EmptyState title={t("admin.notificationTemplates.emptyTitle")} description={t("admin.notificationTemplates.emptyDescription")} />
       ) : (
         <ul className="space-y-2">
-          {items.map((t) => (
-            <li key={t.code} className="rounded-2xl border border-border bg-card p-4">
+          {items.map((tpl) => (
+            <li key={tpl.code} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 font-bold">
                     <BellRing className="size-4 text-primary" />
-                    <span className="font-mono text-xs">{t.code}</span>
-                    <Badge className={t.enabled ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}>
-                      {t.enabled ? "Đang dùng" : "Tắt (dùng mặc định)"}
+                    <span className="font-mono text-xs">{tpl.code}</span>
+                    <Badge className={tpl.enabled ? "bg-success-muted text-success" : "bg-muted text-muted-foreground"}>
+                      {tpl.enabled ? t("admin.notificationTemplates.active") : t("admin.notificationTemplates.inactive")}
                     </Badge>
                   </p>
-                  <p className="mt-1.5 text-sm font-semibold text-foreground">{t.title}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{t.body}</p>
-                  {t.placeholders && (
+                  <p className="mt-1.5 text-sm font-semibold text-foreground">{tpl.title}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{tpl.body}</p>
+                  {tpl.placeholders && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Placeholder: <span className="font-mono">{t.placeholders}</span>
+                      Placeholder: <span className="font-mono">{tpl.placeholders}</span>
                     </p>
                   )}
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Sửa" onClick={() => openEdit(t)}>
+                <Button variant="ghost" size="icon" aria-label={t("common.actions.edit")} onClick={() => openEdit(tpl)}>
                   <Pencil className="size-4" />
                 </Button>
               </div>
@@ -107,29 +109,29 @@ export default function AdminNotificationTemplatesPage() {
         </ul>
       )}
 
-      <Dialog open={!!editing} title={`Sửa template ${editing?.code ?? ""}`} onClose={() => setEditing(null)}>
+      <Dialog open={!!editing} title={t("admin.notificationTemplates.editDialogTitle", { code: editing?.code ?? "" })} onClose={() => setEditing(null)}>
         <div className="space-y-4">
           {editing?.placeholders && (
             <p className="text-xs text-muted-foreground">
-              Placeholder khả dụng: <span className="font-mono">{editing.placeholders}</span>
+              {t("admin.notificationTemplates.placeholders")} <span className="font-mono">{editing.placeholders}</span>
             </p>
           )}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tiêu đề</label>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("admin.notificationTemplates.fieldTitle")}</label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Nội dung</label>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("admin.notificationTemplates.fieldBody")}</label>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} maxLength={1000} />
           </div>
           <label className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Switch checked={enabled} onCheckedChange={setEnabled} />
-            Sử dụng template này (tắt = dùng văn bản mặc định)
+            {t("admin.notificationTemplates.useTemplate")}
           </label>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditing(null)}>Hủy</Button>
-            <Button onClick={submit} disabled={save.isPending} className="bg-primary hover:bg-primary/90 text-white">
-              {save.isPending ? "Đang lưu..." : "Lưu"}
+            <Button variant="outline" onClick={() => setEditing(null)}>{t("common.actions.cancel")}</Button>
+            <Button onClick={submit} disabled={save.isPending} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              {save.isPending ? t("common.states.saving") : t("common.actions.save")}
             </Button>
           </div>
         </div>

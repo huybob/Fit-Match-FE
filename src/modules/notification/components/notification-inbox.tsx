@@ -4,7 +4,7 @@ import { CheckCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/lib/toast-provider";
-import type { NotificationCategory, NotificationItem } from "@/services/notification.service";
+import type { NotificationItem } from "@/services/notification.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
@@ -15,24 +15,14 @@ import {
   useMarkNotificationRead,
   useNotifications,
 } from "../hooks/use-notification";
+import { useTranslations } from "next-intl";
+import { useFormatters } from "@/i18n/use-formatters";
 
-const categoryLabels: Record<NotificationCategory, string> = {
-  BOOKING: "Đặt lịch",
-  PAYMENT: "Thanh toán",
-  SETTLEMENT: "Đối soát",
-  DISPUTE: "Tranh chấp",
-  REVIEW: "Đánh giá",
-  ACCOUNT: "Tài khoản",
-  SYSTEM: "Hệ thống",
-  MARKETING: "Khuyến mãi",
-};
+/* Nhãn nhóm thông báo ở notification.category.* */
 
-function timeText(value?: string) {
-  if (!value) return "";
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
-}
 
 export function NotificationInbox() {
+  const t = useTranslations();
   const [page, setPage] = useState(0);
   const query = useNotifications(page);
   const markRead = useMarkNotificationRead();
@@ -45,7 +35,7 @@ export function NotificationInbox() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-black">Hộp thư thông báo</h2>
+        <h2 className="text-lg font-black">{t("notification.inboxTitle")}</h2>
         {hasUnread && (
           <Button
             variant="outline"
@@ -55,11 +45,11 @@ export function NotificationInbox() {
               try {
                 await markAll.mutateAsync();
               } catch (e) {
-                toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) });
+                toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) });
               }
             }}
           >
-            <CheckCheck className="size-4" /> Đánh dấu tất cả đã đọc
+            <CheckCheck className="size-4" /> {t("notification.markAllRead")}
           </Button>
         )}
       </div>
@@ -67,9 +57,9 @@ export function NotificationInbox() {
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được thông báo" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("notification.loadError")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có thông báo" description="Các cập nhật về đặt lịch, thanh toán, tranh chấp... sẽ hiển thị ở đây." />
+        <EmptyState title={t("notification.empty")} description={t("notification.emptyHint")} />
       ) : (
         <>
           <ul className="space-y-2">
@@ -81,7 +71,7 @@ export function NotificationInbox() {
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-end gap-3">
               <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((v) => v - 1)}>
-                Trước
+                {t("common.actions.previous")}
               </Button>
               <span className="text-sm font-bold">{page + 1} / {totalPages}</span>
               <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((v) => v + 1)}>
@@ -96,6 +86,8 @@ export function NotificationInbox() {
 }
 
 function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen: () => void }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const inner = (
     <div
       className={cn(
@@ -105,9 +97,9 @@ function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen: () 
     >
       <div className="flex items-center justify-between gap-3">
         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-black uppercase text-muted-foreground">
-          {categoryLabels[item.category]}
+          {t(`notification.category.${item.category}`)}
         </span>
-        <span className="text-xs text-muted-foreground">{timeText(item.createdAt)}</span>
+        <span className="text-xs text-muted-foreground">{fmt.dateTimeShort(item.createdAt)}</span>
       </div>
       <p className="mt-2 font-bold">{item.title}</p>
       {item.body && <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>}
@@ -125,7 +117,11 @@ function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen: () 
   }
   return (
     <li>
-      <button type="button" className="block w-full text-left" onClick={onOpen}>
+      <button
+        type="button"
+        className="block w-full rounded-xl text-left transition-colors hover:bg-muted/40"
+        onClick={onOpen}
+      >
         {inner}
       </button>
     </li>

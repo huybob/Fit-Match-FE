@@ -8,24 +8,17 @@ import { PageHeader } from "@/shared/components/common/page-header";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { downloadCsv } from "@/shared/utils/csv.util";
 import { Download } from "lucide-react";
+import { DatePicker } from "@/shared/components/ui/date-picker";
+import { useTranslations } from "next-intl";
+import { Table, TableBody, TableCell, TableRow } from "@/shared/components/ui/table";
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
 
-const bookingStatusLabels: Record<string, string> = {
-  DRAFT: "Nháp",
-  PENDING_PAYMENT: "Chờ thanh toán",
-  PENDING_GYM: "Chờ gym",
-  CONFIRMED: "Đã xác nhận",
-  REJECTED: "Từ chối",
-  CANCELLED: "Đã hủy",
-  NO_SHOW: "Vắng mặt",
-  COMPLETED: "Hoàn tất",
-};
+/* Nhãn trạng thái booking dùng chung ở common.bookingStatus.* */
 
 function firstOfMonth() {
   const d = new Date();
@@ -37,6 +30,7 @@ function today() {
 
 /** UC-076: màn báo cáo vận hành & tài chính (admin/finance toàn nền tảng, hoặc gym). */
 export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
+  const t = useTranslations();
   const [from, setFrom] = useState(firstOfMonth());
   const [to, setTo] = useState(today());
   const [applied, setApplied] = useState({ from: firstOfMonth(), to: today() });
@@ -53,20 +47,20 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
   return (
     <div>
       <PageHeader
-        title="Báo cáo vận hành"
-        description="Thống kê đặt lịch, dòng tiền và tranh chấp theo khoảng thời gian (UC-076)."
+        title={t("reportPage.title")}
+        description={t("reportPage.subtitle")}
       />
 
       <div className="mb-6 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Từ ngày
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-44" />
+          {t("reportPage.fromDate")}
+          <DatePicker value={from} onChange={(v) => setFrom(v ?? "")} className="w-44" />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Đến ngày
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-44" />
+          {t("reportPage.toDate")}
+          <DatePicker value={to} onChange={(v) => setTo(v ?? "")} className="w-44" />
         </label>
-        <Button onClick={() => setApplied({ from, to })}>Xem báo cáo</Button>
+        <Button onClick={() => setApplied({ from, to })}>{t("reportPage.view")}</Button>
         {/* E-12: xuất CSV báo cáo đang xem (client-side, BOM UTF-8 cho Excel) */}
         {r && (
           <Button
@@ -75,27 +69,27 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
             onClick={() =>
               downloadCsv(
                 `bao-cao-${scope}-${applied.from}_${applied.to}`,
-                ["Chỉ số", "Giá trị"],
+                [t("reportPage.metric"), t("common.table.value")],
                 [
-                  ["Từ ngày", applied.from],
-                  ["Đến ngày", applied.to],
-                  ["Tổng booking", r.totalBookings],
+                  [t("reportPage.fromDate"), applied.from],
+                  [t("reportPage.toDate"), applied.to],
+                  [t("reportPage.totalBookings"), r.totalBookings],
                   ...Object.entries(r.bookingsByStatus ?? {}).map(
-                    ([k, v]) => [`Booking ${bookingStatusLabels[k] ?? k}`, v] as [string, number],
+                    ([k, v]) => [t("reportPage.bookingPrefix", { status: t(`common.bookingStatus.${k}` as never) }), v] as [string, number],
                   ),
-                  ["Tiền đã thu (giữ)", r.grossHeld],
-                  ["Đã giải ngân (ròng)", r.releasedNet],
-                  ["Hoa hồng nền tảng", r.commission],
-                  ["Đã hoàn khách", r.refunded],
-                  ["Tổng tranh chấp", r.totalDisputes],
+                  [t("reportPage.collected"), r.grossHeld],
+                  [t("reportPage.released"), r.releasedNet],
+                  [t("reportPage.commission"), r.commission],
+                  [t("reportPage.refunded"), r.refunded],
+                  [t("reportPage.totalDisputes"), r.totalDisputes],
                   ...Object.entries(r.disputesByStatus ?? {}).map(
-                    ([k, v]) => [`Tranh chấp ${k}`, v] as [string, number],
+                    ([k, v]) => [t("reportPage.disputePrefix", { status: t(`dispute.status.${k}` as never) }), v] as [string, number],
                   ),
                 ],
               )
             }
           >
-            <Download className="size-4" /> Xuất CSV
+            <Download className="size-4" /> {t("reportPage.exportCsv")}
           </Button>
         )}
       </div>
@@ -103,7 +97,7 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError || !r ? (
-        <EmptyState title="Không tải được báo cáo" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("reportPage.loadError")} description={toErrorMessage(query.error)} />
       ) : (
         <ReportBody report={r} showWallet={scope === "gym"} />
       )}
@@ -112,31 +106,32 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
 }
 
 function ReportBody({ report: r, showWallet }: { report: OperationalReport; showWallet: boolean }) {
+  const t = useTranslations();
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Tổng booking" value={String(r.totalBookings)} />
-        <Stat label="Tiền đã thu (giữ)" value={money(r.grossHeld)} />
-        <Stat label="Đã giải ngân (ròng)" value={money(r.releasedNet)} />
-        <Stat label="Hoa hồng nền tảng" value={money(r.commission)} />
-        <Stat label="Đã hoàn khách" value={money(r.refunded)} />
-        <Stat label="Tổng tranh chấp" value={String(r.totalDisputes)} />
+        <Stat label={t("reportPage.totalBookings")} value={String(r.totalBookings)} />
+        <Stat label={t("reportPage.collected")} value={money(r.grossHeld)} />
+        <Stat label={t("reportPage.released")} value={money(r.releasedNet)} />
+        <Stat label={t("reportPage.commission")} value={money(r.commission)} />
+        <Stat label={t("reportPage.refunded")} value={money(r.refunded)} />
+        <Stat label={t("reportPage.totalDisputes")} value={String(r.totalDisputes)} />
       </div>
 
       {showWallet && (
         <div>
-          <h3 className="mb-2 text-sm font-black uppercase text-muted-foreground">Số dư ví hiện tại</h3>
+          <h3 className="mb-2 text-sm font-black uppercase text-muted-foreground">{t("reportPage.walletNow")}</h3>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Stat label="Đang giữ" value={money(r.walletHeld)} />
-            <Stat label="Chờ giải ngân" value={money(r.walletPending)} />
-            <Stat label="Khả dụng" value={money(r.walletAvailable)} />
-            <Stat label="Đóng băng" value={money(r.walletFrozen)} />
+            <Stat label={t("reportPage.held")} value={money(r.walletHeld)} />
+            <Stat label={t("withdrawal.pending")} value={money(r.walletPending)} />
+            <Stat label={t("withdrawal.available")} value={money(r.walletAvailable)} />
+            <Stat label={t("reportPage.frozen")} value={money(r.walletFrozen)} />
           </div>
         </div>
       )}
 
-      <BreakdownTable title="Booking theo trạng thái" data={r.bookingsByStatus} labels={bookingStatusLabels} />
-      <BreakdownTable title="Tranh chấp theo trạng thái" data={r.disputesByStatus} />
+      <BreakdownTable title={t("reportPage.bookingsByStatus")} data={r.bookingsByStatus} labelPrefix="common.bookingStatus." />
+      <BreakdownTable title={t("reportPage.disputesByStatus")} data={r.disputesByStatus} />
     </div>
   );
 }
@@ -150,22 +145,23 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BreakdownTable({ title, data, labels }: { title: string; data: Record<string, number>; labels?: Record<string, string> }) {
+function BreakdownTable({ title, data, labelPrefix }: { title: string; data: Record<string, number>; labelPrefix?: "common.bookingStatus." | "dispute.status." }) {
+  const t = useTranslations();
   const entries = Object.entries(data ?? {});
   if (!entries.length) return null;
   return (
     <div className="rounded-2xl border border-border bg-card p-5">
       <h3 className="mb-3 text-sm font-black">{title}</h3>
-      <table className="w-full text-sm">
-        <tbody className="divide-y divide-border">
+      <Table>
+        <TableBody>
           {entries.map(([k, v]) => (
-            <tr key={k}>
-              <td className="py-2 text-muted-foreground">{labels?.[k] ?? k}</td>
-              <td className="py-2 text-right font-bold">{v}</td>
-            </tr>
+            <TableRow key={k}>
+              <TableCell className="py-2 text-muted-foreground">{labelPrefix ? t(`${labelPrefix}${k}` as never) : k}</TableCell>
+              <TableCell className="py-2 text-right font-bold">{v}</TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
 
 const REPORTER_ROLES = ["ROLE_CUSTOMER", "ROLE_GYM_OPERATOR", "ROLE_PT"];
 
@@ -29,6 +30,7 @@ export function ReportIssueButton({
   targetId: number;
   targetName?: string;
 }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const { user, status } = useAuthStore();
   const [open, setOpen] = useState(false);
@@ -37,11 +39,11 @@ export function ReportIssueButton({
   const mut = useMutation({
     mutationFn: () => issueReportService.create({ targetType, targetId, reason: reason.trim() }),
     onSuccess: () => {
-      toast({ type: "success", title: "Đã gửi báo cáo", description: "Đội kiểm duyệt sẽ xem xét sớm nhất." });
+      toast({ type: "success", title: t("report.sent"), description: t("report.sentDesc") });
       setOpen(false);
       setReason("");
     },
-    onError: (e) => toast({ type: "error", title: "Không gửi được báo cáo", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("report.failed"), description: toErrorMessage(e) }),
   });
 
   if (status !== "authenticated" || !user?.role || !REPORTER_ROLES.includes(user.role)) {
@@ -50,11 +52,11 @@ export function ReportIssueButton({
 
   function submit() {
     if (reason.trim().length < 10) {
-      toast({ type: "warning", title: "Mô tả vấn đề tối thiểu 10 ký tự" });
+      toast({ type: "warning", title: t("report.minLength") });
       return;
     }
     if (reason.trim().length > 1000) {
-      toast({ type: "warning", title: "Mô tả tối đa 1000 ký tự" });
+      toast({ type: "warning", title: t("report.maxLength") });
       return;
     }
     mut.mutate();
@@ -68,30 +70,30 @@ export function ReportIssueButton({
         className="gap-1.5 text-muted-foreground hover:text-destructive"
         onClick={() => setOpen(true)}
       >
-        <Flag className="size-3.5" /> Báo cáo vấn đề
+        <Flag className="size-3.5" /> {t("report.button")}
       </Button>
 
-      <Dialog open={open} title={`Báo cáo vấn đề${targetName ? ` — ${targetName}` : ""}`} onClose={() => setOpen(false)}>
+      <Dialog open={open} title={targetName ? t("report.dialogTitleFor", { name: targetName }) : t("report.dialogTitle")} onClose={() => setOpen(false)}>
         <p className="text-sm text-muted-foreground">
-          Mô tả vấn đề bạn gặp phải (hành vi, chất lượng dịch vụ, nội dung sai phạm...).
-          Báo cáo được gửi tới đội kiểm duyệt của nền tảng.
+          {t("report.hint")}
+          {t("report.hint2")}
         </p>
         <Textarea
           className="mt-3"
           rows={4}
           maxLength={1000}
-          placeholder="Tối thiểu 10 ký tự..."
+          placeholder={t("report.placeholder")}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>{t("common.actions.cancel")}</Button>
           <Button
             disabled={mut.isPending}
-            className="bg-primary text-white hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={submit}
           >
-            {mut.isPending ? "Đang gửi..." : "Gửi báo cáo"}
+            {mut.isPending ? t("common.states.submitting") : t("report.submit")}
           </Button>
         </div>
       </Dialog>

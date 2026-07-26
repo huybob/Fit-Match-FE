@@ -20,14 +20,16 @@ import {
   useDisputeEvidence,
   useMyDisputes,
 } from "../hooks/use-dispute";
+import { useTranslations } from "next-intl";
 
-export const disputeStatusLabels: Record<DisputeStatus, string> = {
-  OPEN: "Đang mở",
-  UNDER_REVIEW: "Đang xem xét",
-  RESOLVED: "Đã giải quyết",
-  CLOSED: "Đã đóng",
-  ESCALATED: "Đã chuyển cấp",
-};
+/** Thứ tự hiển thị trạng thái tranh chấp; nhãn ở dispute.status.* */
+export const DISPUTE_STATUS_ORDER: DisputeStatus[] = [
+  "OPEN",
+  "UNDER_REVIEW",
+  "RESOLVED",
+  "CLOSED",
+  "ESCALATED",
+];
 
 export function disputeStatusVariant(status: DisputeStatus): React.ComponentProps<typeof Badge>["variant"] {
   if (status === "RESOLVED" || status === "CLOSED") return "success";
@@ -41,6 +43,7 @@ const money = (v?: number) => formatCurrency(v ?? 0);
 
 /** UC-063/064: màn tranh chấp của các bên (customer/gym/pt). */
 export function MyDisputesPage() {
+  const t = useTranslations();
   const query = useMyDisputes();
   const [selected, setSelected] = useState<Dispute | null>(null);
   const items = query.data?.content ?? [];
@@ -48,16 +51,16 @@ export function MyDisputesPage() {
   return (
     <div>
       <PageHeader
-        title="Tranh chấp / Khiếu nại"
-        description="Theo dõi các khiếu nại liên quan đến buổi tập của bạn và gửi bằng chứng (UC-063/064)."
+        title={t("dispute.myTitle")}
+        description={t("dispute.mySubtitle")}
       />
 
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được tranh chấp" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("dispute.myLoadError")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có tranh chấp" description="Bạn có thể mở tranh chấp từ chi tiết một booking." />
+        <EmptyState title={t("dispute.myEmpty")} description={t("dispute.myEmptyHint")} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((d) => (
@@ -71,7 +74,7 @@ export function MyDisputesPage() {
                 <span className="flex items-center gap-2 text-sm font-black">
                   <ShieldAlert className="size-4 text-destructive" /> #{d.id} · Booking #{d.bookingId}
                 </span>
-                <Badge variant={disputeStatusVariant(d.status)}>{disputeStatusLabels[d.status]}</Badge>
+                <Badge variant={disputeStatusVariant(d.status)}>{t(`dispute.status.${d.status}`)}</Badge>
               </div>
               <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{d.reason}</p>
               <p className="mt-2 text-xs text-muted-foreground">{d.gymName}{d.ptName ? ` · ${d.ptName}` : ""}</p>
@@ -86,6 +89,7 @@ export function MyDisputesPage() {
 }
 
 function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: () => void }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const evidence = useDisputeEvidence(dispute.id);
   const addEvidence = useAddEvidence();
@@ -95,59 +99,59 @@ function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: 
 
   async function submit() {
     if (!description.trim()) {
-      toast({ type: "warning", title: "Nhập mô tả bằng chứng" });
+      toast({ type: "warning", title: t("dispute.evidenceDescRequired") });
       return;
     }
     try {
       await addEvidence.mutateAsync({ id: dispute.id, payload: { description: description.trim(), fileUrl: fileUrl.trim() || undefined } });
-      toast({ type: "success", title: "Đã gửi bằng chứng" });
+      toast({ type: "success", title: t("dispute.evidenceSent") });
       setDescription("");
       setFileUrl("");
     } catch (e) {
-      toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) });
+      toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) });
     }
   }
 
   return (
-    <Dialog open title={`Tranh chấp #${dispute.id}`} onClose={onClose}>
+    <Dialog open title={t("dispute.detailTitle", { id: dispute.id })} onClose={onClose}>
       <div className="rounded-2xl bg-muted/40 p-4 text-sm">
         <div className="flex items-center justify-between">
-          <Badge variant={disputeStatusVariant(dispute.status)}>{disputeStatusLabels[dispute.status]}</Badge>
+          <Badge variant={disputeStatusVariant(dispute.status)}>{t(`dispute.status.${dispute.status}`)}</Badge>
           {dispute.resolution && <span className="text-xs font-black">{dispute.resolution}</span>}
         </div>
-        <p className="mt-2"><b>Lý do:</b> {dispute.reason}</p>
+        <p className="mt-2"><b>{t("dispute.reasonLabel")}</b> {dispute.reason}</p>
         <p className="mt-1 text-muted-foreground">Booking #{dispute.bookingId} · {dispute.gymName}</p>
         {dispute.frozenAmount != null && dispute.frozenAmount > 0 && (
-          <p className="mt-1 text-muted-foreground">Số tiền đang giữ: {money(dispute.frozenAmount)}</p>
+          <p className="mt-1 text-muted-foreground">{t("dispute.heldAmount")} {money(dispute.frozenAmount)}</p>
         )}
         {dispute.moderatorNote && (
-          <p className="mt-2 rounded-lg bg-card p-2"><b>Điều phối viên:</b> {dispute.moderatorNote}</p>
+          <p className="mt-2 rounded-lg bg-card p-2"><b>{t("dispute.moderator")}</b> {dispute.moderatorNote}</p>
         )}
       </div>
 
       <div className="mt-4">
-        <h4 className="text-sm font-black">Bằng chứng</h4>
+        <h4 className="text-sm font-black">{t("dispute.evidence")}</h4>
         {evidence.isLoading ? (
-          <p className="mt-2 text-sm text-muted-foreground">Đang tải...</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("common.states.loading")}</p>
         ) : !evidence.data?.length ? (
-          <p className="mt-2 text-sm text-muted-foreground">Chưa có bằng chứng.</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("dispute.noEvidence")}</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {evidence.data.map((e) => (
-              <li key={e.id} className="rounded-xl border border-border bg-card p-3 text-sm">
+              <li key={e.id} className="rounded-2xl border border-border bg-card p-3 text-sm">
                 <p>{e.description}</p>
                 <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                   <span>{e.submittedBy}</span>
                   {e.fileUrl && (
                     // D-10/B-6: tệp evidence nằm ở /api/files/documents (cần Bearer) — mở qua blob.
-                    <button
-                      type="button"
-                      onClick={() => openSecureFile(e.fileUrl!).catch((err) =>
-                        toast({ type: "error", title: "Không mở được tệp", description: toErrorMessage(err) }))}
-                      className="flex items-center gap-1 text-primary hover:underline"
-                    >
-                      <Paperclip className="size-3" /> Tệp
-                    </button>
+                    <Button variant="link" size="inline"
+ type="button"
+ onClick={() => openSecureFile(e.fileUrl!).catch((err) =>
+ toast({ type: "error", title: t("dispute.openFileFailed"), description: toErrorMessage(err) }))}
+ className="flex gap-1 text-primary"
+>
+                      <Paperclip className="size-3" /> {t("dispute.fileWord")}
+                    </Button>
                   )}
                 </div>
               </li>
@@ -158,18 +162,18 @@ function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: 
 
       {canAdd && (
         <div className="mt-4 space-y-2 rounded-2xl border border-border p-4">
-          <p className="text-sm font-black">Gửi bằng chứng mới</p>
-          <Textarea placeholder="Mô tả" maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
+          <p className="text-sm font-black">{t("dispute.newEvidenceTitle")}</p>
+          <Textarea placeholder={t("common.table.description")} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
           {/* D-10 (audit 2026-07-17): upload tệp thật thay ô nhập URL tay — trước đây
               người dùng thường không có cách nào nộp bằng chứng thực tế. */}
           <FileUpload
             value={fileUrl}
             onChange={setFileUrl}
             folder="documents"
-            label="Đính kèm ảnh/tài liệu (tùy chọn)"
+            label={t("dispute.attachOptional")}
           />
           <Button disabled={addEvidence.isPending} onClick={submit}>
-            <Plus className="size-4" /> Gửi bằng chứng
+            <Plus className="size-4" /> {t("dispute.sendEvidence")}
           </Button>
         </div>
       )}

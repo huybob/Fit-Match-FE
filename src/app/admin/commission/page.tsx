@@ -12,8 +12,10 @@ import { useToast } from "@/lib/toast-provider";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
 
 export default function AdminCommissionPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const client = useQueryClient();
   const [commission, setCommission] = useState("");
@@ -41,9 +43,9 @@ export default function AdminCommissionPage() {
       } as CommissionConfig),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["admin", "commission-config"] });
-      toast({ type: "success", title: "Đã lưu cấu hình", description: "Áp dụng cho booking chốt settlement từ giờ trở đi (không hồi tố)." });
+      toast({ type: "success", title: t("admin.commission.savedTitle"), description: t("admin.commission.savedDescription") });
     },
-    onError: (e) => toast({ type: "error", title: "Lưu thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("admin.commission.saveFailed"), description: toErrorMessage(e) }),
   });
 
   const pctInvalid = (v: string) => v !== "" && (Number(v) < 0 || Number(v) > 100);
@@ -55,10 +57,9 @@ export default function AdminCommissionPage() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Hoa hồng & quy tắc nền tảng</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("admin.commission.title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          UC-072 — mỗi lần lưu tạo bản ghi cấu hình mới (giữ lịch sử, ghi audit); commission
-          được snapshot vào booking lúc chốt settlement nên không ảnh hưởng booking cũ.
+          {t("admin.commission.note")}
         </p>
       </div>
 
@@ -66,51 +67,51 @@ export default function AdminCommissionPage() {
         {query.isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
         ) : query.isError ? (
-          <p className="text-sm text-red-500">{toErrorMessage(query.error)}</p>
+          <p className="text-sm text-destructive">{toErrorMessage(query.error)}</p>
         ) : (
           <div className="space-y-5">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Hoa hồng nền tảng (%) <span className="text-red-500">*</span>
+                {t("admin.commission.rateLabel")} <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <Input type="number" min={0} max={100} step={0.5} value={commission}
                   onChange={(e) => setCommission(e.target.value)} className="pr-9" />
                 <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">Trừ vào tiền giải ngân cho gym khi release (UC-059).</p>
-              {pctInvalid(commission) && <p className="mt-1 text-xs text-red-500">Phải trong khoảng 0–100.</p>}
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("admin.commission.rateHelp")}</p>
+              {pctInvalid(commission) && <p className="mt-1 text-xs text-destructive">{t("common.validation.percentRange")}</p>}
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Phí nền tảng (%) <span className="text-red-500">*</span>
+                {t("admin.commission.feeLabel")} <span className="text-destructive">*</span>
               </label>
               <div className="relative">
                 <Input type="number" min={0} max={100} step={0.5} value={platformFee}
                   onChange={(e) => setPlatformFee(e.target.value)} className="pr-9" />
                 <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               </div>
-              <p className="mt-1 text-[11px] text-amber-700">
-                Lưu ý: hiện chưa có công thức nào tiêu thụ phí này (C-8 — quyết định nghiệp vụ ở Phase 3).
+              <p className="mt-1 text-[11px] text-warning">
+                {t("admin.commission.feeNote")}
               </p>
-              {pctInvalid(platformFee) && <p className="mt-1 text-xs text-red-500">Phải trong khoảng 0–100.</p>}
+              {pctInvalid(platformFee) && <p className="mt-1 text-xs text-destructive">{t("common.validation.percentRange")}</p>}
             </div>
 
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                Thời gian giữ tiền sau hoàn tất (ngày) <span className="text-red-500">*</span>
+                {t("admin.commission.holdLabel")} <span className="text-destructive">*</span>
               </label>
               <Input type="number" min={0} value={holdDays} onChange={(e) => setHoldDays(e.target.value)} />
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Buổi tập hoàn tất → tiền chờ đủ số ngày này (cửa sổ khiếu nại) rồi mới giải ngân cho gym.
+                {t("admin.commission.holdHelp")}
               </p>
             </div>
 
             <div className="flex justify-end">
               <Button onClick={() => save.mutate()} disabled={invalid || save.isPending}
-                className="gap-2 bg-primary hover:bg-primary/90 text-white">
-                {save.isPending && <Loader2 className="size-4 animate-spin" />} Lưu cấu hình
+                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+                {save.isPending && <Loader2 className="size-4 animate-spin" />} {t("admin.commission.submit")}
               </Button>
             </div>
           </div>

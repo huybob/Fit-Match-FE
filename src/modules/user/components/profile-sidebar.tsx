@@ -7,17 +7,19 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
+import { useTranslations } from "next-intl";
 
 const links = [
-  { href: "/", label: "Bảng điều khiển", icon: LayoutDashboard },
-  { href: "/profile/bookings", label: "Lịch đặt", icon: Calendar },
-  { href: "/profile/measurements", label: "Tiến trình", icon: TrendingUp },
-  { href: "/profile/favorites", label: "Yêu thích", icon: Heart },
-  { href: "/profile", label: "Hồ sơ", icon: User },
-  { href: "/change-password", label: "Bảo mật", icon: Shield },
-];
+  { href: "/", navKey: "dashboard", icon: LayoutDashboard },
+  { href: "/profile/bookings", navKey: "bookings", icon: Calendar },
+  { href: "/profile/measurements", navKey: "progress", icon: TrendingUp },
+  { href: "/profile/favorites", navKey: "favorites", icon: Heart },
+  { href: "/profile", navKey: "profile", icon: User },
+  { href: "/change-password", navKey: "security", icon: Shield },
+] as const;
 
 export function ProfileSidebar() {
+  const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -28,27 +30,27 @@ export function ProfileSidebar() {
   }
 
   return (
-    <aside className="w-64 shrink-0 bg-primary/10 border border-border rounded-xl p-4 flex flex-col gap-2 h-fit sticky top-6">
+    <aside className="w-full shrink-0 bg-primary/10 border border-border rounded-xl p-4 flex flex-col gap-2 h-fit lg:sticky lg:top-6 lg:w-64">
       <div className="pb-4">
         <p className="text-2xl font-semibold text-primary leading-tight">
           FitMatch<br />Workspace
         </p>
-        <p className="text-sm font-medium text-muted-foreground mt-1">Quản lý hành trình thể hình</p>
+        <p className="text-sm font-medium text-muted-foreground mt-1">{t("member.sidebar.tagline")}</p>
       </div>
 
       <nav className="flex-1 flex flex-col gap-1">
-        {links.map(({ href, label, icon: Icon }) => {
+        {links.map(({ href, navKey, icon: Icon }) => {
           const active = pathname === href;
           return (
             <Link
               key={href}
               href={href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                active ? "bg-primary text-white" : "text-muted-foreground hover:bg-card/60"
+                active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-card/60"
               }`}
             >
               <Icon className="size-4 shrink-0" />
-              {label}
+              {t(`member.nav.${navKey}`)}
             </Link>
           );
         })}
@@ -56,8 +58,8 @@ export function ProfileSidebar() {
 
       <div className="mt-4 pb-4">
         <Link href="/booking">
-          <Button className="w-full bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg h-9">
-            Đặt buổi tập mới
+          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg h-9">
+            {t("member.sidebar.newBooking")}
           </Button>
         </Link>
       </div>
@@ -69,15 +71,13 @@ export function ProfileSidebar() {
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-card/60"
         >
           <Bell className="size-4" />
-          Thông báo
+          {t("member.sidebar.notifications")}
         </Link>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 w-full text-left"
         >
-          <LogOut className="size-4" />
-          Đăng xuất
-        </button>
+          <LogOut className="size-4" />{t("common.menu.logout")}</button>
       </div>
     </aside>
   );

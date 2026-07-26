@@ -31,7 +31,7 @@ export function RoleWorkspaceShell({
         <aside className="border-b border-border bg-card lg:border-b-0 lg:border-r">
           <div className="border-b border-border px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-white">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
                 <Dumbbell className="size-4" />
               </span>
               <div className="min-w-0">
@@ -57,7 +57,7 @@ export function RoleWorkspaceShell({
                   className={cn(
                     "group flex min-w-max items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors lg:min-w-0",
                     active
-                      ? "bg-primary text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                   )}
                 >

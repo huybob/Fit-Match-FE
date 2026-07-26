@@ -4,7 +4,7 @@
 // trang thật nối /api/admin/bookings — list/detail/timeline/confirm-payment/correct-attendance.
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/admin.service";
 import { useToast } from "@/lib/toast-provider";
@@ -21,19 +21,15 @@ import {
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { formatCurrency } from "@/utils/format.util";
 import type { Booking, BookingStatus } from "@/types/Booking";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useTranslations } from "next-intl";
+import { BOOKING_STATUS_ORDER } from "@/shared/utils/enum-label.util";
+import { Pagination } from "@/shared/components/ui/pagination";
+import { DataTable } from "@/shared/components/common/data-table";
+import { useFormatters } from "@/i18n/use-formatters";
 
 const PAGE_SIZE = 10;
 
-const STATUS_LABEL: Record<BookingStatus, string> = {
-  DRAFT: "Nháp",
-  PENDING_PAYMENT: "Chờ thanh toán",
-  PENDING_GYM: "Chờ phòng tập",
-  CONFIRMED: "Đã xác nhận",
-  REJECTED: "Bị từ chối",
-  CANCELLED: "Đã hủy",
-  NO_SHOW: "Vắng mặt",
-  COMPLETED: "Hoàn tất",
-};
 
 const STATUS_VARIANT: Record<BookingStatus, "default" | "success" | "destructive" | "warning"> = {
   DRAFT: "default",
@@ -46,15 +42,14 @@ const STATUS_VARIANT: Record<BookingStatus, "default" | "success" | "destructive
   COMPLETED: "success",
 };
 
-function formatDateTime(value?: string) {
-  return value ? new Date(value).toLocaleString("vi-VN") : "—";
-}
-
-function itemName(b: Booking) {
-  return b.serviceName ?? b.packageName ?? (b.customerPackageId ? "Buổi từ gói đã mua" : "—");
+/** `fromPackageLabel` truyền từ component vì helper thường không gọi được hook. */
+function itemName(b: Booking, fromPackageLabel: string) {
+  return b.serviceName ?? b.packageName ?? (b.customerPackageId ? fromPackageLabel : "—");
 }
 
 function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: () => void }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const { toast } = useToast();
   const client = useQueryClient();
   const [correctOpen, setCorrectOpen] = useState(false);
@@ -74,10 +69,10 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: 
     mutationFn: () => adminService.confirmBookingPayment(booking.id),
     onSuccess: () => {
       invalidate();
-      toast({ type: "success", title: "Đã xác nhận giữ tiền", description: "Booking chuyển sang Chờ phòng tập." });
+      toast({ type: "success", title: t("admin.bookings.heldConfirmed"), description: t("admin.bookings.heldConfirmedDesc") });
       onClose();
     },
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   const correct = useMutation({
@@ -85,10 +80,10 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: 
       adminService.correctBookingAttendance(booking.id, { status: correctStatus, reason: reason.trim() }),
     onSuccess: () => {
       invalidate();
-      toast({ type: "success", title: "Đã hiệu chỉnh bản ghi" });
+      toast({ type: "success", title: t("admin.bookings.corrected") });
       onClose();
     },
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   const canCorrect = booking.status === "COMPLETED" || booking.status === "NO_SHOW";
@@ -97,44 +92,44 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: 
     <Dialog open title={`Booking #${booking.id}`} onClose={onClose}>
       <div className="space-y-4 text-sm">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <p className="text-muted-foreground">Khách hàng</p>
+          <p className="text-muted-foreground">{t("admin.bookings.customer")}</p>
           <p className="text-foreground">{booking.customerUsername ?? "—"}</p>
-          <p className="text-muted-foreground">Phòng tập</p>
+          <p className="text-muted-foreground">{t("admin.bookings.gym")}</p>
           <p className="text-foreground">{booking.gymName ?? "—"}{booking.branchName ? ` — ${booking.branchName}` : ""}</p>
-          <p className="text-muted-foreground">Dịch vụ / Gói</p>
-          <p className="text-foreground">{itemName(booking)}</p>
+          <p className="text-muted-foreground">{t("admin.bookings.serviceOrPackage")}</p>
+          <p className="text-foreground">{itemName(booking, t("admin.bookings.fromPackage"))}</p>
           <p className="text-muted-foreground">PT</p>
           <p className="text-foreground">{booking.ptDisplayName ?? "—"}</p>
-          <p className="text-muted-foreground">Thời gian</p>
-          <p className="text-foreground">{formatDateTime(booking.startAt)} → {formatDateTime(booking.endAt)}</p>
+          <p className="text-muted-foreground">{t("common.table.time")}</p>
+          <p className="text-foreground">{fmt.dateTime(booking.startAt)} → {fmt.dateTime(booking.endAt)}</p>
           <p className="text-muted-foreground">Check-in</p>
-          <p className="text-foreground">{formatDateTime(booking.checkedInAt)}</p>
-          <p className="text-muted-foreground">Phải trả</p>
+          <p className="text-foreground">{fmt.dateTime(booking.checkedInAt)}</p>
+          <p className="text-muted-foreground">{t("admin.bookings.payable")}</p>
           <p className="text-foreground">{booking.payableAmount != null ? formatCurrency(booking.payableAmount) : "—"}</p>
-          <p className="text-muted-foreground">Trạng thái</p>
-          <p><Badge variant={STATUS_VARIANT[booking.status]}>{STATUS_LABEL[booking.status]}</Badge></p>
+          <p className="text-muted-foreground">{t("common.table.status")}</p>
+          <p><Badge variant={STATUS_VARIANT[booking.status]}>{t(`common.bookingStatus.${booking.status}`)}</Badge></p>
           {booking.statusReason && (
             <>
-              <p className="text-muted-foreground">Lý do</p>
+              <p className="text-muted-foreground">{t("common.table.reason")}</p>
               <p className="text-foreground">{booking.statusReason}</p>
             </>
           )}
         </div>
 
         <div>
-          <p className="font-medium text-foreground mb-2">Lịch sử trạng thái</p>
+          <p className="font-medium text-foreground mb-2">{t("admin.bookings.statusHistory")}</p>
           {history.isLoading ? (
             <div className="h-8 bg-muted rounded animate-pulse" />
           ) : history.isError ? (
-            <p className="text-xs text-red-500">{toErrorMessage(history.error)}</p>
+            <p className="text-xs text-destructive">{toErrorMessage(history.error)}</p>
           ) : (history.data ?? []).length === 0 ? (
-            <p className="text-xs text-muted-foreground">Chưa có lịch sử.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.bookings.noHistory")}</p>
           ) : (
             <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
               {(history.data ?? []).map((h, i) => (
                 <li key={i} className="text-xs text-muted-foreground">
-                  <span className="text-foreground">{STATUS_LABEL[h.fromStatus] ?? h.fromStatus} → {STATUS_LABEL[h.toStatus] ?? h.toStatus}</span>
-                  {h.changedBy ? ` · ${h.changedBy}` : ""} · {formatDateTime(h.changedAt)}
+                  <span className="text-foreground">{h.fromStatus ? t(`common.bookingStatus.${h.fromStatus}`) : "—"} → {h.toStatus ? t(`common.bookingStatus.${h.toStatus}`) : "—"}</span>
+                  {h.changedBy ? ` · ${h.changedBy}` : ""} · {fmt.dateTime(h.changedAt)}
                   {h.reason ? ` — ${h.reason}` : ""}
                 </li>
               ))}
@@ -147,49 +142,50 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: 
             <Button
               onClick={() => confirmPayment.mutate()}
               disabled={confirmPayment.isPending}
-              className="gap-2 bg-primary hover:bg-primary/90 text-white"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {confirmPayment.isPending && <Loader2 className="size-4 animate-spin" />}
-              Xác nhận đã nhận tiền (đối soát tay)
+              {t("admin.bookings.confirmReceived")}
             </Button>
           )}
           {canCorrect && (
             <Button variant="outline" onClick={() => setCorrectOpen(true)}>
-              Hiệu chỉnh điểm danh
+              {t("admin.bookings.correctAttendance")}
             </Button>
           )}
-          <Button variant="outline" onClick={onClose}>Đóng</Button>
+          <Button variant="outline" onClick={onClose}>{t("common.actions.close")}</Button>
         </div>
       </div>
 
-      <Dialog open={correctOpen} title="Hiệu chỉnh bản ghi hoàn tất/vắng mặt" onClose={() => setCorrectOpen(false)}>
+      <Dialog open={correctOpen} title={t("admin.bookings.correctDialogTitle")} onClose={() => setCorrectOpen(false)}>
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Chỉ dùng khi bản ghi sai (UC-050). Bị chặn nếu tiền đã giải ngân/hoàn.
+            {t("admin.bookings.correctHint")}
           </p>
           <Select value={correctStatus} onValueChange={(v) => setCorrectStatus(v as "COMPLETED" | "NO_SHOW")}>
             <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="COMPLETED">Chuyển thành Hoàn tất</SelectItem>
-              <SelectItem value="NO_SHOW">Chuyển thành Vắng mặt</SelectItem>
+              <SelectItem value="COMPLETED">{t("admin.bookings.toCompleted")}</SelectItem>
+              <SelectItem value="NO_SHOW">{t("admin.bookings.toNoShow")}</SelectItem>
             </SelectContent>
           </Select>
-          <textarea
+          <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
-            placeholder="Lý do hiệu chỉnh (bắt buộc, ghi vào audit log)..."
-            className="w-full text-sm border border-border rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+            maxLength={500}
+            placeholder={t("admin.bookings.correctReasonPlaceholder")}
+            className="resize-none"
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setCorrectOpen(false)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setCorrectOpen(false)}>{t("common.actions.cancel")}</Button>
             <Button
               onClick={() => correct.mutate()}
               disabled={!reason.trim() || correctStatus === booking.status || correct.isPending}
-              className="gap-2 bg-primary hover:bg-primary/90 text-white"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {correct.isPending && <Loader2 className="size-4 animate-spin" />}
-              Xác nhận
+              {t("admin.bookings.confirmCorrection")}
             </Button>
           </div>
         </div>
@@ -199,6 +195,8 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking; onClose: 
 }
 
 export default function AdminBookingsRoute() {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const [status, setStatus] = useState<string>("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
@@ -220,107 +218,88 @@ export default function AdminBookingsRoute() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="flex items-center justify-between mb-5">
-        <h1 className="text-2xl font-bold text-foreground">Quản lý booking</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("admin.bookings.title")}</h1>
         <div className="w-48">
           <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
             <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="Tất cả trạng thái" />
+              <SelectValue placeholder={t("common.filters.allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả trạng thái</SelectItem>
-              {(Object.keys(STATUS_LABEL) as BookingStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+              <SelectItem value="">{t("common.filters.allStatuses")}</SelectItem>
+              {BOOKING_STATUS_ORDER.map((s) => (
+                <SelectItem key={s} value={s}>{t(`common.bookingStatus.${s}`)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Mã</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Khách hàng</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phòng tập</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dịch vụ / Gói</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bắt đầu</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phải trả</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {query.isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    <td colSpan={7} className="px-5 py-3">
-                      <div className="h-8 bg-muted rounded animate-pulse" />
-                    </td>
-                  </tr>
-                ))
-              ) : query.isError ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-red-500 text-sm">
-                    {toErrorMessage(query.error)}
-                  </td>
-                </tr>
-              ) : bookings.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground text-sm">
-                    Không có booking nào
-                  </td>
-                </tr>
-              ) : (
-                bookings.map((b) => (
-                  <tr
-                    key={b.id}
-                    className="hover:bg-muted/40 transition-colors cursor-pointer"
-                    onClick={() => setSelected(b)}
-                  >
-                    <td className="px-5 py-3 font-medium text-foreground">#{b.id}</td>
-                    <td className="px-4 py-3 text-foreground">{b.customerUsername ?? "—"}</td>
-                    <td className="px-4 py-3 text-foreground">{b.gymName ?? "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{itemName(b)}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDateTime(b.startAt)}</td>
-                    <td className="px-4 py-3 text-foreground">
-                      {b.payableAmount != null ? formatCurrency(b.payableAmount) : "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant={STATUS_VARIANT[b.status]}>{STATUS_LABEL[b.status]}</Badge>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <DataTable
+          className="rounded-none"
+          rows={bookings}
+          rowKey={(b) => String(b.id)}
+          loading={query.isLoading}
+          error={query.isError}
+          errorTitle={t("admin.bookings.loadError")}
+          errorDescription={query.isError ? toErrorMessage(query.error) : undefined}
+          onRetry={() => query.refetch()}
+          emptyTitle={t("admin.bookings.empty")}
+          onRowClick={(b) => setSelected(b)}
+          columns={[
+            { key: "id", header: t("common.table.code"), cell: (b) => `#${b.id}` },
+            {
+              key: "customer",
+              header: t("admin.bookings.customer"),
+              cell: (b) => b.customerUsername ?? "—",
+            },
+            {
+              key: "gym",
+              header: t("admin.bookings.gym"),
+              hideBelow: "sm",
+              cell: (b) => b.gymName ?? "—",
+            },
+            {
+              key: "item",
+              header: t("admin.bookings.serviceOrPackage"),
+              hideBelow: "lg",
+              cellClassName: "text-muted-foreground",
+              cell: (b) => itemName(b, t("admin.bookings.fromPackage")),
+            },
+            {
+              key: "start",
+              header: t("admin.bookings.start"),
+              hideBelow: "md",
+              cellClassName: "text-xs text-muted-foreground",
+              cell: (b) => fmt.dateTime(b.startAt),
+            },
+            {
+              key: "payable",
+              header: t("admin.bookings.payable"),
+              align: "right",
+              cell: (b) => (b.payableAmount != null ? formatCurrency(b.payableAmount) : "—"),
+            },
+            {
+              key: "status",
+              header: t("common.table.status"),
+              cell: (b) => (
+                <Badge variant={STATUS_VARIANT[b.status]}>
+                  {t(`common.bookingStatus.${b.status}`)}
+                </Badge>
+              ),
+            },
+          ]}
+        />
 
-        <div className="px-5 py-3 border-t border-border flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {totalElements > 0
-              ? `Hiển thị ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, totalElements)} / ${totalElements.toLocaleString("vi-VN")} booking`
-              : "Không có dữ liệu"}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="h-8 px-3 text-xs gap-1"
-              disabled={page === 0}
-              onClick={() => setPage((v) => v - 1)}
-            >
-              <ChevronLeft className="size-3.5" /> Trước
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 px-3 text-xs gap-1"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((v) => v + 1)}
-            >
-              Sau <ChevronRight className="size-3.5" />
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          className="border-t border-border px-5 py-3"
+          page={page}
+          zeroBased
+          totalPages={totalPages}
+          totalItems={totalElements}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
 
       {selected && <BookingDetailDialog booking={selected} onClose={() => setSelected(null)} />}

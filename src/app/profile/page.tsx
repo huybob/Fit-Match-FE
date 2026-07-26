@@ -3,13 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  LayoutDashboard,
-  Calendar,
-  Heart,
   User,
-  Shield,
-  Settings,
-  LogOut,
   Camera,
   Activity,
   AlertCircle,
@@ -18,7 +12,6 @@ import {
   Loader2,
   Save,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { authService } from "@/services/auth.service";
 import { useToast } from "@/lib/toast-provider";
@@ -29,16 +22,28 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import type { AuthUser } from "@/services/auth.service";
 
 import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useTranslations } from "next-intl";
+import { roleLabelKey } from "@/shared/utils/enum-label.util";
+import { initialsOf, UserAvatar } from "@/shared/components/common/user-avatar";
+import { useFormatters } from "@/i18n/use-formatters";
 
 function ProfileHeader({ user }: { user: AuthUser }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const [uploading, setUploading] = useState(false);
 
   const displayName = user.fullName ?? user.username ?? "";
-  const initials = displayName
-    ? displayName.split(" ").slice(0, 2).map((n) => n[0]?.toUpperCase() ?? "").join("")
-    : "U";
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -47,9 +52,9 @@ function ProfileHeader({ user }: { user: AuthUser }) {
     try {
       const updated = await authService.uploadAvatar(file);
       updateUser(updated);
-      toast({ type: "success", title: "Cập nhật ảnh đại diện thành công!" });
+      toast({ type: "success", title: t("member.profile.avatarUpdated") });
     } catch (error) {
-      toast({ type: "error", title: "Upload thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("member.profile.uploadFailed"), description: toErrorMessage(error) });
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -57,16 +62,16 @@ function ProfileHeader({ user }: { user: AuthUser }) {
   }
 
   return (
-    <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
+    <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex gap-6 items-start">
         <div className="relative shrink-0">
-          <div className="size-32 rounded-full border-4 border-white shadow-md bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={displayName} className="size-full object-cover" />
-            ) : (
-              <span className="text-3xl font-bold text-white">{initials}</span>
-            )}
-          </div>
+          <UserAvatar
+            className="size-32 border-4 border-card shadow-md"
+            src={user.avatarUrl}
+            name={displayName}
+            fallback={initialsOf(displayName, "U")}
+            fallbackClassName="bg-primary text-3xl font-bold text-primary-foreground"
+          />
           <label className="absolute bottom-1 right-1 bg-primary rounded-full p-2 shadow-md hover:bg-primary/90 transition-colors cursor-pointer">
             {uploading ? (
               <Loader2 className="size-3.5 text-white animate-spin" />
@@ -76,6 +81,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
             <input
               type="file"
               accept="image/*"
+              aria-label={t("member.profile.changeAvatar")}
               className="hidden"
               onChange={handleAvatarChange}
             />
@@ -85,29 +91,29 @@ function ProfileHeader({ user }: { user: AuthUser }) {
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold text-foreground truncate">{displayName}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Thành viên từ{" "}
+            {t("member.profile.memberSince")}{" "}
             {user.createdAt
-              ? new Date(user.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })
+              ? fmt.monthYear(user.createdAt)
               : "—"}
           </p>
           <div className="flex gap-2 mt-3 flex-wrap">
             {user.emailVerified ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-600 text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-muted text-success text-xs font-medium">
                 <CheckCircle className="size-3" />
-                Đã xác thực Email
+                {t("member.profile.emailVerified")}
               </span>
             ) : (
               <Link
                 href="/resend-verification"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 text-xs font-medium hover:bg-yellow-100"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning-muted text-warning text-xs font-medium hover:bg-warning-muted"
               >
                 <AlertCircle className="size-3" />
-                Chưa xác thực email
+                {t("member.profile.emailNotVerified")}
               </Link>
             )}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
               <Star className="size-3" />
-              Hạng Elite
+              {t("member.profile.eliteTier")}
             </span>
           </div>
         </div>
@@ -117,6 +123,7 @@ function ProfileHeader({ user }: { user: AuthUser }) {
 }
 
 function PersonalInfoCard({ user }: { user: AuthUser }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const [fullName, setFullName] = useState(user.fullName ?? "");
@@ -130,10 +137,7 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
     // A-22 (audit 2026-07-17): đổi email làm BE reset emailVerified=false — lần login
     // sau bị chặn cho tới khi xác thực lại. Trước đây điều này diễn ra âm thầm.
     const emailChanged = !!email && email !== user.email;
-    if (emailChanged && !window.confirm(
-      "Đổi email sẽ yêu cầu xác thực lại: hệ thống gửi link xác thực tới email MỚI, "
-      + "và bạn không đăng nhập được cho tới khi bấm link đó. Tiếp tục?",
-    )) {
+    if (emailChanged && !window.confirm(t("member.profile.emailChangeWarning"))) {
       return;
     }
     setSaving(true);
@@ -148,35 +152,35 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
       updateUser(updated);
       toast({
         type: "success",
-        title: "Cập nhật thông tin thành công!",
-        description: emailChanged ? "Kiểm tra hộp thư email mới để xác thực lại tài khoản." : undefined,
+        title: t("member.profile.infoUpdated"),
+        description: emailChanged ? t("member.profile.checkNewInbox") : undefined,
       });
     } catch (error) {
-      toast({ type: "error", title: "Cập nhật thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("member.profile.updateFailed"), description: toErrorMessage(error) });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
         <User className="size-4 text-muted-foreground" />
-        <h2 className="text-2xl font-semibold text-foreground">Thông tin cá nhân</h2>
+        <h2 className="text-2xl font-semibold text-foreground">{t("member.profile.personalInfo")}</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.fullName")}</label>
           <Input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Nhập họ và tên"
+            placeholder={t("member.profile.fullNamePlaceholder")}
             className="h-11 border-border rounded-lg text-base text-foreground"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.emailLabel")}</label>
           <Input
             type="email"
             value={email}
@@ -185,7 +189,7 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("common.table.phone")}</label>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -194,39 +198,30 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Vai trò</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.roleLabel")}</label>
           <Input
-            value={
-              {
-                ROLE_CUSTOMER: "Khách hàng",
-                ROLE_PT: "Huấn luyện viên",
-                ROLE_GYM_OPERATOR: "Quản lý phòng gym",
-                ROLE_ADMIN: "Quản trị viên",
-              }[user.role ?? "ROLE_CUSTOMER"] ?? user.role
-            }
+            value={t(roleLabelKey(user.role))}
             readOnly
             className="h-11 border-border rounded-lg bg-muted/40 text-base text-foreground"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Giới tính</label>
-          <select
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-            className="w-full h-11 border border-border rounded-lg px-3 text-base text-foreground bg-card"
-          >
-            <option value="">Chọn giới tính</option>
-            <option value="MALE">Nam</option>
-            <option value="FEMALE">Nữ</option>
-            <option value="OTHER">Khác</option>
-          </select>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.genderLabel")}</label>
+          <Select value={gender} onValueChange={setGender}>
+            <SelectTrigger><SelectValue placeholder={t("member.profile.genderPlaceholder")} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MALE">Nam</SelectItem>
+              <SelectItem value="FEMALE">{t("member.profile.genderFemale")}</SelectItem>
+              <SelectItem value="OTHER">{t("member.profile.genderOther")}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Địa điểm</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.locationLabel")}</label>
           <Input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="TP. Hồ Chí Minh"
+            placeholder={t("gym.branches.cityPlaceholder")}
             className="h-11 border-border rounded-lg text-base text-foreground"
           />
         </div>
@@ -236,10 +231,10 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-primary hover:bg-primary/90 text-white h-10 px-6 rounded-lg gap-2"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 rounded-lg gap-2"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Lưu thay đổi
+          {t("common.actions.saveChanges")}
         </Button>
       </div>
     </div>
@@ -247,6 +242,7 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
 }
 
 function FitnessMetricsCard({ user }: { user: AuthUser }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const [height, setHeight] = useState(user.height?.toString() ?? "");
@@ -263,9 +259,9 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
         mainGoal: mainGoal || undefined,
       });
       updateUser(updated);
-      toast({ type: "success", title: "Cập nhật chỉ số thành công!" });
+      toast({ type: "success", title: t("member.profile.metricsUpdated") });
     } catch (error) {
-      toast({ type: "error", title: "Cập nhật thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("member.profile.updateFailed"), description: toErrorMessage(error) });
     } finally {
       setSaving(false);
     }
@@ -275,37 +271,40 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
     <div className="bg-primary rounded-xl p-6 shadow-md">
       <div className="flex items-center gap-3 mb-5">
         <Activity className="size-5 text-white" />
-        <h2 className="text-lg font-semibold text-white">Chỉ số thể hình</h2>
+        <h2 className="text-lg font-semibold text-white">{t("member.profile.metricsTitle")}</h2>
       </div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2">
         <div className="space-y-1">
-          <p className="text-xs font-medium text-white/70">Chiều cao (cm)</p>
-          <input
-            type="number"
+          <p className="text-xs font-medium text-white/70">{t("member.profile.heightLabel")}</p>
+          <Input
+            type="text"
+            inputMode="numeric"
             value={height}
             onChange={(e) => setHeight(e.target.value)}
             placeholder="—"
-            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
+            className="text-xl bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 border-primary-foreground/20 hover:border-primary-foreground/40 focus-visible:border-primary-foreground/60 focus-visible:ring-primary-foreground/20"
           />
         </div>
         <div className="space-y-1">
-          <p className="text-xs font-medium text-white/70">Cân nặng (kg)</p>
-          <input
-            type="number"
+          <p className="text-xs font-medium text-white/70">{t("member.profile.weightLabel")}</p>
+          <Input
+            type="text"
+            inputMode="numeric"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             placeholder="—"
-            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-xl font-normal border border-white/20 focus:outline-none focus:border-white/60"
+            className="text-xl bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 border-primary-foreground/20 hover:border-primary-foreground/40 focus-visible:border-primary-foreground/60 focus-visible:ring-primary-foreground/20"
           />
         </div>
-        <div className="col-span-2 space-y-1">
-          <p className="text-xs font-medium text-white/70">Mục tiêu chính</p>
-          <input
+        <div className="space-y-1 sm:col-span-2">
+          <p className="text-xs font-medium text-white/70">{t("member.profile.mainGoalLabel")}</p>
+          <Input
             type="text"
+            inputMode="text"
             value={mainGoal}
             onChange={(e) => setMainGoal(e.target.value)}
-            placeholder="Phát triển cơ bắp..."
-            className="w-full bg-card/10 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm font-medium border border-white/20 focus:outline-none focus:border-white/60"
+            placeholder={t("member.profile.mainGoalPlaceholder")}
+            className="text-sm font-medium bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 border-primary-foreground/20 hover:border-primary-foreground/40 focus-visible:border-primary-foreground/60 focus-visible:ring-primary-foreground/20"
           />
         </div>
       </div>
@@ -315,13 +314,14 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
         className="w-full flex items-center justify-center gap-2 bg-card/15 hover:bg-card/25 text-white text-sm font-medium rounded-lg h-9 transition-colors"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-        Lưu chỉ số
+        {t("member.profile.saveMetrics")}
       </button>
     </div>
   );
 }
 
 function EmergencyContactCard({ user }: { user: AuthUser }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const ec = user.emergencyContact;
@@ -337,41 +337,41 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
         emergencyContact: { name, relationship, phone },
       });
       updateUser(updated);
-      toast({ type: "success", title: "Cập nhật liên hệ khẩn cấp thành công!" });
+      toast({ type: "success", title: t("member.profile.emergencyUpdated") });
     } catch (error) {
-      toast({ type: "error", title: "Cập nhật thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("member.profile.updateFailed"), description: toErrorMessage(error) });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-5">
-        <AlertCircle className="size-4 text-amber-500" />
-        <h2 className="text-lg font-semibold text-foreground">Liên hệ khẩn cấp</h2>
+        <AlertCircle className="size-4 text-warning" />
+        <h2 className="text-lg font-semibold text-foreground">{t("member.profile.emergencyTitle")}</h2>
       </div>
       <div className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Tên người liên hệ</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.contactNameLabel")}</label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nguyễn Văn B"
+            placeholder={t("member.profile.contactNamePlaceholder")}
             className="h-11 border-border rounded-lg text-base"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Mối quan hệ</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.relationshipLabel")}</label>
           <Input
             value={relationship}
             onChange={(e) => setRelationship(e.target.value)}
-            placeholder="Vợ/Chồng"
+            placeholder={t("member.profile.relationshipPlaceholder")}
             className="h-11 border-border rounded-lg text-base"
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
+          <label className="text-sm font-medium text-muted-foreground">{t("common.table.phone")}</label>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -382,10 +382,10 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="w-full bg-primary hover:bg-primary/90 text-white h-10 rounded-lg gap-2"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-lg gap-2"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Lưu liên hệ
+          {t("member.profile.saveContact")}
         </Button>
       </div>
     </div>
@@ -393,6 +393,7 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
 }
 
 function FitnessPreferencesCard({ user }: { user: AuthUser }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
   const fp = user.fitnessPreferences;
@@ -422,52 +423,54 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
         fitnessPreferences: { styles, frequency, equipmentAccess, injuries },
       });
       updateUser(updated);
-      toast({ type: "success", title: "Cập nhật sở thích tập luyện thành công!" });
+      toast({ type: "success", title: t("member.profile.prefsUpdated") });
     } catch (error) {
-      toast({ type: "error", title: "Cập nhật thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("member.profile.updateFailed"), description: toErrorMessage(error) });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
           <Activity className="size-4 text-muted-foreground" />
-          <h2 className="text-2xl font-semibold text-foreground">Sở thích tập luyện</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{t("member.profile.prefsTitle")}</h2>
         </div>
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="bg-primary hover:bg-primary/90 text-white h-9 px-4 rounded-lg gap-2 text-sm"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 rounded-lg gap-2 text-sm"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          Lưu
+          {t("common.actions.save")}
         </Button>
       </div>
       <div className="grid grid-cols-4 gap-6">
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Phong cách yêu thích</p>
+          <p className="text-sm font-medium text-foreground">{t("member.profile.favoriteStyles")}</p>
           <div className="flex flex-wrap gap-2">
             {styles.map((s) => (
               <span key={s} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
                 {s}
-                <button onClick={() => removeStyle(s)} className="hover:text-destructive leading-none">×</button>
+                <button type="button" onClick={() => removeStyle(s)} aria-label={t("member.profile.removeStyle")} title={t("member.profile.removeStyle")} className="cursor-pointer hover:text-destructive leading-none">×</button>
               </span>
             ))}
           </div>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 border-primary text-primary hover:bg-primary/10"
             onClick={() => { setStyleInput(""); setStyleDialogOpen(true); }}
-            className="px-3 h-8 rounded-lg border border-[#004ac6] text-primary text-xs font-medium hover:bg-primary/10"
           >
-            + Thêm
-          </button>
+            {t("member.profile.addStyle")}
+          </Button>
         </div>
 
         <Dialog
           open={styleDialogOpen}
-          title="Thêm phong cách tập luyện"
+          title={t("member.profile.addStyleTitle")}
           onClose={() => setStyleDialogOpen(false)}
         >
           <div className="space-y-4">
@@ -476,62 +479,58 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
               value={styleInput}
               onChange={(e) => setStyleInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStyle(); } }}
-              placeholder="VD: HIIT, Yoga, Cử tạ..."
+              placeholder={t("member.profile.addStylePlaceholder")}
               className="h-11"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setStyleDialogOpen(false)}>Hủy</Button>
+              <Button variant="outline" onClick={() => setStyleDialogOpen(false)}>{t("common.actions.cancel")}</Button>
               <Button
                 onClick={addStyle}
                 disabled={!styleInput.trim()}
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                Thêm
-              </Button>
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >{t("common.actions.add")}</Button>
             </div>
           </div>
         </Dialog>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Tần suất</p>
-          <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">{t("member.profile.frequencyLabel")}</p>
+          <RadioGroup value={frequency} onValueChange={setFrequency} className="space-y-2">
             {[
-              { value: "4-5", label: "4-5 ngày/tuần" },
-              { value: "daily", label: "Hàng ngày" },
-              { value: "2-3", label: "2-3 ngày/tuần" },
+              { value: "4-5", label: t("member.profile.freq.4-5") },
+              { value: "daily", label: t("member.profile.freq.daily") },
+              { value: "2-3", label: t("member.profile.freq.2-3") },
             ].map(({ value, label }) => (
-              <label key={value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="freq"
-                  value={value}
-                  checked={frequency === value}
-                  onChange={() => setFrequency(value)}
-                  className="accent-[#004ac6]"
-                />
-                <span className="text-sm text-foreground">{label}</span>
-              </label>
+              <div key={value} className="flex items-center gap-2">
+                <RadioGroupItem id={`freq-${value}`} value={value} className="cursor-pointer" />
+                <label
+                  htmlFor={`freq-${value}`}
+                  className="cursor-pointer select-none text-sm text-foreground"
+                >
+                  {label}
+                </label>
+              </div>
             ))}
-          </div>
+          </RadioGroup>
         </div>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Tiếp cận thiết bị</p>
-          <select
-            value={equipmentAccess}
-            onChange={(e) => setEquipmentAccess(e.target.value)}
-            className="w-full h-11 border border-border rounded-lg px-3 text-base text-foreground bg-card"
-          >
-            <option value="gym">Phòng Gym chuyên nghiệp</option>
-            <option value="home">Tại nhà</option>
-            <option value="outdoor">Ngoài trời</option>
-          </select>
+          <p className="text-sm font-medium text-foreground">{t("member.profile.equipmentLabel")}</p>
+          <Select value={equipmentAccess} onValueChange={setEquipmentAccess}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gym">{t("member.profile.equip.gym")}</SelectItem>
+              <SelectItem value="home">{t("member.profile.equip.home")}</SelectItem>
+              <SelectItem value="outdoor">{t("member.profile.equip.outdoor")}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Chấn thương/Lưu ý</p>
-          <textarea
+          <p className="text-sm font-medium text-foreground">{t("member.profile.injuriesLabel")}</p>
+          <Textarea
             value={injuries}
             onChange={(e) => setInjuries(e.target.value)}
-            placeholder={"Ví dụ: Đau lưng nhẹ,\ndị ứng hạt..."}
-            className="w-full h-24 border border-border rounded-lg p-3 text-base text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb]"
+            placeholder={t("member.profile.injuriesPlaceholder")}
+            maxLength={500}
+            className="h-24 resize-none"
           />
         </div>
       </div>
@@ -546,17 +545,17 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <div className="flex gap-6 px-20 py-6">
+      <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-10 xl:px-20">
         <ProfileSidebar />
 
         <main className="flex-1 min-w-0 flex flex-col gap-6">
           <ProfileHeader user={user} />
 
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-8">
               <PersonalInfoCard user={user} />
             </div>
-            <div className="col-span-4 flex flex-col gap-6">
+            <div className="flex flex-col gap-6 lg:col-span-4">
               <FitnessMetricsCard user={user} />
               <EmergencyContactCard user={user} />
             </div>

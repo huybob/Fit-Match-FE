@@ -14,25 +14,27 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import type { UpdateNotificationPreferenceRequest } from "@/types/Notification";
 import { cn } from "@/shared/utils/cn.util";
 import { NotificationInbox } from "./notification-inbox";
+import { useTranslations } from "next-intl";
 
 // E-14 (audit 2026-07-17): gỡ 3 toggle email/push/nhắc nhở — BE lưu nhưng KHÔNG BAO GIỜ
 // đọc khi gửi (chưa có kênh email/push cho notification, chưa có reminder scheduler)
 // → toggle vô hiệu đánh lừa người dùng. Thêm lại khi kênh tương ứng tồn tại (Phase 5).
 const PREFS: {
   key: keyof UpdateNotificationPreferenceRequest;
-  label: string;
-  desc: string;
+  labelKey: "notification.pref.marketingEnabled";
+  descKey: "notification.pref.marketingEnabledDesc";
   icon: React.ElementType;
 }[] = [
   {
     key: "marketingEnabled",
-    label: "Thông báo marketing",
-    desc: "Nhận các ưu đãi, khuyến mãi và tin tức từ FitMatch",
+    labelKey: "notification.pref.marketingEnabled",
+    descKey: "notification.pref.marketingEnabledDesc",
     icon: Megaphone,
   },
 ];
 
 export function NotificationPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const query = useNotificationPreferences();
   const update = useUpdateNotificationPreferences();
@@ -51,9 +53,9 @@ export function NotificationPage() {
   async function handleSave() {
     try {
       await update.mutateAsync(values);
-      toast({ type: "success", title: "Đã lưu cài đặt thông báo" });
+      toast({ type: "success", title: t("notification.settingsSaved") });
     } catch (error) {
-      toast({ type: "error", title: "Lỗi", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(error) });
     }
   }
 
@@ -65,24 +67,26 @@ export function NotificationPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6">
         <div className="mb-1 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Thông báo</h1>
+        <h1 className="text-3xl font-black">{t("notification.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Xem thông báo và tuỳ chỉnh cách FitMatch gửi thông báo đến bạn
+          {t("notification.subtitle")}
         </p>
       </section>
 
       <div className="mb-5 inline-flex rounded-2xl border border-border bg-card p-1">
-        {(["inbox", "settings"] as const).map((t) => (
+        {(["inbox", "settings"] as const).map((tabKey) => (
           <button
-            key={t}
+            key={tabKey}
             type="button"
-            onClick={() => setTab(t)}
+            onClick={() => setTab(tabKey)}
             className={cn(
-              "rounded-xl px-4 py-2 text-sm font-bold transition",
-              tab === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              "cursor-pointer rounded-xl px-4 py-2 text-sm font-bold transition",
+              tab === tabKey
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {t === "inbox" ? "Hộp thư" : "Cài đặt"}
+            {tabKey === "inbox" ? t("notification.tabInbox") : t("notification.tabSettings")}
           </button>
         ))}
       </div>
@@ -93,23 +97,26 @@ export function NotificationPage() {
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState
-          title="Không thể tải cài đặt"
+          title={t("notification.settingsLoadError")}
           description={toErrorMessage(query.error)}
         />
       ) : (
         <div className="space-y-3">
-          {PREFS.map(({ key, label, desc, icon: Icon }) => {
+          {PREFS.map(({ key, labelKey, descKey, icon: Icon }) => {
             const enabled = !!values[key];
             return (
               <button
                 key={key}
                 type="button"
+                // Nút hoạt động như công tắc bật/tắt -> aria-pressed để screen reader
+                // đọc đúng trạng thái thay vì chỉ đọc nhãn.
+                aria-pressed={enabled}
                 onClick={() => toggle(key)}
                 className={cn(
                   "flex w-full items-center gap-4 rounded-2xl border p-5 text-left transition",
                   enabled
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-border bg-card",
+                    ? "border-primary/40 bg-primary/5 hover:bg-primary/10"
+                    : "border-border bg-card hover:border-ring/50 hover:bg-muted/40",
                 )}
               >
                 <span
@@ -121,8 +128,8 @@ export function NotificationPage() {
                   <Icon className="size-4" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <strong className="block text-sm font-semibold">{label}</strong>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">{desc}</span>
+                  <strong className="block text-sm font-semibold">{t(labelKey)}</strong>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{t(descKey)}</span>
                 </span>
                 {/* Toggle */}
                 <span
@@ -149,7 +156,7 @@ export function NotificationPage() {
               className="gap-2"
             >
               {update.isPending && <Loader2 className="size-4 animate-spin" />}
-              Lưu thay đổi
+              {t("common.actions.saveChanges")}
             </Button>
           </div>
         </div>

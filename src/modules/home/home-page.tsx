@@ -12,6 +12,7 @@ import { CmsBanners } from "@/modules/cms/cms-banners";
 import { FeaturedSection } from "@/modules/cms/featured-section";
 import { RealGymsSection, RealTrainersSection } from "@/modules/home/real-sections";
 import { SiteLayout } from "@/modules/layout/site-layout";
+import { useTranslations } from "next-intl";
 
 function useCanBook() {
   const { user, status } = useAuthStore();
@@ -31,41 +32,39 @@ export function HomePage() {
 }
 
 function Hero() {
+  const t = useTranslations();
   const canBook = useCanBook();
 
   return (
     <section className="relative overflow-hidden bg-card">
-      <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-blue-50/60 to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-primary/60 to-transparent pointer-events-none" />
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-24">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-primary/10 px-3 py-1 text-xs font-bold tracking-wider text-primary">
-            Nền tảng Thể thao Đẳng cấp Thế giới
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold tracking-wider text-primary">
+            {t("home.badge")}
           </span>
           <h1 className="mt-5 max-w-lg text-5xl font-black leading-[1.1] tracking-tight text-foreground sm:text-6xl">
-            Nâng tầm Hiệu suất cùng{" "}
-            <span className="text-primary">Chuyên gia Hàng đầu</span>
+            {t("home.titleLine1")}{" "}
+            <span className="text-primary">{t("home.titleLine2")}</span>
           </h1>
           <p className="mt-5 max-w-md text-base leading-7 text-muted-foreground">
-            Kết nối với các huấn luyện viên cá nhân được xác thực và phòng gym
-            cao cấp phù hợp với hành trình thể hình của bạn. Đặt lịch trực
-            tuyến, theo dõi hiệu suất và hỗ trợ cộng đồng trong một hệ sinh thái
-            duy nhất.
+            {t("home.heroBody")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {canBook && (
               <Link
-                className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:-translate-y-0.5 hover:bg-primary/90"
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-6 text-sm font-black text-primary-foreground shadow-lg shadow-primary/25 transition hover:-translate-y-0.5 hover:bg-primary/90"
                 href={appRoutes.trainers}
               >
                 <Users className="size-4" />
-                Tìm PT
+                {t("home.findTrainer")}
               </Link>
             )}
             <Link
               className="inline-flex h-11 items-center gap-2 rounded-xl border border-border px-6 text-sm font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-muted/40"
               href={appRoutes.gyms}
             >
-              Tìm Phòng tập
+              {t("home.findGym")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -73,7 +72,7 @@ function Hero() {
 
         <div className="relative hidden lg:block">
           <div
-            className="relative overflow-hidden rounded-2xl shadow-2xl shadow-blue-900/30"
+            className="relative overflow-hidden rounded-2xl shadow-2xl shadow-primary/30"
             style={{ aspectRatio: "4/5" }}
           >
             <Image

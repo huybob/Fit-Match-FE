@@ -2,7 +2,7 @@
 
 import { formatCurrency } from "@/utils/format.util";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarCheck2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Plus, QrCode, UserRound } from "lucide-react";
+import { CalendarCheck2, CalendarDays, MapPin, Plus, QrCode, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,6 +15,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { DatePicker } from "@/shared/components/ui/date-picker";
+import { TimePicker } from "@/shared/components/ui/time-picker";
 import { Input } from "@/shared/components/ui/input";
 import {
   Select,
@@ -41,7 +42,7 @@ import {
   useMyPackages,
   useRescheduleBooking,
 } from "../hooks/use-booking";
-import { createBookingSchema } from "../schemas";
+import { useBookingSchemas } from "../use-booking-schemas";
 import { gymService } from "@/services/gym.service";
 import {
   BookingTimeline,
@@ -52,6 +53,9 @@ import {
   SessionNotesSection,
   WaitlistSection,
 } from "./booking-detail-extras";
+import { useTranslations } from "next-intl";
+import { Pagination } from "@/shared/components/ui/pagination";
+import { useFormatters } from "@/i18n/use-formatters";
 
 const statuses: BookingStatus[] = [
   "DRAFT",
@@ -64,41 +68,9 @@ const statuses: BookingStatus[] = [
   "COMPLETED",
 ];
 
-const scopeTitles: Record<string, string> = {
-  customerTitle: "Đặt lịch của tôi",
-  ptTitle: "Lịch được phân công",
-  gymTitle: "Lịch đặt tại phòng gym",
-  customerDescription: "Đặt dịch vụ/gói tập, thanh toán VietQR và theo dõi trạng thái.",
-  ptDescription: "Các buổi tập bạn được gym phân công (chỉ xem).",
-  gymDescription: "Nhận/từ chối yêu cầu, gán PT, xác nhận hoàn tất buổi tập.",
-};
+/* Nhãn nằm trong booking.scope.* / common.bookingStatus.* / booking.success.*
+   — key trùng tên nên resolve động trong component. */
 
-const bookingStatusLabels: Record<BookingStatus, string> = {
-  DRAFT: "Bản nháp",
-  PENDING_PAYMENT: "Chờ thanh toán",
-  PENDING_GYM: "Chờ gym xác nhận",
-  CONFIRMED: "Đã xác nhận",
-  REJECTED: "Gym từ chối",
-  CANCELLED: "Đã hủy",
-  NO_SHOW: "Vắng mặt",
-  COMPLETED: "Hoàn thành",
-};
-
-const actionSuccessLabels: Record<BookingAction, string> = {
-  checkout: "Đã gửi yêu cầu — vui lòng thanh toán nếu có phí",
-  cancel: "Đã hủy lịch đặt",
-  refund: "Đã gửi yêu cầu hoàn tiền",
-  checkIn: "Đã check-in",
-  accept: "Đã nhận lịch đặt",
-  reject: "Đã từ chối lịch đặt",
-  noShow: "Đã đánh dấu vắng mặt",
-  complete: "Đã xác nhận hoàn tất buổi tập",
-};
-
-function dateTimeText(value?: string) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
-}
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
 function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badge>["variant"] {
@@ -108,11 +80,14 @@ function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badg
   if (status === "PENDING_PAYMENT" || status === "PENDING_GYM") return "warning";
   return "default";
 }
-function itemName(booking: Booking) {
-  return booking.serviceName ?? booking.packageName ?? "Dịch vụ không tên";
+/** `fallback` truyền từ component vì helper thường không gọi được hook. */
+function itemName(booking: Booking, fallback: string) {
+  return booking.serviceName ?? booking.packageName ?? fallback;
 }
 
 export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const [status, setStatus] = useState<BookingStatus | "">("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
@@ -145,12 +120,12 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-            <h1 className="text-3xl font-black tracking-tight">{scopeTitles[`${scope}Title`] ?? "Đặt lịch"}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{scopeTitles[`${scope}Description`] ?? ""}</p>
+            <h1 className="text-3xl font-black tracking-tight">{t(`booking.scope.${scope}Title`)}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t(`booking.scope.${scope}Description`)}</p>
           </div>
           {scope === "customer" && (
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" />Tạo lịch đặt
+              <Plus className="size-4" />{t("booking.create")}
             </Button>
           )}
         </div>
@@ -162,15 +137,15 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
 
       <section className="mb-5 grid gap-3 rounded-2xl border border-border bg-card/80 p-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">Trạng thái</span>
+          <span className="text-xs font-black uppercase tracking-wide text-muted-foreground">{t("common.table.status")}</span>
           <Select value={status} onValueChange={(v) => { setStatus(v as BookingStatus | ""); setPage(0); }}>
             <SelectTrigger>
-              <SelectValue placeholder="Tất cả trạng thái" />
+              <SelectValue placeholder={t("common.filters.allStatuses")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả trạng thái</SelectItem>
+              <SelectItem value="">{t("common.filters.allStatuses")}</SelectItem>
               {statuses.map((s) => (
-                <SelectItem key={s} value={s}>{bookingStatusLabels[s] ?? s}</SelectItem>
+                <SelectItem key={s} value={s}>{t(`common.bookingStatus.${s}`)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -178,9 +153,9 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
       </section>
 
       {query.isLoading ? <LoadingSkeleton /> : query.isError ? (
-        <EmptyState title="Không thể tải dữ liệu" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("booking.loadError")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có lịch đặt" description={scope === "customer" ? "Bạn chưa có lịch đặt nào. Hãy tạo lịch đặt mới để bắt đầu." : "Chưa có lịch đặt nào ở trạng thái này."} />
+        <EmptyState title={t("booking.emptyTitle")} description={scope === "customer" ? t("booking.emptyAll") : t("booking.emptyFiltered")} />
       ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {items.map((booking) => (
@@ -193,16 +168,16 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">#{booking.id}</p>
-                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{itemName(booking)}</h2>
+                  <h2 className="mt-1 text-lg font-black group-hover:text-accent">{itemName(booking, t("booking.unnamedService"))}</h2>
                 </div>
                 <Badge variant={statusVariant(booking.status)}>
-                  {bookingStatusLabels[booking.status] ?? booking.status}
+                  {booking.status ? t(`common.bookingStatus.${booking.status}`) : "—"}
                 </Badge>
               </div>
               <div className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{dateTimeText(booking.startAt)}</span>
-                <span className="flex items-center gap-2"><UserRound className="size-4 text-primary" />{scope === "customer" ? (booking.ptDisplayName ?? "Chưa gán PT") : booking.customerUsername}</span>
-                <span className="flex items-center gap-2"><MapPin className="size-4 text-blue-500" />{booking.branchName ?? booking.gymName}</span>
+                <span className="flex items-center gap-2"><CalendarDays className="size-4 text-accent" />{fmt.dateTime(booking.startAt)}</span>
+                <span className="flex items-center gap-2"><UserRound className="size-4 text-primary" />{scope === "customer" ? (booking.ptDisplayName ?? t("booking.noTrainerAssigned")) : booking.customerUsername}</span>
+                <span className="flex items-center gap-2"><MapPin className="size-4 text-primary" />{booking.branchName ?? booking.gymName}</span>
                 <strong className="text-foreground">{money(booking.totalAmount)}</strong>
               </div>
             </button>
@@ -210,17 +185,15 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
         </div>
       )}
 
-      {(query.data?.totalPages ?? 0) > 1 && (
-        <div className="mt-6 flex items-center justify-end gap-3">
-          <Button variant="outline" size="icon-sm" disabled={page === 0} onClick={() => setPage((v) => v - 1)}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-sm font-bold">{page + 1} / {query.data?.totalPages}</span>
-          <Button variant="outline" size="icon-sm" disabled={query.data?.last} onClick={() => setPage((v) => v + 1)}>
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      )}
+      <Pagination
+        className="mt-6"
+        page={page}
+        zeroBased
+        totalPages={query.data?.totalPages ?? 0}
+        totalItems={query.data?.totalElements}
+        onPageChange={setPage}
+        disabled={query.isLoading}
+      />
 
       <BookingDetailDialog
         booking={selected}
@@ -248,6 +221,8 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   onClose: () => void;
   onPay: (id: number) => void;
 }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const { toast } = useToast();
   const action = useBookingAction(scope);
   const openDispute = useOpenDispute();
@@ -287,16 +262,16 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
 
   async function submitDispute() {
     if (!bookingId || !disputeReason?.trim()) {
-      toast({ type: "warning", title: "Nhập lý do tranh chấp" });
+      toast({ type: "warning", title: t("booking.disputeReasonRequired") });
       return;
     }
     try {
       await openDispute.mutateAsync({ bookingId, reason: disputeReason.trim() });
-      toast({ type: "success", title: "Đã mở tranh chấp", description: "Điều phối viên sẽ xử lý; tiền (nếu có) được tạm giữ." });
+      toast({ type: "success", title: t("booking.disputeOpened"), description: t("booking.disputeOpenedDesc") });
       setDisputeReason(null);
       onClose();
     } catch (e) {
-      toast({ type: "error", title: "Không mở được tranh chấp", description: toErrorMessage(e) });
+      toast({ type: "error", title: t("booking.disputeFailed"), description: toErrorMessage(e) });
     }
   }
 
@@ -305,35 +280,35 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   const actions: Array<{ action: BookingAction; label: string; requireMessage?: boolean }> = [];
   const checkedIn = !!booking.checkedInAt;
   if (scope === "customer") {
-    if (status === "DRAFT") actions.push({ action: "checkout", label: "Gửi yêu cầu & thanh toán" });
+    if (status === "DRAFT") actions.push({ action: "checkout", label: t("booking.submitAndPay") });
     if (status === "CONFIRMED" && !checkedIn) actions.push({ action: "checkIn", label: "Check-in" });
     if (["DRAFT", "PENDING_PAYMENT", "PENDING_GYM", "CONFIRMED"].includes(status)) {
-      actions.push({ action: "cancel", label: "Hủy lịch" });
+      actions.push({ action: "cancel", label: t("booking.cancelBooking") });
     }
     if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status)) {
-      actions.push({ action: "refund", label: "Yêu cầu hoàn tiền", requireMessage: true });
+      actions.push({ action: "refund", label: t("booking.requestRefund"), requireMessage: true });
     }
   }
   if (scope === "pt" && status === "CONFIRMED" && !checkedIn) {
-    actions.push({ action: "checkIn", label: "Check-in cho khách" });
+    actions.push({ action: "checkIn", label: t("booking.checkInGuest") });
   }
   if (scope === "gym") {
     if (status === "PENDING_GYM") {
-      actions.push({ action: "accept", label: "Nhận lịch" });
-      actions.push({ action: "reject", label: "Từ chối", requireMessage: true });
+      actions.push({ action: "accept", label: t("booking.accept") });
+      actions.push({ action: "reject", label: t("common.actions.reject"), requireMessage: true });
     }
     if (status === "CONFIRMED") {
-      if (!checkedIn) actions.push({ action: "checkIn", label: "Check-in cho khách" });
-      actions.push({ action: "complete", label: "Hoàn tất buổi tập" });
-      actions.push({ action: "noShow", label: "Khách vắng mặt" });
-      actions.push({ action: "cancel", label: "Hủy lịch", requireMessage: true });
+      if (!checkedIn) actions.push({ action: "checkIn", label: t("booking.checkInGuest") });
+      actions.push({ action: "complete", label: t("booking.complete") });
+      actions.push({ action: "noShow", label: t("booking.noShow") });
+      actions.push({ action: "cancel", label: t("booking.cancelBooking"), requireMessage: true });
     }
   }
 
   async function run() {
     if (!confirming || !bookingId) return;
     if (confirming.requireMessage && !confirming.message?.trim()) {
-      toast({ type: "warning", title: "Vui lòng nhập lý do" });
+      toast({ type: "warning", title: t("booking.reasonRequired") });
       return;
     }
     try {
@@ -344,44 +319,44 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
         // C-5: gán PT ngay khi nhận lịch (BE recheck PT thuộc gym + lịch rảnh).
         ptId: confirming.action === "accept" && acceptPtId ? Number(acceptPtId) : undefined,
       });
-      toast({ type: "success", title: actionSuccessLabels[confirming.action] ?? "Thao tác thành công" });
+      toast({ type: "success", title: t(`booking.success.${confirming.action}`) });
       const done = confirming.action;
       setConfirming(null);
       onClose();
       // Sau checkout có phí -> mở QR thanh toán ngay.
       if (done === "checkout" && (booking?.payableAmount ?? 0) > 0) onPay(bookingId);
     } catch (error) {
-      toast({ type: "error", title: "Yêu cầu thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("booking.requestFailed"), description: toErrorMessage(error) });
     }
   }
 
   return (
-    <Dialog open title="Chi tiết lịch đặt" onClose={onClose}>
+    <Dialog open title={t("booking.detailTitle")} onClose={onClose}>
       <div className="rounded-2xl bg-muted/50 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-xl font-black">{itemName(booking)}</h3>
-          <Badge variant={statusVariant(status)}>{bookingStatusLabels[status] ?? status}</Badge>
+          <h3 className="text-xl font-black">{itemName(booking, t("booking.unnamedService"))}</h3>
+          <Badge variant={statusVariant(status)}>{status ? t(`common.bookingStatus.${status}`) : "—"}</Badge>
         </div>
         <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-          <Info label="Khách hàng" value={booking.customerUsername} />
-          <Info label="Huấn luyện viên" value={booking.ptDisplayName ?? "Chưa gán"} />
-          <Info label="Địa điểm" value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
-          <Info label="Lịch tập" value={`${dateTimeText(booking.startAt)} → ${dateTimeText(booking.endAt)}`} />
-          <Info label="Tổng tiền" value={booking.customerPackageId ? "Thuộc gói đã mua" : money(booking.totalAmount)} />
-          <Info label="Check-in" value={booking.checkedInAt ? dateTimeText(booking.checkedInAt) : "Chưa check-in"} />
+          <Info label={t("booking.customer")} value={booking.customerUsername} />
+          <Info label={t("booking.trainer")} value={booking.ptDisplayName ?? t("booking.notAssigned")} />
+          <Info label={t("booking.location")} value={[booking.gymName, booking.branchName].filter(Boolean).join(" · ")} />
+          <Info label={t("booking.schedule")} value={`${fmt.dateTime(booking.startAt)} → ${fmt.dateTime(booking.endAt)}`} />
+          <Info label={t("booking.total")} value={booking.customerPackageId ? t("booking.fromPurchasedPackage") : money(booking.totalAmount)} />
+          <Info label={t("booking.checkInLabel")} value={booking.checkedInAt ? fmt.dateTime(booking.checkedInAt) : t("booking.notCheckedIn")} />
         </dl>
         {/* C-7: breakdown giá — khách thấy đúng số phải trả (khớp QR) */}
         <PriceBreakdown booking={booking} />
         {booking.lateCancellation && (
-          <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-700">
-            Hủy muộn — theo chính sách, một phần phí có thể không được hoàn lại.
+          <p className="mt-2 rounded-xl border border-warning/30 bg-warning-muted p-3 text-xs font-semibold text-warning">
+            {t("booking.lateCancelWarning")}
           </p>
         )}
         {booking.statusReason && (
-          <p className="mt-4 rounded-xl border border-border bg-card p-3 text-sm text-muted-foreground">{booking.statusReason}</p>
+          <p className="mt-4 rounded-2xl border border-border bg-card p-3 text-sm text-muted-foreground">{booking.statusReason}</p>
         )}
         {booking.customerNote && (
-          <p className="mt-2 rounded-xl border border-border bg-card p-3 text-sm">{booking.customerNote}</p>
+          <p className="mt-2 rounded-2xl border border-border bg-card p-3 text-sm">{booking.customerNote}</p>
         )}
         {/* C-11 + C-6: timeline trạng thái + ghi chú buổi tập */}
         <BookingTimeline bookingId={booking.id} scope={scope} />
@@ -390,7 +365,7 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
 
       {scope === "customer" && status === "PENDING_PAYMENT" && (
         <Button className="mt-4 w-full" variant="outline" onClick={() => bookingId && onPay(bookingId)}>
-          <QrCode className="size-4" />Xem mã QR thanh toán
+          <QrCode className="size-4" />{t("booking.viewQr")}
         </Button>
       )}
 
@@ -407,11 +382,11 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
           ))}
           {/* C-4 (UC-041): dời lịch — customer & gym, trước khi buổi diễn ra */}
           {scope !== "pt" && ["PENDING_GYM", "CONFIRMED"].includes(status) && (
-            <Button variant="outline" onClick={() => setRescheduling(true)}>Dời lịch</Button>
+            <Button variant="outline" onClick={() => setRescheduling(true)}>{t("booking.reschedule")}</Button>
           )}
           {/* C-6 (UC-050): gym hiệu chỉnh bản ghi hoàn tất/vắng mặt */}
           {scope === "gym" && ["COMPLETED", "NO_SHOW"].includes(status) && (
-            <Button variant="outline" onClick={() => setCorrecting(true)}>Hiệu chỉnh điểm danh</Button>
+            <Button variant="outline" onClick={() => setCorrecting(true)}>{t("booking.correctAttendance")}</Button>
           )}
         </div>
       )}
@@ -419,99 +394,104 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
       {/* C-5 (UC-039): gym đổi PT cho booking đã nhận */}
       {scope === "gym" && status === "CONFIRMED" && (
         <div className="mt-3 flex items-center gap-2">
-          <select
-            value={reassignPtId}
-            onChange={(e) => setReassignPtId(e.target.value)}
-            className="h-9 flex-1 rounded-lg border border-border bg-card px-2 text-sm text-foreground"
-          >
-            <option value="">— Đổi PT phụ trách —</option>
-            {activePts.map((p) => (
-              <option key={p.id} value={p.id}>{p.displayName ?? p.username}</option>
-            ))}
-          </select>
+          <Select value={reassignPtId} onValueChange={setReassignPtId}>
+            <SelectTrigger className="h-9 flex-1 text-sm">
+              <SelectValue placeholder={t("booking.reassignTrainer")} />
+            </SelectTrigger>
+            <SelectContent>
+              {activePts.map((p) => (
+                <SelectItem key={p.id} value={String(p.id)}>{p.displayName ?? p.username}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             disabled={!reassignPtId || reassign.isPending}
             onClick={async () => {
               try {
                 await reassign.mutateAsync({ id: booking.id, ptId: Number(reassignPtId) });
-                toast({ type: "success", title: "Đã đổi PT phụ trách" });
+                toast({ type: "success", title: t("booking.trainerReassigned") });
                 setReassignPtId("");
                 onClose();
               } catch (e) {
-                toast({ type: "error", title: "Đổi PT thất bại", description: toErrorMessage(e) });
+                toast({ type: "error", title: t("booking.reassignFailed"), description: toErrorMessage(e) });
               }
             }}
           >
-            Gán PT
+            {t("booking.assignTrainer")}
           </Button>
         </div>
       )}
 
       {canDispute && disputeReason === null && (
-        <button
-          type="button"
-          onClick={() => setDisputeReason("")}
-          className="mt-3 text-sm font-semibold text-destructive hover:underline"
-        >
-          Mở tranh chấp / khiếu nại
-        </button>
+        <Button variant="link" size="inline"
+ type="button"
+ onClick={() => setDisputeReason("")}
+ className="mt-3 text-sm text-destructive"
+>
+          {t("booking.openDispute")}
+        </Button>
       )}
 
       {disputeReason !== null && (
         <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-          <p className="font-black">Mở tranh chấp cho booking #{bookingId}</p>
+          <p className="font-black">{t("booking.openDisputeFor", { id: bookingId })}</p>
           <Textarea
             className="mt-3"
             maxLength={1000}
-            placeholder="Mô tả vấn đề (dịch vụ, thanh toán, điểm danh...)"
+            placeholder={t("booking.disputePlaceholder")}
             value={disputeReason}
             onChange={(e) => setDisputeReason(e.target.value)}
           />
           <div className="mt-3 flex gap-2">
             <Button variant="destructive" disabled={openDispute.isPending} onClick={() => void submitDispute()}>
-              {openDispute.isPending ? "Đang gửi..." : "Gửi tranh chấp"}
+              {openDispute.isPending ? t("common.states.submitting") : t("booking.submitDispute")}
             </Button>
-            <Button variant="outline" onClick={() => setDisputeReason(null)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setDisputeReason(null)}>{t("common.actions.cancel")}</Button>
           </div>
         </div>
       )}
 
       {confirming && (
-        <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <p className="font-black">{confirming.label} — bạn chắc chắn?</p>
+        <div className="mt-5 rounded-2xl border border-warning/30 bg-warning-muted p-4">
+          <p className="font-black">{t("booking.confirmPrompt", { label: confirming.label })}</p>
           {/* C-5 (UC-039): chọn PT phụ trách ngay khi nhận lịch */}
           {confirming.action === "accept" && (
             <div className="mt-3">
               <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                PT phụ trách {booking.ptDisplayName ? `(khách đề xuất: ${booking.ptDisplayName})` : "(không bắt buộc)"}
+                {t("booking.assignedTrainerLabel", {
+                  suffix: booking.ptDisplayName
+                    ? t("booking.customerSuggested", { name: booking.ptDisplayName })
+                    : t("common.form.optionalLabel"),
+                })}
               </label>
-              <select
-                value={acceptPtId}
-                onChange={(e) => setAcceptPtId(e.target.value)}
-                className="h-9 w-full rounded-lg border border-border bg-card px-2 text-sm text-foreground"
-              >
-                <option value="">— Giữ nguyên lựa chọn của khách —</option>
-                {activePts.map((p) => (
-                  <option key={p.id} value={p.id}>{p.displayName ?? p.username}</option>
-                ))}
-              </select>
+              <Select value={acceptPtId} onValueChange={setAcceptPtId}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder={t("booking.keepCustomerChoice")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{t("booking.keepCustomerChoice")}</SelectItem>
+                  {activePts.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>{p.displayName ?? p.username}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
           {(confirming.requireMessage || ["cancel", "reject", "refund"].includes(confirming.action)) && (
             <Textarea
               className="mt-3"
               maxLength={500}
-              placeholder={confirming.requireMessage ? "Lý do (bắt buộc)" : "Lý do (không bắt buộc)"}
+              placeholder={confirming.requireMessage ? t("booking.reasonRequiredLabel") : t("gym.ptOps.reasonOptional")}
               value={confirming.message ?? ""}
               onChange={(e) => setConfirming({ ...confirming, message: e.target.value })}
             />
           )}
           <div className="mt-3 flex gap-2">
             <Button disabled={action.isPending} onClick={() => void run()}>
-              {action.isPending ? "Đang xử lý..." : "Xác nhận"}
+              {action.isPending ? t("common.states.processing") : t("common.actions.confirm")}
             </Button>
-            <Button variant="outline" onClick={() => setConfirming(null)}>Hủy</Button>
+            <Button variant="outline" onClick={() => setConfirming(null)}>{t("common.actions.cancel")}</Button>
           </div>
         </div>
       )}
@@ -524,11 +504,11 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
           onSubmit={async (startAt, endAt) => {
             try {
               await reschedule.mutateAsync({ id: booking.id, startAt, endAt });
-              toast({ type: "success", title: "Đã dời lịch thành công" });
+              toast({ type: "success", title: t("booking.rescheduled") });
               setRescheduling(false);
               onClose();
             } catch (e) {
-              toast({ type: "error", title: "Dời lịch thất bại", description: toErrorMessage(e) });
+              toast({ type: "error", title: t("booking.rescheduleFailed"), description: toErrorMessage(e) });
             }
           }}
         />
@@ -546,6 +526,8 @@ const DEV_PAYMENT_ENABLED =
 
 /** UC-052: hiển thị VietQR để khách chuyển khoản; Casso tự đối soát (UC-053). */
 function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClose: () => void }) {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const { toast } = useToast();
   const qc = useQueryClient();
   const query = useBookingPayment(bookingId ?? 0, bookingId !== null);
@@ -553,62 +535,61 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
   const simulate = useMutation({
     mutationFn: () => bookingService.simulatePayment(bookingId!),
     onSuccess: () => {
-      toast({ type: "success", title: "Đã mô phỏng thanh toán thành công" });
+      toast({ type: "success", title: t("booking.paySimulated") });
       qc.invalidateQueries({ queryKey: bookingKeys.all });
     },
-    onError: (e) => toast({ type: "error", title: "Không mô phỏng được thanh toán", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("booking.paySimulateFailed"), description: toErrorMessage(e) }),
   });
   if (bookingId === null) return null;
   const order = query.data;
 
   return (
-    <Dialog open title="Thanh toán VietQR" onClose={onClose}>
+    <Dialog open title={t("booking.payTitle")} onClose={onClose}>
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError || !order ? (
-        <EmptyState title="Không tải được đơn thanh toán" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("booking.payLoadError")} description={toErrorMessage(query.error)} />
       ) : order.status === "PAID" ? (
         // Bug 9: kết quả thanh toán hiển thị rõ ràng thay vì chỉ dòng trạng thái thô.
         <div className="grid gap-3 py-4 text-center">
-          <CalendarCheck2 className="mx-auto size-12 text-emerald-600" />
-          <p className="text-lg font-black text-emerald-600">Thanh toán thành công!</p>
+          <CalendarCheck2 className="mx-auto size-12 text-success" />
+          <p className="text-lg font-black text-success">{t("booking.paySuccess")}</p>
           <p className="text-sm text-muted-foreground">
-            Đã nhận {money(order.amount)} cho booking #{bookingId}. Yêu cầu đã được chuyển
-            cho phòng gym xác nhận — bạn sẽ nhận thông báo (và email nếu đã bật) khi gym phản hồi.
+            {t("booking.payReceived", { amount: money(order.amount), id: bookingId })}
           </p>
-          <Button className="mx-auto" onClick={onClose}>Đóng</Button>
+          <Button className="mx-auto" onClick={onClose}>{t("common.actions.close")}</Button>
         </div>
       ) : order.status === "EXPIRED" || order.status === "CANCELLED" ? (
         <div className="grid gap-3 py-4 text-center">
-          <QrCode className="mx-auto size-12 text-red-500" />
-          <p className="text-lg font-black text-red-600">
-            {order.status === "EXPIRED" ? "Đơn thanh toán đã hết hạn" : "Đơn thanh toán đã bị hủy"}
+          <QrCode className="mx-auto size-12 text-destructive" />
+          <p className="text-lg font-black text-destructive">
+            {order.status === "EXPIRED" ? t("booking.orderExpired") : t("booking.orderCancelled")}
           </p>
           <p className="text-sm text-muted-foreground">
             {order.status === "EXPIRED"
-              ? "Booking đã bị hủy vì quá hạn thanh toán; điểm/voucher đã dùng (nếu có) được hoàn lại. Vui lòng tạo lịch đặt mới."
-              : "Đơn đã đóng. Nếu bạn đã chuyển khoản, vui lòng liên hệ hỗ trợ để đối soát."}
+              ? t("booking.orderExpiredBody")
+              : t("booking.orderClosedBody")}
           </p>
-          <Button className="mx-auto" onClick={onClose}>Đóng</Button>
+          <Button className="mx-auto" onClick={onClose}>{t("common.actions.close")}</Button>
         </div>
       ) : (
         <div className="grid gap-4 text-center">
           <p className="text-sm text-muted-foreground">
-            Quét mã bằng app ngân hàng và giữ nguyên nội dung chuyển khoản
+            {t("booking.scanHintPrefix")}
             <strong className="mx-1 text-foreground">{order.refCode}</strong>
-            để hệ thống tự đối soát.
+            {t("booking.scanHintSuffix")}
           </p>
           {order.qrContent && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={order.qrContent} alt="VietQR" className="mx-auto w-64 max-w-full rounded-xl border border-border" />
           )}
           <div className="grid gap-1 text-sm">
-            <span>Số tiền: <strong>{money(order.amount)}</strong></span>
-            <span>Trạng thái: <strong>Chờ thanh toán</strong></span>
-            {order.expiresAt && <span className="text-muted-foreground">Hết hạn: {dateTimeText(order.expiresAt)}</span>}
+            <span>{t("booking.amountLabel")} <strong>{money(order.amount)}</strong></span>
+            <span>{t("booking.statusAwaitingPayment")}</span>
+            {order.expiresAt && <span className="text-muted-foreground">{t("booking.expiresLabel")} {fmt.dateTime(order.expiresAt)}</span>}
           </div>
           <p className="text-xs text-muted-foreground">
-            Sau khi chuyển khoản, trạng thái sẽ tự cập nhật trong vài phút. Bạn có thể đóng cửa sổ này.
+            {t("booking.afterTransfer")}
           </p>
           {DEV_PAYMENT_ENABLED && (
             <Button
@@ -617,7 +598,7 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
               disabled={simulate.isPending}
               onClick={() => simulate.mutate()}
             >
-              {simulate.isPending ? "Đang mô phỏng..." : "Mô phỏng thanh toán (chỉ môi trường dev)"}
+              {simulate.isPending ? t("booking.simulating") : t("booking.simulatePay")}
             </Button>
           )}
         </div>
@@ -644,6 +625,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
   initialGymId?: number;
   initialPackageId?: number;
 }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const create = useCreateBooking();
   const checkoutAction = useBookingAction("customer");
@@ -656,15 +638,16 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
   const joinWaitlist = useMutation({
     mutationFn: () => bookingService.joinWaitlist(waitlistOffer!),
     onSuccess: () => {
-      toast({ type: "success", title: "Đã vào danh sách chờ", description: "Xem tại mục 'Danh sách chờ của tôi'." });
+      toast({ type: "success", title: t("booking.joinedWaitlist"), description: "Xem tại mục 'Danh sách chờ của tôi'." });
       setWaitlistOffer(null);
     },
-    onError: (e) => toast({ type: "error", title: "Không vào được danh sách chờ", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("booking.joinWaitlistFailed"), description: toErrorMessage(e) }),
   });
   const loyalty = useQuery({ queryKey: ["loyalty", "balance-mini"], queryFn: () => loyaltyService.balance(), enabled: open });
 
-  const form = useForm<z.infer<typeof createBookingSchema>>({
-    resolver: zodResolver(createBookingSchema),
+  const schemas = useBookingSchemas();
+  const form = useForm<z.infer<typeof schemas.createBooking>>({
+    resolver: zodResolver(schemas.createBooking),
     defaultValues: {
       mode: "new",
       gymId: 0,
@@ -750,7 +733,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
   const catalogItems = itemType === "service" ? (services.data ?? []) : (packages.data ?? []);
 
   return (
-    <Dialog open={open} title="Tạo lịch đặt" onClose={onClose}>
+    <Dialog open={open} title={t("booking.create")} onClose={onClose}>
       <form
         className="grid gap-4 sm:grid-cols-2"
         onSubmit={form.handleSubmit(async (values) => {
@@ -770,13 +753,13 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
               try {
                 await voucherService.apply(booking.id, voucherCode.trim());
               } catch (err) {
-                toast({ type: "warning", title: "Không áp được voucher", description: toErrorMessage(err) });
+                toast({ type: "warning", title: t("booking.voucherFailed"), description: toErrorMessage(err) });
               }
             } else if (values.mode === "new" && Number(pointsToUse) > 0) {
               try {
                 await loyaltyService.apply(booking.id, Number(pointsToUse));
               } catch (err) {
-                toast({ type: "warning", title: "Không dùng được điểm", description: toErrorMessage(err) });
+                toast({ type: "warning", title: t("booking.pointsFailed"), description: toErrorMessage(err) });
               }
             }
             // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
@@ -785,18 +768,18 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
               const payable = (checked as Booking).payableAmount ?? 0;
               toast({
                 type: "success",
-                title: payable > 0 ? "Đã tạo lịch — vui lòng thanh toán VietQR" : "Đã gửi yêu cầu cho phòng gym",
+                title: payable > 0 ? t("booking.createdPayNow") : t("booking.sentToGym"),
               });
               form.reset();
               onCheckedOut(booking.id, payable);
             } catch (checkoutError) {
               // B-31: checkout lỗi -> hủy nháp vừa tạo để không dồn nháp trùng khung giờ
               // (trước đây mỗi lần thử lại để lại 1 "Bản nháp" giống hệt).
-              await bookingService.cancel(booking.id, { reason: "Tự hủy nháp do checkout thất bại" }).catch(() => undefined);
+              await bookingService.cancel(booking.id, { reason: t("booking.autoCancelDraft") }).catch(() => undefined);
               throw checkoutError;
             }
           } catch (error) {
-            toast({ type: "error", title: "Không thể đặt lịch", description: toErrorMessage(error) });
+            toast({ type: "error", title: t("booking.createFailed"), description: toErrorMessage(error) });
             // C-2 (UC-044): chỉ mời vào danh sách chờ khi slot thật sự kín/bận (409 do
             // capacity hoặc PT trùng lịch) — không mời khi lỗi cấu hình giờ hoạt động.
             const status = (error as { status?: number })?.status;
@@ -813,7 +796,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
         })}
       >
         <div className="sm:col-span-2">
-          <FieldShell label="Hình thức">
+          <FieldShell label={t("booking.modeLabel")}>
             <Controller
               control={form.control}
               name="mode"
@@ -824,9 +807,11 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="new">Đặt & thanh toán mới</SelectItem>
+                    <SelectItem value="new">{t("booking.modeNew")}</SelectItem>
                     <SelectItem value="package" disabled={!usablePackages.length}>
-                      Dùng buổi từ gói đã mua{usablePackages.length ? ` (${usablePackages.length})` : " (không có)"}
+                      {usablePackages.length
+                        ? t("booking.modePackageCount", { count: usablePackages.length })
+                        : t("booking.modePackageNone")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -837,7 +822,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
 
         {mode === "package" ? (
           <div className="sm:col-span-2">
-            <FieldShell label="Gói đã mua" error={form.formState.errors.customerPackageId}>
+            <FieldShell label={t("booking.purchasedPackage")} error={form.formState.errors.customerPackageId}>
               <Controller
                 control={form.control}
                 name="customerPackageId"
@@ -846,11 +831,11 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                     value={field.value ? String(field.value) : ""}
                     onValueChange={(v) => { field.onChange(Number(v)); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
                   >
-                    <SelectTrigger><SelectValue placeholder="Chọn gói" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("booking.selectPackage")} /></SelectTrigger>
                     <SelectContent>
                       {usablePackages.map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>
-                          {p.packageName} · {p.gymName} · còn {p.sessionsRemaining}/{p.sessionsTotal} buổi
+                          {t("booking.packageRemaining", { name: p.packageName ?? "", gym: p.gymName ?? "", left: p.sessionsRemaining ?? 0, total: p.sessionsTotal ?? 0 })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -862,7 +847,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
         ) : (
           <>
             <div className="sm:col-span-2">
-              <FieldShell label="Phòng gym" error={form.formState.errors.gymId}>
+              <FieldShell label={t("booking.gymLabel")} error={form.formState.errors.gymId}>
                 <Controller
                   control={form.control}
                   name="gymId"
@@ -872,7 +857,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                       onValueChange={(v) => { field.onChange(Number(v)); form.setValue("itemId", 0); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={gyms.isFetching ? "Đang tải..." : "Chọn phòng gym"} />
+                        <SelectValue placeholder={gyms.isFetching ? t("common.states.loading") : t("booking.selectGym")} />
                       </SelectTrigger>
                       <SelectContent>
                         {gyms.data?.content?.map((g) => (
@@ -885,7 +870,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
               </FieldShell>
             </div>
 
-            <FieldShell label="Loại" error={form.formState.errors.itemType}>
+            <FieldShell label={t("booking.typeLabel")} error={form.formState.errors.itemType}>
               <Controller
                 control={form.control}
                 name="itemType"
@@ -893,15 +878,15 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                   <Select value={field.value} onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="service">Dịch vụ buổi lẻ</SelectItem>
-                      <SelectItem value="package">Gói tập</SelectItem>
+                      <SelectItem value="service">{t("booking.typeSingle")}</SelectItem>
+                      <SelectItem value="package">{t("booking.typePackage")}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
             </FieldShell>
 
-            <FieldShell label={itemType === "service" ? "Dịch vụ" : "Gói tập"} error={form.formState.errors.itemId}>
+            <FieldShell label={itemType === "service" ? t("marketplace.services") : t("booking.typePackage")} error={form.formState.errors.itemId}>
               <Controller
                 control={form.control}
                 name="itemId"
@@ -912,7 +897,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                     disabled={!gymId || !catalogItems.length}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={!gymId ? "Chọn gym trước" : (services.isFetching || packages.isFetching) ? "Đang tải..." : catalogItems.length ? "Chọn" : "Gym chưa công bố mục nào"} />
+                      <SelectValue placeholder={!gymId ? t("booking.selectGymFirst") : (services.isFetching || packages.isFetching) ? t("common.states.loading") : catalogItems.length ? t("booking.selectPlaceholder") : t("booking.gymHasNothing")} />
                     </SelectTrigger>
                     <SelectContent>
                       {catalogItems.map((item) => (
@@ -928,7 +913,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
           </>
         )}
 
-        <FieldShell label="Chi nhánh (tùy chọn)" error={form.formState.errors.branchId}>
+        <FieldShell label={t("booking.branchOptional")} error={form.formState.errors.branchId}>
           <Controller
             control={form.control}
             name="branchId"
@@ -938,9 +923,9 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                 onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
                 disabled={!gymId || !branches.data?.length}
               >
-                <SelectTrigger><SelectValue placeholder="Không chọn" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("booking.noSelection")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Không chọn</SelectItem>
+                  <SelectItem value="">{t("booking.noSelection")}</SelectItem>
                   {branches.data?.map((b) => (
                     <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
                   ))}
@@ -950,7 +935,7 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
           />
         </FieldShell>
 
-        <FieldShell label="Huấn luyện viên (tùy chọn)" error={form.formState.errors.ptId}>
+        <FieldShell label={t("booking.trainerOptional")} error={form.formState.errors.ptId}>
           <Controller
             control={form.control}
             name="ptId"
@@ -960,9 +945,9 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
                 onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
                 disabled={!gymId || !pts.data?.content?.length}
               >
-                <SelectTrigger><SelectValue placeholder="Gym tự phân công" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("booking.gymAssigns")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Gym tự phân công</SelectItem>
+                  <SelectItem value="">{t("booking.gymAssigns")}</SelectItem>
                   {pts.data?.content?.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)}>
                       {p.displayName}{p.specialization ? ` · ${p.specialization}` : ""}
@@ -974,26 +959,38 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
           />
         </FieldShell>
 
-        <FieldShell label="Ngày tập" error={form.formState.errors.bookingDate}>
+        <FieldShell label={t("booking.bookingDate")} error={form.formState.errors.bookingDate}>
           <Controller
             control={form.control}
             name="bookingDate"
             render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
           />
         </FieldShell>
-        <FieldShell label="Giờ bắt đầu" error={form.formState.errors.startTime}>
-          <Input type="time" {...form.register("startTime")} />
+        <FieldShell label={t("booking.startTime")} error={form.formState.errors.startTime}>
+          <Controller
+            control={form.control}
+            name="startTime"
+            render={({ field }) => (
+              <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />
+            )}
+          />
         </FieldShell>
-        <FieldShell label="Giờ kết thúc" error={form.formState.errors.endTime}>
-          <Input type="time" {...form.register("endTime")} />
+        <FieldShell label={t("booking.endTime")} error={form.formState.errors.endTime}>
+          <Controller
+            control={form.control}
+            name="endTime"
+            render={({ field }) => (
+              <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />
+            )}
+          />
         </FieldShell>
 
         {mode === "new" && (
           <>
-            <FieldShell label="Mã giảm giá (tùy chọn)">
+            <FieldShell label={t("booking.voucherOptional")}>
               <Input value={voucherCode} onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); if (e.target.value) setPointsToUse(""); }} placeholder="VD: SALE10" />
             </FieldShell>
-            <FieldShell label={`Dùng điểm (còn ${loyalty.data?.pointsBalance ?? 0})`}>
+            <FieldShell label={t("booking.usePoints", { balance: loyalty.data?.pointsBalance ?? 0 })}>
               <Input
                 type="number"
                 min={0}
@@ -1008,20 +1005,20 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
         )}
 
         <div className="sm:col-span-2">
-          <FieldShell label="Ghi chú" error={form.formState.errors.note}>
-            <Textarea {...form.register("note")} placeholder="Mục tiêu, yêu cầu đặc biệt..." />
+          <FieldShell label={t("booking.noteOptional")} error={form.formState.errors.note}>
+            <Textarea {...form.register("note")} placeholder={t("booking.notePlaceholder2")} />
           </FieldShell>
         </div>
 
         {/* B-31: kết quả pre-check khả dụng cho khung giờ đã chọn */}
         {precheckEnabled && precheck.data && (
           precheck.data.available ? (
-            <p className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">
-              ✓ Khung giờ này còn trống — có thể đặt.
+            <p className="sm:col-span-2 rounded-xl border border-success/30 bg-success-muted px-3 py-2 text-xs font-semibold text-success">
+              {t("booking.slotAvailable")}
             </p>
           ) : (
-            <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              <p className="font-semibold">Khung giờ này không khả dụng:</p>
+            <div className="sm:col-span-2 rounded-xl border border-warning/30 bg-warning-muted px-3 py-2 text-xs text-warning">
+              <p className="font-semibold">{t("booking.slotUnavailable")}</p>
               <ul className="mt-1 list-inside list-disc">
                 {precheck.data.reasons.map((r, i) => <li key={i}>{r}</li>)}
               </ul>
@@ -1030,23 +1027,23 @@ function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initia
         )}
 
         {waitlistOffer && (
-          <div className="sm:col-span-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-black text-amber-800">Khung giờ đã kín — vào danh sách chờ?</p>
-            <p className="mt-1 text-xs text-amber-700">
-              Khi có chỗ trống, phòng gym sẽ ưu tiên liên hệ theo thứ tự chờ.
+          <div className="sm:col-span-2 rounded-2xl border border-warning/30 bg-warning-muted p-4">
+            <p className="text-sm font-black text-warning">{t("booking.slotFullOfferTitle")}</p>
+            <p className="mt-1 text-xs text-warning">
+              {t("booking.slotFullOfferBody")}
             </p>
             <div className="mt-2 flex gap-2">
               <Button type="button" disabled={joinWaitlist.isPending} onClick={() => joinWaitlist.mutate()}>
-                {joinWaitlist.isPending ? "Đang xử lý..." : "Vào danh sách chờ"}
+                {joinWaitlist.isPending ? t("common.states.processing") : t("booking.joinWaitlist")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setWaitlistOffer(null)}>Bỏ qua</Button>
+              <Button type="button" variant="outline" onClick={() => setWaitlistOffer(null)}>{t("booking.skip")}</Button>
             </div>
           </div>
         )}
 
         <Button className="sm:col-span-2" disabled={create.isPending || checkoutAction.isPending}>
           <CalendarCheck2 className="size-4" />
-          {create.isPending || checkoutAction.isPending ? "Đang xử lý..." : "Đặt lịch & thanh toán"}
+          {create.isPending || checkoutAction.isPending ? t("common.states.processing") : t("booking.bookAndPay")}
         </Button>
       </form>
     </Dialog>

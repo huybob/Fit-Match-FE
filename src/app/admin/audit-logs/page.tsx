@@ -2,20 +2,23 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { adminService } from "@/services/admin.service";
-import { EmptyState } from "@/shared/components/common/empty-state";
-import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
+import { useTranslations } from "next-intl";
+import { DataTable } from "@/shared/components/common/data-table";
+import { Pagination } from "@/shared/components/ui/pagination";
+import { TableEllipsis } from "@/shared/components/ui/table";
+import { useFormatters } from "@/i18n/use-formatters";
 
-function timeText(v?: string) {
-  return v ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "medium" }).format(new Date(v)) : "—";
-}
 
 /** UC-077: nhật ký kiểm toán (Admin). Tiêu thụ /api/admin/audit-logs. */
 export default function AdminAuditLogsRoute() {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const [action, setAction] = useState("");
   const [targetType, setTargetType] = useState("");
   const [actor, setActor] = useState("");
@@ -47,84 +50,95 @@ export default function AdminAuditLogsRoute() {
     <main className="flex-1 min-w-0 overflow-y-auto p-6">
       <section className="mb-6 rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
         <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-        <h1 className="text-3xl font-black">Nhật ký kiểm toán</h1>
+        <h1 className="text-3xl font-black">{t("admin.auditLogs.title")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Theo dõi các hành động nhạy cảm trên hệ thống (UC-077).
+          {t("admin.auditLogs.subtitle")}
         </p>
       </section>
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Hành động
+          {t("admin.auditLogs.action")}
           <Input value={action} onChange={(e) => setAction(e.target.value)} placeholder="VD: DISPUTE_RESOLVE" className="w-52" />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Đối tượng
+          {t("admin.auditLogs.target")}
           <Input value={targetType} onChange={(e) => setTargetType(e.target.value)} placeholder="VD: Booking" className="w-44" />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Người thực hiện
+          {t("admin.auditLogs.actor")}
           <Input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="username" className="w-44" />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Từ
-          <Input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} className="w-52" />
+          {t("admin.auditLogs.from")}
+          <DateTimePicker value={from} onChange={(v) => setFrom(v ?? "")} className="w-52" />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Đến
-          <Input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} className="w-52" />
+          {t("admin.auditLogs.to")}
+          <DateTimePicker value={to} onChange={(v) => setTo(v ?? "")} className="w-52" />
         </label>
-        <Button onClick={apply}>Lọc</Button>
+        <Button onClick={apply}>{t("common.actions.filter")}</Button>
       </div>
 
-      {query.isLoading ? (
-        <LoadingSkeleton />
-      ) : query.isError ? (
-        <EmptyState title="Không tải được nhật ký" description={toErrorMessage(query.error)} />
-      ) : !items.length ? (
-        <EmptyState title="Không có bản ghi" description="Chưa có hành động nào khớp bộ lọc." />
-      ) : (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-                <th className="p-3">Thời gian</th>
-                <th className="p-3">Hành động</th>
-                <th className="p-3">Đối tượng</th>
-                <th className="p-3">Người thực hiện</th>
-                <th className="p-3">Mô tả</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {items.map((l) => (
-                <tr key={l.id}>
-                  <td className="whitespace-nowrap p-3 text-muted-foreground">{timeText(l.timestamp)}</td>
-                  <td className="p-3">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-black">
-                      <ClipboardList className="size-3" />{l.action}
-                    </span>
-                  </td>
-                  <td className="p-3">{l.targetType}{l.targetId ? ` #${l.targetId}` : ""}</td>
-                  <td className="p-3 font-semibold">{l.actor}</td>
-                  <td className="p-3 text-muted-foreground">{l.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {(query.data?.totalPages ?? 0) > 1 && (
-        <div className="mt-5 flex items-center justify-end gap-3">
-          <Button variant="outline" size="icon-sm" disabled={page === 0} onClick={() => setPage((v) => v - 1)}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-sm font-bold">{page + 1} / {query.data?.totalPages}</span>
-          <Button variant="outline" size="icon-sm" disabled={query.data?.last} onClick={() => setPage((v) => v + 1)}>
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      )}
+      <DataTable
+        rows={items}
+        rowKey={(l) => String(l.id)}
+        loading={query.isLoading}
+        error={query.isError}
+        errorTitle={t("admin.auditLogs.loadError")}
+        errorDescription={query.isError ? toErrorMessage(query.error) : undefined}
+        onRetry={() => query.refetch()}
+        emptyTitle={t("admin.auditLogs.emptyTitle")}
+        emptyDescription={t("admin.auditLogs.emptyDescription")}
+        columns={[
+          {
+            key: "time",
+            header: t("admin.auditLogs.time"),
+            cellClassName: "whitespace-nowrap text-muted-foreground",
+            cell: (l) => fmt.dateTimeSeconds(l.timestamp),
+          },
+          {
+            key: "action",
+            header: t("admin.auditLogs.action"),
+            cell: (l) => (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-black">
+                <ClipboardList className="size-3" />
+                {l.action}
+              </span>
+            ),
+          },
+          {
+            key: "target",
+            header: t("admin.auditLogs.target"),
+            hideBelow: "sm",
+            cell: (l) => `${l.targetType}${l.targetId ? ` #${l.targetId}` : ""}`,
+          },
+          {
+            key: "actor",
+            header: t("admin.auditLogs.actor"),
+            cellClassName: "font-semibold",
+            cell: (l) => l.actor,
+          },
+          {
+            key: "description",
+            header: t("admin.auditLogs.description"),
+            hideBelow: "lg",
+            cellClassName: "text-muted-foreground",
+            cell: (l) => <TableEllipsis>{l.description}</TableEllipsis>,
+          },
+        ]}
+        footer={
+          <Pagination
+            page={page}
+            zeroBased
+            totalPages={query.data?.totalPages ?? 0}
+            totalItems={query.data?.totalElements}
+            pageSize={20}
+            onPageChange={setPage}
+            disabled={query.isLoading}
+          />
+        }
+      />
     </main>
   );
 }

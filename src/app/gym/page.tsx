@@ -17,23 +17,17 @@ import { reportService } from "@/services/report.service";
 import { bookingService } from "@/services/booking.service";
 import { formatCurrency } from "@/utils/format.util";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
-
-const BOOKING_STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Nháp",
-  PENDING_PAYMENT: "Chờ thanh toán",
-  PENDING_GYM: "Chờ xác nhận",
-  CONFIRMED: "Đã xác nhận",
-  REJECTED: "Từ chối",
-  CANCELLED: "Đã hủy",
-  NO_SHOW: "Vắng mặt",
-  COMPLETED: "Hoàn tất",
-};
+import { useTranslations } from "next-intl";
+import type { BookingStatus } from "@/types/Booking";
+import { useFormatters } from "@/i18n/use-formatters";
 
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
 export default function GymDashboardPage() {
+  const t = useTranslations();
+  const fmt = useFormatters();
   const { user } = useAuthStore();
   const displayName = user?.fullName ?? user?.username ?? "Gym";
 
@@ -61,11 +55,11 @@ export default function GymDashboardPage() {
   const r = report.data;
   const byStatus = r?.bookingsByStatus ?? {};
   const stats = [
-    { label: "Booking (30 ngày)", value: r ? String(r.totalBookings) : "…", icon: CalendarCheck2, iconBg: "bg-blue-500" },
-    { label: "Hoàn tất", value: r ? String(byStatus.COMPLETED ?? 0) : "…", icon: ShieldCheck, iconBg: "bg-green-500" },
-    { label: "Đã hủy / vắng mặt", value: r ? String((byStatus.CANCELLED ?? 0) + (byStatus.NO_SHOW ?? 0)) : "…", icon: XCircle, iconBg: "bg-red-500" },
-    { label: "Đã giải ngân (net)", value: r ? formatCurrency(r.releasedNet) : "…", icon: DollarSign, iconBg: "bg-purple-500" },
-    { label: "Ví khả dụng", value: r?.walletAvailable != null ? formatCurrency(r.walletAvailable) : "…", icon: WalletCards, iconBg: "bg-orange-500" },
+    { label: t("gym.dashboard.bookings30d"), value: r ? String(r.totalBookings) : "…", icon: CalendarCheck2, iconBg: "bg-primary" },
+    { label: t("common.bookingStatus.COMPLETED"), value: r ? String(byStatus.COMPLETED ?? 0) : "…", icon: ShieldCheck, iconBg: "bg-success" },
+    { label: t("gym.dashboard.cancelledNoShow"), value: r ? String((byStatus.CANCELLED ?? 0) + (byStatus.NO_SHOW ?? 0)) : "…", icon: XCircle, iconBg: "bg-destructive" },
+    { label: t("gym.dashboard.paidOutNet"), value: r ? formatCurrency(r.releasedNet) : "…", icon: DollarSign, iconBg: "bg-info" },
+    { label: t("gym.dashboard.walletAvailable"), value: r?.walletAvailable != null ? formatCurrency(r.walletAvailable) : "…", icon: WalletCards, iconBg: "bg-warning" },
   ];
 
   const verified = verification.data?.verificationStatus === "APPROVED";
@@ -78,31 +72,31 @@ export default function GymDashboardPage() {
           {/* Welcome banner */}
           <div className="flex items-center justify-between bg-card rounded-2xl border border-border px-6 py-4 shadow-sm">
             <div>
-              <h1 className="text-xl font-bold text-foreground">Chào mừng trở lại, {displayName}!</h1>
+              <h1 className="text-xl font-bold text-foreground">{t("gym.dashboard.welcome", { name: displayName })}</h1>
               <div className="flex items-center gap-2 mt-1.5">
                 {verification.isLoading ? (
-                  <span className="text-xs text-muted-foreground">Đang tải trạng thái…</span>
+                  <span className="text-xs text-muted-foreground">{t("gym.dashboard.loadingStatus")}</span>
                 ) : verified ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold">
-                    <span className="size-1.5 rounded-full bg-emerald-500 inline-block" /> Đã xác minh
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success-muted text-success text-[11px] font-semibold">
+                    <span className="size-1.5 rounded-full bg-success inline-block" /> {t("gym.dashboard.verified")}
                   </span>
                 ) : (
-                  <Link href="/gym/verification" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[11px] font-semibold hover:bg-amber-200">
-                    <Clock className="size-3" /> Chưa xác minh — hoàn tất hồ sơ
+                  <Link href="/gym/verification" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-warning-muted text-warning text-[11px] font-semibold hover:bg-warning">
+                    <Clock className="size-3" /> {t("gym.dashboard.notVerified")}
                   </Link>
                 )}
               </div>
             </div>
             <Link href="/gym/bookings"
-              className="flex items-center gap-2 h-9 px-5 bg-primary hover:bg-primary/90 text-white text-sm font-semibold rounded-xl transition-colors shadow-md shadow-blue-200">
-              <Plus className="size-4" /> Quản lý đặt lịch
+              className="flex items-center gap-2 h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl transition-colors shadow-md shadow-primary/20">
+              <Plus className="size-4" /> {t("gym.dashboard.manageBookings")}
             </Link>
           </div>
 
           {/* Stats row — dữ liệu thật 30 ngày */}
           {report.isError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
-              Không tải được báo cáo vận hành. Thử lại sau.
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-6 py-4 text-sm text-destructive">
+              {t("gym.dashboard.reportError")}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -121,54 +115,54 @@ export default function GymDashboardPage() {
           <div className="grid gap-5 lg:grid-cols-2">
             {/* Booking theo trạng thái */}
             <section className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-              <h2 className="text-sm font-bold text-foreground mb-4">Booking theo trạng thái (30 ngày)</h2>
+              <h2 className="text-sm font-bold text-foreground mb-4">{t("gym.dashboard.byStatus")}</h2>
               {report.isLoading ? (
                 <div className="h-24 animate-pulse rounded-xl bg-muted" />
               ) : Object.keys(byStatus).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Chưa có booking nào trong kỳ.</p>
+                <p className="text-sm text-muted-foreground">{t("gym.dashboard.noBookingsPeriod")}</p>
               ) : (
                 <ul className="space-y-2">
                   {Object.entries(byStatus).map(([status, count]) => (
                     <li key={status} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{BOOKING_STATUS_LABEL[status] ?? status}</span>
+                      <span className="text-muted-foreground">{t(`common.bookingStatus.${status as BookingStatus}`)}</span>
                       <span className="font-bold text-foreground">{count}</span>
                     </li>
                   ))}
                 </ul>
               )}
               <Link href="/gym/revenue" className="mt-4 inline-block text-xs font-semibold text-primary hover:underline">
-                Xem báo cáo doanh thu đầy đủ →
+                {t("gym.dashboard.fullRevenueReport")}
               </Link>
             </section>
 
-            {/* Booking gần nhất */}
+            {/* {t("gym.dashboard.recentBookings")} */}
             <section className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-              <h2 className="text-sm font-bold text-foreground mb-4">Booking gần nhất</h2>
+              <h2 className="text-sm font-bold text-foreground mb-4">{t("gym.dashboard.recentBookings")}</h2>
               {recentBookings.isLoading ? (
                 <div className="h-24 animate-pulse rounded-xl bg-muted" />
               ) : !(recentBookings.data?.content ?? []).length ? (
-                <p className="text-sm text-muted-foreground">Chưa có booking nào.</p>
+                <p className="text-sm text-muted-foreground">{t("gym.dashboard.noBookings")}</p>
               ) : (
                 <ul className="space-y-2">
                   {(recentBookings.data?.content ?? []).map((b) => (
                     <li key={b.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 text-sm">
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">
-                          #{b.id} · {b.customerUsername ?? "—"} · {b.serviceName ?? b.packageName ?? "Buổi từ gói"}
+                          #{b.id} · {b.customerUsername ?? "—"} · {b.serviceName ?? b.packageName ?? t("gym.dashboard.fromPackage")}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {b.startAt ? new Date(b.startAt).toLocaleString("vi-VN") : "—"}
+                          {fmt.dateTime(b.startAt)}
                         </p>
                       </div>
                       <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        {BOOKING_STATUS_LABEL[b.status] ?? b.status}
+                        {t(`common.bookingStatus.${b.status}`)}
                       </span>
                     </li>
                   ))}
                 </ul>
               )}
               <Link href="/gym/bookings" className="mt-4 inline-block text-xs font-semibold text-primary hover:underline">
-                Xem tất cả →
+                {t("gym.dashboard.viewAll")}
               </Link>
             </section>
           </div>
