@@ -4,6 +4,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/shared/utils/cn.util";
+import { useTranslations } from "next-intl";
 
 const DialogRoot = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -18,7 +19,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     data-slot="dialog-overlay"
     className={cn(
-      "fixed inset-0 z-[90] bg-zinc-950/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[90] bg-foreground/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -32,6 +33,8 @@ const DialogContent = React.forwardRef<
     showClose?: boolean;
   }
 >(({ className, children, showClose = true, ...props }, ref) => {
+  const t = useTranslations();
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -39,7 +42,7 @@ const DialogContent = React.forwardRef<
         ref={ref}
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-[91] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-white/20 bg-gradient-to-b from-white to-zinc-50/80 p-6 shadow-2xl ring-1 ring-black/5 duration-200 max-h-[90vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "fixed left-1/2 top-1/2 z-[91] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-white/20 bg-gradient-to-b from-white to-muted/80 p-6 shadow-2xl ring-1 ring-black/5 duration-200 max-h-[90vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
@@ -47,11 +50,11 @@ const DialogContent = React.forwardRef<
         {children}
         {showClose && (
           <DialogPrimitive.Close
-            aria-label="Đóng"
-            className="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            aria-label={t("common.actions.close")}
+            className="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
           >
             <X className="size-5" />
-            <span className="sr-only">Đóng</span>
+            <span className="sr-only">{t("common.actions.close")}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

@@ -33,6 +33,15 @@ const buttonVariants = cva(
         lg: "h-12 rounded-xl px-7 text-base",
         icon: "size-11",
         "icon-sm": "size-9",
+        /**
+         * Hành động dạng chữ nằm LỌT trong dòng (ô bảng, dòng danh sách):
+         * không cao, không đệm, cỡ chữ do nơi gọi quyết định. Dùng kèm
+         * variant="link" để thay các <button className="text-primary
+         * hover:underline"> tự dựng mà không đổi bố cục.
+         */
+        // whitespace-normal: ghi đè whitespace-nowrap ở base — chữ trong dòng
+        // phải xuống dòng được, nếu không sẽ đẩy tràn ngang trên mobile.
+        inline: "h-auto whitespace-normal rounded-md p-0 text-left text-xs font-semibold",
       },
     },
     defaultVariants: {

@@ -21,10 +21,10 @@ const badgeVariants = cva(
         outline:
           "border-border bg-transparent text-foreground",
         success:
-          "border-emerald-200 bg-emerald-50 text-emerald-700",
+          "border-success/30 bg-success-muted text-success",
         warning:
-          "border-amber-200 bg-amber-50 text-amber-700",
-        info: "border-blue-200 bg-blue-50 text-blue-700",
+          "border-warning/30 bg-warning-muted text-warning",
+        info: "border-primary/20 bg-primary/10 text-primary",
       },
     },
     defaultVariants: {
