@@ -21,7 +21,9 @@ export function FieldShell({
       <Label>{label}</Label>
       {children}
       {error?.message && (
-        <p className="text-xs font-semibold text-destructive">{error.message}</p>
+        <p role="alert" aria-live="polite" className="text-xs font-semibold text-destructive">
+          {error.message}
+        </p>
       )}
     </div>
   );
@@ -30,7 +32,7 @@ export function FieldShell({
 export const inputClassName = cn(
   "flex h-11 w-full rounded-xl border border-input bg-card/90 px-3.5 text-sm font-semibold text-foreground shadow-sm outline-none transition",
   "placeholder:font-medium placeholder:text-muted-foreground",
-  "hover:border-[#b9bda8] focus-visible:border-[#88d900] focus-visible:ring-4 focus-visible:ring-ring/20",
+  "hover:border-ring/50 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20",
   "disabled:cursor-not-allowed disabled:opacity-60",
 );
 

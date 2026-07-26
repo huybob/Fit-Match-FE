@@ -1,1 +1,0 @@
-import{z}from"zod";export const reviewSchema=z.object({bookingId:z.number().int().positive(),rating:z.number().int().min(1).max(5),comment:z.string().max(2000).optional()});export const replySchema=z.object({reply:z.string().min(1).max(2000)});

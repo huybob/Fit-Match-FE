@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { CheckCircle, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,18 +14,14 @@ import { authService } from "@/services/auth.service";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Input } from "@/shared/components/ui/input";
+import { PasswordInput } from "@/shared/components/ui/password-input";
 import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
 import { FieldShell } from "./form-controls";
-import {
-  changePasswordSchema,
-  forgotPasswordSchema,
-  loginSchema,
-  registerSchema,
-  resendVerificationSchema,
-  resetPasswordSchema,
-} from "./schemas";
+import { useAuthSchemas } from "./use-auth-schemas";
+import { useTranslations } from "next-intl";
 
 function BackToLoginLink({ className }: { className?: string }) {
+  const t = useTranslations();
   const router = useRouter();
   const { status } = useAuthStore();
   const base = "text-primary hover:underline";
@@ -34,14 +30,14 @@ function BackToLoginLink({ className }: { className?: string }) {
   if (status === "authenticated") {
     return (
       <button onClick={() => router.back()} className={cls}>
-        ← Quay lại
+        {t("auth.back")}
       </button>
     );
   }
 
   return (
     <Link href="/login" className={cls}>
-      ← Quay lại đăng nhập
+      {t("auth.backToLogin")}
     </Link>
   );
 }
@@ -50,20 +46,21 @@ function BackToLoginLink({ className }: { className?: string }) {
 // ─── Login ────────────────────────────────────────────────────────────────────
 
 export function LoginForm() {
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const { toast } = useToast();
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
-  const [showPassword, setShowPassword] = useState(false);
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<z.infer<typeof schemas.login>>({
+    resolver: zodResolver(schemas.login),
     mode: "onTouched",
     defaultValues: { username: "", password: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof loginSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.login>) {
     try {
       const user = await login(values);
-      toast({ type: "success", title: "Đăng nhập thành công" });
+      toast({ type: "success", title: t("auth.loginSuccess") });
       // F-8: quay lại trang người dùng định vào (chỉ nhận path nội bộ, chống open-redirect).
       const returnUrl = new URLSearchParams(window.location.search).get("returnUrl");
       const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
@@ -73,15 +70,15 @@ export function LoginForm() {
       if (code === "EMAIL_NOT_VERIFIED") {
         toast({
           type: "warning",
-          title: "Email chưa được xác thực",
-          description: "Vui lòng kiểm tra email để xác thực tài khoản.",
+          title: t("auth.emailNotVerified"),
+          description: t("auth.emailNotVerifiedDesc"),
         });
         router.push("/resend-verification");
         return;
       }
       toast({
         type: "error",
-        title: "Có lỗi xảy ra",
+        title: t("auth.genericError"),
         description: toErrorMessage(error),
       });
     }
@@ -90,76 +87,67 @@ export function LoginForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Chào mừng trở lại</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("auth.welcomeBack")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Vui lòng nhập thông tin chi tiết để truy cập tài khoản của bạn.
+          {t("auth.loginHint")}
         </p>
       </div>
 
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Email hoặc tên đăng nhập</label>
+          <label className="text-sm font-medium text-foreground">{t("auth.identifierLabel")}</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
               autoComplete="username"
-              placeholder="ten@congty.com hoặc nguyenvana"
+              placeholder={t("auth.identifierPlaceholder")}
               className="pl-10 h-11 border-border rounded-lg"
               {...form.register("username")}
             />
           </div>
           {form.formState.errors.username && (
-            <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-foreground">Mật khẩu</label>
+            <label className="text-sm font-medium text-foreground">{t("auth.passwordLabel")}</label>
             <Link
               href="/forgot-password"
               className="text-xs font-medium text-primary hover:underline"
             >
-              Quên mật khẩu?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <PasswordInput
               autoComplete="current-password"
-              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 pr-10 h-11 border-border rounded-lg"
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("password")}
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
           </div>
           {form.formState.errors.password && (
-            <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
 
         <Button
-          className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+          {form.formState.isSubmitting ? t("common.states.processing") : t("auth.login")}
         </Button>
       </form>
 
       {/* F-37: gỡ nút Google giả (không handler, BE không có OAuth) — thêm lại khi có OAuth thật. */}
 
       <p className="text-center text-sm text-muted-foreground">
-        Bạn chưa có tài khoản?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/register" className="font-normal text-primary hover:underline">
-          Đăng ký
+          {t("auth.register")}
         </Link>
       </p>
     </div>
@@ -169,13 +157,13 @@ export function LoginForm() {
 // ─── Register ─────────────────────────────────────────────────────────────────
 
 export function RegisterForm() {
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const { toast } = useToast();
   const registerAccount = useAuthStore((state) => state.register);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const form = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<z.infer<typeof schemas.register>>({
+    resolver: zodResolver(schemas.register),
     mode: "onTouched",
     defaultValues: {
       username: "",
@@ -190,7 +178,7 @@ export function RegisterForm() {
   });
   const accountType = form.watch("accountType");
 
-  async function onSubmit(values: z.infer<typeof registerSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.register>) {
     // confirmPassword/terms chỉ dùng phía client — không gửi lên BE
     const { confirmPassword: _confirm, terms: _terms, ...payload } = values;
     try {
@@ -202,7 +190,7 @@ export function RegisterForm() {
     } catch (error) {
       toast({
         type: "error",
-        title: "Có lỗi xảy ra",
+        title: t("auth.genericError"),
         description: toErrorMessage(error),
       });
     }
@@ -217,17 +205,17 @@ export function RegisterForm() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{t("auth.checkEmailTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Chúng tôi đã gửi link xác thực đến{" "}
+            {t("auth.sentVerifyTo")}{" "}
             <span className="font-medium text-foreground">{form.getValues("email")}</span>.
-            Vui lòng kiểm tra hộp thư và nhấn vào link để kích hoạt tài khoản.
+            {t("auth.checkInboxHint")}
           </p>
         </div>
         <p className="text-sm text-muted-foreground">
-          Không nhận được email?{" "}
+          {t("auth.noEmailReceived")}{" "}
           <Link href="/resend-verification" className="text-primary hover:underline font-medium">
-            Gửi lại
+            {t("auth.resend")}
           </Link>
         </p>
         <p className="text-sm text-muted-foreground">
@@ -240,18 +228,18 @@ export function RegisterForm() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-3xl font-normal text-foreground">Tạo tài khoản của bạn</h1>
-        <p className="mt-2 text-base text-muted-foreground">Bắt đầu với FitMatch ngay hôm nay.</p>
+        <h1 className="text-3xl font-normal text-foreground">{t("auth.createAccountTitle")}</h1>
+        <p className="mt-2 text-base text-muted-foreground">{t("auth.createAccountHint")}</p>
       </div>
 
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-base text-foreground">Loại tài khoản</label>
+          <label className="text-base text-foreground">{t("auth.accountType")}</label>
           <div className="grid grid-cols-2 gap-4">
             {(
               [
-                { value: "CUSTOMER", label: "Khách hàng", hint: "Tìm và đặt lịch tập" },
-                { value: "GYM_OPERATOR", label: "Chủ phòng tập", hint: "Đăng ký & vận hành phòng tập" },
+                { value: "CUSTOMER", label: t("auth.roleCustomer"), hint: t("auth.roleCustomerHint") },
+                { value: "GYM_OPERATOR", label: t("auth.roleGym"), hint: t("auth.roleGymHint") },
               ] as const
             ).map((option) => (
               <button
@@ -274,19 +262,19 @@ export function RegisterForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-base text-foreground">Họ và Tên</label>
+            <label className="text-base text-foreground">{t("auth.fullName")}</label>
             <Input
               autoComplete="name"
-              placeholder="Nguyễn Văn A"
+              placeholder={t("auth.fullNamePlaceholder")}
               className="h-11 border-border rounded-lg text-base"
               {...form.register("fullName")}
             />
             {form.formState.errors.fullName && (
-              <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
+              <p className="text-xs text-destructive">{form.formState.errors.fullName.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
-            <label className="text-base text-foreground">Tên đăng nhập</label>
+            <label className="text-base text-foreground">{t("auth.username")}</label>
             <Input
               autoComplete="username"
               placeholder="nguyenvana"
@@ -294,14 +282,14 @@ export function RegisterForm() {
               {...form.register("username")}
             />
             {form.formState.errors.username && (
-              <p className="text-xs text-red-500">{form.formState.errors.username.message}</p>
+              <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-base text-foreground">Địa chỉ Email</label>
+            <label className="text-base text-foreground">{t("auth.email")}</label>
             <Input
               autoComplete="email"
               type="email"
@@ -310,11 +298,11 @@ export function RegisterForm() {
               {...form.register("email")}
             />
             {form.formState.errors.email && (
-              <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+              <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
             )}
           </div>
           <div className="space-y-1.5">
-            <label className="text-base text-foreground">Số điện thoại</label>
+            <label className="text-base text-foreground">{t("common.table.phone")}</label>
             <Input
               autoComplete="tel"
               placeholder="0901 234 567"
@@ -325,51 +313,34 @@ export function RegisterForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-base text-foreground">Mật khẩu</label>
+          <label className="text-base text-foreground">{t("auth.passwordLabel")}</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <PasswordInput
               autoComplete="new-password"
-              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 pr-10 h-11 border-border rounded-lg text-base"
+              className="pl-10 h-11 border-border rounded-lg text-base"
               {...form.register("password")}
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
           </div>
           {form.formState.errors.password && (
-            <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-base text-foreground">Xác nhận mật khẩu</label>
+          <label className="text-base text-foreground">{t("auth.confirmPassword")}</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <PasswordInput
               autoComplete="new-password"
-              type={showConfirmPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="pl-10 pr-10 h-11 border-border rounded-lg text-base"
+              className="pl-10 h-11 border-border rounded-lg text-base"
               {...form.register("confirmPassword")}
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-              aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              onClick={() => setShowConfirmPassword((v) => !v)}
-            >
-              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
           </div>
           {form.formState.errors.confirmPassword && (
-            <p className="text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>
           )}
         </div>
 
@@ -385,13 +356,13 @@ export function RegisterForm() {
                   className="mt-0.5"
                 />
                 <span className="text-base text-muted-foreground">
-                  Tôi đồng ý với{" "}
+                  {t("auth.agreeTo")}{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    Điều khoản Dịch vụ
+                    {t("auth.terms")}
                   </Link>{" "}
-                  và{" "}
+                  {t("auth.and")}{" "}
                   <Link href="#" className="text-primary hover:underline">
-                    Chính sách Bảo mật
+                    {t("auth.privacy")}
                   </Link>
                   .
                 </span>
@@ -399,24 +370,24 @@ export function RegisterForm() {
             )}
           />
           {form.formState.errors.terms && (
-            <p className="mt-1 text-xs text-red-500">{form.formState.errors.terms.message}</p>
+            <p className="mt-1 text-xs text-destructive">{form.formState.errors.terms.message}</p>
           )}
         </div>
 
         <Button
-          className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base font-normal rounded-lg gap-2"
+          className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-normal rounded-lg gap-2"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Đang xử lý..." : "Đăng ký →"}
+          {form.formState.isSubmitting ? t("common.states.processing") : t("auth.registerArrow")}
         </Button>
       </form>
 
       {/* F-37: gỡ nút Google/Apple giả (không handler, BE không có OAuth). */}
 
       <p className="text-center text-base text-muted-foreground pt-4">
-        Đã có tài khoản?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link href="/login" className="text-primary hover:underline">
-          Đăng nhập
+          {t("auth.login")}
         </Link>
       </p>
     </div>
@@ -426,16 +397,17 @@ export function RegisterForm() {
 // ─── Forgot Password ──────────────────────────────────────────────────────────
 
 export function ForgotPasswordForm() {
-  const { toast } = useToast();
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
+  const form = useForm<z.infer<typeof schemas.forgotPassword>>({
+    resolver: zodResolver(schemas.forgotPassword),
     mode: "onTouched",
     defaultValues: { email: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.forgotPassword>) {
     try {
       await authService.forgotPassword(values.email);
       setSentEmail(values.email);
@@ -456,10 +428,11 @@ export function ForgotPasswordForm() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{t("auth.checkEmailTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Nếu <span className="font-medium text-foreground">{sentEmail}</span> đã đăng ký, chúng tôi
-            sẽ gửi link đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra cả hộp thư spam.
+            {t("auth.forgotSentPrefix")}{" "}
+            <span className="font-medium text-foreground">{sentEmail}</span>{" "}
+            {t("auth.forgotSentSuffix")}
           </p>
         </div>
         <BackToLoginLink className="inline-block text-sm font-medium" />
@@ -470,14 +443,14 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Quên mật khẩu?</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("auth.forgotPassword")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Nhập địa chỉ email bạn đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu.
+          {t("auth.forgotHint")}
         </p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-foreground">{t("auth.email")}</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -489,14 +462,14 @@ export function ForgotPasswordForm() {
             />
           </div>
           {form.formState.errors.email && (
-            <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
           )}
         </div>
         <Button
-          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Đang gửi..." : "Gửi link đặt lại mật khẩu"}
+          {form.formState.isSubmitting ? t("common.states.submitting") : t("auth.sendResetLink")}
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground">
@@ -509,20 +482,20 @@ export function ForgotPasswordForm() {
 // ─── Reset Password ───────────────────────────────────────────────────────────
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const { toast } = useToast();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const form = useForm<z.infer<typeof resetPasswordSchema>>({
-    resolver: zodResolver(resetPasswordSchema),
+  const form = useForm<z.infer<typeof schemas.resetPassword>>({
+    resolver: zodResolver(schemas.resetPassword),
     mode: "onTouched",
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof resetPasswordSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.resetPassword>) {
     try {
       await authService.resetPassword(token, values.newPassword);
-      toast({ type: "success", title: "Mật khẩu đã được đặt lại thành công!" });
+      toast({ type: "success", title: t("auth.resetSuccess") });
       router.replace("/login");
     } catch (error) {
       const code = getErrorCode(error);
@@ -531,9 +504,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       const tokenInvalid = code === "VERIFICATION_TOKEN_INVALID" || code === "TOKEN_EXPIRED";
       toast({
         type: "error",
-        title: tokenInvalid ? "Link không hợp lệ hoặc đã hết hạn" : "Đặt lại mật khẩu thất bại",
+        title: tokenInvalid ? t("auth.linkInvalid") : t("auth.resetFailed"),
         description: tokenInvalid
-          ? "Vui lòng yêu cầu gửi lại link đặt lại mật khẩu."
+          ? t("auth.requestNewLink")
           : toErrorMessage(error),
       });
     }
@@ -542,62 +515,45 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Đặt lại mật khẩu</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("auth.resetTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("auth.resetHint")}</p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Mật khẩu mới</label>
+          <label className="text-sm font-medium text-foreground">{t("auth.newPassword")}</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <PasswordInput
               autoComplete="new-password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Tối thiểu 6 ký tự"
-              className="pl-10 pr-10 h-11 border-border rounded-lg"
+              placeholder={t("auth.min6")}
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("newPassword")}
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-              onClick={() => setShowPassword((v) => !v)}
-            >
-              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
           </div>
           {form.formState.errors.newPassword && (
-            <p className="text-xs text-red-500">{form.formState.errors.newPassword.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.newPassword.message}</p>
           )}
         </div>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Xác nhận mật khẩu</label>
+          <label className="text-sm font-medium text-foreground">{t("auth.confirmPassword")}</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-            <Input
+            <PasswordInput
               autoComplete="new-password"
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Nhập lại mật khẩu"
-              className="pl-10 pr-10 h-11 border-border rounded-lg"
+              placeholder={t("auth.reenterPassword")}
+              className="pl-10 h-11 border-border rounded-lg"
               {...form.register("confirmPassword")}
             />
-            <button
-              type="button"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-              aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              onClick={() => setShowConfirmPassword((v) => !v)}
-            >
-              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
           </div>
           {form.formState.errors.confirmPassword && (
-            <p className="text-xs text-red-500">{form.formState.errors.confirmPassword.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>
           )}
         </div>
         <Button
-          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Đang lưu..." : "Đặt lại mật khẩu"}
+          {form.formState.isSubmitting ? t("common.states.saving") : t("auth.resetTitle")}
         </Button>
       </form>
     </div>
@@ -607,16 +563,18 @@ export function ResetPasswordForm({ token }: { token: string }) {
 // ─── Resend Verification ──────────────────────────────────────────────────────
 
 export function ResendVerificationForm() {
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const { toast } = useToast();
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
-  const form = useForm<z.infer<typeof resendVerificationSchema>>({
-    resolver: zodResolver(resendVerificationSchema),
+  const form = useForm<z.infer<typeof schemas.resendVerification>>({
+    resolver: zodResolver(schemas.resendVerification),
     mode: "onTouched",
     defaultValues: { email: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof resendVerificationSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.resendVerification>) {
     try {
       await authService.resendVerification(values.email);
       setSentEmail(values.email);
@@ -624,10 +582,10 @@ export function ResendVerificationForm() {
     } catch (error) {
       const code = getErrorCode(error);
       if (code === "EMAIL_ALREADY_VERIFIED") {
-        toast({ type: "success", title: "Email đã được xác thực", description: "Bạn có thể đăng nhập ngay." });
+        toast({ type: "success", title: t("auth.emailVerified"), description: t("auth.canLoginNow") });
         return;
       }
-      toast({ type: "error", title: "Gửi thất bại", description: toErrorMessage(error) });
+      toast({ type: "error", title: t("auth.sendFailed"), description: toErrorMessage(error) });
     }
   }
 
@@ -640,11 +598,11 @@ export function ResendVerificationForm() {
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Email đã được gửi!</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{t("auth.emailSent")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Chúng tôi đã gửi link xác thực đến{" "}
-            <span className="font-medium text-foreground">{sentEmail}</span>. Link có hiệu lực trong
-            24 giờ.
+            {t("auth.sentVerifyTo")}{" "}
+            <span className="font-medium text-foreground">{sentEmail}</span>{t("auth.linkValidPrefix")}
+            {t("auth.linkValid24h")}
           </p>
         </div>
         <BackToLoginLink className="inline-block text-sm" />
@@ -655,14 +613,14 @@ export function ResendVerificationForm() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Gửi lại email xác thực</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("auth.resendVerify")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Nhập email đã đăng ký để nhận lại link xác thực tài khoản.
+          {t("auth.resendVerifyHint")}
         </p>
       </div>
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
+          <label className="text-sm font-medium text-foreground">{t("auth.email")}</label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -674,14 +632,14 @@ export function ResendVerificationForm() {
             />
           </div>
           {form.formState.errors.email && (
-            <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+            <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
           )}
         </div>
         <Button
-          className="w-full h-10 bg-primary hover:bg-primary/90 text-white rounded-lg"
+          className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg"
           disabled={form.formState.isSubmitting}
         >
-          {form.formState.isSubmitting ? "Đang gửi..." : "Gửi lại email xác thực"}
+          {form.formState.isSubmitting ? t("common.states.submitting") : t("auth.resendVerify")}
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground">
@@ -694,23 +652,25 @@ export function ResendVerificationForm() {
 // ─── Change Password ──────────────────────────────────────────────────────────
 
 export function ChangePasswordForm() {
+  const t = useTranslations();
+  const schemas = useAuthSchemas();
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof changePasswordSchema>>({
-    resolver: zodResolver(changePasswordSchema),
+  const form = useForm<z.infer<typeof schemas.changePassword>>({
+    resolver: zodResolver(schemas.changePassword),
     mode: "onTouched",
     defaultValues: { oldPassword: "", newPassword: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof changePasswordSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.changePassword>) {
     try {
       await authService.changePassword(values);
       form.reset();
-      toast({ type: "success", title: "Đổi mật khẩu thành công" });
+      toast({ type: "success", title: t("auth.passwordChanged") });
     } catch (error) {
       toast({
         type:
           getErrorCode(error) === "INVALID_CREDENTIALS" ? "warning" : "error",
-        title: "Có lỗi xảy ra",
+        title: t("auth.genericError"),
         description: toErrorMessage(error),
       });
     }
@@ -719,7 +679,7 @@ export function ChangePasswordForm() {
   return (
     <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldShell
-        label="Mật khẩu hiện tại"
+        label={t("auth.currentPassword")}
         error={form.formState.errors.oldPassword}
       >
         <Input
@@ -729,7 +689,7 @@ export function ChangePasswordForm() {
         />
       </FieldShell>
       <FieldShell
-        label="Mật khẩu mới"
+        label={t("auth.newPassword")}
         error={form.formState.errors.newPassword}
       >
         <Input
@@ -739,7 +699,7 @@ export function ChangePasswordForm() {
         />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
+        {form.formState.isSubmitting ? t("common.states.processing") : "Lưu thay đổi"}
       </Button>
     </form>
   );
