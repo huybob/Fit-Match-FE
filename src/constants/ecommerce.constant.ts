@@ -2,7 +2,6 @@ export const appRoutes = {
   home: "/",
   login: "/login",
   register: "/register",
-  packages: "/packages",
   gyms: "/gyms",
   trainers: "/trainers",
   booking: "/booking",
