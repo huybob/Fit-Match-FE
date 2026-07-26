@@ -17,7 +17,7 @@ export function GuestGuard({ children }: { children: ReactNode }) {
   if (status === "idle" || status === "loading" || status === "authenticated") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-blue-500" />
+        <Loader2 className="size-8 animate-spin text-primary" />
       </div>
     );
   }
