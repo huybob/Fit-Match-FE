@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:ui": "node scripts/check-ui.mjs",
+    "verify": "npm run lint && tsc --noEmit && npm run check:ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
