@@ -3,134 +3,148 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Palette "sport tươi sáng — Volt Field": teal aqua (primary) + orange energy
+   (accent) + volt lime cho điểm nhấn CTA. Nền kem sáng, không dùng trắng-xanh.
+   Lưu ý a11y: primary/accent/success/warning/info còn được dùng làm CHỮ trên nền
+   sáng (text-primary 154 chỗ), nên bản light phải giữ tông đậm-vừa đạt AA —
+   màu rực như volt lime chỉ sống ở --fit-green (CTA có mực đậm đi kèm). */
 :root {
-  --background: #f7f7ef;
-  --foreground: #10130f;
+  --background: #fbfaf5;
+  --foreground: #12171a;
 
   --card: #ffffff;
-  --card-foreground: #10130f;
+  --card-foreground: #12171a;
 
   --popover: #ffffff;
-  --popover-foreground: #10130f;
+  --popover-foreground: #12171a;
 
-  --primary: #2563eb;
+  --primary: #00767f;
   --primary-foreground: #ffffff;
 
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
+  --secondary: #e8f2f2;
+  --secondary-foreground: #12171a;
 
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #eef2f1;
+  --muted-foreground: #5a6b6d;
 
-  --accent: #2563eb;
+  --accent: #cc4a10;
   --accent-foreground: #ffffff;
 
-  --destructive: #dc2626;
+  --destructive: #d81f3c;
   --destructive-foreground: #ffffff;
 
   /* Token trạng thái — trước đây các trang tự hardcode xanh/vàng/xanh dương. */
-  --success: #16a34a;
+  --success: #08874d;
   --success-foreground: #ffffff;
-  --success-muted: #dcfce7;
+  --success-muted: #d3f7e4;
 
-  --warning: #d97706;
+  --warning: #a86000;
   --warning-foreground: #ffffff;
-  --warning-muted: #fef3c7;
+  --warning-muted: #fdeecf;
 
-  --info: #0284c7;
+  --info: #0170ad;
   --info-foreground: #ffffff;
-  --info-muted: #e0f2fe;
+  --info-muted: #dcf0fd;
 
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #2563eb;
+  --border: #dfe6e4;
+  --input: #dfe6e4;
+  --ring: #00767f;
 
   /* Nét kẻ nền và thanh cuộn — cần đổi theo theme nên phải là token. */
-  --grid-line: rgba(16, 19, 15, 0.025);
-  --scrollbar-thumb: #b8bcaa;
+  --grid-line: rgba(18, 23, 26, 0.03);
+  --scrollbar-thumb: #b3c1bf;
 
-  --chart-1: #2563eb;
-  --chart-2: #ff6b22;
-  --chart-3: #10b981;
-  --chart-4: #3b82f6;
+  --chart-1: #00767f;
+  --chart-2: #ff6a1f;
+  --chart-3: #00c98d;
+  --chart-4: #8fe000;
   --chart-5: #8b5cf6;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #2563eb;
+  --sidebar-foreground: #12171a;
+  --sidebar-primary: #00767f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #2563eb;
+  --sidebar-accent: #e8f2f2;
+  --sidebar-accent-foreground: #12171a;
+  --sidebar-border: #dfe6e4;
+  --sidebar-ring: #00767f;
 
   --radius: 1rem;
 
-  --fit-ink: #10130f;
+  --fit-ink: #12171a;
   --fit-panel: #ffffff;
-  --fit-soft: #f1f2e8;
-  --fit-line: #dedfce;
+  --fit-soft: #eef2f1;
+  --fit-line: #dbe3e0;
   --fit-green: #a3ff12;
   --fit-orange: #ff6b22;
-  --fit-muted: #68705f;
+  --fit-muted: #5a6b6d;
   --fit-radius: 1rem;
-  --fit-shadow-sm: 0 8px 24px rgba(16, 19, 15, 0.06);
-  --fit-shadow-lg: 0 24px 80px rgba(16, 19, 15, 0.12);
+  --fit-shadow-sm: 0 8px 24px rgba(18, 23, 26, 0.06);
+  --fit-shadow-lg: 0 24px 80px rgba(18, 23, 26, 0.12);
 }
 
 .dark {
-  --background: #080a07;
-  --foreground: #f5f5ed;
+  --background: #07100f;
+  --foreground: #eef5f3;
 
-  --card: #121610;
-  --card-foreground: #f5f5ed;
+  --card: #0f1a19;
+  --card-foreground: #eef5f3;
 
-  --popover: #121610;
-  --popover-foreground: #f5f5ed;
+  --popover: #0f1a19;
+  --popover-foreground: #eef5f3;
 
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
+  /* Trên nền tối, teal/orange được đẩy sáng lên nên chữ đi cùng phải là mực đậm
+     (không phải trắng) mới đủ tương phản. */
+  --primary: #1fd1c6;
+  --primary-foreground: #03191b;
 
-  --secondary: #1a1f15;
-  --secondary-foreground: #f5f5ed;
+  --secondary: #162422;
+  --secondary-foreground: #eef5f3;
 
-  --muted: #1a1f15;
-  --muted-foreground: #a8ac99;
+  --muted: #162422;
+  --muted-foreground: #9fb3af;
 
-  --accent: #3b82f6;
-  --accent-foreground: #ffffff;
+  --accent: #ff7a3c;
+  --accent-foreground: #210a02;
 
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
+  --destructive: #ff5a6b;
+  --destructive-foreground: #2a0409;
 
   /* Bản dark sáng hơn để giữ đủ tương phản trên nền tối. */
-  --success: #22c55e;
-  --success-foreground: #05130a;
-  --success-muted: rgba(34, 197, 94, 0.16);
+  --success: #2ad98f;
+  --success-foreground: #04140c;
+  --success-muted: rgba(42, 217, 143, 0.16);
 
-  --warning: #f59e0b;
-  --warning-foreground: #1a1204;
-  --warning-muted: rgba(245, 158, 11, 0.16);
+  --warning: #ffb020;
+  --warning-foreground: #1c1203;
+  --warning-muted: rgba(255, 176, 32, 0.16);
 
-  --info: #38bdf8;
-  --info-foreground: #04141d;
-  --info-muted: rgba(56, 189, 248, 0.16);
+  --info: #4cc4ff;
+  --info-foreground: #03131d;
+  --info-muted: rgba(76, 196, 255, 0.16);
 
-  --border: rgba(245, 245, 237, 0.12);
-  --input: rgba(245, 245, 237, 0.18);
-  --ring: #3b82f6;
+  --border: rgba(238, 245, 243, 0.12);
+  --input: rgba(238, 245, 243, 0.18);
+  --ring: #1fd1c6;
 
-  --grid-line: rgba(245, 245, 237, 0.035);
-  --scrollbar-thumb: rgba(245, 245, 237, 0.22);
+  --grid-line: rgba(238, 245, 243, 0.035);
+  --scrollbar-thumb: rgba(238, 245, 243, 0.22);
 
-  --sidebar: #0f1310;
-  --sidebar-foreground: #f5f5ed;
-  --sidebar-primary: #3b82f6;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a1f15;
-  --sidebar-accent-foreground: #f5f5ed;
-  --sidebar-border: rgba(245, 245, 237, 0.1);
-  --sidebar-ring: #3b82f6;
+  /* Chart sáng hơn bản light để nổi trên nền tối. */
+  --chart-1: #1fd1c6;
+  --chart-2: #ff874a;
+  --chart-3: #2ee0a0;
+  --chart-4: #b6f226;
+  --chart-5: #a78bfa;
+
+  --sidebar: #0c1615;
+  --sidebar-foreground: #eef5f3;
+  --sidebar-primary: #1fd1c6;
+  --sidebar-primary-foreground: #03191b;
+  --sidebar-accent: #162422;
+  --sidebar-accent-foreground: #eef5f3;
+  --sidebar-border: rgba(238, 245, 243, 0.1);
+  --sidebar-ring: #1fd1c6;
 }
 
 @theme inline {
@@ -296,13 +310,13 @@ textarea {
       rgba(255, 107, 34, 0.13),
       transparent 30rem
     ),
-    #080a07;
+    #07100f;
 }
 
 .fit-card {
   border-color: var(--fit-line);
   background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 18px 60px rgba(16, 19, 15, 0.08);
+  box-shadow: 0 18px 60px rgba(18, 23, 26, 0.08);
 }
 
 .fit-surface {
@@ -314,13 +328,13 @@ textarea {
 }
 
 .dark .fit-surface {
-  border-color: rgba(245, 245, 237, 0.1);
-  background: rgba(18, 22, 16, 0.9);
+  border-color: rgba(238, 245, 243, 0.1);
+  background: rgba(15, 26, 25, 0.9);
 }
 
 .dark .fit-card {
-  border-color: rgba(245, 245, 237, 0.12);
-  background: rgba(18, 22, 16, 0.92);
+  border-color: rgba(238, 245, 243, 0.12);
+  background: rgba(15, 26, 25, 0.92);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
 }
 
@@ -342,8 +356,8 @@ html {
 }
 
 ::selection {
-  background: #34d399;
-  color: #09090b;
+  background: var(--fit-green);
+  color: var(--fit-ink);
 }
 
 @layer base {
