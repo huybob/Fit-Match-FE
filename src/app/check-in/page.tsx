@@ -7,8 +7,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { useTranslations } from "next-intl";
 
 export default function CheckInRedirect() {
+  const t = useTranslations();
   const router = useRouter();
   const { status, user } = useAuthStore();
 
@@ -23,7 +25,7 @@ export default function CheckInRedirect() {
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="Đang chuyển hướng" />
+      <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label={t("admin.redirecting")} />
     </div>
   );
 }

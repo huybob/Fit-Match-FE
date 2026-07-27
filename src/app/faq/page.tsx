@@ -6,24 +6,26 @@ import { cmsService } from "@/services/cms.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
 
 export default function FaqRoute() {
+  const t = useTranslations();
   const query = useQuery({ queryKey: ["public", "cms", "FAQ"], queryFn: () => cmsService.publicByType("FAQ") });
   const items = query.data ?? [];
 
   return (
     <SiteLayout>
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-black">Câu hỏi thường gặp</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Giải đáp các thắc mắc phổ biến về FitMatch.</p>
+        <h1 className="text-3xl font-black">{t("faq.title")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("faq.subtitle")}</p>
 
         <div className="mt-6">
           {query.isLoading ? (
             <LoadingSkeleton />
           ) : query.isError ? (
-            <EmptyState title="Không tải được" description={toErrorMessage(query.error)} />
+            <EmptyState title={t("common.states.errorTitle")} description={toErrorMessage(query.error)} />
           ) : !items.length ? (
-            <EmptyState title="Chưa có nội dung" description="Nội dung FAQ sẽ được cập nhật." />
+            <EmptyState title={t("faq.empty")} description={t("faq.emptyHint")} />
           ) : (
             <div className="space-y-3">
               {items.map((f) => (

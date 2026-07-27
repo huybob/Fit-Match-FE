@@ -78,7 +78,7 @@ const DropdownMenuItem = React.forwardRef<
     className={cn(
       "relative flex cursor-default select-none items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold outline-none transition-colors focus:bg-muted focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
       inset && "pl-8",
-      variant === "destructive" && "text-destructive focus:bg-red-50 focus:text-destructive",
+      variant === "destructive" && "text-destructive focus:bg-destructive/10 focus:text-destructive",
       className,
     )}
     {...props}

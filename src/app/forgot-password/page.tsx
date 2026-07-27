@@ -11,21 +11,24 @@ import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { forgotPasswordSchema } from "@/modules/forms/schemas";
+import { useAuthSchemas } from "@/modules/forms/use-auth-schemas";
+import { useTranslations } from "next-intl";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations();
   const [sent, setSent] = useState(false);
   const [sentEmail, setSentEmail] = useState("");
   const router = useRouter();
   const { status } = useAuthStore();
   const isAuthenticated = status === "authenticated";
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
+  const schemas = useAuthSchemas();
+  const form = useForm<z.infer<typeof schemas.forgotPassword>>({
+    resolver: zodResolver(schemas.forgotPassword),
     mode: "onTouched",
     defaultValues: { email: "" },
   });
 
-  async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
+  async function onSubmit(values: z.infer<typeof schemas.forgotPassword>) {
     try {
       await authService.forgotPassword(values.email);
     } catch {
@@ -38,22 +41,17 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex flex-col bg-muted/40">
       {/* Minimal Header */}
-      <header className="sticky top-0 z-10 h-16 flex items-center border-b border-border bg-card/80 backdrop-blur-md px-20">
+      <header className="sticky top-0 z-10 h-16 flex items-center border-b border-border bg-card/80 backdrop-blur-md px-4 sm:px-8 lg:px-20">
         <div className="flex w-full max-w-[1440px] mx-auto items-center justify-between">
           <Link href="/" className="text-sm text-primary tracking-tight font-normal">
             FitMatch
           </Link>
           {isAuthenticated ? (
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-1 text-sm text-primary hover:underline"
-            >
-              <ChevronLeft className="size-3.5" />
-              Quay lại
-            </button>
+            <Button variant="link" size="inline" onClick={() => router.back()} className="flex gap-1 text-sm text-primary">
+              <ChevronLeft className="size-3.5" />{t("common.actions.back")}</Button>
           ) : (
             <Link href="/login" className="text-sm text-primary hover:underline">
-              Quay lại Đăng nhập
+              {t("auth.backToLoginPlain")}
             </Link>
           )}
         </div>
@@ -62,11 +60,11 @@ export default function ForgotPasswordPage() {
       {/* Main — centered card */}
       <main className="flex-1 relative flex items-center justify-center px-6 overflow-hidden">
         {/* Ambient glow */}
-        <div className="pointer-events-none absolute -left-[10%] -top-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/20 blur-[60px]" />
-        <div className="pointer-events-none absolute -right-[10%] -bottom-[10%] w-[40%] h-[40%] rounded-full bg-blue-100/20 blur-[60px]" />
+        <div className="pointer-events-none absolute -left-[10%] -top-[10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[60px]" />
+        <div className="pointer-events-none absolute -right-[10%] -bottom-[10%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[60px]" />
 
         <div className="relative z-10 w-full max-w-[440px]">
-          <div className="bg-card border border-border rounded-xl shadow-md p-[41px] w-full">
+          <div className="bg-card border border-border rounded-2xl shadow-md p-[41px] w-full">
             {sent ? (
               /* ── Success state ── */
               <div className="flex flex-col items-center gap-5 text-center">
@@ -74,18 +72,18 @@ export default function ForgotPasswordPage() {
                   <CheckCircle className="size-7 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-semibold text-foreground">Kiểm tra email của bạn</h1>
+                  <h1 className="text-2xl font-semibold text-foreground">{t("auth.checkEmailTitle")}</h1>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Nếu{" "}
-                    <span className="font-medium text-foreground">{sentEmail}</span> đã đăng ký, chúng
-                    tôi sẽ gửi link đặt lại mật khẩu trong vài phút. Kiểm tra cả thư mục spam.
+                    {t("auth.forgotSentPrefix")}{" "}
+                    <span className="font-medium text-foreground">{sentEmail}</span>{" "}
+                    {t("auth.forgotSentSuffixShort")}
                   </p>
                 </div>
                 <div className="border-t border-border w-full pt-5">
                   <p className="text-xs text-muted-foreground/70">
-                    Bạn đã nhớ mật khẩu?{" "}
+                    {t("auth.rememberedPassword")}{" "}
                     <Link href="/login" className="text-primary hover:underline font-normal">
-                      Đăng nhập
+                      {t("auth.login")}
                     </Link>
                   </p>
                 </div>
@@ -95,10 +93,9 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-[23px]">
                 {/* Header */}
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-2xl font-semibold text-foreground">Quên mật khẩu?</h1>
+                  <h1 className="text-2xl font-semibold text-foreground">{t("auth.forgotTitle")}</h1>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại
-                    mật khẩu.
+                    {t("auth.forgotBody")}
                   </p>
                 </div>
 
@@ -108,7 +105,7 @@ export default function ForgotPasswordPage() {
                   onSubmit={form.handleSubmit(onSubmit)}
                 >
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-foreground">Địa chỉ Email</label>
+                    <label className="text-sm font-medium text-foreground">{t("auth.email")}</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-[14px] text-muted-foreground pointer-events-none" />
                       <Input
@@ -120,24 +117,24 @@ export default function ForgotPasswordPage() {
                       />
                     </div>
                     {form.formState.errors.email && (
-                      <p className="text-xs text-red-500">{form.formState.errors.email.message}</p>
+                      <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
                     )}
                   </div>
 
                   <Button
-                    className="w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-normal rounded-lg"
+                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-normal rounded-lg"
                     disabled={form.formState.isSubmitting}
                   >
-                    {form.formState.isSubmitting ? "Đang gửi..." : "Đặt lại mật khẩu"}
+                    {form.formState.isSubmitting ? t("common.states.submitting") : "Đặt lại mật khẩu"}
                   </Button>
                 </form>
 
                 {/* Footer link */}
                 <div className="border-t border-border pt-[25px] flex justify-center">
                   <p className="text-xs text-muted-foreground/70">
-                    Bạn đã nhớ mật khẩu?{" "}
+                    {t("auth.rememberedPassword")}{" "}
                     <Link href="/login" className="text-primary hover:underline font-normal">
-                      Đăng nhập
+                      {t("auth.login")}
                     </Link>
                   </p>
                 </div>
@@ -148,22 +145,22 @@ export default function ForgotPasswordPage() {
       </main>
 
       {/* Footer */}
-      <footer className="shrink-0 border-t border-border bg-card py-6 px-20">
+      <footer className="shrink-0 border-t border-border bg-card py-6 px-4 sm:px-8 lg:px-20">
         <div className="flex w-full max-w-[1440px] mx-auto items-center justify-between">
           <span className="text-sm text-foreground">FitMatch</span>
           <div className="flex gap-6">
             <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
-              Chính sách bảo mật
+              {t("site.privacy")}
             </Link>
             <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
-              Điều khoản dịch vụ
+              {t("site.terms")}
             </Link>
             <Link href="#" className="text-xs font-medium text-muted-foreground/70 underline hover:text-muted-foreground">
-              Hỗ trợ
+              {t("site.support")}
             </Link>
           </div>
           <span className="text-xs font-medium text-muted-foreground/70">
-            © 2024 FitMatch Marketplace. Bảo lưu mọi quyền.
+            {t("site.copyright")}
           </span>
         </div>
       </footer>

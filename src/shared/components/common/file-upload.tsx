@@ -5,6 +5,8 @@ import { UploadCloud, Loader2 } from "lucide-react";
 import { fileService, resolveFileUrl, type UploadFolder } from "@/services/file.service";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
+import { Button } from "@/shared/components/ui/button";
 
 const IMAGE_RE = /\.(png|jpe?g|gif|webp|bmp|svg|avif)(\?|$)/i;
 
@@ -13,7 +15,7 @@ function fileNameOf(url: string) {
     const clean = url.split("?")[0];
     return decodeURIComponent(clean.substring(clean.lastIndexOf("/") + 1)) || "Tệp đã tải lên";
   } catch {
-    return "Tệp đã tải lên";
+    return null;
   }
 }
 
@@ -28,7 +30,7 @@ export function FileUpload({
   value,
   onChange,
   folder = "documents",
-  label = "Tải lên tệp",
+  label,
   accept = "image/*,application/pdf",
   disabled = false,
   className = "",
@@ -41,6 +43,7 @@ export function FileUpload({
   disabled?: boolean;
   className?: string;
 }) {
+  const t = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   // Local preview + name for the file picked in this session (survives auth-only download endpoints).
@@ -82,6 +85,7 @@ export function FileUpload({
         ref={inputRef}
         type="file"
         accept={accept}
+        aria-label={label ?? t("upload.label")}
         className="hidden"
         disabled={disabled || uploading}
         onChange={(e) => handleFile(e.target.files?.[0])}
@@ -97,51 +101,51 @@ export function FileUpload({
               className="size-11 rounded-lg object-cover border border-border shrink-0 bg-muted/40"
             />
           ) : (
-            <div className="size-11 rounded-lg bg-blue-50 border border-blue-100 flex flex-col items-center justify-center shrink-0">
-              <span className="text-[9px] font-bold text-blue-600 leading-none">{extOf(displayName)}</span>
+            <div className="size-11 rounded-lg bg-primary/10 border border-primary/20 flex flex-col items-center justify-center shrink-0">
+              <span className="text-[9px] font-bold text-primary leading-none">{extOf(displayName ?? "")}</span>
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-emerald-700">Đã tải lên</p>
+            <p className="text-xs font-semibold text-success">{t("upload.done")}</p>
             <p className="text-[11px] text-muted-foreground truncate">{displayName}</p>
           </div>
           {!disabled && (
             <div className="flex items-center gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                disabled={uploading}
-                className="text-[11px] text-primary font-semibold hover:underline disabled:opacity-50"
-              >
-                {uploading ? "Đang tải..." : "Đổi tệp"}
-              </button>
-              <button
-                type="button"
-                onClick={clear}
-                className="text-[11px] text-red-500 font-semibold hover:underline"
-              >
-                Xóa
-              </button>
+              <Button variant="link" size="inline"
+ type="button"
+ onClick={() => inputRef.current?.click()}
+ disabled={uploading}
+ className="text-[11px] text-primary disabled:opacity-50"
+>
+                {uploading ? t("upload.loading") : t("upload.replace")}
+              </Button>
+              <Button variant="link" size="inline"
+ type="button"
+ onClick={clear}
+ className="text-[11px] text-destructive"
+>{t("common.actions.delete")}</Button>
             </div>
           )}
         </div>
       ) : (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
+          className="w-full text-muted-foreground hover:border-primary hover:text-primary"
           onClick={() => inputRef.current?.click()}
           disabled={disabled || uploading}
-          className="flex items-center justify-center gap-2 w-full h-9 rounded-lg border border-border bg-card text-xs font-semibold text-muted-foreground hover:border-[#2563eb] hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {uploading ? (
             <>
-              <Loader2 className="size-3.5 animate-spin" /> Đang tải lên...
+              <Loader2 className="size-3.5 animate-spin" /> {t("upload.uploading")}
             </>
           ) : (
             <>
-              <UploadCloud className="size-3.5" /> {label}
+              <UploadCloud className="size-3.5" /> {label ?? t("upload.label")}
             </>
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

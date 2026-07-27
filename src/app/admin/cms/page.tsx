@@ -11,19 +11,25 @@ import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { CheckboxField } from "@/shared/components/ui/checkbox-field";
 import { Input } from "@/shared/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useTranslations } from "next-intl";
 
-const typeLabels: Record<CmsType, string> = {
+/** Nhãn loại nội dung: BANNER/FAQ/BLOG là tên riêng nên giữ nguyên,
+ *  chỉ FEATURED cần dịch (resolve trong component qua t()). */
+const TYPE_ORDER: CmsType[] = ["BANNER", "FAQ", "BLOG", "FEATURED"];
+const staticTypeLabels: Partial<Record<CmsType, string>> = {
   BANNER: "Banner",
   FAQ: "FAQ",
   BLOG: "Blog",
-  FEATURED: "Nổi bật",
 };
 
 export default function AdminCmsRoute() {
+  const t = useTranslations();
+  const typeLabel = (type: CmsType) => staticTypeLabels[type] ?? t("admin.cms.typeFeatured");
   const qc = useQueryClient();
   const { toast } = useToast();
   const query = useQuery({ queryKey: ["admin", "cms"], queryFn: () => cmsService.list() });
@@ -33,7 +39,7 @@ export default function AdminCmsRoute() {
   const remove = useMutation({
     mutationFn: (id: number) => cmsService.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "cms"] }),
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   return (
@@ -41,18 +47,18 @@ export default function AdminCmsRoute() {
       <section className="mb-6 flex items-end justify-between rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">Nội dung CMS</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Banner, FAQ, blog và chiến dịch nổi bật hiển thị trên trang chủ (UC-074).</p>
+          <h1 className="text-3xl font-black">{t("admin.cms.title")}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{t("admin.cms.subtitle")}</p>
         </div>
-        <Button onClick={() => setEditing(null)}><Plus className="size-4" /> Tạo nội dung</Button>
+        <Button onClick={() => setEditing(null)}><Plus className="size-4" /> {t("admin.cms.create")}</Button>
       </section>
 
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
-        <EmptyState title="Không tải được" description={toErrorMessage(query.error)} />
+        <EmptyState title={t("common.states.errorTitle")} description={toErrorMessage(query.error)} />
       ) : !items.length ? (
-        <EmptyState title="Chưa có nội dung" description="Tạo banner hoặc mục nổi bật đầu tiên." />
+        <EmptyState title={t("admin.cms.emptyTitle")} description={t("admin.cms.emptyDescription")} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((c) => (
@@ -60,17 +66,17 @@ export default function AdminCmsRoute() {
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 font-black"><FileText className="size-4 text-accent" />{c.title}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant="default">{typeLabels[c.type]}</Badge>
-                  <Badge variant={c.published ? "success" : "warning"}>{c.published ? "Hiển thị" : "Nháp"}</Badge>
+                  <Badge variant="default">{typeLabel(c.type)}</Badge>
+                  <Badge variant={c.published ? "success" : "warning"}>{c.published ? t("admin.cms.published") : t("admin.cms.draft")}</Badge>
                 </div>
               </div>
               {c.body && <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.body}</p>}
               <div className="mt-3 flex gap-2">
-                <Button variant="outline" onClick={() => setEditing(c)}>Sửa</Button>
+                <Button variant="outline" onClick={() => setEditing(c)}>{t("common.actions.edit")}</Button>
                 <ConfirmDialog
-                  label="Xóa"
-                  title="Xóa nội dung này?"
-                  description="Nội dung sẽ bị xóa vĩnh viễn khỏi trang công khai."
+                  label={t("common.actions.delete")}
+                  title={t("admin.cms.deleteTitle")}
+                  description={t("admin.cms.deleteDescription")}
                   onConfirm={() => remove.mutate(c.id)}
                 />
               </div>
@@ -85,6 +91,8 @@ export default function AdminCmsRoute() {
 }
 
 function CmsDialog({ content, onClose }: { content: CmsContent | null; onClose: () => void }) {
+  const t = useTranslations();
+  const typeLabel = (type: CmsType) => staticTypeLabels[type] ?? t("admin.cms.typeFeatured");
   const qc = useQueryClient();
   const { toast } = useToast();
   const [form, setForm] = useState<CmsContentRequest>({
@@ -102,51 +110,53 @@ function CmsDialog({ content, onClose }: { content: CmsContent | null; onClose: 
     mutationFn: () => (content ? cmsService.update(content.id, form) : cmsService.create(form)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "cms"] });
-      toast({ type: "success", title: content ? "Đã cập nhật" : "Đã tạo nội dung" });
+      toast({ type: "success", title: content ? t("admin.cms.updated") : t("admin.cms.created") });
       onClose();
     },
-    onError: (e) => toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   return (
-    <Dialog open title={content ? "Sửa nội dung" : "Tạo nội dung"} onClose={onClose}>
+    <Dialog open title={content ? t("admin.cms.editTitle") : t("admin.cms.create")} onClose={onClose}>
       <div className="grid gap-3">
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Loại
+          {t("admin.cms.fieldType")}
           <Select value={form.type} onValueChange={(v) => set({ type: v as CmsType })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(typeLabels) as CmsType[]).map((t) => (
-                <SelectItem key={t} value={t}>{typeLabels[t]}</SelectItem>
+              {TYPE_ORDER.map((type) => (
+                <SelectItem key={type} value={type}>{typeLabel(type)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Tiêu đề <Input value={form.title} onChange={(e) => set({ title: e.target.value })} />
+          {t("admin.cms.fieldTitle")} <Input value={form.title} onChange={(e) => set({ title: e.target.value })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Nội dung <Textarea value={form.body ?? ""} onChange={(e) => set({ body: e.target.value })} />
+          {t("admin.cms.fieldBody")} <Textarea value={form.body ?? ""} onChange={(e) => set({ body: e.target.value })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Ảnh (URL) <Input value={form.imageUrl ?? ""} onChange={(e) => set({ imageUrl: e.target.value })} />
+          {t("admin.cms.fieldImage")} <Input value={form.imageUrl ?? ""} onChange={(e) => set({ imageUrl: e.target.value })} />
         </label>
         <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-          Liên kết <Input value={form.link ?? ""} onChange={(e) => set({ link: e.target.value })} placeholder="/gyms/123" />
+          {t("admin.cms.fieldLink")} <Input value={form.link ?? ""} onChange={(e) => set({ link: e.target.value })} placeholder="/gyms/123" />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="grid gap-1 text-xs font-black uppercase text-muted-foreground">
-            Thứ tự <Input type="number" value={form.sortOrder ?? 0} onChange={(e) => set({ sortOrder: Number(e.target.value) })} />
+            {t("admin.cms.fieldSort")} <Input type="number" value={form.sortOrder ?? 0} onChange={(e) => set({ sortOrder: Number(e.target.value) })} />
           </label>
-          <label className="flex items-end gap-2 pb-2 text-sm font-bold">
-            <input type="checkbox" checked={!!form.published} onChange={(e) => set({ published: e.target.checked })} />
-            Hiển thị công khai
-          </label>
+          <CheckboxField
+            className="items-end pb-2"
+            checked={!!form.published}
+            onCheckedChange={(published) => set({ published })}
+            label={t("admin.cms.fieldPublished")}
+          />
         </div>
       </div>
       <div className="mt-4 flex gap-2">
-        <Button disabled={save.isPending || !form.title.trim()} onClick={() => save.mutate()}>Lưu</Button>
-        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <Button disabled={save.isPending || !form.title.trim()} onClick={() => save.mutate()}>{t("common.actions.save")}</Button>
+        <Button variant="outline" onClick={onClose}>{t("common.actions.cancel")}</Button>
       </div>
     </Dialog>
   );

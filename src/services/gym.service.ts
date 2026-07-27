@@ -2,31 +2,19 @@ import { api } from "@/services/api";
 import type {
   BookingRules,
   BranchInput,
-  BranchPage,
-  BranchRequest,
   BranchResponse,
   CatalogStatus,
   CreateGymPtInput,
   FacilityInput,
-  FacilityPage,
-  FacilityRequest,
   FacilityResponse,
-  Gym,
-  GymBranch,
   GymDocumentDto,
-  GymFacility,
-  GymPage,
-  GymPartnership,
   GymPolicy,
   GymPtPage,
   GymPtResponse,
-  GymRequest,
   GymServiceInput,
   GymServiceResponse,
   GymVerificationStatusResponse,
   OperatingHour,
-  PartnershipActionRequest,
-  PartnershipPage,
   PtCertInput,
   PtCertResponse,
   PtDocInput,
@@ -48,130 +36,13 @@ import type {
 } from "@/types/Trainer";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
-export type {
-  BranchInput,
-  BranchPage,
-  BranchRequest,
-  BranchResponse,
-  FacilityInput,
-  FacilityPage,
-  FacilityRequest,
-  FacilityResponse,
-  Gym,
-  GymBranch,
-  GymDocumentDto,
-  GymFacility,
-  GymPage,
-  GymPartnership,
-  GymRequest,
-  GymServiceInput,
-  GymServiceResponse,
-  GymVerificationStatusResponse,
-  PartnershipActionRequest,
-  PartnershipPage,
-  SubmitGymRegistrationRequest,
-} from "@/types/Gym";
-
-export type GymSearchParams = Partial<PaginationParams> & {
-  city?: string;
-  district?: string;
-  minRating?: number;
-  facilityType?: string;
-  keyword?: string;
-};
+// Phase 2 cleanup: đã xóa cụm hàm legacy gọi endpoint không tồn tại trên BE
+// (/gyms, /gyms/me, /gyms/{id}/close|reopen|logo|cover, /pt/partnerships/*)
+// cùng cluster UI chết gym-workspace-pages/use-gym. Chỉ giữ contract thật.
 
 const page = { page: 0, size: 20 };
-function upload(file: File) {
-  const form = new FormData();
-  form.append("file", file);
-  return form;
-}
 
 export const gymService = {
-  async search(params: GymSearchParams = {}) {
-    return api.get<GymPage>("/gyms", { params: { ...page, ...params } });
-  },
-  async getDetail(id: number) {
-    return api.get<Gym>(`/gyms/${id}`);
-  },
-  async getMine(params: PaginationParams = page) {
-    return api.get<GymPage>("/gyms/me", { params });
-  },
-  async create(payload: GymRequest) {
-    return api.post<Gym, GymRequest>("/gyms", payload);
-  },
-  async update(id: number, payload: GymRequest) {
-    return api.put<Gym, GymRequest>(`/gyms/${id}`, payload);
-  },
-  async close(id: number) {
-    await api.putRaw(`/gyms/${id}/close`);
-  },
-  async reopen(id: number) {
-    await api.putRaw(`/gyms/${id}/reopen`);
-  },
-  async uploadLogo(id: number, file: File) {
-    return api.post<Gym, FormData>(`/gyms/${id}/logo`, upload(file));
-  },
-  async uploadCover(id: number, file: File) {
-    return api.post<Gym, FormData>(`/gyms/${id}/cover`, upload(file));
-  },
-  async getBranches(gymId: number, params: PaginationParams = page) {
-    return api.get<BranchPage>(`/gyms/${gymId}/branches`, { params });
-  },
-  async createBranch(gymId: number, payload: BranchRequest) {
-    return api.post<GymBranch, BranchRequest>(
-      `/gyms/${gymId}/branches`,
-      payload,
-    );
-  },
-  async updateBranch(gymId: number, id: number, payload: BranchRequest) {
-    return api.put<GymBranch, BranchRequest>(
-      `/gyms/${gymId}/branches/${id}`,
-      payload,
-    );
-  },
-  async deleteBranch(gymId: number, id: number) {
-    await api.deleteRaw(`/gyms/${gymId}/branches/${id}`);
-  },
-  async getFacilities(gymId: number, params: PaginationParams = page) {
-    return api.get<FacilityPage>(`/gyms/${gymId}/facilities`, { params });
-  },
-  async createFacility(gymId: number, payload: FacilityRequest) {
-    return api.post<GymFacility, FacilityRequest>(
-      `/gyms/${gymId}/facilities`,
-      payload,
-    );
-  },
-  async updateFacility(gymId: number, id: number, payload: FacilityRequest) {
-    return api.put<GymFacility, FacilityRequest>(
-      `/gyms/${gymId}/facilities/${id}`,
-      payload,
-    );
-  },
-  async deleteFacility(gymId: number, id: number) {
-    await api.deleteRaw(`/gyms/${gymId}/facilities/${id}`);
-  },
-  async getPartnerships(status?: string) {
-    return api.get<PartnershipPage>("/pt/partnerships/me", {
-      params: { ...page, status },
-    });
-  },
-  async approvePartnership(id: number, payload: PartnershipActionRequest) {
-    return api.put<GymPartnership, PartnershipActionRequest>(
-      `/pt/partnerships/${id}/approve`,
-      payload,
-    );
-  },
-  async rejectPartnership(id: number, payload: PartnershipActionRequest) {
-    return api.put<GymPartnership, PartnershipActionRequest>(
-      `/pt/partnerships/${id}/reject`,
-      payload,
-    );
-  },
-  async endPartnership(id: number) {
-    return api.put<GymPartnership>(`/pt/partnerships/${id}/end`);
-  },
-
   getVerificationStatus: () =>
     api.get<GymVerificationStatusResponse>("/gym/verification-status"),
 

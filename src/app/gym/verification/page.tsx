@@ -29,22 +29,31 @@ import { FileUpload } from "@/shared/components/common/file-upload";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { IconButton } from "@/shared/components/ui/icon-button";
+import { useTranslations } from "next-intl";
 
-const STATUS_STEPS = [
-  { label: "Thông tin doanh nghiệp" },
-  { label: "Tài liệu pháp lý" },
-  { label: "Chờ phê duyệt" },
-];
+/* Chỉ giữ khoá i18n ở module scope — nhãn resolve trong component vì t() cần hook. */
+const STATUS_STEP_KEYS = [
+  "gym.verification.stepBusiness",
+  "gym.verification.stepDocs",
+  "gym.verification.stepPending",
+] as const;
 
 const DOC_TYPES = [
-  { type: "BUSINESS_LICENSE", label: "Giấy phép kinh doanh (Bản gốc/Công chứng)" },
-  { type: "TAX_CERT", label: "Chứng nhận thuế" },
-  { type: "SUPPLEMENT", label: "Tài liệu bổ sung" },
-];
+  { type: "BUSINESS_LICENSE", labelKey: "gym.verification.docLicense" },
+  { type: "TAX_CERT", labelKey: "gym.verification.docTax" },
+  { type: "SUPPLEMENT", labelKey: "gym.verification.docExtra" },
+] as const;
 
-const DOC_TYPE_LABEL: Record<string, string> = Object.fromEntries(
-  DOC_TYPES.map((d) => [d.type, d.label]),
-);
+const DOC_TYPE_KEY: Record<string, (typeof DOC_TYPES)[number]["labelKey"]> =
+  Object.fromEntries(DOC_TYPES.map((d) => [d.type, d.labelKey]));
 
 function statusStepIndex(s?: GymVerificationStatus) {
   if (!s || s === "NOT_SUBMITTED") return 0;
@@ -54,9 +63,10 @@ function statusStepIndex(s?: GymVerificationStatus) {
 
 /** Quản lý tài liệu lẻ (UC-012) — dùng khi hồ sơ đã tồn tại và BE còn cho sửa. */
 function DocumentManager() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [newType, setNewType] = useState(DOC_TYPES[2].type);
+  const [newType, setNewType] = useState<string>(DOC_TYPES[2].type);
   const [newUrl, setNewUrl] = useState("");
 
   const docs = useQuery({ queryKey: ["gym-documents"], queryFn: gymService.listDocuments });
@@ -71,18 +81,18 @@ function DocumentManager() {
     onSuccess: () => {
       invalidate();
       setNewUrl("");
-      toast({ type: "success", title: "Đã thêm tài liệu" });
+      toast({ type: "success", title: t("gym.verification.docAdded") });
     },
-    onError: (e) => toast({ type: "error", title: "Thêm thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("gym.ptOps.addFailed"), description: toErrorMessage(e) }),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => gymService.deleteDocument(id),
     onSuccess: () => {
       invalidate();
-      toast({ type: "success", title: "Đã xóa tài liệu" });
+      toast({ type: "success", title: t("gym.verification.docDeleted") });
     },
-    onError: (e) => toast({ type: "error", title: "Xóa thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
   });
 
   return (
@@ -90,50 +100,51 @@ function DocumentManager() {
       {docs.isLoading ? (
         <div className="h-16 bg-muted rounded-xl animate-pulse" />
       ) : docs.isError ? (
-        <p className="text-xs text-red-500">{toErrorMessage(docs.error)}</p>
+        <p className="text-xs text-destructive">{toErrorMessage(docs.error)}</p>
       ) : (docs.data ?? []).length === 0 ? (
-        <p className="text-xs text-muted-foreground">Chưa có tài liệu nào.</p>
+        <p className="text-xs text-muted-foreground">{t("gym.verification.noDocs")}</p>
       ) : (
         <ul className="space-y-2">
           {(docs.data ?? []).map((doc) => (
             <li key={doc.id} className="flex items-center justify-between gap-3 border border-border rounded-xl px-4 py-2.5">
               <div className="min-w-0">
                 <p className="text-[13px] font-semibold text-foreground">
-                  {DOC_TYPE_LABEL[doc.documentType] ?? doc.documentType}
+                  {DOC_TYPE_KEY[doc.documentType] ? t(DOC_TYPE_KEY[doc.documentType]) : doc.documentType}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">{doc.fileUrl}</p>
               </div>
-              <button
+              <IconButton
+                tooltip={t("gym.verification.deleteDoc")}
                 onClick={() => doc.id && remove.mutate(doc.id)}
                 disabled={remove.isPending}
-                className="p-1.5 text-muted-foreground hover:text-red-600 transition-colors shrink-0"
-                aria-label="Xóa tài liệu"
+                className="shrink-0 text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="size-4" />
-              </button>
+              </IconButton>
             </li>
           ))}
         </ul>
       )}
 
       <div className="border border-dashed border-border rounded-xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground">Thêm tài liệu mới</p>
-        <select
-          value={newType}
-          onChange={(e) => setNewType(e.target.value)}
-          className="w-full h-9 text-sm border border-border rounded-lg px-2.5 bg-card text-foreground"
-        >
-          {DOC_TYPES.map((d) => (
-            <option key={d.type} value={d.type}>{d.label}</option>
-          ))}
-        </select>
-        <FileUpload value={newUrl} onChange={setNewUrl} folder="documents" label="Tải tài liệu lên" />
+        <p className="text-xs font-semibold text-muted-foreground">{t("gym.verification.addDocTitle")}</p>
+        <Select value={newType} onValueChange={setNewType}>
+          <SelectTrigger className="h-9 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DOC_TYPES.map((d) => (
+              <SelectItem key={d.type} value={d.type}>{t(d.labelKey)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FileUpload value={newUrl} onChange={setNewUrl} folder="documents" label={t("gym.verification.uploadDoc")} />
         <Button
           onClick={() => add.mutate()}
           disabled={!newUrl.trim() || add.isPending}
-          className="h-9 gap-2 bg-primary hover:bg-primary/90 text-white text-sm"
+          className="h-9 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
         >
-          {add.isPending && <Loader2 className="size-4 animate-spin" />} Thêm tài liệu
+          {add.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.verification.addDoc")}
         </Button>
       </div>
     </div>
@@ -141,6 +152,7 @@ function DocumentManager() {
 }
 
 export default function GymVerificationPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -189,12 +201,12 @@ export default function GymVerificationPage() {
     onSuccess: () => {
       toast({
         type: "success",
-        title: isResubmit ? "Đã nộp lại hồ sơ" : "Đã gửi hồ sơ xác minh thành công",
+        title: isResubmit ? t("gym.verification.resubmitted") : t("gym.verification.submitted"),
       });
       qc.invalidateQueries({ queryKey: ["gym-verification-status"] });
       qc.invalidateQueries({ queryKey: ["gym-documents"] });
     },
-    onError: (e) => toast({ type: "error", title: "Gửi thất bại", description: toErrorMessage(e) }),
+    onError: (e) => toast({ type: "error", title: t("gym.verification.submitFailed"), description: toErrorMessage(e) }),
   });
 
   function updateDoc(index: number, value: string) {
@@ -203,12 +215,12 @@ export default function GymVerificationPage() {
 
   function handleSubmit() {
     if (!gymName.trim()) {
-      toast({ type: "warning", title: "Vui lòng nhập tên phòng tập" });
+      toast({ type: "warning", title: t("gym.verification.nameRequired") });
       return;
     }
     const validDocs = documents.filter((d) => d.fileUrl.trim());
     if (validDocs.length === 0) {
-      toast({ type: "warning", title: "Vui lòng cung cấp ít nhất 1 tài liệu" });
+      toast({ type: "warning", title: t("gym.verification.docRequired") });
       return;
     }
     submitMut.mutate({
@@ -234,33 +246,34 @@ export default function GymVerificationPage() {
           {/* Page header */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Xác minh doanh nghiệp</h1>
-              <p className="text-sm text-muted-foreground mt-1">Vui lòng cung cấp đầy đủ thông tin để kích hoạt tài khoản đối tác chính thức.</p>
+              <h1 className="text-2xl font-bold text-foreground">{t("gym.verification.title")}</h1>
+              <p className="text-sm text-muted-foreground mt-1">{t("gym.verification.subtitle")}</p>
             </div>
-            <button
+            <Button
+              size="sm"
+              className="px-5"
               onClick={handleSubmit}
               disabled={submitMut.isPending || formLocked}
-              className="h-9 px-5 bg-primary hover:bg-primary/90 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-40"
             >
-              {submitMut.isPending ? "Đang gửi..." : isResubmit ? "Nộp lại hồ sơ" : "Gửi yêu cầu"}
-            </button>
+              {submitMut.isPending ? t("common.states.submitting") : isResubmit ? t("gym.verification.resubmit") : t("gym.verification.submit")}
+            </Button>
           </div>
 
           {statusError && (
-            <div className="mb-6 flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-              <AlertCircle className="size-4 text-red-500 mt-0.5 shrink-0" />
-              <p className="text-sm text-red-700">{toErrorMessage(statusErrorObj)}</p>
+            <div className="mb-6 flex items-start gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
+              <AlertCircle className="size-4 text-destructive mt-0.5 shrink-0" />
+              <p className="text-sm text-destructive">{toErrorMessage(statusErrorObj)}</p>
             </div>
           )}
 
           {/* Progress stepper */}
           <div className="bg-card rounded-2xl border border-border px-6 py-5 mb-6 shadow-sm">
             <div className="flex items-center">
-              {STATUS_STEPS.map((step, i) => {
+              {STATUS_STEP_KEYS.map((stepKey, i) => {
                 const done = i < stepIdx;
                 const current = i === stepIdx || (stepIdx === 0 && i === 0);
                 return (
-                  <div key={step.label} className="flex items-center flex-1 last:flex-none">
+                  <div key={stepKey} className="flex items-center flex-1 last:flex-none">
                     <div className="flex flex-col items-center gap-1.5">
                       <div className={`size-9 rounded-full flex items-center justify-center border-2 ${
                         done ? "bg-primary border-primary"
@@ -268,7 +281,7 @@ export default function GymVerificationPage() {
                           : "bg-card border-border"
                       }`}>
                         {done ? (
-                          <CheckCircle2 className="size-5 text-white" />
+                          <CheckCircle2 className="size-5 text-primary-foreground" />
                         ) : current ? (
                           <div className="size-3 rounded-full bg-primary" />
                         ) : (
@@ -277,9 +290,9 @@ export default function GymVerificationPage() {
                       </div>
                       <span className={`text-[11px] font-semibold text-center max-w-[100px] leading-tight ${
                         done || current ? "text-primary" : "text-muted-foreground"
-                      }`}>{step.label}</span>
+                      }`}>{t(stepKey)}</span>
                     </div>
-                    {i < STATUS_STEPS.length - 1 && (
+                    {i < STATUS_STEP_KEYS.length - 1 && (
                       <div className={`flex-1 h-0.5 mx-3 mb-5 rounded-full ${done ? "bg-primary" : "bg-muted"}`} />
                     )}
                   </div>
@@ -288,70 +301,70 @@ export default function GymVerificationPage() {
             </div>
 
             {isRejected && (
-              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-                <AlertCircle className="size-4 text-red-500 mt-0.5 shrink-0" />
+              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
+                <AlertCircle className="size-4 text-destructive mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-red-700">Hồ sơ bị từ chối</p>
+                  <p className="text-sm font-semibold text-destructive">{t("gym.verification.rejectedTitle")}</p>
                   {status?.rejectionReason && (
-                    <p className="text-xs text-red-600 mt-0.5">{status.rejectionReason}</p>
+                    <p className="text-xs text-destructive mt-0.5">{status.rejectionReason}</p>
                   )}
-                  <p className="text-xs text-red-600 mt-1">Bạn có thể chỉnh sửa thông tin bên dưới và nộp lại.</p>
+                  <p className="text-xs text-destructive mt-1">{t("gym.verification.rejectedBody")}</p>
                 </div>
               </div>
             )}
             {isRequiresInfo && (
-              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
-                <AlertCircle className="size-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-warning-muted border border-warning/30">
+                <AlertCircle className="size-4 text-warning mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-700">Cần bổ sung thông tin</p>
+                  <p className="text-sm font-semibold text-warning">{t("gym.verification.needInfoTitle")}</p>
                   {status?.reviewNote && (
-                    <p className="text-xs text-amber-700 mt-0.5">Ghi chú của quản trị viên: {status.reviewNote}</p>
+                    <p className="text-xs text-warning mt-0.5">{t("gym.verification.adminNote")} {status.reviewNote}</p>
                   )}
-                  <p className="text-xs text-amber-700 mt-1">Cập nhật thông tin/tài liệu theo yêu cầu rồi bấm “Nộp lại hồ sơ”.</p>
+                  <p className="text-xs text-warning mt-1">{t("gym.verification.needInfoBody")}</p>
                 </div>
               </div>
             )}
             {isPending && (
-              <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
-                <Clock className="size-4 text-amber-600 shrink-0" />
-                <p className="text-sm text-amber-700 font-medium">Hồ sơ đang được xét duyệt. Thời gian phê duyệt từ 24 - 48 giờ làm việc. Bạn vẫn có thể bổ sung tài liệu ở mục bên dưới.</p>
+              <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-warning-muted border border-warning/30">
+                <Clock className="size-4 text-warning shrink-0" />
+                <p className="text-sm text-warning font-medium">{t("gym.verification.pendingBody")}</p>
               </div>
             )}
             {isApproved && (
-              <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                <p className="text-sm text-emerald-700 font-medium">Doanh nghiệp đã được xác minh. Tài khoản đối tác chính thức đã kích hoạt.</p>
+              <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-success-muted border border-success/30">
+                <CheckCircle2 className="size-4 text-success shrink-0" />
+                <p className="text-sm text-success font-medium">{t("gym.verification.approvedBody")}</p>
               </div>
             )}
             {isSuspended && (
-              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-                <AlertCircle className="size-4 text-red-500 mt-0.5 shrink-0" />
+              <div className="mt-4 flex items-start gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
+                <AlertCircle className="size-4 text-destructive mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-red-700">Phòng tập đang bị đình chỉ</p>
+                  <p className="text-sm font-semibold text-destructive">{t("gym.verification.suspendedTitle")}</p>
                   {status?.reviewNote && (
-                    <p className="text-xs text-red-600 mt-0.5">Lý do: {status.reviewNote}</p>
+                    <p className="text-xs text-destructive mt-0.5">{t("gym.verification.reasonLabel")} {status.reviewNote}</p>
                   )}
-                  <p className="text-xs text-red-600 mt-1">Nội dung của bạn đã bị ẩn khỏi marketplace. Vui lòng liên hệ quản trị viên để được kích hoạt lại.</p>
+                  <p className="text-xs text-destructive mt-1">{t("gym.verification.suspendedBody")}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
             {/* Left: Form sections */}
-            <div className="col-span-2 space-y-5">
+            <div className="space-y-5 lg:col-span-2">
               {/* Section 1: Business info */}
               <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                 <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
-                  <div className="size-6 rounded bg-blue-100 flex items-center justify-center">
+                  <div className="size-6 rounded bg-primary/10 flex items-center justify-center">
                     <Building2 className="size-3.5 text-primary" />
                   </div>
-                  <h2 className="text-[15px] font-bold text-foreground">Thông tin doanh nghiệp</h2>
+                  <h2 className="text-[15px] font-bold text-foreground">{t("gym.verification.stepBusiness")}</h2>
                 </div>
                 <div className="px-6 py-5 space-y-4">
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                      Tên phòng tập (Thương hiệu) <span className="text-red-500">*</span>
+                      {t("gym.verification.brandNameLabel")} <span className="text-destructive">*</span>
                     </label>
                     <Input
                       value={gymName}
@@ -361,36 +374,36 @@ export default function GymVerificationPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Mô tả</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.description")}</label>
                     <Input
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Giới thiệu ngắn về phòng tập"
+                      placeholder={t("gym.verification.bioPlaceholder")}
                       disabled={formLocked}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Địa chỉ</label>
+                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
                       <Input
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Số nhà, tên đường..."
+                        placeholder={t("gym.branches.addressPlaceholder")}
                         disabled={formLocked}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Thành phố</label>
+                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
                       <Input
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="TP. Hồ Chí Minh"
+                        placeholder={t("gym.branches.cityPlaceholder")}
                         disabled={formLocked}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Số điện thoại</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
                     <Input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -405,15 +418,15 @@ export default function GymVerificationPage() {
               {!hasProfile || isResubmit ? (
                 <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
-                    <div className="size-6 rounded bg-purple-100 flex items-center justify-center">
-                      <ShieldCheck className="size-3.5 text-purple-600" />
+                    <div className="size-6 rounded bg-info-muted flex items-center justify-center">
+                      <ShieldCheck className="size-3.5 text-info" />
                     </div>
-                    <h2 className="text-[15px] font-bold text-foreground">Tài liệu pháp lý</h2>
+                    <h2 className="text-[15px] font-bold text-foreground">{t("gym.verification.stepDocs")}</h2>
                   </div>
                   <div className="px-6 py-5 space-y-4">
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground mb-2">
-                        Giấy phép kinh doanh (Bản gốc/Công chứng) <span className="text-red-500">*</span>
+                        {t("gym.verification.licenceLabel")} <span className="text-destructive">*</span>
                       </label>
                       <div className={`border-2 border-dashed rounded-xl p-6 ${
                         documents[0]?.fileUrl ? "border-primary/40 bg-primary/10" : "border-border bg-muted/40"
@@ -422,13 +435,13 @@ export default function GymVerificationPage() {
                           <div className="size-10 rounded-full bg-muted flex items-center justify-center">
                             <ShieldCheck className="size-5 text-muted-foreground" />
                           </div>
-                          <p className="text-[10px] text-muted-foreground">PDF, JPG, PNG (Tối đa 10MB)</p>
+                          <p className="text-[10px] text-muted-foreground">{t("gym.verification.fileHint")}</p>
                         </div>
                         <FileUpload
                           value={documents[0]?.fileUrl ?? ""}
                           onChange={(url) => updateDoc(0, url)}
                           folder="documents"
-                          label="Tải giấy phép lên"
+                          label={t("gym.verification.uploadLicence")}
                           disabled={formLocked}
                         />
                       </div>
@@ -440,13 +453,13 @@ export default function GymVerificationPage() {
                         return (
                           <div key={i} className={`border border-dashed border-border rounded-xl p-4 ${doc.fileUrl ? "border-primary/40 bg-primary/10" : "bg-muted/40"}`}>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">
-                              {info?.label ?? DOC_TYPE_LABEL[doc.documentType] ?? "Tài liệu"}
+                              {info ? t(info.labelKey) : DOC_TYPE_KEY[doc.documentType] ? t(DOC_TYPE_KEY[doc.documentType]) : t("gym.verification.docLabel")}
                             </p>
                             <FileUpload
                               value={doc.fileUrl}
                               onChange={(url) => updateDoc(i + 1, url)}
                               folder="documents"
-                              label="Tải lên"
+                              label={t("common.actions.upload")}
                               disabled={formLocked}
                             />
                           </div>
@@ -461,10 +474,10 @@ export default function GymVerificationPage() {
               {hasProfile && canManageDocs && (
                 <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
-                    <div className="size-6 rounded bg-purple-100 flex items-center justify-center">
-                      <ShieldCheck className="size-3.5 text-purple-600" />
+                    <div className="size-6 rounded bg-info-muted flex items-center justify-center">
+                      <ShieldCheck className="size-3.5 text-info" />
                     </div>
-                    <h2 className="text-[15px] font-bold text-foreground">Tài liệu đã nộp</h2>
+                    <h2 className="text-[15px] font-bold text-foreground">{t("gym.verification.submittedDocs")}</h2>
                   </div>
                   <DocumentManager />
                 </div>
@@ -474,17 +487,17 @@ export default function GymVerificationPage() {
               <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="size-6 rounded bg-green-100 flex items-center justify-center">
-                      <GitBranch className="size-3.5 text-green-600" />
+                    <div className="size-6 rounded bg-success-muted flex items-center justify-center">
+                      <GitBranch className="size-3.5 text-success" />
                     </div>
                     <div>
-                      <h2 className="text-[15px] font-bold text-foreground">Chi nhánh</h2>
-                      <p className="text-xs text-muted-foreground">Quản lý chi nhánh tại trang riêng sau khi hồ sơ được duyệt.</p>
+                      <h2 className="text-[15px] font-bold text-foreground">{t("gym.nav.branches")}</h2>
+                      <p className="text-xs text-muted-foreground">{t("gym.verification.branchesHint")}</p>
                     </div>
                   </div>
                   <Link href="/gym/branches"
                     className="text-xs text-primary font-semibold hover:underline">
-                    Quản lý chi nhánh →
+                    {t("gym.verification.manageBranches")}
                   </Link>
                 </div>
               </div>
@@ -492,16 +505,16 @@ export default function GymVerificationPage() {
 
             {/* Right: Info panel */}
             <div className="space-y-4">
-              <div className="bg-primary rounded-2xl p-5 text-white">
-                <h3 className="text-sm font-bold mb-3">Lưu ý quan trọng</h3>
+              <div className="bg-primary rounded-2xl p-5 text-primary-foreground">
+                <h3 className="text-sm font-bold mb-3">{t("gym.verification.noticeTitle")}</h3>
                 <ul className="space-y-2.5">
                   {[
-                    "Đảm bảo tất cả thông tin khớp với Giấy phép kinh doanh của bạn.",
-                    "Ảnh chụp tài liệu phải rõ nét, không tối hoặc bị mất góc.",
-                    "Thời gian phê duyệt hồ sơ từ 24h - 48h làm việc.",
+                    t("gym.verification.notice1"),
+                    t("gym.verification.notice2"),
+                    t("gym.verification.notice3"),
                   ].map((note, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-xs text-white/85">
-                      <CheckCircle2 className="size-3.5 text-white mt-0.5 shrink-0" />
+                    <li key={i} className="flex items-start gap-2.5 text-xs text-success-foreground/85">
+                      <CheckCircle2 className="size-3.5 text-success-foreground mt-0.5 shrink-0" />
                       {note}
                     </li>
                   ))}
@@ -509,21 +522,21 @@ export default function GymVerificationPage() {
               </div>
 
               <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-                <h3 className="text-[13px] font-bold text-foreground mb-4">Trạng thái hồ sơ</h3>
+                <h3 className="text-[13px] font-bold text-foreground mb-4">{t("gym.verification.statusTitle")}</h3>
                 <div className="space-y-3">
                   {[
-                    { label: "Thông tin cơ bản", pct: profilePct },
-                    { label: "Tài liệu pháp lý", pct: docPct },
+                    { label: t("gym.verification.stepBasic"), pct: profilePct },
+                    { label: t("gym.verification.stepDocs"), pct: docPct },
                   ].map(({ label, pct }) => (
                     <div key={label}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[12px] text-muted-foreground font-medium">{label}</span>
-                        <span className={`text-[10px] font-bold ${pct === 100 ? "text-emerald-600" : "text-orange-500"}`}>
-                          {pct === 100 ? "Hoàn tất" : `${pct}%`}
+                        <span className={`text-[10px] font-bold ${pct === 100 ? "text-success" : "text-warning"}`}>
+                          {pct === 100 ? t("gym.verification.stepDone") : `${pct}%`}
                         </span>
                       </div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${pct === 100 ? "bg-green-500" : "bg-orange-400"}`} style={{ width: `${pct}%` }} />
+                        <div className={`h-full rounded-full ${pct === 100 ? "bg-success" : "bg-warning"}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   ))}

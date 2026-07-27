@@ -32,7 +32,8 @@ import {
   useReviews,
   useSaveReview,
 } from "../hooks/use-review";
-import { replySchema, reviewSchema } from "../schemas";
+import { useReviewSchemas } from "../use-review-schemas";
+import { useTranslations } from "next-intl";
 
 export function CustomerReviewsPage() {
   return <ReviewPage scope="customer" />;
@@ -49,23 +50,9 @@ export function GymReviewsPage() {
   return <ReviewPage scope="gym" />;
 }
 
-const reviewStatusLabels: Record<string, string> = {
-  VISIBLE: "Hiển thị",
-  HIDDEN: "Đã ẩn",
-  REMOVED: "Đã gỡ",
-};
+/* Nhãn trạng thái review ở review.status.* */
 
-const scopeTitles: Record<string, string> = {
-  customer: "Đánh giá của tôi",
-  pt: "Đánh giá của huấn luyện viên",
-  gym: "Đánh giá phòng gym",
-};
 
-const scopeDescriptions: Record<string, string> = {
-  customer: "Xem và quản lý các đánh giá bạn đã gửi.",
-  pt: "Xem các đánh giá từ khách hàng về bạn.",
-  gym: "Xem các đánh giá từ khách hàng về phòng gym.",
-};
 
 function ReviewPage({
   scope,
@@ -74,6 +61,7 @@ function ReviewPage({
   scope: "customer" | "pt" | "gym";
   targetId?: number;
 }) {
+  const t = useTranslations();
   const [editing, setEditing] = useState<Review | null | undefined>();
   const [replying, setReplying] = useState<Review | null>(null);
   const [reporting, setReporting] = useState<Review | null>(null);
@@ -87,15 +75,15 @@ function ReviewPage({
       <section className="mb-6 flex items-end justify-between rounded-3xl border border-border bg-card/80 p-6 shadow-sm">
         <div>
           <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{scopeTitles[scope] ?? scope}</h1>
+          <h1 className="text-3xl font-black">{t(`review.${scope}Title`)}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {scopeDescriptions[scope] ?? ""}
+            {t(`review.${scope}Description`)}
           </p>
         </div>
         {scope === "customer" && (
           <Button onClick={() => setEditing(null)}>
             <Plus className="size-4" />
-            Viết đánh giá
+            {t("review.write")}
           </Button>
         )}
       </section>
@@ -104,13 +92,13 @@ function ReviewPage({
         <LoadingSkeleton />
       ) : query.isError ? (
         <EmptyState
-          title="Không thể tải đánh giá"
+          title={t("review.loadError")}
           description={toErrorMessage(query.error)}
         />
       ) : !items.length ? (
         <EmptyState
-          title="Chưa có đánh giá"
-          description="Chưa có đánh giá nào được ghi lại."
+          title={t("review.empty")}
+          description={t("review.emptyHint")}
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -127,12 +115,12 @@ function ReviewPage({
                 </span>
               </div>
               {scope === "gym" && r.status !== "VISIBLE" && (
-                <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700">
-                  {reviewStatusLabels[r.status] ?? r.status}
+                <span className="mt-1 inline-block rounded-full bg-warning-muted px-2 py-0.5 text-[10px] font-black text-warning">
+                  {t(`review.status.${r.status}`)}
                 </span>
               )}
               <p className="mt-3 text-sm text-muted-foreground">
-                {r.comment || "Không có nội dung"}
+                {r.comment || t("review.noContent")}
               </p>
               {r.reply && (
                 <div className="mt-4 rounded-xl bg-muted/50 p-3 text-sm">
@@ -142,16 +130,14 @@ function ReviewPage({
               <div className="mt-4 flex gap-2">
                 {scope === "customer" ? (
                   <>
-                    <Button onClick={() => setEditing(r)}>
-                      Sửa
-                    </Button>
+                    <Button onClick={() => setEditing(r)}>{t("common.actions.edit")}</Button>
                     <ConfirmDialog
-                      label="Xóa"
-                      title="Xóa đánh giá này?"
-                      description="Đánh giá sẽ bị gỡ vĩnh viễn. Bạn có thể viết lại sau."
+                      label={t("common.actions.delete")}
+                      title={t("review.deleteTitle")}
+                      description={t("review.deleteBody")}
                       onConfirm={async () => {
                         await del.mutateAsync(r.id!);
-                        toast({ type: "success", title: "Đã xóa đánh giá" });
+                        toast({ type: "success", title: t("review.deleted") });
                       }}
                     />
                   </>
@@ -159,11 +145,11 @@ function ReviewPage({
                   <>
                     <Button onClick={() => setReplying(r)}>
                       <MessageSquareReply className="size-4" />
-                      Phản hồi
+                      {t("review.reply")}
                     </Button>
                     {/* E-5 (UC-070): gym/PT báo cáo review vi phạm — hook có sẵn, trước đây 0 UI */}
                     <Button variant="outline" onClick={() => setReporting(r)}>
-                      Báo cáo vi phạm
+                      {t("review.reportViolation")}
                     </Button>
                   </>
                 )}
@@ -188,38 +174,39 @@ function ReviewPage({
 
 /** E-5 (UC-070): báo cáo review vi phạm — tạo case cho moderation (UC-071). */
 function ReportReviewDialog({ review, onClose }: { review: Review; onClose: () => void }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const report = useReportReview();
   const [reason, setReason] = useState("");
 
   return (
-    <Dialog open title={`Báo cáo đánh giá của ${review.customerName}`} onClose={onClose}>
+    <Dialog open title={t("review.reportTitle", { name: review.customerName ?? "" })} onClose={onClose}>
       <p className="text-sm text-muted-foreground">
-        Đánh giá sẽ được kiểm duyệt viên xem xét (ẩn/gỡ nếu vi phạm). Mỗi đánh giá chỉ báo cáo một lần khi đang mở.
+        {t("review.reportHint")}
       </p>
       <Textarea
         className="mt-3"
         maxLength={500}
         rows={3}
-        placeholder="Lý do báo cáo (spam, xúc phạm, sai sự thật...)"
+        placeholder={t("review.reportPlaceholder")}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
       />
       <div className="mt-4 flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>Hủy</Button>
+        <Button variant="outline" onClick={onClose}>{t("common.actions.cancel")}</Button>
         <Button
           disabled={!reason.trim() || report.isPending}
           onClick={async () => {
             try {
               await report.mutateAsync({ id: review.id!, reason: reason.trim() });
-              toast({ type: "success", title: "Đã gửi báo cáo", description: "Kiểm duyệt viên sẽ xem xét." });
+              toast({ type: "success", title: t("review.reportSent"), description: t("review.reportSentDesc") });
               onClose();
             } catch (e) {
-              toast({ type: "error", title: "Báo cáo thất bại", description: toErrorMessage(e) });
+              toast({ type: "error", title: t("review.reportFailed"), description: toErrorMessage(e) });
             }
           }}
         >
-          {report.isPending ? "Đang gửi..." : "Gửi báo cáo"}
+          {report.isPending ? t("common.states.submitting") : t("review.sendReport")}
         </Button>
       </div>
     </Dialog>
@@ -233,6 +220,7 @@ function ReviewDialog({
   review: Review | null;
   onClose: () => void;
 }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const save = useSaveReview();
   const bookingsQuery = useBookings("customer", {
@@ -241,8 +229,9 @@ function ReviewDialog({
     size: 50,
   });
   const completed = bookingsQuery.data?.content ?? [];
-  const form = useForm<z.infer<typeof reviewSchema>>({
-    resolver: zodResolver(reviewSchema),
+  const schemas = useReviewSchemas();
+  const form = useForm<z.infer<typeof schemas.review>>({
+    resolver: zodResolver(schemas.review),
     defaultValues: {
       bookingId: review?.bookingId ?? 0,
       rating: review?.rating ?? 5,
@@ -253,7 +242,7 @@ function ReviewDialog({
   return (
     <Dialog
       open
-      title={review ? "Sửa đánh giá" : "Viết đánh giá"}
+      title={review ? t("review.editTitle") : t("review.write")}
       onClose={onClose}
     >
       <form
@@ -261,30 +250,28 @@ function ReviewDialog({
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await save.mutateAsync({ id: review?.id, payload: v });
-            toast({ type: "success", title: "Đã lưu đánh giá" });
+            toast({ type: "success", title: t("review.saved") });
             onClose();
           } catch (e) {
             toast({
               type: "error",
-              title: "Yêu cầu thất bại",
+              title: t("review.requestFailed"),
               description: toErrorMessage(e),
             });
           }
         })}
       >
-        <FieldShell label="Buổi đặt lịch">
+        <FieldShell label={t("review.bookingLabel")} error={form.formState.errors.bookingId}>
           {review ? (
             <Input
               disabled
               value={`#${review.bookingId} · ${review.ptName ?? ""}`}
             />
           ) : bookingsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">
-              Đang xử lý...
-            </p>
+            <p className="text-sm text-muted-foreground">{t("common.states.processing")}</p>
           ) : !completed.length ? (
             <p className="text-sm text-muted-foreground">
-              Không có buổi đã hoàn thành
+              {t("review.noCompleted")}
             </p>
           ) : (
             <Controller
@@ -293,7 +280,7 @@ function ReviewDialog({
               render={({ field }) => (
                 <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn buổi đặt lịch" />
+                    <SelectValue placeholder={t("review.selectBooking")} />
                   </SelectTrigger>
                   <SelectContent>
                     {completed.map((b) => (
@@ -307,7 +294,7 @@ function ReviewDialog({
             />
           )}
         </FieldShell>
-        <FieldShell label="Điểm đánh giá">
+        <FieldShell label={t("review.ratingLabel")} error={form.formState.errors.rating}>
           <Controller
             control={form.control}
             name="rating"
@@ -323,10 +310,10 @@ function ReviewDialog({
             )}
           />
         </FieldShell>
-        <FieldShell label="Nội dung">
-          <Textarea {...form.register("comment")} />
+        <FieldShell label={t("review.contentLabel")} error={form.formState.errors.comment}>
+          <Textarea {...form.register("comment")} aria-invalid={!!form.formState.errors.comment} />
         </FieldShell>
-        <Button>Lưu thay đổi</Button>
+        <Button>{t("common.actions.saveChanges")}</Button>
       </form>
     </Dialog>
   );
@@ -339,35 +326,37 @@ function ReplyDialog({
   review: Review;
   onClose: () => void;
 }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const mutation = useReplyReview();
-  const form = useForm<z.infer<typeof replySchema>>({
-    resolver: zodResolver(replySchema),
+  const schemas = useReviewSchemas();
+  const form = useForm<z.infer<typeof schemas.reply>>({
+    resolver: zodResolver(schemas.reply),
     defaultValues: { reply: review.reply ?? "" },
   });
 
   return (
-    <Dialog open title="Phản hồi" onClose={onClose}>
+    <Dialog open title={t("review.reply")} onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
             await mutation.mutateAsync({ id: review.id!, reply: v.reply });
-            toast({ type: "success", title: "Đã gửi phản hồi" });
+            toast({ type: "success", title: t("review.replySent") });
             onClose();
           } catch (e) {
             toast({
               type: "error",
-              title: "Yêu cầu thất bại",
+              title: t("review.requestFailed"),
               description: toErrorMessage(e),
             });
           }
         })}
       >
-        <FieldShell label="Phản hồi">
-          <Textarea {...form.register("reply")} />
+        <FieldShell label={t("review.reply")} error={form.formState.errors.reply}>
+          <Textarea {...form.register("reply")} aria-invalid={!!form.formState.errors.reply} />
         </FieldShell>
-        <Button>Gửi phản hồi</Button>
+        <Button>{t("review.sendReply")}</Button>
       </form>
     </Dialog>
   );

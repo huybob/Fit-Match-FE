@@ -12,9 +12,11 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { useTranslations } from "next-intl";
 
 /** UC-017 (B-11): chính sách đặt lịch/hủy/no-show/nội quy — BE có sẵn, trước đây FE = 0. */
 function PoliciesSection() {
+  const t = useTranslations();
   const { toast } = useToast();
   const [policy, setPolicy] = useState<GymPolicy>({});
 
@@ -32,24 +34,24 @@ function PoliciesSection() {
         noShowPolicy: policy.noShowPolicy?.trim() || undefined,
         houseRules: policy.houseRules?.trim() || undefined,
       }),
-    onSuccess: () => toast({ type: "success", title: "Đã lưu chính sách" }),
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) }),
+    onSuccess: () => toast({ type: "success", title: t("gym.settings.policySaved") }),
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) }),
   });
 
   const fields: Array<{ key: keyof GymPolicy; label: string; placeholder: string }> = [
-    { key: "bookingPolicy", label: "Chính sách đặt lịch", placeholder: "Vd: Đặt trước tối thiểu 2 giờ, mỗi khách tối đa 2 buổi/ngày..." },
-    { key: "cancellationPolicy", label: "Chính sách hủy lịch", placeholder: "Vd: Hủy trước 24h miễn phí; hủy muộn mất phí đặt cọc..." },
-    { key: "noShowPolicy", label: "Chính sách vắng mặt (no-show)", placeholder: "Vd: Vắng mặt không báo trước sẽ không được hoàn tiền..." },
-    { key: "houseRules", label: "Nội quy phòng tập", placeholder: "Vd: Mang giày thể thao, giữ vệ sinh chung..." },
+    { key: "bookingPolicy", label: t("gym.settings.bookingPolicy"), placeholder: t("gym.settings.bookingPolicyHint") },
+    { key: "cancellationPolicy", label: t("gym.settings.cancelPolicy"), placeholder: t("gym.settings.cancelPolicyHint") },
+    { key: "noShowPolicy", label: t("gym.settings.noShowPolicy"), placeholder: t("gym.settings.noShowPolicyHint") },
+    { key: "houseRules", label: t("gym.settings.houseRules"), placeholder: t("gym.settings.houseRulesHint") },
   ];
 
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
       <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-1">
-        <ScrollText className="size-4 text-primary" /> Chính sách & nội quy
+        <ScrollText className="size-4 text-primary" /> {t("gym.settings.policiesTitle")}
       </h2>
       <p className="text-xs text-muted-foreground mb-4">
-        Hiển thị cho khách khi đặt lịch. Quy tắc tài chính (cọc %, giờ hủy miễn phí) cấu hình theo từng dịch vụ/gói.
+        {t("gym.settings.policiesHint")}
       </p>
       {query.isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
@@ -68,8 +70,8 @@ function PoliciesSection() {
             </div>
           ))}
           <div className="flex justify-end">
-            <Button onClick={() => save.mutate()} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-              {save.isPending && <Loader2 className="size-4 animate-spin" />} Lưu chính sách
+            <Button onClick={() => save.mutate()} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {save.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.settings.savePolicies")}
             </Button>
           </div>
         </div>
@@ -79,6 +81,7 @@ function PoliciesSection() {
 }
 
 export default function GymSettingsPage() {
+  const t = useTranslations();
   const { toast } = useToast();
 
   const [gymName, setGymName] = useState("");
@@ -107,24 +110,24 @@ export default function GymSettingsPage() {
 
   const saveProfile = useMutation({
     mutationFn: (payload: UpdateGymProfileInput) => gymService.updateProfile(payload),
-    onSuccess: () => toast({ type: "success", title: "Đã cập nhật hồ sơ phòng gym" }),
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onSuccess: () => toast({ type: "success", title: t("gym.settings.profileUpdated") }),
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
 
   const saveVisibility = useMutation({
     mutationFn: (v: boolean) => gymService.setVisibility(v),
-    onSuccess: (_d, v) => toast({ type: "success", title: v ? "Đã hiển thị trên marketplace" : "Đã ẩn khỏi marketplace" }),
+    onSuccess: (_d, v) => toast({ type: "success", title: v ? t("gym.settings.shownOnMarketplace") : t("gym.settings.hiddenFromMarketplace") }),
     onError: (e, v) => {
       // Đảo lại toggle khi BE từ chối (vd chưa APPROVED, chưa có branch active).
       setVisible(!v);
-      toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) });
+      toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) });
     },
   });
 
   const notApproved = !!status && status.verificationStatus !== "APPROVED";
 
   function submit() {
-    if (!gymName.trim()) { toast({ type: "warning", title: "Nhập tên phòng gym" }); return; }
+    if (!gymName.trim()) { toast({ type: "warning", title: t("gym.settings.nameRequired") }); return; }
     saveProfile.mutate({
       gymName: gymName.trim(),
       description: description.trim() || undefined,
@@ -140,8 +143,8 @@ export default function GymSettingsPage() {
 
       <div className="flex-1 overflow-y-auto p-6 max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Cài đặt</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cập nhật hồ sơ công khai và trạng thái hiển thị của phòng gym.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("gym.settings.title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("gym.settings.subtitle")}</p>
         </div>
 
         {isLoading ? (
@@ -149,33 +152,33 @@ export default function GymSettingsPage() {
         ) : (
           <div className="space-y-5">
             <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4"><Building2 className="size-4 text-primary" /> Hồ sơ phòng gym</h2>
+              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4"><Building2 className="size-4 text-primary" /> {t("gym.settings.profileTitle")}</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tên phòng gym <span className="text-red-500">*</span></label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.settings.nameLabel")} <span className="text-destructive">*</span></label>
                   <Input value={gymName} onChange={e => setGymName(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Mô tả</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.description")}</label>
                   <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Địa chỉ</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
                     <Input value={address} onChange={e => setAddress(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Thành phố</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
                     <Input value={city} onChange={e => setCity(e.target.value)} />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Số điện thoại</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
                   <Input value={phone} onChange={e => setPhone(e.target.value)} />
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={submit} disabled={saveProfile.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-                    {saveProfile.isPending && <Loader2 className="size-4 animate-spin" />} Lưu hồ sơ
+                  <Button onClick={submit} disabled={saveProfile.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    {saveProfile.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.settings.saveProfile")}
                   </Button>
                 </div>
               </div>
@@ -184,14 +187,14 @@ export default function GymSettingsPage() {
             <PoliciesSection />
 
             <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4"><Eye className="size-4 text-primary" /> Hiển thị trên marketplace</h2>
+              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4"><Eye className="size-4 text-primary" /> {t("gym.settings.visibilityTitle")}</h2>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Cho phép khách hàng tìm thấy phòng gym</p>
+                  <p className="text-sm font-medium text-foreground">{t("gym.settings.visibilityHint")}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {notApproved
-                      ? "Chỉ khả dụng sau khi hồ sơ được duyệt (và có ít nhất 1 chi nhánh hoạt động)."
-                      : "Bật để hồ sơ hiển thị công khai trên trang tìm kiếm."}
+                      ? t("gym.settings.visibilityLocked")
+                      : t("gym.settings.visibilityOn")}
                   </p>
                 </div>
                 <Switch

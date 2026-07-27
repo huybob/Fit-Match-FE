@@ -14,18 +14,28 @@ import { NotificationBell } from "@/modules/notification/components/notification
 import { appRoutes } from "@/constants/ecommerce.constant";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
 import { MotionPage } from "@/shared/components/common/motion-page";
+import { LocaleSwitch } from "@/shared/components/common/locale-switch";
 import { ThemeSwitch } from "@/shared/components/common/theme-switch";
 import { cn } from "@/shared/utils/cn.util";
+import { useTranslations } from "next-intl";
 
+/** labelKey = null nghĩa là tên riêng, không dịch. */
 const navItems = [
-  ["Trang chủ", appRoutes.home],
-  ["Phòng gym", appRoutes.gyms],
-  ["Huấn luyện viên", appRoutes.trainers],
-  ["Đặt lịch", appRoutes.booking],
+  { labelKey: "site.nav.home", label: null, href: appRoutes.home },
+  { labelKey: "site.nav.gyms", label: null, href: appRoutes.gyms },
+  { labelKey: "site.nav.trainers", label: null, href: appRoutes.trainers },
+  { labelKey: "site.nav.bookings", label: null, href: appRoutes.booking },
   // Bug 13: FAQ/Blog do CMS quản lý đã có trang nhưng không được link ở đâu cả.
-  ["Blog", appRoutes.blog],
-  ["FAQ", appRoutes.faq],
+  { labelKey: null, label: "Blog", href: appRoutes.blog },
+  { labelKey: null, label: "FAQ", href: appRoutes.faq },
 ] as const;
 
 function useVisibleNavItems() {
@@ -33,14 +43,15 @@ function useVisibleNavItems() {
   const canBook = status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
   return canBook
     ? navItems
-    : navItems.filter(([, href]) => href !== appRoutes.booking);
+    : navItems.filter((item) => item.href !== appRoutes.booking);
 }
 
 // Role-specific workspace entry shown in the account dropdown.
+/** Trả về KEY thay vì chuỗi — helper thường không được gọi hook (rules-of-hooks). */
 function workspaceEntryFor(role?: string) {
-  if (role === "ROLE_ADMIN") return { href: "/admin", label: "Trang quản trị" };
-  if (role === "ROLE_PT") return { href: "/trainer", label: "Khu vực huấn luyện viên" };
-  if (role === "ROLE_GYM_OPERATOR") return { href: "/gym", label: "Khu vực phòng gym" };
+  if (role === "ROLE_ADMIN") return { href: "/admin", labelKey: "site.workspace.admin" } as const;
+  if (role === "ROLE_PT") return { href: "/trainer", labelKey: "site.workspace.pt" } as const;
+  if (role === "ROLE_GYM_OPERATOR") return { href: "/gym", labelKey: "site.workspace.gym" } as const;
   return null;
 }
 
@@ -55,9 +66,10 @@ export function SiteLayout({ children }: { children: ReactNode }) {
 }
 
 function SiteHeader() {
+  const t = useTranslations();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserOpen, setIsUserOpen] = useState(false);
   const { user, status, logout } = useAuthStore();
+  const workspaceEntry = workspaceEntryFor(user?.role);
   const canUseNotifications = status === "authenticated" && ["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"].includes(user?.role ?? "");
   const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
@@ -66,7 +78,6 @@ function SiteHeader() {
 
   async function handleLogout() {
     await logout();
-    setIsUserOpen(false);
   }
 
   return (
@@ -79,7 +90,7 @@ function SiteHeader() {
         </Link>
 
         <nav className="ml-8 hidden items-center gap-6 lg:flex">
-          {visibleNavItems.map(([label, href]) => (
+          {visibleNavItems.map(({ labelKey, label, href }) => (
             <Link
               key={href}
               href={href}
@@ -90,90 +101,85 @@ function SiteHeader() {
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {label}
+              {labelKey ? t(labelKey) : label}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 sm:flex">
+          <LocaleSwitch />
           <ThemeSwitch />
           {/* E-6: badge số chưa đọc thật (poll 60s) thay Link tĩnh */}
           {canUseNotifications && <NotificationBell />}
 
           {status === "idle" || status === "loading" ? (
             <div
-              aria-label="Đang xử lý..."
+              aria-label={t("common.states.processing")}
               className="h-9 w-32 animate-pulse rounded-md bg-muted"
             />
           ) : status === "authenticated" && user ? (
-            <div className="relative">
-              <Button
-                type="button"
-                onClick={() => setIsUserOpen((value) => !value)}
-                className="h-9 bg-primary px-3 text-white hover:bg-primary/90"
-              >
-                <UserCircle className="size-4" />
-                {user.username}
-                <ChevronDown className="size-4" />
-              </Button>
-              {isUserOpen && (
-                <div className="absolute right-0 top-11 w-56 rounded-lg border border-border bg-card p-2 shadow-xl">
-                  <Link
-                    className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40"
-                    href={appRoutes.profile}
-                    onClick={() => setIsUserOpen(false)}
-                  >
-                    Hồ sơ
-                  </Link>
-                  {workspaceEntryFor(user.role) && (
-                    <Link
-                      className="block rounded-md px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
-                      href={workspaceEntryFor(user.role)!.href}
-                      onClick={() => setIsUserOpen(false)}
-                    >
-                      {workspaceEntryFor(user.role)!.label}
-                    </Link>
-                  )}
-                  {user.role === "ROLE_CUSTOMER" && (
-                    <>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/profile/favorites">
-                        PT yêu thích
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/profile/bookings">
-                        Lịch đặt
-                      </Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/profile/reviews">Đánh giá</Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/profile/disputes">Tranh chấp</Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/profile/loyalty">Điểm thưởng</Link>
-                      <Link className="block rounded-md px-3 py-2 text-sm font-semibold hover:bg-muted/40" href="/notifications">Thông báo</Link>
-                    </>
-                  )}
-                  {/* Khu vực quản lý — tạm ẩn */}
-                  {/* Đổi mật khẩu — tạm ẩn */}
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-destructive hover:bg-destructive/10"
-                    onClick={() => void handleLogout()}
-                    type="button"
-                  >
-                    <LogOut className="size-4" />
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  className="h-9 bg-primary px-3 text-primary-foreground hover:bg-primary/90"
+                >
+                  <UserCircle className="size-4" />
+                  {user.username}
+                  <ChevronDown className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link href={appRoutes.profile}>{t("member.nav.profile")}</Link>
+                </DropdownMenuItem>
+                {workspaceEntry && (
+                  <DropdownMenuItem asChild className="text-primary focus:bg-primary/10 focus:text-primary">
+                    <Link href={workspaceEntry.href}>{t(workspaceEntry.labelKey)}</Link>
+                  </DropdownMenuItem>
+                )}
+                {user.role === "ROLE_CUSTOMER" && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/favorites">{t("site.menu.favoriteTrainers")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/bookings">{t("member.nav.bookings")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/reviews">{t("site.menu.reviews")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/disputes">{t("site.menu.disputes")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/loyalty">{t("site.menu.loyalty")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/notifications">{t("notification.title")}</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onSelect={() => void handleLogout()}>
+                  <LogOut className="size-4" />
+                  {t("common.menu.logout")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Link
                 className="px-3 text-sm font-semibold text-foreground hover:text-foreground"
                 href={appRoutes.login}
               >
-                Đăng nhập
+                {t("auth.login")}
               </Link>
               <Link
-                className="rounded-md bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary/90"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition hover:bg-primary/90"
                 href={appRoutes.register}
               >
-                Đăng ký
+                {t("auth.register")}
               </Link>
             </>
           )}
@@ -183,7 +189,7 @@ function SiteHeader() {
           type="button"
           onClick={() => setIsMenuOpen((value) => !value)}
           className="ml-auto size-9 bg-muted/40 p-0 text-muted-foreground shadow-none ring-1 ring-border hover:bg-muted lg:hidden"
-          aria-label="Trình đơn"
+          aria-label={t("site.menuButton")}
         >
           {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
@@ -192,14 +198,14 @@ function SiteHeader() {
       {isMenuOpen && (
         <div className="border-t border-border bg-card px-4 py-4 lg:hidden">
           <div className="space-y-1">
-            {visibleNavItems.map(([label, href]) => (
+            {visibleNavItems.map(({ labelKey, label, href }) => (
               <Link
                 key={href}
                 href={href}
                 onClick={() => setIsMenuOpen(false)}
                 className="block rounded-md px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/40"
               >
-                {label}
+                {labelKey ? t(labelKey) : label}
               </Link>
             ))}
             {status === "idle" || status === "loading" ? (
@@ -210,25 +216,25 @@ function SiteHeader() {
                   {user.username}
                 </p>
                 <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href={appRoutes.profile} onClick={() => setIsMenuOpen(false)}>
-                  Hồ sơ
+                  {t("member.nav.profile")}
                 </Link>
                 {workspaceEntryFor(user.role) && (
                   <Link className="block rounded-md px-3 py-2 text-sm font-semibold text-primary" href={workspaceEntryFor(user.role)!.href} onClick={() => setIsMenuOpen(false)}>
-                    {workspaceEntryFor(user.role)!.label}
+                    {t(workspaceEntryFor(user.role)!.labelKey)}
                   </Link>
                 )}
                 {canUseNotifications && (
                   <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/notifications">
-                    Thông báo
+                    {t("notification.title")}
                   </Link>
                 )}
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/favorites">PT yêu thích</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">Lịch đặt</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">Đánh giá</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/disputes">Tranh chấp</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/loyalty">Điểm thưởng</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/favorites">{t("site.menu.favoriteTrainers")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">{t("member.nav.bookings")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">{t("site.menu.reviews")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/disputes">{t("site.menu.disputes")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/loyalty">{t("site.menu.loyalty")}</Link>
                   </>
                 )}
                 {/* Khu vực quản lý — tạm ẩn */}
@@ -238,9 +244,7 @@ function SiteHeader() {
                   onClick={() => void handleLogout()}
                   type="button"
                 >
-                  <LogOut className="size-4" />
-                  Đăng xuất
-                </button>
+                  <LogOut className="size-4" />{t("common.menu.logout")}</button>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
@@ -248,13 +252,13 @@ function SiteHeader() {
                   className="rounded-md px-3 py-2 text-center text-sm font-semibold text-foreground"
                   href={appRoutes.login}
                 >
-                  Đăng nhập
+                  {t("auth.login")}
                 </Link>
                 <Link
-                  className="rounded-md bg-primary px-3 py-2 text-center text-sm font-bold text-white"
+                  className="rounded-md bg-primary px-3 py-2 text-center text-sm font-bold text-primary-foreground"
                   href={appRoutes.register}
                 >
-                  Đăng ký
+                  {t("auth.register")}
                 </Link>
               </div>
             )}
@@ -266,21 +270,22 @@ function SiteHeader() {
 }
 
 function SiteFooter() {
+  const t = useTranslations();
   const visibleNavItems = useVisibleNavItems();
 
   return (
-    <footer className="border-t border-border bg-gray-900 px-4 py-10 text-white sm:px-6 lg:px-8">
+    <footer className="border-t border-border bg-foreground px-4 py-10 text-background sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-lg font-black text-white">FitMatch</p>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Khám phá phòng gym, đặt lịch huấn luyện viên và quản lý hành trình luyện tập tại một nơi.
+            {t("site.footerTagline")}
           </p>
         </div>
         <div className="flex flex-wrap gap-4 text-sm font-semibold text-muted-foreground">
-          {visibleNavItems.map(([label, href]) => (
+          {visibleNavItems.map(({ labelKey, label, href }) => (
             <Link key={href} href={href} className={cn("hover:text-white transition")}>
-              {label}
+              {labelKey ? t(labelKey) : label}
             </Link>
           ))}
         </div>

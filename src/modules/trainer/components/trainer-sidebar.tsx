@@ -6,17 +6,20 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { IconButton } from "@/shared/components/ui/icon-button";
+import { useTranslations } from "next-intl";
 
 // PTs are managed by their Gym; the PT workspace is a lean self-service
 // (profile + availability/blocked time + assigned bookings + reviews).
 const ptLinks = [
-  { href: "/trainer", label: "Hồ sơ của tôi", icon: UserRound },
-  { href: "/trainer/availability", label: "Lịch làm việc", icon: CalendarClock },
-  { href: "/trainer/bookings", label: "Buổi tập", icon: CalendarCheck2 },
-  { href: "/trainer/reviews", label: "Đánh giá", icon: Star },
-];
+  { href: "/trainer", navKey: "profile", icon: UserRound },
+  { href: "/trainer/availability", navKey: "availability", icon: CalendarClock },
+  { href: "/trainer/bookings", navKey: "bookings", icon: CalendarCheck2 },
+  { href: "/trainer/reviews", navKey: "reviews", icon: Star },
+] as const;
 
 export function TrainerSidebar() {
+  const t = useTranslations();
   const { user, logout } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
@@ -43,18 +46,18 @@ export function TrainerSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-        {ptLinks.map(({ href, label, icon: Icon }) => {
+        {ptLinks.map(({ href, navKey, icon: Icon }) => {
           const active = pathname === href || (href !== "/trainer" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                 active
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
             >
               <Icon className="size-4 shrink-0" />
-              {label}
+              {t(`trainer.nav.${navKey}`)}
             </Link>
           );
         })}
@@ -63,16 +66,16 @@ export function TrainerSidebar() {
       {/* User info */}
       <div className="px-4 py-4 border-t border-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+          <div className="size-8 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-xs font-bold text-primary-foreground shrink-0">
             {(user?.fullName ?? user?.username ?? "T")[0]?.toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-foreground truncate">{user?.fullName ?? user?.username}</p>
             <p className="text-[10px] text-muted-foreground">Professional PT</p>
           </div>
-          <button onClick={handleLogout} title="Đăng xuất" className="text-muted-foreground hover:text-foreground transition-colors">
+          <IconButton tooltip={t("common.menu.logout")} onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
             <LogOut className="size-3.5" />
-          </button>
+          </IconButton>
         </div>
       </div>
     </aside>

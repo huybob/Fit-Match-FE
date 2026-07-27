@@ -7,8 +7,10 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { authService } from "@/services/auth.service";
 import { AuthPageShell } from "@/shared/components/common/auth-page-shell";
+import { useTranslations } from "next-intl";
 
 function VerifyEmailContent() {
+  const t = useTranslations();
   const params = useSearchParams();
   const token = params.get("token") ?? "";
   const [status, setStatus] = useState<"loading" | "success" | "error" | "no-token">(
@@ -26,10 +28,10 @@ function VerifyEmailContent() {
   if (status === "no-token") {
     return (
       <div className="space-y-4 text-center py-4">
-        <h1 className="text-2xl font-semibold text-foreground">Link không hợp lệ</h1>
-        <p className="text-sm text-muted-foreground">Không tìm thấy token xác thực trong link.</p>
+        <h1 className="text-2xl font-semibold text-foreground">{t("auth.verifyInvalidTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("auth.verifyNoToken")}</p>
         <Link href="/resend-verification" className="text-sm text-primary hover:underline">
-          Gửi lại email xác thực
+          {t("auth.resendVerify")}
         </Link>
       </div>
     );
@@ -39,7 +41,7 @@ function VerifyEmailContent() {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
         <Loader2 className="size-10 text-primary animate-spin" />
-        <p className="text-sm text-muted-foreground">Đang xác thực email của bạn...</p>
+        <p className="text-sm text-muted-foreground">{t("auth.verifying")}</p>
       </div>
     );
   }
@@ -48,21 +50,21 @@ function VerifyEmailContent() {
     return (
       <div className="space-y-6 text-center py-4">
         <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-green-50">
-            <CheckCircle className="size-8 text-green-600" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-success-muted">
+            <CheckCircle className="size-8 text-success" />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Email đã xác thực!</h2>
+          <h2 className="text-2xl font-semibold text-foreground">{t("auth.verifiedTitle")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Tài khoản của bạn đã được kích hoạt thành công. Bạn có thể đăng nhập ngay bây giờ.
+            {t("auth.verifiedBody")}
           </p>
         </div>
         <Link
           href="/login"
-          className="inline-flex items-center justify-center w-full h-10 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-flex items-center justify-center w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors"
         >
-          Đăng nhập ngay
+          {t("auth.loginNow")}
         </Link>
       </div>
     );
@@ -71,18 +73,18 @@ function VerifyEmailContent() {
   return (
     <div className="space-y-6 text-center py-4">
       <div className="flex justify-center">
-        <div className="flex size-16 items-center justify-center rounded-full bg-red-50">
-          <XCircle className="size-8 text-red-500" />
+        <div className="flex size-16 items-center justify-center rounded-full bg-destructive/10">
+          <XCircle className="size-8 text-destructive" />
         </div>
       </div>
       <div>
-        <h2 className="text-2xl font-semibold text-foreground">Xác thực thất bại</h2>
+        <h2 className="text-2xl font-semibold text-foreground">{t("auth.verifyFailedTitle")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Link xác thực không hợp lệ hoặc đã hết hạn (24 giờ).
+          {t("auth.verifyFailedBody")}
         </p>
       </div>
       <Link href="/resend-verification" className="text-sm text-primary hover:underline">
-        Gửi lại email xác thực
+        {t("auth.resendVerify")}
       </Link>
     </div>
   );

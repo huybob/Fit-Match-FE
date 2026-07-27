@@ -14,6 +14,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn.util";
+import { useTranslations } from "next-intl";
 
 export function ConfirmDialog({
   label,
@@ -28,6 +29,7 @@ export function ConfirmDialog({
   destructive?: boolean;
   onConfirm: () => void;
 }) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -48,16 +50,14 @@ export function ConfirmDialog({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className={cn(destructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
             onClick={() => {
               onConfirm();
               setOpen(false);
             }}
-          >
-            Xác nhận
-          </AlertDialogAction>
+          >{t("common.actions.confirm")}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

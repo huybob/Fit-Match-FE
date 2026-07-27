@@ -7,15 +7,17 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { useUnreadCount } from "../hooks/use-notification";
+import { useTranslations } from "next-intl";
 
 export function NotificationBell({ className }: { className?: string }) {
+  const t = useTranslations();
   const { data } = useUnreadCount();
   const count = data?.count ?? 0;
 
   return (
     <Link
       href="/notifications"
-      aria-label={count > 0 ? `Thông báo (${count} chưa đọc)` : "Thông báo"}
+      aria-label={count > 0 ? t("notification.bellUnread", { count }) : t("notification.title")}
       className={
         className ??
         "relative inline-flex size-9 items-center justify-center rounded-md bg-muted/40 text-muted-foreground ring-1 ring-border"
@@ -23,7 +25,7 @@ export function NotificationBell({ className }: { className?: string }) {
     >
       <Bell className="size-4" />
       {count > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
           {count > 99 ? "99+" : count}
         </span>
       )}

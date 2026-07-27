@@ -31,7 +31,7 @@ export function AuthGuard({ children, roles }: { children: ReactNode; roles?: Us
   if (status !== "authenticated" || forbidden) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <ShieldAlert className="size-8 text-orange-500" aria-label="Access denied" />
+        <ShieldAlert className="size-8 text-warning" aria-label="Access denied" />
       </div>
     );
   }

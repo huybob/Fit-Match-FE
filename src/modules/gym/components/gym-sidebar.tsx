@@ -9,25 +9,27 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { gymService } from "@/services/gym.service";
+import { useTranslations } from "next-intl";
 
 // Links available before the gym is approved (submit + track verification only).
 const ALWAYS_AVAILABLE = new Set(["/gym", "/gym/verification"]);
 
 const gymLinks = [
-  { href: "/gym", label: "Bảng điều hành", icon: LayoutDashboard },
-  { href: "/gym/verification", label: "Xác minh", icon: ShieldCheck },
-  { href: "/gym/facilities", label: "Cơ sở vật chất", icon: Dumbbell },
-  { href: "/gym/branches", label: "Chi nhánh", icon: GitBranch },
-  { href: "/gym/pts", label: "Huấn luyện viên", icon: Users },
-  { href: "/gym/services", label: "Dịch vụ", icon: Sparkles },
-  { href: "/gym/packages", label: "Gói tập", icon: Package },
-  { href: "/gym/bookings", label: "Đặt lịch", icon: CalendarCheck2 },
-  { href: "/gym/revenue", label: "Doanh thu", icon: DollarSign },
-  { href: "/gym/withdrawals", label: "Rút tiền", icon: Banknote },
-  { href: "/gym/settings", label: "Cài đặt", icon: Settings },
-];
+  { href: "/gym", navKey: "dashboard", icon: LayoutDashboard },
+  { href: "/gym/verification", navKey: "verification", icon: ShieldCheck },
+  { href: "/gym/facilities", navKey: "facilities", icon: Dumbbell },
+  { href: "/gym/branches", navKey: "branches", icon: GitBranch },
+  { href: "/gym/pts", navKey: "trainers", icon: Users },
+  { href: "/gym/services", navKey: "services", icon: Sparkles },
+  { href: "/gym/packages", navKey: "packages", icon: Package },
+  { href: "/gym/bookings", navKey: "bookings", icon: CalendarCheck2 },
+  { href: "/gym/revenue", navKey: "revenue", icon: DollarSign },
+  { href: "/gym/withdrawals", navKey: "withdrawals", icon: Banknote },
+  { href: "/gym/settings", navKey: "settings", icon: Settings },
+] as const;
 
 export function GymSidebar() {
+  const t = useTranslations();
   const { user, logout } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
@@ -69,7 +71,7 @@ export function GymSidebar() {
       {/* User info — top below brand */}
       <div className="px-4 py-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+          <div className="size-10 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-sm font-bold text-primary-foreground shrink-0">
             {initial}
           </div>
           <div className="min-w-0 flex-1">
@@ -81,28 +83,28 @@ export function GymSidebar() {
 
       {/* B-35: gym SUSPENDED trước đây hiển thị như hồ sơ mới, không banner */}
       {suspended && (
-        <div className="mx-3 mt-3 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200 shrink-0">
-          <p className="text-[11px] font-bold text-red-700">Phòng tập đang bị đình chỉ</p>
-          <p className="text-[10px] text-red-600 mt-0.5">
-            Nội dung đã bị ẩn khỏi marketplace. Xem lý do tại trang Xác minh.
+        <div className="mx-3 mt-3 px-3 py-2.5 rounded-xl bg-destructive/10 border border-destructive/30 shrink-0">
+          <p className="text-[11px] font-bold text-destructive">{t("gym.suspendedTitle")}</p>
+          <p className="text-[10px] text-destructive mt-0.5">
+            {t("gym.suspendedBody")}
           </p>
         </div>
       )}
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
-        {visibleLinks.map(({ href, label, icon: Icon }) => {
+        {visibleLinks.map(({ href, navKey, icon: Icon }) => {
           const active = pathname === href || (href !== "/gym" && pathname.startsWith(href));
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
                 active
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
               }`}
             >
               <Icon className="size-4 shrink-0" />
-              {label}
+              {t(`gym.nav.${navKey}`)}
             </Link>
           );
         })}
@@ -112,8 +114,7 @@ export function GymSidebar() {
       <div className="px-4 py-4 border-t border-border shrink-0">
         <button onClick={handleLogout}
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-          <LogOut className="size-3.5" /> Đăng xuất
-        </button>
+          <LogOut className="size-3.5" />{t("common.menu.logout")}</button>
       </div>
     </aside>
   );

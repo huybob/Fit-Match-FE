@@ -12,8 +12,17 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { useTranslations } from "next-intl";
 
 export default function GymFacilitiesPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -42,9 +51,9 @@ export default function GymFacilitiesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-facilities"] });
       closeForm();
-      toast({ type: "success", title: editing ? "Đã cập nhật tiện ích" : "Đã thêm tiện ích" });
+      toast({ type: "success", title: editing ? t("gym.facilities.updated") : t("gym.facilities.added") });
     },
-    onError: (e) => toast({ type: "error", title: "Lưu thất bại", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) })
   });
 
   const deactivateMut = useMutation({
@@ -52,9 +61,9 @@ export default function GymFacilitiesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-facilities"] });
       setConfirmId(null);
-      toast({ type: "success", title: "Đã vô hiệu hoá tiện ích" });
+      toast({ type: "success", title: t("gym.facilities.disabled") });
     },
-    onError: (e) => toast({ type: "error", title: "Thao tác thất bại", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) })
   });
 
   function openCreate() {
@@ -69,7 +78,7 @@ export default function GymFacilitiesPage() {
     setFormOpen(false); setEditing(null); setName(""); setDescription(""); setBranchId("");
   }
   function save() {
-    if (!name.trim()) { toast({ type: "warning", title: "Vui lòng nhập tên tiện ích" }); return; }
+    if (!name.trim()) { toast({ type: "warning", title: t("gym.facilities.nameRequired") }); return; }
     saveMut.mutate({
       name: name.trim(),
       description: description.trim() || undefined,
@@ -84,11 +93,11 @@ export default function GymFacilitiesPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Tiện ích & Cơ sở vật chất</h1>
-            <p className="text-sm text-muted-foreground mt-1">Quản lý và cập nhật trang thiết bị, không gian luyện tập.</p>
+            <h1 className="text-2xl font-bold text-foreground">{t("gym.facilities.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("gym.facilities.subtitle")}</p>
           </div>
-          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-            <Plus className="size-4" /> Thêm tiện ích mới
+          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Plus className="size-4" /> {t("gym.facilities.addNew")}
           </Button>
         </div>
 
@@ -97,7 +106,7 @@ export default function GymFacilitiesPage() {
         ) : facilities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-2xl border border-border">
             <Dumbbell className="size-10 mb-3" />
-            <p className="text-sm">Chưa có tiện ích nào. Bấm &quot;Thêm tiện ích mới&quot; để bắt đầu.</p>
+            <p className="text-sm">Chưa có tiện ích nào. Bấm &quot;{t("gym.facilities.addNew")}&quot; để bắt đầu.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -108,23 +117,22 @@ export default function GymFacilitiesPage() {
                     <Dumbbell className="size-5 text-primary" />
                   </div>
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                    f.active === false ? "bg-muted text-muted-foreground" : "bg-emerald-100 text-emerald-700"
+                    f.active === false ? "bg-muted text-muted-foreground" : "bg-success-muted text-success"
                   }`}>
-                    {f.active === false ? "Ngừng" : <><CheckCircle2 className="size-3" /> Đang hoạt động</>}
+                    {f.active === false ? t("common.states.stopped") : <><CheckCircle2 className="size-3" /> Đang hoạt động</>}
                   </span>
                 </div>
                 <h3 className="text-[15px] font-bold text-foreground">{f.name}</h3>
                 {f.branchName && (
-                  <p className="text-[11px] font-semibold text-primary mt-0.5">Chi nhánh: {f.branchName}</p>
+                  <p className="text-[11px] font-semibold text-primary mt-0.5">{t("gym.facilities.branchLabel")} {f.branchName}</p>
                 )}
-                <p className="text-sm text-muted-foreground mt-1 flex-1 line-clamp-3">{f.description || "Không có mô tả."}</p>
+                <p className="text-sm text-muted-foreground mt-1 flex-1 line-clamp-3">{f.description || t("gym.facilities.noDescription")}</p>
                 <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                  <button onClick={() => openEdit(f)} className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                    <Pencil className="size-3.5" /> Sửa
-                  </button>
+                  <Button variant="link" size="inline" onClick={() => openEdit(f)} className="flex gap-1.5 text-primary">
+                    <Pencil className="size-3.5" />{t("common.actions.edit")}</Button>
                   {f.active !== false && (
-                    <button onClick={() => f.id != null && setConfirmId(f.id)} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-red-500 ml-auto">
-                      <Ban className="size-3.5" /> Vô hiệu hoá
+                    <button onClick={() => f.id != null && setConfirmId(f.id)} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive ml-auto">
+                      <Ban className="size-3.5" /> {t("gym.facilities.disable")}
                     </button>
                   )}
                 </div>
@@ -135,45 +143,46 @@ export default function GymFacilitiesPage() {
       </div>
 
       {/* Create / edit dialog */}
-      <Dialog open={formOpen} title={editing ? "Chỉnh sửa tiện ích" : "Thêm tiện ích mới"} onClose={closeForm}>
+      <Dialog open={formOpen} title={editing ? t("gym.facilities.editTitle") : t("gym.facilities.addNew")} onClose={closeForm}>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tên tiện ích <span className="text-red-500">*</span></label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Vd: Phòng Gym chuyên sâu" />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.facilities.nameLabel")} <span className="text-destructive">*</span></label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("gym.facilities.namePlaceholder")} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Mô tả chi tiết</label>
-            <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Mô tả không gian, thiết bị, đặc điểm nổi bật..." />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.facilities.descLabel")}</label>
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder={t("gym.facilities.descPlaceholder")} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Chi nhánh</label>
-            <select
-              value={branchId}
-              onChange={(e) => setBranchId(e.target.value)}
-              className="w-full h-10 text-sm border border-border rounded-lg px-2.5 bg-card text-foreground"
-            >
-              <option value="">— Chưa gắn chi nhánh —</option>
-              {branches.filter((b) => b.active !== false).map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </select>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.nav.branches")}</label>
+            <Select value={branchId} onValueChange={setBranchId}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder={t("gym.facilities.noBranch")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("gym.facilities.noBranch")}</SelectItem>
+                {branches.filter((b) => b.active !== false).map((b) => (
+                  <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">Hủy</Button>
-            <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />} Lưu
+            <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
+            <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.save")}
             </Button>
           </div>
         </div>
       </Dialog>
 
       {/* Deactivate confirm */}
-      <Dialog open={confirmId !== null} title="Vô hiệu hoá tiện ích?" onClose={() => setConfirmId(null)}>
-        <p className="text-sm text-muted-foreground">Tiện ích sẽ không còn hiển thị cho khách hàng. Bạn có chắc chắn?</p>
+      <Dialog open={confirmId !== null} title={t("gym.facilities.disableConfirmTitle")} onClose={() => setConfirmId(null)}>
+        <p className="text-sm text-muted-foreground">{t("gym.facilities.disableConfirmBody")}</p>
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={() => setConfirmId(null)} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">Hủy</Button>
-          <Button onClick={() => confirmId != null && deactivateMut.mutate(confirmId)} disabled={deactivateMut.isPending} className="gap-2 bg-red-600 hover:bg-red-700 text-white">
-            {deactivateMut.isPending && <Loader2 className="size-4 animate-spin" />} Xác nhận
+          <Button onClick={() => setConfirmId(null)} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
+          <Button onClick={() => confirmId != null && deactivateMut.mutate(confirmId)} disabled={deactivateMut.isPending} className="gap-2 bg-destructive hover:bg-destructive text-destructive-foreground">
+            {deactivateMut.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.confirm")}
           </Button>
         </div>
       </Dialog>

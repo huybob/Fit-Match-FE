@@ -26,6 +26,13 @@ import type {
   UserStatus,
 } from "@/types/Admin";
 import type { PaginationParams } from "@/shared/types/pagination.type";
+import type {
+  PaymentTransaction,
+  PaymentTxnAnomaly,
+  ReconciliationApplyRequest,
+  ReconciliationResolveRequest,
+  ReconciliationSummary,
+} from "@/types/Payment";
 
 export type { AdminUserResponse, AdminUserPage, AuditLogPage, UserStatus, UserRole, PtVerificationResponse, PtVerificationPage, PtDocumentDto, GymVerificationResponse, GymVerificationPage };
 
@@ -119,6 +126,22 @@ export const adminService = {
       `/admin/refunds/${id}/approve`, payload),
   rejectRefund: (id: number, payload: { note?: string }) =>
     api.post<RefundRequest, { note?: string }>(`/admin/refunds/${id}/reject`, payload),
+
+  // ── Đối soát thanh toán (UC-053/056) ──
+  // Tiền vào tài khoản nền tảng nhưng không khớp booking (sai nội dung CK,
+  // thiếu/thừa tiền, vào sau khi đơn hết hạn, CK trùng) trước đây chỉ nằm ở
+  // log BE; giờ là hàng đợi Finance xử lý được.
+  listPaymentTransactions: (
+    params: PaginationParams & { reconStatus?: string; anomaly?: PaymentTxnAnomaly },
+  ) => api.get<PageResponse<PaymentTransaction>>("/admin/payments/reconciliation", { params }),
+  getReconciliationSummary: () =>
+    api.get<ReconciliationSummary>("/admin/payments/reconciliation/summary"),
+  applyPaymentTransaction: (id: number, payload: ReconciliationApplyRequest) =>
+    api.post<PaymentTransaction, ReconciliationApplyRequest>(
+      `/admin/payments/reconciliation/${id}/apply`, payload),
+  resolvePaymentTransaction: (id: number, payload: ReconciliationResolveRequest) =>
+    api.post<PaymentTransaction, ReconciliationResolveRequest>(
+      `/admin/payments/reconciliation/${id}/resolve`, payload),
 
   // ── Commission config (UC-072, E-2) ──
   getCommissionConfig: () =>

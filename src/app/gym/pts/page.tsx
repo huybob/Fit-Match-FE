@@ -23,17 +23,23 @@ import {
 } from "@/shared/components/ui/select";
 import { FileUpload } from "@/shared/components/common/file-upload";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { IconButton } from "@/shared/components/ui/icon-button";
+import { useTranslations } from "next-intl";
+import { DataTable } from "@/shared/components/common/data-table";
+import { UserAvatar } from "@/shared/components/common/user-avatar";
 
-const STATUS: Record<GymPtStatus, { label: string; cls: string }> = {
-  ACTIVE: { label: "Đang hoạt động", cls: "bg-emerald-100 text-emerald-700" },
-  INACTIVE: { label: "Tạm ẩn", cls: "bg-muted text-muted-foreground" },
-  SUSPENDED: { label: "Đình chỉ", cls: "bg-red-100 text-red-600" }
+/* Chỉ giữ class; nhãn lấy từ gym.ptStatus.* trong component. */
+const STATUS_CLS: Record<GymPtStatus, string> = {
+  ACTIVE: "bg-success-muted text-success",
+  INACTIVE: "bg-muted text-muted-foreground",
+  SUSPENDED: "bg-destructive/10 text-destructive",
 };
 
 // ─────────────────────────────────────────────
 // Certifications & documents dialog
 // ─────────────────────────────────────────────
 function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () => void }) {
+  const t = useTranslations();
   const ptId = pt.id!;
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -76,32 +82,32 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-pt-certs", ptId] });
       resetCert();
-      toast({ type: "success", title: "Đã lưu chứng chỉ" });
+      toast({ type: "success", title: t("gym.trainers.certSaved") });
     },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
   const delCert = useMutation({
     mutationFn: (certId: number) => gymService.deletePtCert(ptId, certId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["gym-pt-certs", ptId] }); toast({ type: "success", title: "Đã xóa chứng chỉ" }); },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["gym-pt-certs", ptId] }); toast({ type: "success", title: t("gym.trainers.certDeleted") }); },
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
   const addDoc = useMutation({
     mutationFn: () => gymService.addPtDoc(ptId, { documentType: docType.trim(), fileUrl: docUrl.trim() }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-pt-docs", ptId] });
       setDocType(""); setDocUrl("");
-      toast({ type: "success", title: "Đã thêm tài liệu" });
+      toast({ type: "success", title: t("gym.trainers.docAdded") });
     },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
   const delDoc = useMutation({
     mutationFn: (docId: number) => gymService.deletePtDoc(ptId, docId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["gym-pt-docs", ptId] }); toast({ type: "success", title: "Đã xóa tài liệu" }); },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["gym-pt-docs", ptId] }); toast({ type: "success", title: t("gym.trainers.docDeleted") }); },
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
 
   function submitCert() {
-    if (!cName.trim()) { toast({ type: "warning", title: "Nhập tên chứng chỉ" }); return; }
+    if (!cName.trim()) { toast({ type: "warning", title: t("gym.trainers.certNameRequired") }); return; }
     saveCert.mutate({
       name: cName.trim(),
       issuingOrganization: cOrg.trim() || undefined,
@@ -111,25 +117,24 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
     });
   }
   function submitDoc() {
-    if (!docType.trim() || !docUrl.trim()) { toast({ type: "warning", title: "Nhập loại tài liệu và tải tệp lên" }); return; }
+    if (!docType.trim() || !docUrl.trim()) { toast({ type: "warning", title: t("gym.trainers.docRequired") }); return; }
     addDoc.mutate();
   }
 
   return (
-    <Dialog open title={`Chứng chỉ & tài liệu · ${pt.displayName ?? pt.username}`} onClose={onClose}>
+    <Dialog open title={t("gym.trainers.certsDialogTitle", { name: pt.displayName ?? pt.username ?? "" })} onClose={onClose}>
       <div className="space-y-6">
         {/* Certifications */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h3 className="flex items-center gap-1.5 text-sm font-bold text-foreground"><Award className="size-4 text-primary" /> Chứng chỉ</h3>
+            <h3 className="flex items-center gap-1.5 text-sm font-bold text-foreground"><Award className="size-4 text-primary" /> {t("gym.trainers.certsTitle")}</h3>
             {!showCertForm && (
-              <button onClick={() => { resetCert(); setShowCertForm(true); }} className="flex items-center gap-1 text-xs text-primary font-semibold hover:underline">
-                <Plus className="size-3" /> Thêm
-              </button>
+              <Button variant="link" size="inline" onClick={() => { resetCert(); setShowCertForm(true); }} className="flex gap-1 text-primary">
+                <Plus className="size-3" />{t("common.actions.add")}</Button>
             )}
           </div>
           {(certs as PtCertResponse[]).length === 0 && !showCertForm ? (
-            <p className="text-xs text-muted-foreground py-1">Chưa có chứng chỉ.</p>
+            <p className="text-xs text-muted-foreground py-1">{t("gym.trainers.noCerts")}</p>
           ) : (
             <div className="space-y-2">
               {(certs as PtCertResponse[]).map((c) => (
@@ -141,27 +146,27 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => editCert(c)} className="p-1 text-muted-foreground hover:text-primary"><Pencil className="size-3.5" /></button>
-                    <button onClick={() => c.id && delCert.mutate(c.id)} className="p-1 text-muted-foreground hover:text-red-500"><Trash2 className="size-3.5" /></button>
+                    <IconButton tooltip={t("gym.trainers.editCert")} onClick={() => editCert(c)} className="size-8 text-muted-foreground hover:text-primary"><Pencil className="size-3.5" /></IconButton>
+                    <IconButton tooltip={t("gym.trainers.deleteCert")} onClick={() => c.id && delCert.mutate(c.id)} className="size-8 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></IconButton>
                   </div>
                 </div>
               ))}
             </div>
           )}
           {showCertForm && (
-            <div className="mt-2 p-3 bg-primary/10 rounded-lg border border-blue-100 space-y-2.5">
-              <Input value={cName} onChange={e => setCName(e.target.value)} placeholder="Tên chứng chỉ *" className="h-9" />
-              <Input value={cOrg} onChange={e => setCOrg(e.target.value)} placeholder="Tổ chức cấp" className="h-9" />
+            <div className="mt-2 p-3 bg-primary/10 rounded-lg border border-primary/20 space-y-2.5">
+              <Input value={cName} onChange={e => setCName(e.target.value)} placeholder={t("gym.trainers.certNameLabel")} className="h-9" />
+              <Input value={cOrg} onChange={e => setCOrg(e.target.value)} placeholder={t("gym.trainers.certOrgLabel")} className="h-9" />
               <div className="grid grid-cols-2 gap-2">
-                <DatePicker value={cIssue} onChange={setCIssue} placeholder="Ngày cấp" className="h-9" />
-                <DatePicker value={cExpiry} onChange={setCExpiry} placeholder="Ngày hết hạn" className="h-9" />
+                <DatePicker value={cIssue} onChange={(v) => setCIssue(v ?? "")} placeholder={t("gym.trainers.issueDate")} className="h-9" />
+                <DatePicker value={cExpiry} onChange={(v) => setCExpiry(v ?? "")} placeholder={t("gym.trainers.expiryDate")} className="h-9" />
               </div>
-              <FileUpload value={cUrl} onChange={setCUrl} folder="certifications" label="Tải chứng chỉ lên" />
+              <FileUpload value={cUrl} onChange={setCUrl} folder="certifications" label={t("gym.trainers.uploadCert")} />
               <div className="flex gap-2">
-                <Button onClick={submitCert} disabled={saveCert.isPending} className="h-8 px-4 bg-primary hover:bg-primary/90 text-white text-xs gap-1.5">
-                  {saveCert.isPending && <Loader2 className="size-3.5 animate-spin" />} Lưu
+                <Button onClick={submitCert} disabled={saveCert.isPending} className="h-8 px-4 bg-primary hover:bg-primary/90 text-primary-foreground text-xs gap-1.5">
+                  {saveCert.isPending && <Loader2 className="size-3.5 animate-spin" />} {t("common.actions.save")}
                 </Button>
-                <Button onClick={resetCert} className="h-8 px-4 bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none text-xs">Hủy</Button>
+                <Button onClick={resetCert} className="h-8 px-4 bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none text-xs">{t("common.actions.cancel")}</Button>
               </div>
             </div>
           )}
@@ -169,32 +174,31 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
 
         {/* Documents */}
         <div>
-          <h3 className="flex items-center gap-1.5 text-sm font-bold text-foreground mb-2"><FileText className="size-4 text-primary" /> Tài liệu năng lực</h3>
+          <h3 className="flex items-center gap-1.5 text-sm font-bold text-foreground mb-2"><FileText className="size-4 text-primary" /> {t("gym.trainers.docsTitle")}</h3>
           {(docs as PtDocResponse[]).length === 0 ? (
-            <p className="text-xs text-muted-foreground py-1">Chưa có tài liệu.</p>
+            <p className="text-xs text-muted-foreground py-1">{t("gym.trainers.noDocs")}</p>
           ) : (
             <div className="space-y-2 mb-2">
               {(docs as PtDocResponse[]).map((doc) => (
                 <div key={doc.id} className="flex items-center justify-between p-2.5 bg-muted/40 rounded-lg border border-border">
                   <p className="text-xs text-foreground truncate">{doc.documentType}</p>
-                  <button onClick={() => doc.id && delDoc.mutate(doc.id)} className="p-1 text-muted-foreground hover:text-red-500 shrink-0"><Trash2 className="size-3.5" /></button>
+                  <IconButton tooltip={t("gym.trainers.deleteDoc")} onClick={() => doc.id && delDoc.mutate(doc.id)} className="size-8 shrink-0 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></IconButton>
                 </div>
               ))}
             </div>
           )}
           <div className="p-3 bg-muted/40 rounded-lg border border-border space-y-2.5">
-            <Input value={docType} onChange={e => setDocType(e.target.value)} placeholder="Loại tài liệu (vd: Bằng cấp, CCCD)" className="h-9" />
-            <FileUpload value={docUrl} onChange={setDocUrl} folder="documents" label="Tải tài liệu lên" />
-            <Button onClick={submitDoc} disabled={addDoc.isPending} className="h-8 px-4 bg-primary hover:bg-primary/90 text-white text-xs gap-1.5">
-              {addDoc.isPending && <Loader2 className="size-3.5 animate-spin" />} Thêm tài liệu
+            <Input value={docType} onChange={e => setDocType(e.target.value)} placeholder={t("gym.trainers.docTypePlaceholder")} className="h-9" />
+            <FileUpload value={docUrl} onChange={setDocUrl} folder="documents" label={t("gym.trainers.uploadDoc")} />
+            <Button onClick={submitDoc} disabled={addDoc.isPending} className="h-8 px-4 bg-primary hover:bg-primary/90 text-primary-foreground text-xs gap-1.5">
+              {addDoc.isPending && <Loader2 className="size-3.5 animate-spin" />} {t("gym.trainers.addDoc")}
             </Button>
           </div>
         </div>
 
         <div className="flex justify-end">
           <Button onClick={onClose} className="h-9 px-5 bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none gap-1.5">
-            <X className="size-4" /> Đóng
-          </Button>
+            <X className="size-4" />{t("common.actions.close")}</Button>
         </div>
       </div>
     </Dialog>
@@ -205,6 +209,7 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
 // Page
 // ─────────────────────────────────────────────
 export default function GymPtsPage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -236,7 +241,7 @@ export default function GymPtsPage() {
     setNcName(""); setNcOrg(""); setNcIssue(""); setNcExpiry(""); setNcUrl("");
   }
   function addNewCert() {
-    if (!ncName.trim()) { toast({ type: "warning", title: "Nhập tên chứng chỉ" }); return; }
+    if (!ncName.trim()) { toast({ type: "warning", title: t("gym.trainers.certNameRequired") }); return; }
     setNewCerts((prev) => [...prev, {
       name: ncName.trim(),
       issuingOrganization: ncOrg.trim() || undefined,
@@ -285,7 +290,7 @@ export default function GymPtsPage() {
           } catch (e) {
             toast({
               type: "warning",
-              title: `Không thêm được chứng chỉ "${cert.name}"`,
+              title: t("gym.trainers.certAddFailed", { name: cert.name ?? "" }),
               description: toErrorMessage(e),
             });
           }
@@ -296,9 +301,9 @@ export default function GymPtsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-pts"] });
       closeForm();
-      toast({ type: "success", title: editing ? "Đã cập nhật PT" : "Đã tạo PT" });
+      toast({ type: "success", title: editing ? t("gym.trainers.updated") : t("gym.trainers.created") });
     },
-    onError: (e) => toast({ type: "error", title: "Lưu thất bại", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) })
   });
 
   const statusMut = useMutation({
@@ -306,9 +311,9 @@ export default function GymPtsPage() {
       gymService.updatePtStatus(id, { status }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["gym-pts"] });
-      toast({ type: "success", title: "Đã cập nhật trạng thái" });
+      toast({ type: "success", title: t("gym.trainers.statusUpdated") });
     },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
 
   function openCreate() {
@@ -329,10 +334,14 @@ export default function GymPtsPage() {
   function save() {
     if (!editing) {
       if (!username.trim() || !email.trim() || !password) {
-        toast({ type: "warning", title: "Nhập tài khoản, email và mật khẩu" }); return;
+        toast({ type: "warning", title: t("gym.trainers.credentialsRequired") }); return;
+      }
+      // Khớp rule @StrongPassword phía BE: 8-100 ký tự, có ít nhất 1 chữ và 1 số
+      if (password.length < 8 || password.length > 100 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        toast({ type: "warning", title: t("gym.trainers.passwordRule") }); return;
       }
     }
-    if (!displayName.trim()) { toast({ type: "warning", title: "Nhập tên hiển thị" }); return; }
+    if (!displayName.trim()) { toast({ type: "warning", title: t("gym.trainers.displayNameRequired") }); return; }
     saveMut.mutate();
   }
 
@@ -343,11 +352,11 @@ export default function GymPtsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Huấn luyện viên</h1>
-            <p className="text-sm text-muted-foreground mt-1">Quản lý đội ngũ PT của phòng gym: hồ sơ, chứng chỉ và tài liệu năng lực.</p>
+            <h1 className="text-2xl font-bold text-foreground">{t("gym.trainers.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("gym.trainers.subtitle")}</p>
           </div>
-          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-            <Plus className="size-4" /> Thêm PT
+          <Button onClick={openCreate} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Plus className="size-4" /> {t("gym.trainers.add")}
           </Button>
         </div>
 
@@ -357,132 +366,177 @@ export default function GymPtsPage() {
           ) : pts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Users className="size-10 mb-3" />
-              <p className="text-sm">Chưa có huấn luyện viên nào. Bấm &quot;Thêm PT&quot; để tạo.</p>
+              <p className="text-sm">{t("gym.trainers.empty")}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide border-b border-border">
-                  <th className="pb-3 text-left">Huấn luyện viên</th>
-                  <th className="pb-3 text-left">Chuyên môn</th>
-                  <th className="pb-3 text-left">Kinh nghiệm</th>
-                  <th className="pb-3 text-left">Trạng thái</th>
-                  <th className="pb-3 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {pts.map((pt) => (
-                  <tr key={pt.id}>
-                    <td className="py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                          {(pt.displayName ?? pt.username ?? "P")[0]?.toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-[13px] font-semibold text-foreground">{pt.displayName ?? pt.username}</p>
-                          <p className="text-[10px] text-muted-foreground">@{pt.username}</p>
-                        </div>
+            <DataTable
+              minWidth="35rem"
+              rows={pts}
+              rowKey={(pt) => String(pt.id)}
+              emptyTitle={t("gym.trainers.empty")}
+              columns={[
+                {
+                  key: "trainer",
+                  header: t("gym.trainers.title"),
+                  cell: (pt) => (
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        className="size-8"
+                        name={pt.displayName ?? pt.username}
+                        tintSeed={pt.id}
+                        fallbackClassName="text-xs font-bold"
+                      />
+                      <div>
+                        <p className="text-[13px] font-semibold text-foreground">
+                          {pt.displayName ?? pt.username}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">@{pt.username}</p>
                       </div>
-                    </td>
-                    <td className="py-3 text-xs text-muted-foreground">{pt.specialization ?? "—"}</td>
-                    <td className="py-3 text-xs text-muted-foreground">{pt.experienceYears != null ? `${pt.experienceYears} năm` : "—"}</td>
-                    <td className="py-3">
-                      {/* B-33: SUSPENDED chỉ do Admin đặt (BE luôn 409 nếu gym gửi) —
-                          khi bị đình chỉ hiện badge + lý do, không cho gym đổi. */}
-                      {pt.status === "SUSPENDED" ? (
-                        <div>
-                          <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold ${STATUS.SUSPENDED.cls}`}>
-                            Đình chỉ bởi quản trị viên
-                          </span>
-                          {pt.suspensionReason && (
-                            <p className="mt-1 max-w-[220px] text-[10px] text-red-600">{pt.suspensionReason}</p>
-                          )}
-                        </div>
-                      ) : (
-                        <Select value={pt.status ?? "ACTIVE"} onValueChange={(v) => pt.id && statusMut.mutate({ id: pt.id, status: v as GymPtStatus })}>
-                          <SelectTrigger size="sm" className={`w-[150px] h-8 text-[11px] font-semibold ${STATUS[pt.status ?? "ACTIVE"].cls}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="ACTIVE">Đang hoạt động</SelectItem>
-                            <SelectItem value="INACTIVE">Tạm ẩn</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center justify-end gap-3">
-                        <button onClick={() => openEdit(pt)} className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                          <Pencil className="size-3.5" /> Sửa
-                        </button>
-                        <button onClick={() => setCredentialsPt(pt)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
-                          <Award className="size-3.5" /> Chứng chỉ & tài liệu
-                        </button>
-                        <button onClick={() => setOpsPt(pt)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
-                          <CalendarClock className="size-3.5" /> Vận hành
-                        </button>
+                    </div>
+                  ),
+                },
+                {
+                  key: "specialization",
+                  header: t("gym.trainers.specialization"),
+                  hideBelow: "md",
+                  cellClassName: "text-xs text-muted-foreground",
+                  cell: (pt) => pt.specialization ?? "—",
+                },
+                {
+                  key: "experience",
+                  header: t("gym.trainers.experience"),
+                  hideBelow: "lg",
+                  cellClassName: "text-xs text-muted-foreground",
+                  cell: (pt) =>
+                    pt.experienceYears != null
+                      ? t("gym.trainers.years", { years: pt.experienceYears })
+                      : "—",
+                },
+                {
+                  key: "status",
+                  header: t("common.table.status"),
+                  // B-33: SUSPENDED chỉ do Admin đặt (BE luôn 409 nếu gym gửi) —
+                  // khi bị đình chỉ hiện badge + lý do, không cho gym đổi.
+                  cell: (pt) =>
+                    pt.status === "SUSPENDED" ? (
+                      <div>
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold ${STATUS_CLS.SUSPENDED}`}
+                        >
+                          {t("gym.trainers.suspendedByAdmin")}
+                        </span>
+                        {pt.suspensionReason && (
+                          <p className="mt-1 max-w-[220px] text-[10px] text-destructive">
+                            {pt.suspensionReason}
+                          </p>
+                        )}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table></div>
+                    ) : (
+                      <Select
+                        value={pt.status ?? "ACTIVE"}
+                        onValueChange={(v) =>
+                          pt.id && statusMut.mutate({ id: pt.id, status: v as GymPtStatus })
+                        }
+                      >
+                        <SelectTrigger
+                          size="sm"
+                          className={`h-8 w-[150px] text-[11px] font-semibold ${STATUS_CLS[pt.status ?? "ACTIVE"]}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ACTIVE">{t("gym.ptStatus.ACTIVE")}</SelectItem>
+                          <SelectItem value="INACTIVE">{t("gym.ptStatus.INACTIVE")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ),
+                },
+                {
+                  key: "actions",
+                  header: t("common.table.actions"),
+                  align: "right",
+                  cell: (pt) => (
+                    <div className="flex items-center justify-end gap-3">
+                      <Button variant="link" size="inline"
+ onClick={() => openEdit(pt)}
+ className="flex gap-1 text-primary"
+>
+                        <Pencil className="size-3.5" />
+                        {t("common.actions.edit")}
+                      </Button>
+                      <button
+                        onClick={() => setCredentialsPt(pt)}
+                        className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary"
+                      >
+                        <Award className="size-3.5" /> {t("gym.trainers.certsAndDocs")}
+                      </button>
+                      <button
+                        onClick={() => setOpsPt(pt)}
+                        className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary"
+                      >
+                        <CalendarClock className="size-3.5" /> {t("gym.trainers.operations")}
+                      </button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           )}
         </div>
       </div>
 
       {/* Create / edit dialog */}
-      <Dialog open={formOpen} title={editing ? "Chỉnh sửa huấn luyện viên" : "Thêm huấn luyện viên"} onClose={closeForm}>
+      <Dialog open={formOpen} title={editing ? t("gym.trainers.editTitle") : t("gym.trainers.addTitle")} onClose={closeForm}>
         <div className="space-y-4">
           {!editing && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tài khoản <span className="text-red-500">*</span></label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.accountLabel")} <span className="text-destructive">*</span></label>
                 <Input value={username} onChange={e => setUsername(e.target.value)} placeholder="pt_username" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Email <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("auth.email")} <span className="text-destructive">*</span></label>
                 <Input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="pt@email.com" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Mật khẩu <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.passwordLabel")} <span className="text-destructive">*</span></label>
                 <Input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" />
               </div>
-              <div className="col-span-2">
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Số điện thoại</label>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
                 <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
               </div>
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tên hiển thị <span className="text-red-500">*</span></label>
-            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Nguyễn Văn An" />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.displayNameLabel")} <span className="text-destructive">*</span></label>
+            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t("gym.trainers.displayNamePlaceholder")} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Chuyên môn</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.specialization")}</label>
               <Input value={specialization} onChange={e => setSpecialization(e.target.value)} placeholder="Gym & Fitness" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Số năm kinh nghiệm</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.experienceYearsLabel")}</label>
               <Input value={experienceYears} onChange={e => setExperienceYears(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="3" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Khu vực phục vụ</label>
-            <Input value={serviceArea} onChange={e => setServiceArea(e.target.value)} placeholder="TP. Hồ Chí Minh" />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.serviceAreaLabel")}</label>
+            <Input value={serviceArea} onChange={e => setServiceArea(e.target.value)} placeholder={t("gym.branches.cityPlaceholder")} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Giới thiệu</label>
-            <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder="Kinh nghiệm, phương pháp huấn luyện..." />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.bioLabel")}</label>
+            <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} placeholder={t("gym.trainers.bioPlaceholder")} />
           </div>
 
           {/* Bug 15: thêm chứng chỉ ngay khi tạo PT — trước đây phải tạo xong
-              mới vào "Chứng chỉ & tài liệu", card PT hiển thị "0 chứng chỉ". */}
+              mới vào t("gym.trainers.certsAndDocs"), card PT hiển thị t("gym.trainers.certCount", { count: 0 }). */}
           {!editing && (
             <div className="rounded-lg border border-border p-3">
               <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
-                <Award className="size-3.5 text-primary" /> Chứng chỉ (tùy chọn)
+                <Award className="size-3.5 text-primary" /> {t("gym.trainers.certsOptional")}
               </p>
               {newCerts.length > 0 && (
                 <div className="space-y-1.5 mb-2">
@@ -496,35 +550,36 @@ export default function GymPtsPage() {
                           </p>
                         )}
                       </div>
-                      <button
+                      <IconButton
+                        tooltip={t("gym.trainers.removeFromList")}
                         onClick={() => setNewCerts((prev) => prev.filter((_, idx) => idx !== i))}
-                        className="p-1 text-muted-foreground hover:text-red-500 shrink-0"
+                        className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="size-3.5" />
-                      </button>
+                      </IconButton>
                     </div>
                   ))}
                 </div>
               )}
               <div className="space-y-2">
-                <Input value={ncName} onChange={e => setNcName(e.target.value)} placeholder="Tên chứng chỉ (vd: NASM-CPT)" className="h-9" />
-                <Input value={ncOrg} onChange={e => setNcOrg(e.target.value)} placeholder="Tổ chức cấp" className="h-9" />
+                <Input value={ncName} onChange={e => setNcName(e.target.value)} placeholder={t("gym.trainers.certNamePlaceholder")} className="h-9" />
+                <Input value={ncOrg} onChange={e => setNcOrg(e.target.value)} placeholder={t("gym.trainers.certOrgLabel")} className="h-9" />
                 <div className="grid grid-cols-2 gap-2">
-                  <DatePicker value={ncIssue} onChange={setNcIssue} placeholder="Ngày cấp" className="h-9" />
-                  <DatePicker value={ncExpiry} onChange={setNcExpiry} placeholder="Ngày hết hạn" className="h-9" />
+                  <DatePicker value={ncIssue} onChange={(v) => setNcIssue(v ?? "")} placeholder={t("gym.trainers.issueDate")} className="h-9" />
+                  <DatePicker value={ncExpiry} onChange={(v) => setNcExpiry(v ?? "")} placeholder={t("gym.trainers.expiryDate")} className="h-9" />
                 </div>
-                <FileUpload value={ncUrl} onChange={setNcUrl} folder="certifications" label="Tải chứng chỉ lên" />
+                <FileUpload value={ncUrl} onChange={setNcUrl} folder="certifications" label={t("gym.trainers.uploadCert")} />
                 <Button onClick={addNewCert} className="h-8 px-4 bg-card border border-border text-primary hover:bg-primary/5 shadow-none text-xs gap-1">
-                  <Plus className="size-3.5" /> Thêm vào danh sách
+                  <Plus className="size-3.5" /> {t("gym.trainers.addToList")}
                 </Button>
               </div>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">Hủy</Button>
-            <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />} Lưu
+            <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
+            <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.save")}
             </Button>
           </div>
         </div>

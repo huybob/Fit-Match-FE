@@ -12,17 +12,22 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { useTranslations } from "next-intl";
 
-const STATUS: Record<string, { label: string; cls: string; icon: typeof CheckCircle2 }> = {
-  APPROVED: { label: "Đã xác minh", cls: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
-  PENDING: { label: "Đang chờ duyệt", cls: "bg-amber-100 text-amber-700", icon: Clock },
-  REQUIRES_INFO: { label: "Cần bổ sung", cls: "bg-amber-100 text-amber-700", icon: AlertCircle },
-  REJECTED: { label: "Bị từ chối", cls: "bg-red-100 text-red-600", icon: AlertCircle },
-  SUSPENDED: { label: "Đình chỉ", cls: "bg-red-100 text-red-600", icon: AlertCircle },
-  NOT_SUBMITTED: { label: "Chưa xác minh", cls: "bg-muted text-muted-foreground", icon: AlertCircle }
+/* Chỉ giữ class + icon; nhãn lấy từ trainer.verifyStatus.* trong component. */
+type VerifyKey = "APPROVED" | "PENDING" | "REQUIRES_INFO" | "REJECTED" | "SUSPENDED" | "NOT_SUBMITTED";
+
+const STATUS: Record<string, { key: VerifyKey; cls: string; icon: typeof CheckCircle2 }> = {
+  APPROVED: { key: "APPROVED", cls: "bg-success-muted text-success", icon: CheckCircle2 },
+  PENDING: { key: "PENDING", cls: "bg-warning-muted text-warning", icon: Clock },
+  REQUIRES_INFO: { key: "REQUIRES_INFO", cls: "bg-warning-muted text-warning", icon: AlertCircle },
+  REJECTED: { key: "REJECTED", cls: "bg-destructive/10 text-destructive", icon: AlertCircle },
+  SUSPENDED: { key: "SUSPENDED", cls: "bg-destructive/10 text-destructive", icon: AlertCircle },
+  NOT_SUBMITTED: { key: "NOT_SUBMITTED", cls: "bg-muted text-muted-foreground", icon: AlertCircle },
 };
 
 export default function TrainerSelfServicePage() {
+  const t = useTranslations();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -56,13 +61,13 @@ export default function TrainerSelfServicePage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["pt-my-profile"] });
       setOpen(false);
-      toast({ type: "success", title: "Đã cập nhật hồ sơ" });
+      toast({ type: "success", title: t("trainer.profile.updated") });
     },
-    onError: (e) => toast({ type: "error", title: "Lỗi", description: toErrorMessage(e) })
+    onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) })
   });
 
   function submit() {
-    if (!displayName.trim()) { toast({ type: "warning", title: "Nhập tên hiển thị" }); return; }
+    if (!displayName.trim()) { toast({ type: "warning", title: t("trainer.profile.nameRequired") }); return; }
     // A-2: BE reject toàn request nếu gửi specialization/serviceArea/experienceYears
     // (các field năng lực do Gym quản lý — UC-019/020) — chỉ gửi displayName + bio.
     save.mutate({
@@ -81,8 +86,8 @@ export default function TrainerSelfServicePage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Hồ sơ của tôi</h1>
-            <p className="text-sm text-muted-foreground mt-1">Xem và cập nhật thông tin cá nhân. Chứng chỉ do phòng gym quản lý.</p>
+            <h1 className="text-2xl font-bold text-foreground">{t("trainer.profile.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("trainer.profile.subtitle")}</p>
           </div>
         </div>
 
@@ -94,38 +99,38 @@ export default function TrainerSelfServicePage() {
               <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="size-16 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shrink-0">
+                    <div className="size-16 rounded-2xl bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-2xl font-bold text-primary-foreground shrink-0">
                       {(profile?.displayName ?? "T")[0]?.toUpperCase()}
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-foreground">{profile?.displayName ?? "—"}</h2>
                       {profile?.specialization && <p className="text-sm text-muted-foreground mt-0.5">{profile.specialization}</p>}
                       <span className={`inline-flex items-center gap-1 mt-2 px-2.5 py-1 rounded-full text-[11px] font-semibold ${st.cls}`}>
-                        <StIcon className="size-3" /> {st.label}
+                        <StIcon className="size-3" /> {t(`trainer.verifyStatus.${st.key}`)}
                       </span>
                     </div>
                   </div>
-                  <Button onClick={() => setOpen(true)} className="gap-2 bg-primary hover:bg-primary/90 text-white">
-                    <Pencil className="size-4" /> Chỉnh sửa
+                  <Button onClick={() => setOpen(true)} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Pencil className="size-4" /> {t("trainer.profile.edit")}
                   </Button>
                 </div>
                 {verification?.rejectionReason && (
-                  <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-700">{verification.rejectionReason}</div>
+                  <div className="mt-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-sm text-destructive">{verification.rejectionReason}</div>
                 )}
                 <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">Kinh nghiệm</p><p className="mt-0.5 text-foreground">{profile?.experienceYears != null ? `${profile.experienceYears} năm` : "—"}</p></div>
-                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">Khu vực</p><p className="mt-0.5 flex items-center gap-1 text-foreground">{profile?.serviceArea ? <><MapPin className="size-3.5 text-muted-foreground" />{profile.serviceArea}</> : "—"}</p></div>
+                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">{t("trainer.profile.experienceLabel")}</p><p className="mt-0.5 text-foreground">{profile?.experienceYears != null ? `${profile.experienceYears} năm` : "—"}</p></div>
+                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">{t("trainer.profile.areaLabel")}</p><p className="mt-0.5 flex items-center gap-1 text-foreground">{profile?.serviceArea ? <><MapPin className="size-3.5 text-muted-foreground" />{profile.serviceArea}</> : "—"}</p></div>
                 </div>
                 {profile?.bio && (
-                  <div className="mt-4"><p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Giới thiệu</p><p className="text-sm text-foreground leading-relaxed">{profile.bio}</p></div>
+                  <div className="mt-4"><p className="text-xs font-semibold text-muted-foreground uppercase mb-1">{t("trainer.profile.bio")}</p><p className="text-sm text-foreground leading-relaxed">{profile.bio}</p></div>
                 )}
               </div>
             </div>
 
             <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-3"><Award className="size-4 text-primary" /> Chứng chỉ</h2>
+              <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-3"><Award className="size-4 text-primary" /> {t("trainer.profile.certs")}</h2>
               {(certs as CertificationResponse[]).length === 0 ? (
-                <p className="text-xs text-muted-foreground py-2">Chưa có chứng chỉ. Liên hệ phòng gym để bổ sung.</p>
+                <p className="text-xs text-muted-foreground py-2">{t("trainer.profile.noCerts")}</p>
               ) : (
                 <div className="space-y-2">
                   {(certs as CertificationResponse[]).map((c) => (
@@ -144,23 +149,22 @@ export default function TrainerSelfServicePage() {
         )}
       </div>
 
-      <Dialog open={open} title="Chỉnh sửa hồ sơ" onClose={() => setOpen(false)}>
+      <Dialog open={open} title={t("trainer.profile.editTitle")} onClose={() => setOpen(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Tên hiển thị <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("trainer.profile.displayNameLabel")} <span className="text-destructive">*</span></label>
             <Input value={displayName} onChange={e => setDisplayName(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Giới thiệu</label>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("trainer.profile.bio")}</label>
             <Textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Chuyên môn, khu vực phục vụ và số năm kinh nghiệm do phòng tập quản lý (UC-019/020) —
-            liên hệ phòng tập của bạn để cập nhật.
+            {t("trainer.profile.managedByGym")}
           </p>
           <div className="flex justify-end gap-2">
-            <Button onClick={() => setOpen(false)} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">Hủy</Button>
-            <Button onClick={submit} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-white">{save.isPending && <Loader2 className="size-4 animate-spin" />} Lưu</Button>
+            <Button onClick={() => setOpen(false)} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
+            <Button onClick={submit} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">{save.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.save")}</Button>
           </div>
         </div>
       </Dialog>

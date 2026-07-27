@@ -1,11 +1,18 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { GymPublicDetailPage } from "@/modules/gym/components/gym-public-pages";
 
 // Phase 5 (SEO): metadata tĩnh cho trang public — root layout chỉ có title chung.
-export const metadata = {
-  title: "Chi tiết phòng tập | FitMatch",
-  description: "Thông tin phòng gym: dịch vụ, gói tập, chi nhánh, giờ mở cửa và huấn luyện viên.",
-};
+/**
+ * metadata phải dịch phía SERVER (getTranslations) — hook không dùng được ở đây.
+ */
+export async function generateMetadata() {
+  const t = await getTranslations();
+  return {
+    title: t("meta.gymDetail.title"),
+    description: t("meta.gymDetail.description"),
+  };
+}
 
 export default async function Page({
   params,

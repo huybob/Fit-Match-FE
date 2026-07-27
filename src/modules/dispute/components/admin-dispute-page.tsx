@@ -22,24 +22,27 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { PageHeader } from "@/shared/components/common/page-header";
 import { useDisputeDecision, useDisputeEvidence, useDisputeQueue } from "../hooks/use-dispute";
-import { disputeStatusLabels, disputeStatusVariant } from "./dispute-pages";
+import { DISPUTE_STATUS_ORDER, disputeStatusVariant } from "./dispute-pages";
+import { useTranslations } from "next-intl";
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
 
-const resolutionLabels: Record<DisputeResolution, string> = {
-  REFUND_FULL: "Hoàn toàn bộ cho khách",
-  REFUND_PARTIAL: "Hoàn một phần cho khách",
-  SPLIT: "Chia (hoàn một phần, còn lại về gym)",
-  RELEASE_TO_GYM: "Giải phóng toàn bộ cho gym",
-  NO_ACTION: "Không hành động tài chính",
-  PENALTY: "Phạt gym/PT (hoàn cho khách)",
-};
+/** Thứ tự hiển thị phương án xử lý; nhãn ở dispute.resolution.* */
+const RESOLUTION_ORDER: DisputeResolution[] = [
+  "REFUND_FULL",
+  "REFUND_PARTIAL",
+  "SPLIT",
+  "RELEASE_TO_GYM",
+  "NO_ACTION",
+  "PENALTY",
+];
 
 const needsAmount = (r: DisputeResolution) => r === "REFUND_PARTIAL" || r === "SPLIT";
 
 /** UC-065..068: màn xử lý tranh chấp (Moderator/Admin). */
 export function AdminDisputesPage() {
+  const t = useTranslations();
   const [status, setStatus] = useState<DisputeStatus | "">("");
   const query = useDisputeQueue(status || undefined);
   const [selected, setSelected] = useState<Dispute | null>(null);
@@ -48,16 +51,16 @@ export function AdminDisputesPage() {
   return (
     <div>
       <PageHeader
-        title="Xử lý tranh chấp"
-        description="Xem bằng chứng, quyết định hoàn/giải phóng tiền và đóng/chuyển cấp (UC-065..068)."
+        title={t("dispute.adminTitle")}
+        description={t("dispute.adminSubtitle")}
       />
 
       <Select value={status} onValueChange={(v) => setStatus(v as DisputeStatus | "")}>
-        <SelectTrigger className="w-64"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
+        <SelectTrigger className="w-64"><SelectValue placeholder={t("common.filters.allStatuses")} /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Tất cả trạng thái</SelectItem>
-          {(Object.keys(disputeStatusLabels) as DisputeStatus[]).map((s) => (
-            <SelectItem key={s} value={s}>{disputeStatusLabels[s]}</SelectItem>
+          <SelectItem value="">{t("common.filters.allStatuses")}</SelectItem>
+          {DISPUTE_STATUS_ORDER.map((s) => (
+            <SelectItem key={s} value={s}>{t(`dispute.status.${s}`)}</SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -66,9 +69,9 @@ export function AdminDisputesPage() {
         {query.isLoading ? (
           <LoadingSkeleton />
         ) : query.isError ? (
-          <EmptyState title="Không tải được" description={toErrorMessage(query.error)} />
+          <EmptyState title={t("common.states.errorTitle")} description={toErrorMessage(query.error)} />
         ) : !items.length ? (
-          <EmptyState title="Không có tranh chấp" description="Chưa có tranh chấp ở trạng thái này." />
+          <EmptyState title={t("dispute.adminEmpty")} description={t("dispute.adminEmptyHint")} />
         ) : (
           <div className="grid gap-4">
             {items.map((d) => (
@@ -78,7 +81,7 @@ export function AdminDisputesPage() {
                     <ShieldAlert className="size-4 text-destructive" /> #{d.id} · Booking #{d.bookingId}
                     <span className="font-normal text-muted-foreground">· {d.openedByRole}</span>
                   </span>
-                  <Badge variant={disputeStatusVariant(d.status)}>{disputeStatusLabels[d.status]}</Badge>
+                  <Badge variant={disputeStatusVariant(d.status)}>{t(`dispute.status.${d.status}`)}</Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{d.reason}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -87,7 +90,7 @@ export function AdminDisputesPage() {
                 </p>
                 <div className="mt-3">
                   <Button variant="outline" onClick={() => setSelected(d)}>
-                    <Gavel className="size-4" /> Xử lý
+                    <Gavel className="size-4" /> {t("dispute.handle")}
                   </Button>
                 </div>
               </article>
@@ -102,12 +105,14 @@ export function AdminDisputesPage() {
 }
 
 function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () => void }) {
+  const t = useTranslations();
   const { toast } = useToast();
   const evidence = useDisputeEvidence(dispute.id, true);
   const decision = useDisputeDecision();
   const [resolution, setResolution] = useState<DisputeResolution>("REFUND_FULL");
   const [amount, setAmount] = useState<string>("");
   const [note, setNote] = useState("");
+
 
   // D-9: chặn hoàn vượt số tiền đang giữ ngay tại client (BE vẫn validate lại).
   const maxRefund = dispute.frozenAmount ?? 0;
@@ -118,8 +123,8 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
     if (action === "resolve" && amountInvalid) {
       toast({
         type: "warning",
-        title: "Số tiền hoàn không hợp lệ",
-        description: `Phải trong khoảng 1 – ${money(maxRefund)} (số đang giữ).`,
+        title: t("dispute.invalidRefund"),
+        description: t("dispute.refundRange", { max: money(maxRefund) }),
       });
       return;
     }
@@ -137,34 +142,34 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
       } else {
         await decision.mutateAsync({ id: dispute.id, action, note: note.trim() || undefined });
       }
-      toast({ type: "success", title: "Đã cập nhật tranh chấp" });
+      toast({ type: "success", title: t("dispute.updated") });
       onClose();
     } catch (e) {
-      toast({ type: "error", title: "Thất bại", description: toErrorMessage(e) });
+      toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) });
     }
   }
 
   return (
-    <Dialog open title={`Xử lý tranh chấp #${dispute.id}`} onClose={onClose}>
+    <Dialog open title={t("dispute.moderateTitle", { id: dispute.id })} onClose={onClose}>
       <div className="rounded-2xl bg-muted/40 p-4 text-sm">
-        <p><b>Lý do:</b> {dispute.reason}</p>
+        <p><b>{t("dispute.reasonLabel")}</b> {dispute.reason}</p>
         <p className="mt-1 text-muted-foreground">
           Booking #{dispute.bookingId} · {dispute.customerName} → {dispute.gymName}
           {dispute.frozenAmount ? ` · giữ ${money(dispute.frozenAmount)}` : ""}
         </p>
         {dispute.assignedModerator && (
           <p className="mt-1 text-xs font-semibold text-primary">
-            Người phụ trách: {dispute.assignedModerator}
+            {t("dispute.assignee")} {dispute.assignedModerator}
           </p>
         )}
       </div>
 
       <div className="mt-3">
-        <h4 className="text-sm font-black">Bằng chứng</h4>
+        <h4 className="text-sm font-black">{t("dispute.evidence")}</h4>
         {evidence.isLoading ? (
-          <p className="mt-1 text-sm text-muted-foreground">Đang tải...</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("common.states.loading")}</p>
         ) : !evidence.data?.length ? (
-          <p className="mt-1 text-sm text-muted-foreground">Chưa có bằng chứng.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("dispute.noEvidence")}</p>
         ) : (
           <ul className="mt-1 space-y-1">
             {evidence.data.map((e) => (
@@ -173,7 +178,7 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
                 <span className="ml-1 text-xs text-muted-foreground">— {e.submittedBy}</span>
                 {e.fileUrl && (
                   <a href={e.fileUrl} target="_blank" rel="noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary hover:underline">
-                    <Paperclip className="size-3" />tệp
+                    <Paperclip className="size-3" />{t("dispute.fileLabel")}
                   </a>
                 )}
               </li>
@@ -184,12 +189,12 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
 
       {["OPEN", "UNDER_REVIEW", "ESCALATED"].includes(dispute.status) && (
         <div className="mt-4 space-y-3 rounded-2xl border border-border p-4">
-          <p className="text-sm font-black">Quyết định (UC-066/067)</p>
+          <p className="text-sm font-black">{t("dispute.decisionTitle")}</p>
           <Select value={resolution} onValueChange={(v) => setResolution(v as DisputeResolution)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(Object.keys(resolutionLabels) as DisputeResolution[]).map((r) => (
-                <SelectItem key={r} value={r}>{resolutionLabels[r]}</SelectItem>
+              {RESOLUTION_ORDER.map((r) => (
+                <SelectItem key={r} value={r}>{t(`dispute.resolution.${r}`)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -199,30 +204,30 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
                 type="number"
                 min={1}
                 max={maxRefund}
-                placeholder={`Số tiền hoàn cho khách (tối đa ${money(maxRefund)})`}
+                placeholder={t("dispute.refundAmountPlaceholder", { max: money(maxRefund) })}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
               {amountInvalid && amount && (
-                <p className="mt-1 text-xs text-red-500">Tối đa {money(maxRefund)} — số tiền đang giữ của tranh chấp.</p>
+                <p className="mt-1 text-xs text-destructive">{t("dispute.heldNote", { max: money(maxRefund) })}</p>
               )}
             </div>
           )}
-          <Textarea placeholder="Ghi chú quyết định" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
+          <Textarea placeholder={t("dispute.decisionNote")} maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="flex flex-wrap gap-2">
             {/* D-20: khớp guard BE — review nhận cả OPEN lẫn ESCALATED (claim case D-12);
                 escalate chỉ từ OPEN/UNDER_REVIEW (ESCALATED bấm lại sẽ 409). */}
             {(dispute.status === "OPEN" || dispute.status === "ESCALATED") && (
               <Button variant="outline" disabled={decision.isPending} onClick={() => act("review")}>
-                Bắt đầu xem xét
+                {t("dispute.startReview")}
               </Button>
             )}
             <Button disabled={decision.isPending} onClick={() => act("resolve")}>
-              <CheckCircle2 className="size-4" /> Quyết định & áp dụng
+              <CheckCircle2 className="size-4" /> {t("dispute.applyDecision")}
             </Button>
             {dispute.status !== "ESCALATED" && (
               <Button variant="destructive" disabled={decision.isPending} onClick={() => act("escalate")}>
-                <ArrowUpCircle className="size-4" /> Chuyển cấp
+                <ArrowUpCircle className="size-4" /> {t("dispute.escalate")}
               </Button>
             )}
           </div>
@@ -231,9 +236,9 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
 
       {dispute.status === "RESOLVED" && (
         <div className="mt-4">
-          <Textarea className="mb-2" placeholder="Ghi chú đóng" value={note} onChange={(e) => setNote(e.target.value)} />
+          <Textarea className="mb-2" placeholder={t("dispute.closeNote")} value={note} onChange={(e) => setNote(e.target.value)} />
           <Button disabled={decision.isPending} onClick={() => act("close")}>
-            <Lock className="size-4" /> Đóng tranh chấp
+            <Lock className="size-4" /> {t("dispute.close")}
           </Button>
         </div>
       )}

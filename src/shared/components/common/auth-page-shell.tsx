@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Rocket } from "lucide-react";
 import { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 interface AuthPageShellProps {
   variant: "login" | "register";
@@ -10,10 +11,11 @@ interface AuthPageShellProps {
 }
 
 export function AuthPageShell({ variant, children }: AuthPageShellProps) {
+  const t = useTranslations();
   const isLogin = variant === "login";
 
   const bluePanel = (
-    <div className="hidden overflow-hidden bg-primary lg:flex lg:flex-col p-10 text-white">
+    <div className="hidden overflow-hidden bg-primary lg:flex lg:flex-col p-10 text-primary-foreground">
       {!isLogin && (
         <>
           <Link href="/" className="text-xl font-bold text-white">
@@ -24,22 +26,22 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
               <Rocket className="size-8" />
             </div>
             <h2 className="text-4xl font-black leading-tight tracking-tight max-w-sm">
-              Nâng Tầm Hành Trình Tập Luyện.
+              {t("authShell.headline")}
             </h2>
-            <p className="mt-5 text-blue-100 leading-relaxed max-w-sm">
-              Tham gia mạng lưới hàng đầu dành cho các chuyên gia thể hình và phòng gym cao cấp. Sự thay đổi của bạn bắt đầu từ đây.
+            <p className="mt-5 text-primary-foreground/80 leading-relaxed max-w-sm">
+              {t("authShell.body")}
             </p>
             <div className="mt-10 flex gap-3">
               <div className="rounded-xl bg-card/15 px-5 py-3">
                 <p className="text-2xl font-black">500+</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-200 mt-0.5">
-                  HLV Chuyên Nghiệp
+                <p className="text-xs font-bold uppercase tracking-wider text-primary-foreground/80 mt-0.5">
+                  {t("authShell.proTrainers")}
                 </p>
               </div>
               <div className="rounded-xl bg-card/15 px-5 py-3">
                 <p className="text-2xl font-black">1.2k</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-200 mt-0.5">
-                  Phòng Gym Cao Cấp
+                <p className="text-xs font-bold uppercase tracking-wider text-primary-foreground/80 mt-0.5">
+                  {t("authShell.premiumGyms")}
                 </p>
               </div>
             </div>
@@ -80,7 +82,7 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
         )}
       </div>
       <footer className="border-t border-border bg-card py-4 text-center text-xs text-muted-foreground">
-        © 2024 FitMatch Marketplace. Bảo lưu mọi quyền.
+        {t("site.copyright")}
       </footer>
     </div>
   );

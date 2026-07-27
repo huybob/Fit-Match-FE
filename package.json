@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:ui": "node scripts/check-ui.mjs",
+    "verify": "npm run lint && tsc --noEmit && npm run check:ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -39,6 +41,7 @@
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.21.0",
     "next": "^15.5.19",
+    "next-intl": "^4.13.4",
     "react": "^19.2.7",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.7",
