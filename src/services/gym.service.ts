@@ -37,8 +37,10 @@ import type {
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 // Phase 2 cleanup: đã xóa cụm hàm legacy gọi endpoint không tồn tại trên BE
-// (/gyms, /gyms/me, /gyms/{id}/close|reopen|logo|cover, /pt/partnerships/*)
-// cùng cluster UI chết gym-workspace-pages/use-gym. Chỉ giữ contract thật.
+// (/gyms, /gyms/me, /gyms/{id}/close|reopen|logo|cover, /pt/partnerships/*).
+// Cluster UI chết đi kèm (gym-workspace-pages, use-gym, gym/query-keys,
+// gym/schemas) từng bị sót lại và làm tsc đỏ 26 lỗi — nay đã xóa nốt.
+// Chỉ giữ contract thật.
 
 const page = { page: 0, size: 20 };
 
