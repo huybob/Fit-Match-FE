@@ -279,7 +279,6 @@
       "reconciliation": "Reconciliation",
       "commission": "Commission",
       "vouchers": "Vouchers",
-      "analytics": "Analytics",
       "cms": "CMS",
       "notifications": "Notification templates",
       "masterData": "Master data",
@@ -327,7 +326,7 @@
       "fieldTitle": "Title",
       "fieldBody": "Body",
       "useTemplate": "Use this template (off = use the default text)",
-      "subtitle": "Event-driven notification content. Placeholders like {'{'}key{'}'} are substituted at send time; disabling a template falls back to the system default.",
+      "subtitle": "Event-driven notification content. Placeholders like '{'key'}' are substituted at send time; disabling a template falls back to the system default.",
       "editDialogTitle": "Edit template {code}"
     },
     "redirecting": "Redirecting",
@@ -399,7 +398,8 @@
       "maxDiscountShort": "max {max}",
       "minOrderShort": "min order {min}",
       "usedCount": "{used} used",
-      "usedCountOf": "{used}/{limit} used"
+      "usedCountOf": "{used}/{limit} used",
+      "codeExists": "This voucher code already exists. Use a different code."
     },
     "issueReports": {
       "statusOpen": "Open",
@@ -633,7 +633,15 @@
       "viewProfile": "View profile",
       "defaultSpecialization": "Personal trainer",
       "emptyPt": "No trainer applications",
-      "emptyGym": "No gym applications"
+      "emptyGym": "No gym applications",
+      "queueTitle": "Verification queue",
+      "queueSubtitle": "Gym application review",
+      "recentApplications": "Recent applications"
+    },
+    "forbidden": {
+      "title": "You do not have access to this page",
+      "body": "The {role} account is not authorised for this area. Contact a system administrator if you need access.",
+      "backToWorkspace": "Back to your workspace"
     }
   },
   "gym": {
@@ -773,7 +781,9 @@
       "saveHours": "Save opening hours",
       "hoursSaved": "Opening hours saved",
       "open": "Open",
-      "hoursInvalid": "Each open day needs open time < close time."
+      "hoursInvalid": "Each open day needs open time < close time.",
+      "coordsAuto": "Coordinates will be resolved from the address on save.",
+      "coordsPinned": "Pinned coordinates: {lat}, {lng}"
     },
     "services": {
       "title": "Services",
@@ -1073,7 +1083,31 @@
     "viewTrainerGym": "View the trainer’s gym",
     "interestedTitle": "Interested in this trainer?",
     "interestedBody": "Save to favourites to follow them and get in touch via their gym.",
-    "yearsExperienceShort": "{years} yrs exp"
+    "yearsExperienceShort": "{years} yrs exp",
+    "nearby": {
+      "searchAround": "Search around",
+      "placePlaceholder": "Enter an address, ward or landmark…",
+      "lookupPlace": "Look up place",
+      "placeNotFound": "No matching place found. Try a more specific address.",
+      "placeLookupFailed": "Could not look up that place. Please try again.",
+      "useMyLocation": "My location",
+      "myLocation": "Your location",
+      "clearLocation": "Clear",
+      "pickedOnMap": "Point picked on the map",
+      "pickLocationFirst": "Pick a location to filter by radius.",
+      "radius": "Search radius",
+      "withinKm": "Within {km} km",
+      "awayKm": "{km} km away",
+      "viaBranch": "{branch} branch",
+      "sortByDistance": "Nearest first",
+      "foundGymsWithin": "Found {count} gyms within {km} km of {place}.",
+      "geolocationUnsupported": "This browser does not support geolocation.",
+      "geolocationDenied": "Location access was denied. Re-enable it in your browser settings.",
+      "geolocationFailed": "Could not get your current location. Please try again.",
+      "mapLoading": "Loading map…",
+      "mapDisabled": "The map is not configured. All results are still listed below.",
+      "mapError": "The map failed to load. All results are still listed below."
+    }
   },
   "trainer": {
     "nav": {
@@ -1213,7 +1247,8 @@
       "deleteTitle": "Delete measurement?",
       "deleteBody": "Delete the record from {date} — this cannot be undone.",
       "sessionsUsed": "{used}/{total} sessions",
-      "heightValue": "Height {height} cm"
+      "heightValue": "Height {height} cm",
+      "atLeastOneMetric": "Enter at least one measurement (weight, height, body fat, chest, waist or hip)."
     },
     "profile": {
       "avatarUpdated": "Profile photo updated.",
@@ -1447,6 +1482,70 @@
       "pickGymAndItem": "Please choose a gym and a service/package",
       "pickPurchasedPackage": "Please choose a purchased package",
       "dateInvalid": "Invalid date"
+    },
+    "wizard": {
+      "stepOf": "Step {current}/{total}",
+      "modeStep": "Mode",
+      "catalogStep": "Service",
+      "placeStep": "Place",
+      "timeStep": "Time",
+      "extrasStep": "Perks",
+      "reviewStep": "Review",
+      "modeTitle": "How would you like to book?",
+      "modeSubtitle": "Book and pay for a new session, or use one from a package you own.",
+      "modeNewDesc": "Pick a gym service or package, then pay via VietQR.",
+      "modePackageDesc": "Uses one session from an active package — no extra charge.",
+      "noPackagesHint": "You have no package with sessions left.",
+      "packageStepTitle": "Choose a purchased package",
+      "sessionsLeft": "{left}/{total} sessions left",
+      "expiresOn": "Valid until {date}",
+      "catalogTitle": "Gym & service",
+      "catalogSubtitle": "Pick a gym, then choose a single session or a package.",
+      "searchGym": "Search gyms by name or city…",
+      "noGymFound": "No matching gym found.",
+      "minutes": "{minutes} min",
+      "sessions": "{count} sessions",
+      "validDays": "Valid {days} days",
+      "placeTitle": "Branch & trainer",
+      "placeSubtitle": "Leave it to the gym if you have no preference.",
+      "branchStep": "Branch",
+      "trainerStep": "Trainer",
+      "anyBranch": "Any branch",
+      "anyBranchDesc": "Let the gym pick a suitable branch.",
+      "autoAssign": "Gym assigns",
+      "autoAssignDesc": "The gym picks a trainer available in your slot.",
+      "noBranches": "This gym has not published any branch.",
+      "noPts": "This gym has not published any trainer.",
+      "yearsExp": "{years} yrs experience",
+      "timeTitle": "Date & time slot",
+      "timeSubtitle": "Pick a date and slot — availability is checked instantly.",
+      "timeRangeStep": "Time slot",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "durationLabel": "Quick duration",
+      "checkingSlot": "Checking availability…",
+      "pickTimeToCheck": "Pick a trainer or branch to check availability automatically.",
+      "extrasTitle": "Perks & note",
+      "extrasSubtitle": "Add a voucher, loyalty points and a note for the gym.",
+      "discountStep": "Discount",
+      "exclusiveHint": "Voucher and loyalty points cannot be combined.",
+      "packageNoCharge": "This session is deducted from your package — no charge, so vouchers/points do not apply.",
+      "reviewTitle": "Review & pay",
+      "reviewSubtitle": "Check everything before sending the request to the gym.",
+      "summaryGym": "Gym",
+      "summaryItem": "Service",
+      "summaryPackage": "Package",
+      "summaryBranch": "Branch",
+      "summaryTrainer": "Trainer",
+      "summaryTime": "Time",
+      "summaryVoucher": "Voucher",
+      "summaryPoints": "Points",
+      "summaryNote": "Note",
+      "estimatedTotal": "Estimated total",
+      "estimateHint": "The final amount is locked at checkout (discounts applied if valid).",
+      "requireGym": "Please choose a gym",
+      "requireItem": "Please choose a service or package",
+      "requirePackage": "Please choose a purchased package"
     },
     "checkInLabel": "Check-in"
   },
@@ -1736,6 +1835,8 @@
     "emailNotVerified": "Email not verified",
     "emailNotVerifiedDesc": "Please check your email to verify your account.",
     "genericError": "Something went wrong",
+    "invalidCredentials": "Wrong username or password",
+    "invalidCredentialsDesc": "Check your username/email and password, then try again.",
     "welcomeBack": "Welcome back",
     "loginHint": "Enter your details to access your account.",
     "identifierLabel": "Email or username",

@@ -279,7 +279,6 @@
       "reconciliation": "Đối soát",
       "commission": "Hoa hồng",
       "vouchers": "Mã giảm giá",
-      "analytics": "Phân tích",
       "cms": "Nội dung",
       "notifications": "Mẫu thông báo",
       "masterData": "Dữ liệu nền",
@@ -327,7 +326,7 @@
       "fieldTitle": "Tiêu đề",
       "fieldBody": "Nội dung",
       "useTemplate": "Sử dụng template này (tắt = dùng văn bản mặc định)",
-      "subtitle": "Nội dung thông báo theo sự kiện. Placeholder dạng {'{'}key{'}'} được thay lúc gửi; tắt template thì dùng văn bản mặc định của hệ thống.",
+      "subtitle": "Nội dung thông báo theo sự kiện. Placeholder dạng '{'key'}' được thay lúc gửi; tắt template thì dùng văn bản mặc định của hệ thống.",
       "editDialogTitle": "Sửa template {code}"
     },
     "redirecting": "Đang chuyển hướng",
@@ -399,7 +398,8 @@
       "maxDiscountShort": "tối đa {max}",
       "minOrderShort": "đơn tối thiểu {min}",
       "usedCount": "Đã dùng {used} lượt",
-      "usedCountOf": "Đã dùng {used}/{limit} lượt"
+      "usedCountOf": "Đã dùng {used}/{limit} lượt",
+      "codeExists": "Mã voucher này đã tồn tại. Hãy dùng mã khác."
     },
     "issueReports": {
       "statusOpen": "Đang mở",
@@ -633,7 +633,15 @@
       "viewProfile": "Xem hồ sơ",
       "defaultSpecialization": "Huấn luyện viên cá nhân",
       "emptyPt": "Không có hồ sơ PT nào",
-      "emptyGym": "Không có hồ sơ phòng gym nào"
+      "emptyGym": "Không có hồ sơ phòng gym nào",
+      "queueTitle": "Hàng đợi xác minh",
+      "queueSubtitle": "Duyệt hồ sơ phòng gym",
+      "recentApplications": "Hồ sơ gần đây"
+    },
+    "forbidden": {
+      "title": "Bạn không có quyền vào trang này",
+      "body": "Tài khoản {role} không được cấp quyền cho khu vực này. Nếu bạn cần truy cập, hãy liên hệ quản trị viên hệ thống.",
+      "backToWorkspace": "Về khu vực làm việc của bạn"
     }
   },
   "gym": {
@@ -773,7 +781,9 @@
       "saveHours": "Lưu giờ mở cửa",
       "hoursSaved": "Đã lưu giờ mở cửa",
       "open": "Mở",
-      "hoursInvalid": "Mỗi ngày mở cần giờ mở < giờ đóng."
+      "hoursInvalid": "Mỗi ngày mở cần giờ mở < giờ đóng.",
+      "coordsAuto": "Toạ độ sẽ được xác định tự động từ địa chỉ khi lưu.",
+      "coordsPinned": "Đã ghim toạ độ: {lat}, {lng}"
     },
     "services": {
       "title": "Dịch vụ",
@@ -1073,7 +1083,31 @@
     "viewTrainerGym": "Xem phòng gym của PT",
     "interestedTitle": "Quan tâm huấn luyện viên này?",
     "interestedBody": "Lưu vào yêu thích để dễ dàng theo dõi và liên hệ qua phòng gym.",
-    "yearsExperienceShort": "{years} năm KN"
+    "yearsExperienceShort": "{years} năm KN",
+    "nearby": {
+      "searchAround": "Tìm quanh địa điểm",
+      "placePlaceholder": "Nhập địa chỉ, phường hoặc địa điểm...",
+      "lookupPlace": "Tra cứu địa điểm",
+      "placeNotFound": "Không tìm thấy địa điểm này. Hãy thử địa chỉ cụ thể hơn.",
+      "placeLookupFailed": "Không tra cứu được địa điểm. Vui lòng thử lại.",
+      "useMyLocation": "Vị trí của tôi",
+      "myLocation": "Vị trí của bạn",
+      "clearLocation": "Bỏ chọn",
+      "pickedOnMap": "Vị trí đã chọn trên bản đồ",
+      "pickLocationFirst": "Chọn một vị trí để lọc theo bán kính.",
+      "radius": "Bán kính tìm kiếm",
+      "withinKm": "Trong vòng {km} km",
+      "awayKm": "Cách {km} km",
+      "viaBranch": "chi nhánh {branch}",
+      "sortByDistance": "Gần nhất trước",
+      "foundGymsWithin": "Tìm thấy {count} phòng tập trong vòng {km} km quanh {place}.",
+      "geolocationUnsupported": "Trình duyệt không hỗ trợ định vị.",
+      "geolocationDenied": "Bạn đã từ chối quyền truy cập vị trí. Hãy bật lại trong cài đặt trình duyệt.",
+      "geolocationFailed": "Không lấy được vị trí hiện tại. Vui lòng thử lại.",
+      "mapLoading": "Đang tải bản đồ...",
+      "mapDisabled": "Bản đồ chưa được cấu hình. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới.",
+      "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
+    }
   },
   "trainer": {
     "nav": {
@@ -1213,7 +1247,8 @@
       "deleteTitle": "Xóa số đo?",
       "deleteBody": "Xóa bản ghi ngày {date} — không thể hoàn tác.",
       "sessionsUsed": "{used}/{total} buổi",
-      "heightValue": "Chiều cao {height} cm"
+      "heightValue": "Chiều cao {height} cm",
+      "atLeastOneMetric": "Cần nhập ít nhất một chỉ số (cân nặng, chiều cao, %mỡ, ngực, eo hoặc hông)."
     },
     "profile": {
       "avatarUpdated": "Cập nhật ảnh đại diện thành công!",
@@ -1447,6 +1482,70 @@
       "pickGymAndItem": "Vui lòng chọn phòng gym và dịch vụ/gói",
       "pickPurchasedPackage": "Vui lòng chọn gói đã mua",
       "dateInvalid": "Ngày không hợp lệ"
+    },
+    "wizard": {
+      "stepOf": "Bước {current}/{total}",
+      "modeStep": "Hình thức",
+      "catalogStep": "Dịch vụ",
+      "placeStep": "Địa điểm",
+      "timeStep": "Thời gian",
+      "extrasStep": "Ưu đãi",
+      "reviewStep": "Xác nhận",
+      "modeTitle": "Bạn muốn đặt theo hình thức nào?",
+      "modeSubtitle": "Đặt buổi mới và thanh toán, hoặc dùng một buổi trong gói đã mua.",
+      "modeNewDesc": "Chọn dịch vụ hoặc gói tập của phòng gym rồi thanh toán qua VietQR.",
+      "modePackageDesc": "Trừ 1 buổi trong gói còn hiệu lực — không phát sinh thêm phí.",
+      "noPackagesHint": "Bạn chưa có gói tập nào còn buổi.",
+      "packageStepTitle": "Chọn gói đã mua",
+      "sessionsLeft": "Còn {left}/{total} buổi",
+      "expiresOn": "HSD {date}",
+      "catalogTitle": "Phòng gym & dịch vụ",
+      "catalogSubtitle": "Chọn phòng gym, sau đó chọn dịch vụ buổi lẻ hoặc gói tập.",
+      "searchGym": "Tìm phòng gym theo tên hoặc thành phố…",
+      "noGymFound": "Không tìm thấy phòng gym phù hợp.",
+      "minutes": "{minutes} phút",
+      "sessions": "{count} buổi",
+      "validDays": "Hiệu lực {days} ngày",
+      "placeTitle": "Chi nhánh & huấn luyện viên",
+      "placeSubtitle": "Bỏ trống nếu muốn phòng gym sắp xếp giúp bạn.",
+      "branchStep": "Chi nhánh",
+      "trainerStep": "Huấn luyện viên",
+      "anyBranch": "Chi nhánh bất kỳ",
+      "anyBranchDesc": "Để phòng gym sắp xếp chi nhánh phù hợp.",
+      "autoAssign": "Gym tự phân công",
+      "autoAssignDesc": "Phòng gym chọn PT phù hợp với khung giờ của bạn.",
+      "noBranches": "Phòng gym chưa công bố chi nhánh nào.",
+      "noPts": "Phòng gym chưa công bố PT nào.",
+      "yearsExp": "{years} năm kinh nghiệm",
+      "timeTitle": "Ngày & khung giờ",
+      "timeSubtitle": "Chọn ngày tập rồi chốt khung giờ — hệ thống kiểm tra chỗ trống ngay.",
+      "timeRangeStep": "Khung giờ",
+      "today": "Hôm nay",
+      "tomorrow": "Ngày mai",
+      "durationLabel": "Thời lượng nhanh",
+      "checkingSlot": "Đang kiểm tra chỗ trống…",
+      "pickTimeToCheck": "Chọn PT hoặc chi nhánh để hệ thống tự kiểm tra chỗ trống.",
+      "extrasTitle": "Ưu đãi & ghi chú",
+      "extrasSubtitle": "Thêm mã giảm giá, điểm thưởng và ghi chú cho phòng gym.",
+      "discountStep": "Giảm giá",
+      "exclusiveHint": "Mã giảm giá và điểm thưởng không dùng đồng thời.",
+      "packageNoCharge": "Buổi này trừ vào gói đã mua nên không phát sinh phí — không áp dụng voucher/điểm.",
+      "reviewTitle": "Xác nhận & thanh toán",
+      "reviewSubtitle": "Kiểm tra lại thông tin trước khi gửi yêu cầu tới phòng gym.",
+      "summaryGym": "Phòng gym",
+      "summaryItem": "Dịch vụ",
+      "summaryPackage": "Gói đã mua",
+      "summaryBranch": "Chi nhánh",
+      "summaryTrainer": "PT",
+      "summaryTime": "Thời gian",
+      "summaryVoucher": "Mã giảm giá",
+      "summaryPoints": "Điểm thưởng",
+      "summaryNote": "Ghi chú",
+      "estimatedTotal": "Tạm tính",
+      "estimateHint": "Số tiền cuối cùng được chốt khi gửi yêu cầu (đã gồm ưu đãi nếu hợp lệ).",
+      "requireGym": "Vui lòng chọn phòng gym",
+      "requireItem": "Vui lòng chọn dịch vụ hoặc gói tập",
+      "requirePackage": "Vui lòng chọn gói đã mua"
     },
     "checkInLabel": "Giờ check-in"
   },
@@ -1736,6 +1835,8 @@
     "emailNotVerified": "Email chưa được xác thực",
     "emailNotVerifiedDesc": "Vui lòng kiểm tra email để xác thực tài khoản.",
     "genericError": "Có lỗi xảy ra",
+    "invalidCredentials": "Sai tài khoản hoặc mật khẩu",
+    "invalidCredentialsDesc": "Kiểm tra lại tên đăng nhập/email và mật khẩu rồi thử lại.",
     "welcomeBack": "Chào mừng trở lại",
     "loginHint": "Vui lòng nhập thông tin chi tiết để truy cập tài khoản của bạn.",
     "identifierLabel": "Email hoặc tên đăng nhập",
