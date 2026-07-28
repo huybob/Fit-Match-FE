@@ -76,6 +76,18 @@ export function LoginForm() {
         router.push("/resend-verification");
         return;
       }
+      // Sai tài khoản/mật khẩu là lỗi thường gặp nhất — hiện thông báo tiếng Việt
+      // thay cho message thô của BE, giữ nguyên dữ liệu đã gõ và đưa con trỏ về
+      // ô mật khẩu để nhập lại ngay.
+      if (code === "INVALID_CREDENTIALS") {
+        toast({
+          type: "error",
+          title: t("auth.invalidCredentials"),
+          description: t("auth.invalidCredentialsDesc"),
+        });
+        form.setFocus("password");
+        return;
+      }
       toast({
         type: "error",
         title: t("auth.genericError"),
