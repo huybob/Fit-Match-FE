@@ -26,6 +26,37 @@ function extOf(nameOrUrl: string) {
   return ext ? ext.toUpperCase().slice(0, 4) : "FILE";
 }
 
+/**
+ * BUG-09: thuộc tính `accept` chỉ LỌC hộp thoại chọn tệp, không chặn — người dùng
+ * đổi bộ lọc sang "All files" là chọn được .txt, và trước đây tệp sai định dạng
+ * bị bỏ qua hoàn toàn im lặng nên không ai hiểu vì sao không đính kèm được.
+ *
+ * Hỗ trợ 3 dạng mục trong `accept`: đuôi (".pdf"), wildcard ("image/*") và MIME
+ * đầy đủ ("application/pdf").
+ */
+function matchesAccept(file: File, accept: string) {
+  const rules = accept.split(",").map((r) => r.trim().toLowerCase()).filter(Boolean);
+  if (!rules.length) return true;
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return rules.some((rule) => {
+    if (rule.startsWith(".")) return name.endsWith(rule);
+    if (rule.endsWith("/*")) return type.startsWith(rule.slice(0, -1));
+    return type === rule;
+  });
+}
+
+/** Danh sách định dạng cho phép, dạng đọc được để đưa vào thông báo lỗi. */
+function acceptLabel(accept: string) {
+  return accept
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean)
+    .map((r) => (r.endsWith("/*") ? r.replace("/*", "") : r.replace(/^\./, "").replace(/^.*\//, "")))
+    .map((r) => r.toUpperCase())
+    .join(", ");
+}
+
 export function FileUpload({
   value,
   onChange,
@@ -53,6 +84,17 @@ export function FileUpload({
 
   async function handleFile(file?: File) {
     if (!file) return;
+    // BUG-09: chặn TRƯỚC khi upload và nói rõ định dạng nào được chấp nhận —
+    // trước đây tệp sai định dạng chỉ đơn giản là không đính kèm, không báo gì.
+    if (!matchesAccept(file, accept)) {
+      toast({
+        type: "error",
+        title: t("upload.unsupportedType"),
+        description: t("upload.allowedFormats", { formats: acceptLabel(accept) }),
+      });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     try {
       const res = await fileService.upload(file, folder);
@@ -61,7 +103,7 @@ export function FileUpload({
       if (preview) URL.revokeObjectURL(preview);
       setPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : "");
     } catch (e) {
-      toast({ type: "error", title: "Tải lên thất bại", description: toErrorMessage(e) });
+      toast({ type: "error", title: t("upload.failed"), description: toErrorMessage(e) });
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
