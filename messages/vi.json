@@ -115,7 +115,7 @@
       "positive": "{field} phải lớn hơn 0",
       "nonNegative": "{field} không được là số âm",
       "decimal": "{field} chỉ được có tối đa {places} chữ số thập phân",
-      "password": "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt",
+      "password": "Mật khẩu phải có 8–100 ký tự, gồm ít nhất một chữ cái và một chữ số.",
       "passwordConfirm": "Mật khẩu xác nhận không khớp",
       "passwordSameAsOld": "Mật khẩu mới không được trùng mật khẩu cũ",
       "date": "Ngày không hợp lệ",
@@ -701,7 +701,10 @@
       "recentBookings": "Booking gần nhất",
       "noBookings": "Chưa có booking nào.",
       "viewAll": "Xem tất cả →",
-      "fromPackage": "Buổi từ gói"
+      "fromPackage": "Buổi từ gói",
+      "noProfileTitle": "Bạn chưa có hồ sơ phòng gym",
+      "noProfileBody": "Nộp hồ sơ đăng ký để được duyệt, sau đó bảng điều khiển sẽ hiện số liệu vận hành thật.",
+      "noProfileCta": "Nộp hồ sơ đăng ký"
     },
     "settings": {
       "title": "Cài đặt",
@@ -918,7 +921,8 @@
       "notice3": "Thời gian phê duyệt hồ sơ từ 24h - 48h làm việc.",
       "statusTitle": "Trạng thái hồ sơ",
       "stepBasic": "Thông tin cơ bản",
-      "stepDone": "Hoàn tất"
+      "stepDone": "Hoàn tất",
+      "statusLoadError": "Không tải được trạng thái hồ sơ. Vui lòng thử lại sau."
     },
     "ptStatus": {
       "ACTIVE": "Đang hoạt động",
@@ -1925,7 +1929,7 @@
     "currentPassword": "Mật khẩu Hiện tại",
     "newPassword": "Mật khẩu Mới",
     "confirmNewPassword": "Xác nhận Mật khẩu Mới",
-    "passwordRule": "Mật khẩu phải có ít nhất 12 ký tự và bao gồm sự kết hợp từ các ký hiệu, số và chữ hoa.",
+    "passwordRule": "Mật khẩu phải có 8–100 ký tự, gồm ít nhất một chữ cái và một chữ số.",
     "updatePassword": "Cập nhật Mật khẩu",
     "logoutAllDevices": "Đăng xuất tất cả thiết bị",
     "comingSoon": "Tính năng sẽ được hỗ trợ sớm.",
@@ -1942,7 +1946,11 @@
     "deletePermanently": "Xóa Vĩnh viễn",
     "confirmDisablePrompt": "Nhập mật khẩu để xác nhận vô hiệu hóa tài khoản:",
     "yourPassword": "Mật khẩu của bạn",
-    "confirmDisable": "Xác nhận vô hiệu hóa"
+    "confirmDisable": "Xác nhận vô hiệu hóa",
+    "needsAttention": "CẦN CẢI THIỆN",
+    "notAvailableTitle": "Tính năng chưa khả dụng",
+    "sessionsNotAvailableBody": "Hệ thống chưa theo dõi phiên đăng nhập theo thiết bị. Khi có, danh sách phiên thật của bạn sẽ hiện ở đây.",
+    "historyNotAvailableBody": "Hệ thống chưa lưu lịch sử đăng nhập. Khi có, các lần đăng nhập thật của bạn sẽ hiện ở đây."
   },
   "site": {
     "nav": {
@@ -2056,7 +2064,10 @@
     "done": "Đã tải lên",
     "loading": "Đang tải...",
     "replace": "Đổi tệp",
-    "uploading": "Đang tải lên..."
+    "uploading": "Đang tải lên...",
+    "unsupportedType": "Định dạng tệp không được hỗ trợ",
+    "allowedFormats": "Chỉ chấp nhận: {formats}",
+    "failed": "Tải lên thất bại"
   },
   "cms": {
     "featuredTitle": "Nổi bật trên FitMatch",
