@@ -24,7 +24,7 @@ import type {
   GymVerificationStatus,
 } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
-import { toErrorMessage } from "@/shared/utils/error.util";
+import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { FileUpload } from "@/shared/components/common/file-upload";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
@@ -181,6 +181,9 @@ export default function GymVerificationPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.verificationStatus]);
 
+  // BUG-08: BE trả 404 khi user chưa có hồ sơ gym — đó là trạng thái onboarding
+  // hợp lệ, không phải sự cố cần báo lỗi.
+  const isMissingProfile = statusError && getErrorStatus(statusErrorObj) === 404;
   const verificationStatus = status?.verificationStatus;
   const isPending = verificationStatus === "PENDING";
   const isApproved = verificationStatus === "APPROVED";
@@ -259,10 +262,14 @@ export default function GymVerificationPage() {
             </Button>
           </div>
 
-          {statusError && (
+          {/* BUG-08: 404 ở đây KHÔNG phải sự cố — nghĩa là operator chưa nộp hồ sơ,
+              đúng trạng thái mà chính trang này sinh ra để xử lý. Trước đây nó bị
+              coi là lỗi và đổ nguyên văn text nội bộ của BE
+              ("Gym profile for user not found with id: operator") ra giao diện. */}
+          {statusError && !isMissingProfile && (
             <div className="mb-6 flex items-start gap-3 p-3 rounded-xl bg-destructive/10 border border-destructive/30">
               <AlertCircle className="size-4 text-destructive mt-0.5 shrink-0" />
-              <p className="text-sm text-destructive">{toErrorMessage(statusErrorObj)}</p>
+              <p className="text-sm text-destructive">{t("gym.verification.statusLoadError")}</p>
             </div>
           )}
 

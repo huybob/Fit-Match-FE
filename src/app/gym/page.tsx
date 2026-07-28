@@ -5,6 +5,7 @@
 // (/gym/reports/operational) + ví (/gym/wallet) + booking gần nhất (/gym/bookings).
 
 import Link from "next/link";
+import { getErrorStatus } from "@/shared/utils/error.util";
 import { useMemo } from "react";
 import {
   CalendarCheck2, DollarSign, WalletCards,
@@ -63,6 +64,9 @@ export default function GymDashboardPage() {
   ];
 
   const verified = verification.data?.verificationStatus === "APPROVED";
+  // BUG-08: 404 ở cả hai endpoint = chưa có hồ sơ gym, không phải lỗi hệ thống.
+  const noGymProfileYet =
+    getErrorStatus(verification.error) === 404 || getErrorStatus(report.error) === 404;
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -94,7 +98,22 @@ export default function GymDashboardPage() {
           </div>
 
           {/* Stats row — dữ liệu thật 30 ngày */}
-          {report.isError ? (
+          {/* BUG-08: operator chưa nộp hồ sơ thì BE trả 404 cho báo cáo vận hành.
+              Đó là trạng thái onboarding chứ không phải sự cố — báo "Không tải
+              được báo cáo" ngay màn hình đầu tiên khiến người dùng mới tưởng hệ
+              thống hỏng. Hướng dẫn họ đi nộp hồ sơ thay vì báo lỗi đỏ. */}
+          {noGymProfileYet ? (
+            <div className="rounded-2xl border border-primary/30 bg-primary/10 px-6 py-4">
+              <p className="text-sm font-semibold text-foreground">{t("gym.dashboard.noProfileTitle")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("gym.dashboard.noProfileBody")}</p>
+              <Link
+                href="/gym/verification"
+                className="mt-3 inline-flex h-9 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {t("gym.dashboard.noProfileCta")}
+              </Link>
+            </div>
+          ) : report.isError ? (
             <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-6 py-4 text-sm text-destructive">
               {t("gym.dashboard.reportError")}
             </div>
