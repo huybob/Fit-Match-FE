@@ -85,18 +85,24 @@ export default function AdminNotificationTemplatesPage() {
             <li key={tpl.code} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-bold">
+                  {/* BUG-07: phải là <div>, không phải <p> — Badge render ra <div>,
+                      mà <div> lồng trong <p> là HTML không hợp lệ nên trình duyệt tự
+                      đóng thẻ <p> sớm, gây lệch cây DOM và hydration error. */}
+                  <div className="flex flex-wrap items-center gap-2 font-bold">
                     <BellRing className="size-4 text-primary" />
                     <span className="font-mono text-xs">{tpl.code}</span>
                     <Badge className={tpl.enabled ? "bg-success-muted text-success" : "bg-muted text-muted-foreground"}>
                       {tpl.enabled ? t("admin.notificationTemplates.active") : t("admin.notificationTemplates.inactive")}
                     </Badge>
-                  </p>
+                  </div>
                   <p className="mt-1.5 text-sm font-semibold text-foreground">{tpl.title}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">{tpl.body}</p>
                   {tpl.placeholders && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Placeholder: <span className="font-mono">{tpl.placeholders}</span>
+                      {/* BUG-10 (cùng loại): nhãn này trước đây hardcode tiếng Anh,
+                          không đổi theo locale. Dùng lại key đã có ở dialog sửa. */}
+                      {t("admin.notificationTemplates.placeholders")}{" "}
+                      <span className="font-mono">{tpl.placeholders}</span>
                     </p>
                   )}
                 </div>
