@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, Package, GitBranch, Users, Heart, CalendarCheck } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, Package, GitBranch, Users, Heart, CalendarCheck, Navigation } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { marketplaceService, type GymSearchParams } from "@/services/marketplace.service";
+import { marketplaceService, type GymPublicProfile, type GymSearchParams } from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
@@ -27,6 +27,9 @@ import { useTranslations } from "next-intl";
 import { weekdayShortKey } from "@/shared/utils/enum-label.util";
 import { SearchInput } from "@/shared/components/ui/search-input";
 import { IconButton } from "@/shared/components/ui/icon-button";
+import { useToast } from "@/lib/toast-provider";
+import { GymMap, type GymMapMarker } from "@/shared/components/map/gym-map";
+import { NearbyLocationPicker, type SearchLocation } from "./nearby-location-picker";
 
 /** A-11 (audit 2026-07-17): toggle yêu thích GYM cho customer — cùng mẫu với PT. */
 function useGymFavorites() {
@@ -67,8 +70,11 @@ function GymFavoriteButton({ gymId }: { gymId: number }) {
   );
 }
 
+const NO_GYMS: GymPublicProfile[] = [];
+
 export function GymsPublicPage() {
   const t = useTranslations();
+  const { toast } = useToast();
   const [keyword, setKeyword] = useState("");
   // Bug 11: vị trí lọc theo thành phố + quận (dropdown) thay vì ô text tự do.
   const [city, setCity] = useState("all");
@@ -77,9 +83,24 @@ export function GymsPublicPage() {
   const [params, setParams] = useState<GymSearchParams>({});
   // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
   const [sort, setSort] = useState("createdAt,desc");
+  // UC-18 (V55): tâm + bán kính tìm kiếm. KHÔNG gộp vào `params` vì hai nhóm này
+  // được áp dụng khác nhau: bộ lọc text chờ bấm "Áp dụng", còn đổi vị trí/bán
+  // kính phải cho kết quả ngay (người dùng vừa bấm "Vị trí của tôi" và đang đợi).
+  const [location, setLocation] = useState<SearchLocation | null>(null);
+  const [radiusKm, setRadiusKm] = useState(5);
+  const [activeGymId, setActiveGymId] = useState<number | null>(null);
+
   const query = useQuery({
-    queryKey: ["marketplace", "gyms", params, sort],
-    queryFn: () => marketplaceService.searchGyms({ ...params, sort }),
+    queryKey: ["marketplace", "gyms", params, sort, location, radiusKm],
+    queryFn: () =>
+      marketplaceService.searchGyms({
+        ...params,
+        // Có vị trí thì BE luôn sắp theo khoảng cách và bỏ qua sort — không gửi
+        // `sort` để khỏi ngụ ý một thứ tự không có thật.
+        ...(location
+          ? { lat: location.lat, lng: location.lng, radiusKm }
+          : { sort }),
+      }),
   });
 
   const districts = VN_CITIES.find((c) => c.name === city)?.districts ?? [];
@@ -97,10 +118,31 @@ export function GymsPublicPage() {
   }
   function clearAll() {
     setKeyword(""); setCity("all"); setDistrict("all"); setPriceFilter("all"); setParams({});
+    setLocation(null); setActiveGymId(null);
   }
 
-  const items = query.data?.content ?? [];
+  // Hằng số module, không phải `[]` mới mỗi render — nếu không thì memo bên dưới
+  // vô hiệu suốt thời gian query đang tải.
+  const items = query.data?.content ?? NO_GYMS;
   const total = query.data?.totalElements ?? items.length;
+  // Chỉ gym đã có toạ độ mới ghim được; gym chưa geocode vẫn nằm trong danh sách.
+  // Memo hoá vì mảng này là dependency của effect vẽ ghim trong GymMap — tạo mảng
+  // mới mỗi lần render (kể cả khi chỉ hover một card) sẽ bắt bản đồ vẽ lại liên tục.
+  const markers: GymMapMarker[] = useMemo(
+    () =>
+      items
+        .filter((gym): gym is typeof gym & { id: number; latitude: number; longitude: number } =>
+          gym.id != null && gym.latitude != null && gym.longitude != null)
+        .map((gym) => ({
+          id: gym.id,
+          title: gym.gymName ?? t("marketplace.gym"),
+          lat: gym.latitude,
+          lng: gym.longitude,
+          subtitle: gym.nearestBranchName ?? [gym.address, gym.district, gym.city].filter(Boolean).join(", "),
+          distanceLabel: gym.distanceKm != null ? t("marketplace.nearby.awayKm", { km: gym.distanceKm }) : undefined,
+        })),
+    [items, t],
+  );
 
   return (
     <SiteLayout>
@@ -112,6 +154,17 @@ export function GymsPublicPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-bold text-foreground">{t("marketplace.filters")}</h2>
                 <Button variant="link" size="inline" type="button" onClick={clearAll} className="text-primary">{t("marketplace.resetFilters")}</Button>
+              </div>
+
+              {/* UC-18 (V55): tìm quanh một vị trí — áp dụng ngay, không chờ nút "Áp dụng". */}
+              <div className="mt-4 border-b border-border pb-4">
+                <NearbyLocationPicker
+                  location={location}
+                  onLocationChange={(next) => { setLocation(next); setActiveGymId(null); }}
+                  radiusKm={radiusKm}
+                  onRadiusChange={setRadiusKm}
+                  onError={(message) => toast({ type: "error", title: message })}
+                />
               </div>
 
               <div className="mt-4">
@@ -174,21 +227,47 @@ export function GymsPublicPage() {
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{t("marketplace.gymsNearYou")}</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">{params.city
+                <p className="text-sm text-muted-foreground mt-0.5">{location
+              ? t("marketplace.nearby.foundGymsWithin", { count: total, km: radiusKm, place: location.label })
+              : params.city
               ? t("marketplace.foundGymsNear", { count: total, city: params.city })
               : t("marketplace.foundGyms", { count: total })}</p>
               </div>
-              <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger className="h-10 w-44"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt,desc">{t("marketplace.sortNewest")}</SelectItem>
-                  {/* UC-008 (V51): sort theo cột denorm avg_rating */}
-                  <SelectItem value="avgRating,desc">{t("marketplace.sortTopRated")}</SelectItem>
-                  <SelectItem value="gymName,asc">{t("marketplace.sortNameAsc")}</SelectItem>
-                  <SelectItem value="gymName,desc">{t("marketplace.sortNameDesc")}</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Đang tìm theo bán kính thì thứ tự luôn là "gần nhất trước" — hiện nhãn
+                  tĩnh thay vì dropdown vô hiệu để khỏi mời người dùng bấm vào chỗ chết. */}
+              {location ? (
+                <span className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground">
+                  <Navigation className="size-4 text-primary" /> {t("marketplace.nearby.sortByDistance")}
+                </span>
+              ) : (
+                <Select value={sort} onValueChange={setSort}>
+                  <SelectTrigger className="h-10 w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt,desc">{t("marketplace.sortNewest")}</SelectItem>
+                    {/* UC-008 (V51): sort theo cột denorm avg_rating */}
+                    <SelectItem value="avgRating,desc">{t("marketplace.sortTopRated")}</SelectItem>
+                    <SelectItem value="gymName,asc">{t("marketplace.sortNameAsc")}</SelectItem>
+                    <SelectItem value="gymName,desc">{t("marketplace.sortNameDesc")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
+
+            {/* Bản đồ chỉ có ý nghĩa khi đã chọn tâm tìm kiếm. */}
+            {location && (
+              <GymMap
+                className="mb-5 h-80 w-full"
+                center={location}
+                radiusKm={radiusKm}
+                markers={markers}
+                activeId={activeGymId}
+                onMarkerClick={setActiveGymId}
+                onCenterPick={(position) => {
+                  setActiveGymId(null);
+                  setLocation({ ...position, label: t("marketplace.nearby.pickedOnMap") });
+                }}
+              />
+            )}
 
             {query.isLoading ? (
               <LoadingSkeleton />
@@ -197,7 +276,14 @@ export function GymsPublicPage() {
             ) : items.length ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {items.map((gym) => (
-                  <article key={gym.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                  <article
+                    key={gym.id}
+                    // Trỏ vào card thì ghim tương ứng mở InfoWindow — nối danh sách với bản đồ.
+                    onMouseEnter={() => gym.id != null && location && setActiveGymId(gym.id)}
+                    className={`overflow-hidden rounded-2xl border bg-card shadow-sm transition-colors ${
+                      activeGymId === gym.id ? "border-primary" : "border-border"
+                    }`}
+                  >
                     {/* A-19: gỡ badge t("marketplace.openNow") hardcode — giờ mở cửa thật ở trang chi tiết */}
                     {/* Bug 11: ảnh thật của gym nếu có media, fallback gradient. */}
                     {gym.coverUrl ? (
@@ -215,6 +301,19 @@ export function GymsPublicPage() {
                       {(gym.address || gym.district || gym.city) && (
                         <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                           <MapPin className="size-3.5" />{[gym.address, gym.district, gym.city].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                      {gym.distanceKm != null && (
+                        <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-primary">
+                          <Navigation className="size-3.5" />
+                          {t("marketplace.nearby.awayKm", { km: gym.distanceKm })}
+                          {/* Khoảng cách tính theo chi nhánh gần nhất chứ không phải trụ sở —
+                              nói rõ chi nhánh nào để con số không gây hiểu nhầm. */}
+                          {gym.nearestBranchName && (
+                            <span className="font-normal text-muted-foreground">
+                              · {t("marketplace.nearby.viaBranch", { branch: gym.nearestBranchName })}
+                            </span>
+                          )}
                         </p>
                       )}
                       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{gym.description || t("marketplace.noDescription")}</p>

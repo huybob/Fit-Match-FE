@@ -167,6 +167,10 @@ export interface BranchResponse {
   /** B-14/UC-017: sức chứa tối đa; null = không giới hạn. */
   capacity?: number;
   active?: boolean;
+  /** UC-18 (V55): toạ độ chi nhánh — BE tự geocode từ địa chỉ nếu không gửi lên. */
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
 }
 
 export interface BranchInput {
@@ -178,6 +182,12 @@ export interface BranchInput {
   // thiếu chúng trong payload là xóa trắng dữ liệu đã có.
   amenities?: string;
   capacity?: number;
+  /**
+   * UC-18 (V55): toạ độ chọn từ gợi ý Places. Bỏ trống thì BE geocode từ địa chỉ;
+   * gửi kèm sẽ ghi đè — chủ gym biết vị trí thật chính xác hơn máy đoán.
+   */
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface FacilityResponse {
