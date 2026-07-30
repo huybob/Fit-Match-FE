@@ -16,6 +16,16 @@ export interface GymPublicProfile {
   coverUrl?: string;
   /** Bug 14: badge "Đã xác minh" data-driven (hồ sơ APPROVED). */
   verified?: boolean;
+  /**
+   * UC-18 (V55): toạ độ marker. Ở kết quả tìm theo bán kính đây là điểm GẦN NGƯỜI
+   * DÙNG NHẤT (trụ sở hoặc một chi nhánh) chứ không chắc là trụ sở.
+   */
+  latitude?: number;
+  longitude?: number;
+  /** Tên chi nhánh gần nhất; bỏ trống nghĩa là điểm gần nhất chính là trụ sở. */
+  nearestBranchName?: string;
+  /** Khoảng cách (km) tới điểm gần nhất — chỉ có khi tìm theo bán kính. */
+  distanceKm?: number;
 }
 
 export interface PublicCertification {
@@ -52,6 +62,14 @@ export interface GymSearchParams {
   /** Bug 11: lọc theo khoảng giá gói tập PUBLISHED của gym (VND). */
   minPrice?: number;
   maxPrice?: number;
+  /**
+   * UC-18 (V55): tâm tìm kiếm theo bán kính. Phải gửi lat + lng cùng nhau (BE trả
+   * 400 nếu thiếu một trong hai). Khi có toạ độ, BE luôn sắp theo khoảng cách và
+   * bỏ qua `sort`.
+   */
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   page?: number;
   size?: number;
   /** UC-008: Spring Pageable sort, ví dụ "createdAt,desc" | "gymName,asc". */
@@ -92,6 +110,18 @@ export interface PublicBranch {
   amenities?: string;
   capacity?: number;
   operatingHours?: PublicOperatingHour[];
+  /** UC-18 (V55): toạ độ chi nhánh — marker trên bản đồ trang chi tiết gym. */
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+}
+
+/** UC-18 (V55): kết quả ánh xạ địa chỉ <-> toạ độ từ proxy geocode của BE. */
+export interface GeocodeResult {
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  placeId?: string;
 }
 
 export interface PublicGymService {
@@ -154,4 +184,11 @@ export const marketplaceService = {
     api.get<PageResponse<PtPublicProfile>>(`/marketplace/gyms/${id}/pts`, {
       params: { page: 0, size: 50, ...params },
     }),
+
+  // UC-18 (V55): proxy geocode phía BE — chỉ dùng khi FE KHÔNG có key Maps
+  // JavaScript (khi có key thì geocode ngay ở trình duyệt, không tốn round-trip).
+  geocodeAddress: (address: string) =>
+    api.get<GeocodeResult>("/marketplace/geocode", { params: { address } }),
+  reverseGeocode: (lat: number, lng: number) =>
+    api.get<GeocodeResult>("/marketplace/geocode/reverse", { params: { lat, lng } }),
 };

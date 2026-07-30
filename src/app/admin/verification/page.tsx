@@ -654,14 +654,15 @@ function GymVerificationQueue() {
   return (
     <div className="flex-1 overflow-y-auto p-6">
       <div className="flex items-center gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Verification Queue</h1>
+        {/* BUG-10: ba nhãn này trước đây hardcode tiếng Anh nên không đổi theo locale. */}
+        <h1 className="text-2xl font-bold text-foreground">{t("admin.verification.queueTitle")}</h1>
         <span className="text-muted-foreground">|</span>
-        <span className="text-sm text-muted-foreground">Gym Application Review</span>
+        <span className="text-sm text-muted-foreground">{t("admin.verification.queueSubtitle")}</span>
       </div>
 
       <div className="bg-card rounded-2xl border border-border p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-foreground">Recent Applications</h2>
+          <h2 className="text-sm font-semibold text-foreground">{t("admin.verification.recentApplications")}</h2>
           {/* B-7: đủ trạng thái — REQUIRES_INFO/SUSPENDED để admin theo dõi bổ sung + kích hoạt lại */}
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
             <SelectTrigger className="h-9 w-40 text-xs"><SelectValue /></SelectTrigger>

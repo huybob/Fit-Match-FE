@@ -1,11 +1,7 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ReportPage } from "@/modules/report/report-page";
-
+// Màn "Phân tích" đã gộp vào "Tổng quan" (/admin) — giữ route này để link/bookmark
+// cũ không 404.
 export default function AdminAnalyticsRoute() {
-  return (
-    <main className="flex-1 min-w-0 overflow-y-auto p-6">
-      <ReportPage scope="admin" />
-    </main>
-  );
+  redirect("/admin");
 }

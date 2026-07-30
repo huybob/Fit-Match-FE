@@ -22,29 +22,35 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 export function useToast() {
+  /**
+   * BUG-05: KHÔNG tự sinh `id` truyền vào Sonner.
+   *
+   * Trước đây mỗi lần gọi truyền `id: String(Date.now())`. Với Sonner, một `id`
+   * do caller cung cấp nghĩa là "cập nhật toast có id này"; StrictMode (dev) chạy
+   * handler hai lần trong cùng một mili-giây nên hai lần gọi ra CÙNG một id —
+   * lần sau ghi đè rồi kết thúc vòng đời của lần trước, toast vừa hiện đã biến
+   * mất trong cùng một frame. Hệ quả: KHÔNG toast nào hiển thị ở bất kỳ đâu
+   * trong app, cả báo lỗi lẫn báo thành công.
+   *
+   * Sonner tự sinh id duy nhất và trả về — dùng đúng giá trị đó cho `dismiss`.
+   */
   const toast = (input: ToastInput): string => {
     const opts = {
       description: input.description,
       duration: input.type === "loading" ? Infinity : (input.duration ?? 4200),
     };
-    const id = String(Date.now());
     switch (input.type) {
       case "success":
-        sonnerToast.success(input.title, { ...opts, id });
-        break;
+        return String(sonnerToast.success(input.title, opts));
       case "error":
-        sonnerToast.error(input.title, { ...opts, id });
-        break;
+        return String(sonnerToast.error(input.title, opts));
       case "warning":
-        sonnerToast.warning(input.title, { ...opts, id });
-        break;
+        return String(sonnerToast.warning(input.title, opts));
       case "loading":
-        sonnerToast.loading(input.title, { ...opts, id });
-        break;
+        return String(sonnerToast.loading(input.title, opts));
       default:
-        sonnerToast.info(input.title, { ...opts, id });
+        return String(sonnerToast.info(input.title, opts));
     }
-    return id;
   };
 
   const dismiss = (id: string) => sonnerToast.dismiss(id);

@@ -30,7 +30,7 @@ function saveAuthTokens(response: AuthResponse) {
   });
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   status: "idle",
 
@@ -51,7 +51,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (payload) => {
-    set({ status: "loading" });
+    // KHÔNG đặt status="loading" ở đây: GuestGuard che toàn màn hình bằng spinner
+    // khi status là loading, nên form đăng nhập bị unmount ngay lúc bấm nút — sai
+    // mật khẩu là màn hình nháy một cái và mất sạch username/password vừa gõ.
+    // Trạng thái "đang gửi" đã có sẵn ở nút bấm (form.formState.isSubmitting);
+    // "loading" chỉ dành cho lúc khôi phục phiên (initialize).
     try {
       saveAuthTokens(await authService.login(payload));
       const user = await authService.getProfile();
@@ -59,7 +63,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       return user;
     } catch (error) {
       tokenStorage.clear();
-      set({ user: null, status: "unauthenticated" });
+      // Chỉ ghi state khi thật sự đổi — tránh re-render thừa cả cây auth.
+      if (get().user || get().status !== "unauthenticated") {
+        set({ user: null, status: "unauthenticated" });
+      }
       throw error;
     }
   },

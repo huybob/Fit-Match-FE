@@ -1,22 +1,15 @@
 "use client";
 
 import { formatCurrency } from "@/utils/format.util";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarCheck2, CalendarDays, MapPin, Plus, QrCode, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { FieldShell } from "@/modules/forms/form-controls";
 import { Booking, BookingStatus, bookingService } from "@/services/booking.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { DatePicker } from "@/shared/components/ui/date-picker";
-import { TimePicker } from "@/shared/components/ui/time-picker";
-import { Input } from "@/shared/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -28,22 +21,18 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookingKeys } from "../query-keys";
-import { marketplaceService } from "@/services/marketplace.service";
 import { useOpenDispute } from "@/modules/dispute/hooks/use-dispute";
-import { voucherService } from "@/services/voucher.service";
-import { loyaltyService } from "@/services/loyalty.service";
 import {
   BookingAction,
   BookingScope,
   useBookingAction,
   useBookingPayment,
   useBookings,
-  useCreateBooking,
-  useMyPackages,
   useRescheduleBooking,
 } from "../hooks/use-booking";
-import { useBookingSchemas } from "../use-booking-schemas";
+import { CreateBookingDialog } from "./create-booking-wizard";
 import { gymService } from "@/services/gym.service";
+import { healthService } from "@/services/health.service";
 import {
   BookingTimeline,
   CorrectAttendanceDialog,
@@ -520,8 +509,11 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
   );
 }
 
-// Bug 8: BE chỉ bật endpoint mô phỏng ở profile local/dev — FE cũng chỉ hiện nút khi dev.
-const DEV_PAYMENT_ENABLED =
+// Bug 8: BE chỉ bật endpoint mô phỏng ở profile local/dev.
+// BUG-11: trước đây FE tự đoán bằng NODE_ENV/env riêng nên nút vẫn hiện khi BE
+// chạy profile khác — bấm vào là 404 và người test tưởng thanh toán hỏng. Nay
+// hỏi thẳng /api/health, còn env chỉ dùng để CHỦ ĐỘNG ẩn nút ở bản dev nội bộ.
+const DEV_PAYMENT_ALLOWED_BY_FE =
   process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_DEV_PAYMENT === "1";
 
 /** UC-052: hiển thị VietQR để khách chuyển khoản; Casso tự đối soát (UC-053). */
@@ -531,6 +523,17 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
   const { toast } = useToast();
   const qc = useQueryClient();
   const query = useBookingPayment(bookingId ?? 0, bookingId !== null);
+  // BUG-11: nguồn sự thật là BE. Không retry — /health hỏng thì coi như không có
+  // simulator và ẩn nút, an toàn hơn là hiện một nút chắc chắn lỗi.
+  const capabilities = useQuery({
+    queryKey: ["health", "capabilities"],
+    queryFn: healthService.getCapabilities,
+    enabled: DEV_PAYMENT_ALLOWED_BY_FE && bookingId !== null,
+    retry: false,
+    staleTime: Infinity,
+  });
+  const devPaymentAvailable =
+    DEV_PAYMENT_ALLOWED_BY_FE && capabilities.data?.paymentSimulatorEnabled === true;
   // Bug 8 (dev): mô phỏng ngân hàng xác nhận để test thông luồng gói tháng.
   const simulate = useMutation({
     mutationFn: () => bookingService.simulatePayment(bookingId!),
@@ -591,7 +594,7 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
           <p className="text-xs text-muted-foreground">
             {t("booking.afterTransfer")}
           </p>
-          {DEV_PAYMENT_ENABLED && (
+          {devPaymentAvailable && (
             <Button
               variant="outline"
               className="mx-auto"
@@ -613,439 +616,5 @@ function Info({ label, value }: { label: string; value?: string }) {
       <dt className="text-xs font-black uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="mt-1 font-bold text-foreground">{value || "—"}</dd>
     </div>
-  );
-}
-
-/** UC-031/032/035: chọn gym -> dịch vụ/gói (+PT/chi nhánh) -> tạo nháp -> checkout. */
-function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initialPackageId }: {
-  open: boolean;
-  onClose: () => void;
-  onCheckedOut: (bookingId: number, payable: number) => void;
-  /** Bug 10: gym/gói chọn sẵn khi mở từ deep-link trang gym / gói tập. */
-  initialGymId?: number;
-  initialPackageId?: number;
-}) {
-  const t = useTranslations();
-  const { toast } = useToast();
-  const create = useCreateBooking();
-  const checkoutAction = useBookingAction("customer");
-  const [voucherCode, setVoucherCode] = useState("");
-  const [pointsToUse, setPointsToUse] = useState("");
-  // C-2 (UC-044): đề nghị vào danh sách chờ khi slot đã kín (409).
-  const [waitlistOffer, setWaitlistOffer] = useState<{
-    serviceId?: number; packageId?: number; preferredStart: string;
-  } | null>(null);
-  const joinWaitlist = useMutation({
-    mutationFn: () => bookingService.joinWaitlist(waitlistOffer!),
-    onSuccess: () => {
-      toast({ type: "success", title: t("booking.joinedWaitlist"), description: "Xem tại mục 'Danh sách chờ của tôi'." });
-      setWaitlistOffer(null);
-    },
-    onError: (e) => toast({ type: "error", title: t("booking.joinWaitlistFailed"), description: toErrorMessage(e) }),
-  });
-  const loyalty = useQuery({ queryKey: ["loyalty", "balance-mini"], queryFn: () => loyaltyService.balance(), enabled: open });
-
-  const schemas = useBookingSchemas();
-  const form = useForm<z.infer<typeof schemas.createBooking>>({
-    resolver: zodResolver(schemas.createBooking),
-    defaultValues: {
-      mode: "new",
-      gymId: 0,
-      itemType: "service",
-      itemId: 0,
-      bookingDate: new Date().toISOString().slice(0, 10),
-      startTime: "08:00",
-      endTime: "09:00",
-      note: "",
-    },
-  });
-  const mode = form.watch("mode");
-  const gymId = form.watch("gymId") ?? 0;
-  const itemType = form.watch("itemType");
-
-  // Bug 10: áp prefill từ deep-link mỗi khi dialog mở.
-  useEffect(() => {
-    if (!open) return;
-    if (initialGymId) {
-      form.setValue("gymId", initialGymId);
-    }
-    if (initialPackageId) {
-      form.setValue("itemType", "package");
-      form.setValue("itemId", initialPackageId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialGymId, initialPackageId]);
-  // B-31/C-15 (UC-030): pre-check slot ngay khi chọn giờ — trước đây khách chỉ biết
-  // slot bận sau khi submit và nhận 409, để lại DRAFT rác.
-  const watchPtId = form.watch("ptId");
-  const watchBranchId = form.watch("branchId");
-  const watchDate = form.watch("bookingDate");
-  const watchStart = form.watch("startTime");
-  const watchEnd = form.watch("endTime");
-  const precheckEnabled =
-    open && !!(watchPtId || watchBranchId) && !!watchDate && !!watchStart && !!watchEnd && watchStart < watchEnd;
-  const precheck = useQuery({
-    queryKey: ["availability-check", watchPtId, watchBranchId, watchDate, watchStart, watchEnd],
-    queryFn: () =>
-      bookingService.checkAvailability({
-        ptId: watchPtId || undefined,
-        branchId: watchBranchId || undefined,
-        startAt: `${watchDate}T${watchStart}:00`,
-        endAt: `${watchDate}T${watchEnd}:00`,
-      }),
-    enabled: precheckEnabled,
-    staleTime: 15_000,
-  });
-
-  const myPackages = useMyPackages(open);
-  const usablePackages = (myPackages.data ?? []).filter((p) => p.status === "ACTIVE" && p.sessionsRemaining > 0);
-
-  const gyms = useQuery({
-    queryKey: ["marketplace", "gyms", "booking"],
-    queryFn: () => marketplaceService.searchGyms({ size: 100 }),
-    enabled: open && mode === "new",
-  });
-  const services = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "services"],
-    queryFn: () => marketplaceService.getGymServices(gymId),
-    enabled: open && gymId > 0,
-  });
-  const packages = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "packages"],
-    queryFn: () => marketplaceService.getGymPackages(gymId),
-    enabled: open && gymId > 0,
-  });
-  // Ở chế độ dùng gói, gym được suy ra từ gói đã chọn.
-  const selectedPackage = usablePackages.find((p) => p.id === form.watch("customerPackageId"));
-  const effectiveGymId = mode === "package" ? (selectedPackage?.gymId ?? 0) : gymId;
-
-  const branches = useQuery({
-    queryKey: ["marketplace", "gym", effectiveGymId, "branches"],
-    queryFn: () => marketplaceService.getGymBranches(effectiveGymId),
-    enabled: open && effectiveGymId > 0,
-  });
-  const pts = useQuery({
-    queryKey: ["marketplace", "gym", effectiveGymId, "pts"],
-    queryFn: () => marketplaceService.getGymPts(effectiveGymId),
-    enabled: open && effectiveGymId > 0,
-  });
-
-  const catalogItems = itemType === "service" ? (services.data ?? []) : (packages.data ?? []);
-
-  return (
-    <Dialog open={open} title={t("booking.create")} onClose={onClose}>
-      <form
-        className="grid gap-4 sm:grid-cols-2"
-        onSubmit={form.handleSubmit(async (values) => {
-          try {
-            const booking = await create.mutateAsync({
-              serviceId: values.mode === "new" && values.itemType === "service" ? values.itemId : undefined,
-              packageId: values.mode === "new" && values.itemType === "package" ? values.itemId : undefined,
-              customerPackageId: values.mode === "package" ? values.customerPackageId : undefined,
-              branchId: values.branchId,
-              ptId: values.ptId,
-              startAt: `${values.bookingDate}T${values.startTime}:00`,
-              endAt: `${values.bookingDate}T${values.endTime}:00`,
-              note: values.note || undefined,
-            });
-            // UC-073: áp giảm giá (voucher hoặc điểm — loại trừ nhau) trước checkout; lỗi không chặn đặt lịch.
-            if (values.mode === "new" && voucherCode.trim()) {
-              try {
-                await voucherService.apply(booking.id, voucherCode.trim());
-              } catch (err) {
-                toast({ type: "warning", title: t("booking.voucherFailed"), description: toErrorMessage(err) });
-              }
-            } else if (values.mode === "new" && Number(pointsToUse) > 0) {
-              try {
-                await loyaltyService.apply(booking.id, Number(pointsToUse));
-              } catch (err) {
-                toast({ type: "warning", title: t("booking.pointsFailed"), description: toErrorMessage(err) });
-              }
-            }
-            // UC-035: checkout ngay sau khi tạo nháp — BE validate đủ điều kiện + chốt giá.
-            try {
-              const checked = await checkoutAction.mutateAsync({ id: booking.id, action: "checkout" });
-              const payable = (checked as Booking).payableAmount ?? 0;
-              toast({
-                type: "success",
-                title: payable > 0 ? t("booking.createdPayNow") : t("booking.sentToGym"),
-              });
-              form.reset();
-              onCheckedOut(booking.id, payable);
-            } catch (checkoutError) {
-              // B-31: checkout lỗi -> hủy nháp vừa tạo để không dồn nháp trùng khung giờ
-              // (trước đây mỗi lần thử lại để lại 1 "Bản nháp" giống hệt).
-              await bookingService.cancel(booking.id, { reason: t("booking.autoCancelDraft") }).catch(() => undefined);
-              throw checkoutError;
-            }
-          } catch (error) {
-            toast({ type: "error", title: t("booking.createFailed"), description: toErrorMessage(error) });
-            // C-2 (UC-044): chỉ mời vào danh sách chờ khi slot thật sự kín/bận (409 do
-            // capacity hoặc PT trùng lịch) — không mời khi lỗi cấu hình giờ hoạt động.
-            const status = (error as { status?: number })?.status;
-            const message = toErrorMessage(error);
-            const slotTaken = /kín chỗ|đã có lịch/i.test(message);
-            if (status === 409 && slotTaken && values.mode === "new" && values.itemId) {
-              setWaitlistOffer({
-                serviceId: values.itemType === "service" ? values.itemId : undefined,
-                packageId: values.itemType === "package" ? values.itemId : undefined,
-                preferredStart: `${values.bookingDate}T${values.startTime}:00`,
-              });
-            }
-          }
-        })}
-      >
-        <div className="sm:col-span-2">
-          <FieldShell label={t("booking.modeLabel")}>
-            <Controller
-              control={form.control}
-              name="mode"
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); form.setValue("customerPackageId", undefined); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">{t("booking.modeNew")}</SelectItem>
-                    <SelectItem value="package" disabled={!usablePackages.length}>
-                      {usablePackages.length
-                        ? t("booking.modePackageCount", { count: usablePackages.length })
-                        : t("booking.modePackageNone")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </FieldShell>
-        </div>
-
-        {mode === "package" ? (
-          <div className="sm:col-span-2">
-            <FieldShell label={t("booking.purchasedPackage")} error={form.formState.errors.customerPackageId}>
-              <Controller
-                control={form.control}
-                name="customerPackageId"
-                render={({ field }) => (
-                  <Select
-                    value={field.value ? String(field.value) : ""}
-                    onValueChange={(v) => { field.onChange(Number(v)); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
-                  >
-                    <SelectTrigger><SelectValue placeholder={t("booking.selectPackage")} /></SelectTrigger>
-                    <SelectContent>
-                      {usablePackages.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {t("booking.packageRemaining", { name: p.packageName ?? "", gym: p.gymName ?? "", left: p.sessionsRemaining ?? 0, total: p.sessionsTotal ?? 0 })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FieldShell>
-          </div>
-        ) : (
-          <>
-            <div className="sm:col-span-2">
-              <FieldShell label={t("booking.gymLabel")} error={form.formState.errors.gymId}>
-                <Controller
-                  control={form.control}
-                  name="gymId"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ? String(field.value) : ""}
-                      onValueChange={(v) => { field.onChange(Number(v)); form.setValue("itemId", 0); form.setValue("ptId", undefined); form.setValue("branchId", undefined); }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={gyms.isFetching ? t("common.states.loading") : t("booking.selectGym")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {gyms.data?.content?.map((g) => (
-                          <SelectItem key={g.id} value={String(g.id)}>{g.gymName}{g.city ? ` · ${g.city}` : ""}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FieldShell>
-            </div>
-
-            <FieldShell label={t("booking.typeLabel")} error={form.formState.errors.itemType}>
-              <Controller
-                control={form.control}
-                name="itemType"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); form.setValue("itemId", 0); }}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="service">{t("booking.typeSingle")}</SelectItem>
-                      <SelectItem value="package">{t("booking.typePackage")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FieldShell>
-
-            <FieldShell label={itemType === "service" ? t("marketplace.services") : t("booking.typePackage")} error={form.formState.errors.itemId}>
-              <Controller
-                control={form.control}
-                name="itemId"
-                render={({ field }) => (
-                  <Select
-                    value={field.value ? String(field.value) : ""}
-                    onValueChange={(v) => field.onChange(Number(v))}
-                    disabled={!gymId || !catalogItems.length}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={!gymId ? t("booking.selectGymFirst") : (services.isFetching || packages.isFetching) ? t("common.states.loading") : catalogItems.length ? t("booking.selectPlaceholder") : t("booking.gymHasNothing")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {catalogItems.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name} · {money(item.price)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FieldShell>
-          </>
-        )}
-
-        <FieldShell label={t("booking.branchOptional")} error={form.formState.errors.branchId}>
-          <Controller
-            control={form.control}
-            name="branchId"
-            render={({ field }) => (
-              <Select
-                value={field.value ? String(field.value) : ""}
-                onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
-                disabled={!gymId || !branches.data?.length}
-              >
-                <SelectTrigger><SelectValue placeholder={t("booking.noSelection")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">{t("booking.noSelection")}</SelectItem>
-                  {branches.data?.map((b) => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
-
-        <FieldShell label={t("booking.trainerOptional")} error={form.formState.errors.ptId}>
-          <Controller
-            control={form.control}
-            name="ptId"
-            render={({ field }) => (
-              <Select
-                value={field.value ? String(field.value) : ""}
-                onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}
-                disabled={!gymId || !pts.data?.content?.length}
-              >
-                <SelectTrigger><SelectValue placeholder={t("booking.gymAssigns")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">{t("booking.gymAssigns")}</SelectItem>
-                  {pts.data?.content?.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.displayName}{p.specialization ? ` · ${p.specialization}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </FieldShell>
-
-        <FieldShell label={t("booking.bookingDate")} error={form.formState.errors.bookingDate}>
-          <Controller
-            control={form.control}
-            name="bookingDate"
-            render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} />}
-          />
-        </FieldShell>
-        <FieldShell label={t("booking.startTime")} error={form.formState.errors.startTime}>
-          <Controller
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />
-            )}
-          />
-        </FieldShell>
-        <FieldShell label={t("booking.endTime")} error={form.formState.errors.endTime}>
-          <Controller
-            control={form.control}
-            name="endTime"
-            render={({ field }) => (
-              <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />
-            )}
-          />
-        </FieldShell>
-
-        {mode === "new" && (
-          <>
-            <FieldShell label={t("booking.voucherOptional")}>
-              <Input value={voucherCode} onChange={(e) => { setVoucherCode(e.target.value.toUpperCase()); if (e.target.value) setPointsToUse(""); }} placeholder="VD: SALE10" />
-            </FieldShell>
-            <FieldShell label={t("booking.usePoints", { balance: loyalty.data?.pointsBalance ?? 0 })}>
-              <Input
-                type="number"
-                min={0}
-                max={loyalty.data?.pointsBalance ?? 0}
-                value={pointsToUse}
-                onChange={(e) => { setPointsToUse(e.target.value); if (e.target.value) setVoucherCode(""); }}
-                placeholder="0"
-                disabled={!!voucherCode.trim() || !(loyalty.data?.pointsBalance)}
-              />
-            </FieldShell>
-          </>
-        )}
-
-        <div className="sm:col-span-2">
-          <FieldShell label={t("booking.noteOptional")} error={form.formState.errors.note}>
-            <Textarea {...form.register("note")} placeholder={t("booking.notePlaceholder2")} />
-          </FieldShell>
-        </div>
-
-        {/* B-31: kết quả pre-check khả dụng cho khung giờ đã chọn */}
-        {precheckEnabled && precheck.data && (
-          precheck.data.available ? (
-            <p className="sm:col-span-2 rounded-xl border border-success/30 bg-success-muted px-3 py-2 text-xs font-semibold text-success">
-              {t("booking.slotAvailable")}
-            </p>
-          ) : (
-            <div className="sm:col-span-2 rounded-xl border border-warning/30 bg-warning-muted px-3 py-2 text-xs text-warning">
-              <p className="font-semibold">{t("booking.slotUnavailable")}</p>
-              <ul className="mt-1 list-inside list-disc">
-                {precheck.data.reasons.map((r, i) => <li key={i}>{r}</li>)}
-              </ul>
-            </div>
-          )
-        )}
-
-        {waitlistOffer && (
-          <div className="sm:col-span-2 rounded-2xl border border-warning/30 bg-warning-muted p-4">
-            <p className="text-sm font-black text-warning">{t("booking.slotFullOfferTitle")}</p>
-            <p className="mt-1 text-xs text-warning">
-              {t("booking.slotFullOfferBody")}
-            </p>
-            <div className="mt-2 flex gap-2">
-              <Button type="button" disabled={joinWaitlist.isPending} onClick={() => joinWaitlist.mutate()}>
-                {joinWaitlist.isPending ? t("common.states.processing") : t("booking.joinWaitlist")}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => setWaitlistOffer(null)}>{t("booking.skip")}</Button>
-            </div>
-          </div>
-        )}
-
-        <Button className="sm:col-span-2" disabled={create.isPending || checkoutAction.isPending}>
-          <CalendarCheck2 className="size-4" />
-          {create.isPending || checkoutAction.isPending ? t("common.states.processing") : t("booking.bookAndPay")}
-        </Button>
-      </form>
-    </Dialog>
   );
 }

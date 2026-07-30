@@ -21,6 +21,7 @@ import { TimePicker } from "@/shared/components/ui/time-picker";
 import { useTranslations } from "next-intl";
 import { weekdayKey } from "@/shared/utils/enum-label.util";
 import { DataTable } from "@/shared/components/common/data-table";
+import { PlaceAutocompleteInput } from "@/shared/components/map/place-autocomplete-input";
 
 
 /** UC-017: editor giờ mở cửa 7 ngày (dayOfWeek 1-7 khớp BE). */
@@ -126,6 +127,8 @@ export default function GymBranchesPage() {
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState("");
   const [capacity, setCapacity] = useState("");
+  // UC-18 (V55): toạ độ chọn từ gợi ý Places. null = để BE tự geocode từ địa chỉ.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
 
@@ -159,12 +162,15 @@ export default function GymBranchesPage() {
 
   function openCreate() {
     setEditing(null); setName(""); setAddress(""); setCity(""); setPhone("");
-    setAmenities(""); setCapacity(""); setFormOpen(true);
+    setAmenities(""); setCapacity(""); setCoords(null); setFormOpen(true);
   }
   function openEdit(b: BranchResponse) {
     setEditing(b); setName(b.name ?? ""); setAddress(b.address ?? ""); setCity(b.city ?? ""); setPhone(b.phone ?? "");
     // B-13: pre-fill amenities/capacity — thiếu chúng trong payload update là mất dữ liệu.
     setAmenities(b.amenities ?? ""); setCapacity(b.capacity != null ? String(b.capacity) : "");
+    // Giữ lại toạ độ đã có: gửi lên nguyên vẹn thì BE không geocode lại một địa
+    // chỉ không đổi (đỡ tốn quota) và không đánh mất vị trí đã chỉnh thủ công.
+    setCoords(b.latitude != null && b.longitude != null ? { lat: b.latitude, lng: b.longitude } : null);
     setFormOpen(true);
   }
   function closeForm() {
@@ -182,6 +188,8 @@ export default function GymBranchesPage() {
       phone: phone.trim() || undefined,
       amenities: amenities.trim() || undefined,
       capacity: capacity ? Number(capacity) : undefined,
+      latitude: coords?.lat,
+      longitude: coords?.lng,
     });
   }
 
@@ -321,7 +329,29 @@ export default function GymBranchesPage() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-            <Input value={address} onChange={e => setAddress(e.target.value)} placeholder={t("gym.branches.addressPlaceholder")} />
+            {/* UC-18 (V55): chọn từ gợi ý Google để chi nhánh có toạ độ chuẩn và
+                xuất hiện đúng chỗ khi khách tìm "gym quanh đây". Gõ tay vẫn được:
+                BE sẽ tự geocode chuỗi địa chỉ khi lưu. */}
+            <PlaceAutocompleteInput
+              value={address}
+              onValueChange={(value) => {
+                setAddress(value);
+                // Sửa lại chữ sau khi đã chọn gợi ý -> toạ độ cũ không còn khớp
+                // địa chỉ mới; bỏ đi để BE geocode lại từ chuỗi thật sự được lưu.
+                setCoords(null);
+              }}
+              onPlacePicked={(place) => {
+                setAddress(place.label);
+                setCoords({ lat: place.lat, lng: place.lng });
+              }}
+              onError={(message) => toast({ type: "warning", title: message })}
+              placeholder={t("gym.branches.addressPlaceholder")}
+            />
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              {coords
+                ? t("gym.branches.coordsPinned", { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
+                : t("gym.branches.coordsAuto")}
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

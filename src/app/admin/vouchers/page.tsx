@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
-import { toErrorMessage } from "@/shared/utils/error.util";
+import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { useTranslations } from "next-intl";
 
@@ -106,14 +106,27 @@ function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose:
     active: voucher?.active ?? true,
   });
 
+  // BUG-05: chỉ có toast là không đủ — toast tự tắt sau ~4s trong khi dialog vẫn
+  // mở, người dùng quay lại nhìn thì không còn manh mối nào về việc lưu hỏng.
+  // Giữ thêm một dòng lỗi cố định ngay trong dialog cho tới lần lưu kế tiếp.
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const save = useMutation({
     mutationFn: () => (voucher ? voucherService.update(voucher.id, form) : voucherService.create(form)),
+    onMutate: () => setSaveError(null),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "vouchers"] });
       toast({ type: "success", title: voucher ? t("admin.vouchers.updated") : t("admin.vouchers.created") });
       onClose();
     },
-    onError: (e) => toast({ type: "error", title: t("common.states.failed"), description: toErrorMessage(e) }),
+    onError: (e) => {
+      // BE trả nguyên văn tiếng Anh ("Voucher code already exists") — dịch trường
+      // hợp đã biết thay vì đổ thẳng text nội bộ ra cho người dùng cuối.
+      const message =
+        getErrorStatus(e) === 409 ? t("admin.vouchers.codeExists") : toErrorMessage(e);
+      setSaveError(message);
+      toast({ type: "error", title: t("common.states.failed"), description: message });
+    },
   });
 
   const set = (patch: Partial<VoucherRequest>) => setForm((f) => ({ ...f, ...patch }));
@@ -163,6 +176,11 @@ function VoucherDialog({ voucher, onClose }: { voucher: Voucher | null; onClose:
           <p className="sm:col-span-2 text-xs text-destructive">{t("admin.vouchers.rangeInvalid")}</p>
         )}
       </div>
+      {saveError && (
+        <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+          {saveError}
+        </p>
+      )}
       <div className="mt-4 flex gap-2">
         <Button
           disabled={save.isPending || !form.code.trim() || (!!form.validFrom && !!form.validTo && form.validFrom >= form.validTo)}

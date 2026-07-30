@@ -3,8 +3,8 @@ import type { AuthUser } from "@/services/auth.service";
 export type UserRole = NonNullable<AuthUser["role"]>;
 
 // A-15 (audit 2026-07-17): mỗi role về đúng workspace sau login (UC-003).
-// MODERATOR/FINANCE_ADMIN về thẳng trang nghiệp vụ vì /admin(/analytics) yêu cầu
-// quyền ADMIN|FINANCE_ADMIN — moderator vào analytics sẽ bị BE trả 403.
+// MODERATOR/FINANCE_ADMIN về thẳng trang nghiệp vụ vì /admin (tổng quan = báo cáo
+// vận hành) yêu cầu quyền ADMIN|FINANCE_ADMIN — moderator vào sẽ bị BE trả 403.
 export function getHomeRouteForRole(role?: AuthUser["role"]) {
   switch (role) {
     case "ROLE_ADMIN":

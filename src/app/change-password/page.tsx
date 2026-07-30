@@ -10,7 +10,6 @@ import {
   Lock,
   Monitor,
   Save,
-  Smartphone,
   XCircle,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -28,35 +27,39 @@ import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
 import { useTranslations } from "next-intl";
 
 
-/**
- * Dữ liệu demo cho khối "phiên đăng nhập" / "lịch sử đăng nhập" — BE chưa có
- * endpoint (Phase 5). Cố ý KHÔNG đưa vào catalog i18n để không lẫn dữ liệu giả
- * vào bộ chuỗi thật.
+/*
+ * BUG-03: khối "phiên đăng nhập" và "lịch sử đăng nhập" trước đây hiển thị dữ
+ * liệu giả CỨNG cho mọi user (MacBook ở San Francisco, iPhone ở London, Windows
+ * ở Berlin) kèm nút đăng xuất thao tác trên các phiên không tồn tại.
+ *
+ * Trên một trang BẢO MẬT, dữ liệu bịa không phải là "placeholder cho đẹp" — nó
+ * khiến người dùng tin rằng mình đang bị đăng nhập ở nước ngoài, hoặc yên tâm vì
+ * "2FA đã bật" trong khi hệ thống chưa hề có 2FA. Thà nói thẳng là chưa hỗ trợ.
+ *
+ * Dữ liệu giả đã được gỡ. Khi BE có endpoint phiên/lịch sử thật (Phase 5), thay
+ * phần "chưa khả dụng" bằng dữ liệu thật.
  */
-const mockSessions = [
-  { id: 1, device: "MacBook Pro 16\"", location: "San Francisco, USA • Chrome • IP: 192.168.1.1", icon: Monitor, current: true },
-  { id: 2, device: "iPhone 15 Pro", location: "London, UK • Ứng dụng FitMatch • 2 giờ trước", icon: Smartphone, current: false },
-  { id: 3, device: "Windows Desktop", location: "Berlin, Germany • Edge • Hôm qua, 14:20", icon: Monitor, current: false },
-];
-
-const mockLoginHistory = [
-  { id: 1, status: "success", title: "Đăng nhập Thành công", detail: "Chrome trên macOS • SF, USA", time: "Hôm nay, 09:12 SA" },
-  { id: 2, status: "fail", title: "Đăng nhập Thất bại", detail: "Safari trên iOS • IP Không xác định", time: "24 Th10, 11:45 CH" },
-  { id: 3, status: "change", title: "Mật khẩu đã được thay đổi", detail: "Công Web FitMatch", time: "20 Th10, 08:30 SA" },
-];
 
 function SecurityScoreCard({ user }: { user: { emailVerified?: boolean } }) {
   const t = useTranslations();
-  const score = 82;
+
+  /*
+   * BUG-03: điểm trước đây là hằng số 82% và mục 2FA luôn `ok: true`, nên mọi
+   * tài khoản đều được báo "RẤT MẠNH · đã bật 2FA" kể cả khi hệ thống chưa có
+   * 2FA. Đây là kiểu sai nguy hiểm nhất của một trang bảo mật: nó khiến người
+   * dùng ngừng đề phòng.
+   *
+   * Nay điểm được TÍNH từ đúng những gì kiểm chứng được. 2FA chưa hỗ trợ nên
+   * hiển thị là chưa đạt, không phải đã đạt.
+   */
+  const checks = [
+    { ok: false, label: t("security.check2fa"), warn: true },
+    { ok: user.emailVerified ?? false, label: t("security.checkRecoveryEmail") },
+  ];
+  const score = Math.round((checks.filter((c) => c.ok).length / checks.length) * 100);
   const r = 52;
   const circumference = 2 * Math.PI * r;
   const offset = circumference - (score / 100) * circumference;
-
-  const checks = [
-    { ok: true, label: t("security.check2fa") },
-    { ok: user.emailVerified ?? false, label: t("security.checkRecoveryEmail") },
-    { ok: false, label: t("security.checkLastChange"), warn: true },
-  ];
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -83,7 +86,10 @@ function SecurityScoreCard({ user }: { user: { emailVerified?: boolean } }) {
             transform="rotate(-90 70 70)"
           />
           <text x="70" y="66" textAnchor="middle" className="text-2xl font-bold" fill="var(--foreground)" fontSize="22" fontWeight="700">{score}%</text>
-          <text x="70" y="84" textAnchor="middle" fill="var(--success)" fontSize="11" fontWeight="600">{t("security.veryStrong")}</text>
+          {/* BUG-03: nhãn trước đây luôn cứng là "RẤT MẠNH" bất kể điểm bao nhiêu. */}
+          <text x="70" y="84" textAnchor="middle" fill={score >= 100 ? "var(--success)" : "var(--warning)"} fontSize="11" fontWeight="600">
+            {score >= 100 ? t("security.veryStrong") : t("security.needsAttention")}
+          </text>
         </svg>
       </div>
       <div className="space-y-2 mb-4">
@@ -100,9 +106,7 @@ function SecurityScoreCard({ user }: { user: { emailVerified?: boolean } }) {
           </div>
         ))}
       </div>
-      <button className="w-full h-9 rounded-lg bg-primary/10 text-primary text-sm font-medium hover:bg-primary transition-colors">
-        {t("security.improveScore")}
-      </button>
+      {/* BUG-03: gỡ nút "Cải thiện điểm" — nó không gắn với hành động nào. */}
     </div>
   );
 }
@@ -211,66 +215,42 @@ function ChangePasswordCard() {
   );
 }
 
-function ActiveSessionsCard() {
+/** Khối "chưa khả dụng" dùng chung cho phiên đăng nhập và lịch sử đăng nhập. */
+function NotAvailableCard({ title, body }: { title: string; body: string }) {
   const t = useTranslations();
-  const { toast } = useToast();
-  function logoutAll() {
-    toast({ type: "info", title: t("security.logoutAllDevices"), description: t("security.comingSoon") });
-  }
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-semibold text-foreground">{t("security.activeSessions")}</h2>
-        <Button variant="link" size="inline" onClick={logoutAll} className="text-primary">
-          {t("security.logoutOtherDevices")}
-        </Button>
-      </div>
-      <div className="space-y-4">
-        {mockSessions.map(({ id, device, location, icon: DevIcon, current }) => (
-          <div key={id} className="flex items-center gap-4">
-            <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <DevIcon className="size-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-foreground">{device}</p>
-                {current && (
-                  <span className="px-2 py-0.5 rounded-full bg-success-muted text-success text-[10px] font-semibold">{t("security.current")}</span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">{location}</p>
-            </div>
-            {!current && (
-              <Button variant="link" size="inline" className="text-destructive shrink-0">{t("common.menu.logout")}</Button>
-            )}
-          </div>
-        ))}
+      <h2 className="text-lg font-semibold text-foreground mb-3">{title}</h2>
+      <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-4">
+        <Monitor className="size-5 shrink-0 text-muted-foreground" />
+        <div>
+          <p className="text-sm font-medium text-foreground">{t("security.notAvailableTitle")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{body}</p>
+        </div>
       </div>
     </div>
+  );
+}
+
+function ActiveSessionsCard() {
+  const t = useTranslations();
+  // BUG-03: bỏ nút "Đăng xuất thiết bị khác" — nó thao tác trên danh sách phiên
+  // bịa, tạo cảm giác an toàn giả cho một hành động không làm gì cả.
+  return (
+    <NotAvailableCard
+      title={t("security.activeSessions")}
+      body={t("security.sessionsNotAvailableBody")}
+    />
   );
 }
 
 function LoginHistoryCard() {
   const t = useTranslations();
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-foreground mb-5">{t("security.loginHistory")}</h2>
-      <div className="space-y-4">
-        {mockLoginHistory.map(({ id, status, title, detail, time }) => (
-          <div key={id} className="flex items-start gap-3">
-            <div className={`size-2 rounded-full mt-1.5 shrink-0 ${
-              status === "success" ? "bg-success" : status === "fail" ? "bg-destructive" : "bg-primary"
-            }`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{title}</p>
-              <p className="text-xs text-muted-foreground">{detail}</p>
-            </div>
-            <p className="text-[10px] text-muted-foreground shrink-0 text-right leading-tight">{time.split(",")[0]}<br />{time.split(",")[1]}</p>
-          </div>
-        ))}
-      </div>
-      <Button variant="link" size="inline" className="mt-4 text-primary">{t("security.viewFullLog")}</Button>
-    </div>
+    <NotAvailableCard
+      title={t("security.loginHistory")}
+      body={t("security.historyNotAvailableBody")}
+    />
   );
 }
 

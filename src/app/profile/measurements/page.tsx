@@ -43,6 +43,8 @@ export interface MeasurementMessages {
   pickDate: string;
   dateNotFuture: string;
   noteMax: string;
+  /** BUG-02: form trắng vẫn tạo được bản ghi rỗng — cần chặn ở cả FE và BE. */
+  atLeastOneMetric: string;
   /** Message "X phải từ min đến max" đã dựng sẵn cho từng field. */
   range: Record<"weightKg" | "heightCm" | "bodyFatPercent" | "chestCm" | "waistCm" | "hipCm", string>;
 }
@@ -66,7 +68,16 @@ const buildMeasurementSchema = (m: MeasurementMessages) =>
     waistCm: numberIn(30, 250, m.range.waistCm),
     hipCm: numberIn(30, 250, m.range.hipCm),
     note: z.string().max(500, m.noteMax),
-  });
+  })
+    // BUG-02: phải có tối thiểu một chỉ số. Ghi chú KHÔNG tính — bản ghi chỉ có
+    // text thì không đo được gì, chỉ làm rác biểu đồ tiến trình và lệch BMI.
+    // Lỗi gắn vào `weightKg` để hiện ngay dưới ô đầu tiên thay vì trôi mất.
+    .refine(
+      (v) =>
+        [v.weightKg, v.heightCm, v.bodyFatPercent, v.chestCm, v.waistCm, v.hipCm]
+          .some((field) => field.trim() !== ""),
+      { message: m.atLeastOneMetric, path: ["weightKg"] },
+    );
 
 type MeasurementValues = z.infer<ReturnType<typeof buildMeasurementSchema>>;
 
@@ -117,6 +128,7 @@ function MeasurementsContent() {
         pickDate: t("member.measurements.pickDate"),
         dateNotFuture: t("member.measurements.dateNotFuture"),
         noteMax: t("member.measurements.noteMax"),
+        atLeastOneMetric: t("member.measurements.atLeastOneMetric"),
         range: {
           weightKg: t("common.validation.between", { field: t("member.measurements.field.weightKg"), min: 20, max: 400 }),
           heightCm: t("common.validation.between", { field: t("member.measurements.field.heightCm"), min: 80, max: 250 }),
