@@ -124,11 +124,20 @@ export interface GeocodeResult {
   placeId?: string;
 }
 
+/** Bug S2-14: một khung giờ rảnh lặp hàng tuần của PT (dayOfWeek 1-7, 1 = Thứ 2). */
+export interface PublicAvailabilitySlot {
+  dayOfWeek?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
 export interface PublicGymService {
   id?: number;
   name?: string;
   description?: string;
   price?: number;
+  /** Bug S2-05: phụ phí khi chọn PT — giá cuối = price + ptSurcharge. */
+  ptSurcharge?: number;
   durationMinutes?: number;
   categoryName?: string;
   eligibilityNotes?: string;
@@ -140,6 +149,8 @@ export interface PublicTrainingPackage {
   name?: string;
   description?: string;
   price?: number;
+  /** Bug S2-05: phụ phí khi chọn PT — giá cuối = price + ptSurcharge. */
+  ptSurcharge?: number;
   sessionCount?: number;
   validityDays?: number;
   usageConditions?: string;
@@ -180,10 +191,18 @@ export const marketplaceService = {
     api.get<PublicTrainingPackage[]>(`/marketplace/gyms/${id}/packages`),
   getGymMedia: (id: number) =>
     api.get<PublicGymMedia[]>(`/marketplace/gyms/${id}/media`),
-  getGymPts: (id: number, params: { page?: number; size?: number } = {}) =>
+  /**
+   * Bug S2-04: có `branchId` thì BE chỉ trả PT được phân công cho chi nhánh đó —
+   * PT chỉ phụ trách một chi nhánh sẽ không còn hiện ra để rồi bị từ chối ở checkout.
+   */
+  getGymPts: (id: number, params: { page?: number; size?: number; branchId?: number } = {}) =>
     api.get<PageResponse<PtPublicProfile>>(`/marketplace/gyms/${id}/pts`, {
       params: { page: 0, size: 50, ...params },
     }),
+
+  /** Bug S2-14: thời gian biểu tuần của PT (lịch rảnh khai báo). */
+  getPtAvailability: (id: number) =>
+    api.get<PublicAvailabilitySlot[]>(`/marketplace/pts/${id}/availability`),
 
   // UC-18 (V55): proxy geocode phía BE — chỉ dùng khi FE KHÔNG có key Maps
   // JavaScript (khi có key thì geocode ngay ở trình duyệt, không tốn round-trip).

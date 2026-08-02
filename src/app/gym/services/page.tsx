@@ -46,6 +46,8 @@ export default function GymServicesPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  // Bug S2-05: giá niêm yết là giá TỰ TẬP; đây là phần cộng thêm khi khách chọn PT.
+  const [ptSurcharge, setPtSurcharge] = useState("");
   const [duration, setDuration] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [eligibilityNotes, setEligibilityNotes] = useState("");
@@ -84,12 +86,13 @@ export default function GymServicesPage() {
   });
 
   function openCreate() {
-    setEditing(null); setName(""); setDescription(""); setPrice(""); setDuration("");
+    setEditing(null); setName(""); setDescription(""); setPrice(""); setPtSurcharge(""); setDuration("");
     setCategoryId(""); setEligibilityNotes(""); setFormOpen(true);
   }
   function openEdit(s: GymServiceResponse) {
     setEditing(s); setName(s.name ?? ""); setDescription(s.description ?? "");
     setPrice(s.price != null ? String(s.price) : ""); setDuration(s.durationMinutes != null ? String(s.durationMinutes) : "");
+    setPtSurcharge(s.ptSurcharge != null ? String(s.ptSurcharge) : "");
     setCategoryId(s.categoryId != null ? String(s.categoryId) : "");
     setEligibilityNotes(s.eligibilityNotes ?? "");
     setFormOpen(true);
@@ -111,6 +114,8 @@ export default function GymServicesPage() {
       name: name.trim(),
       description: description.trim() || undefined,
       price: priceNum,
+      // Bỏ trống = không tính thêm; gửi undefined để BE giữ NULL thay vì 0.
+      ptSurcharge: ptSurcharge.trim() ? Number(ptSurcharge) : undefined,
       durationMinutes: Number(duration),
       categoryId: categoryId ? Number(categoryId) : undefined,
       eligibilityNotes: eligibilityNotes.trim() || undefined,
@@ -209,6 +214,13 @@ export default function GymServicesPage() {
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.services.priceLabel")} <span className="text-destructive">*</span></label>
               <Input value={price} onChange={e => setPrice(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="500000" />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("gym.services.priceHint")}</p>
+            </div>
+            <div>
+              {/* Bug S2-05: khách bỏ trống PT để tiết kiệm — mức chênh do gym tự đặt. */}
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.services.ptSurchargeLabel")}</label>
+              <Input value={ptSurcharge} onChange={e => setPtSurcharge(e.target.value.replace(/[^0-9]/g, ""))} inputMode="numeric" placeholder="0" />
+              <p className="mt-1 text-[11px] text-muted-foreground">{t("gym.services.ptSurchargeHint")}</p>
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.services.durationLabel")} <span className="text-destructive">*</span></label>

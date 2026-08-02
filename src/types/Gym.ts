@@ -137,6 +137,9 @@ export interface GymVerificationStatusResponse {
   rejectionReason?: string;
   /** Ghi chú của admin khi request-info / suspend. */
   reviewNote?: string;
+  /** Bug S2-01: false = admin đã yêu cầu xác minh lại địa chỉ (gym vẫn hoạt động). */
+  addressVerified?: boolean;
+  addressReviewNote?: string;
   /** Đang hiển thị trên marketplace hay không (UC-018). */
   active?: boolean;
 }
@@ -211,6 +214,8 @@ export interface GymServiceResponse {
   name?: string;
   description?: string;
   price?: number;
+  /** Bug S2-05: phụ phí cộng thêm khi khách chọn PT; null/0 = không tính thêm. */
+  ptSurcharge?: number;
   durationMinutes?: number;
   categoryId?: number;
   categoryName?: string;
@@ -225,6 +230,8 @@ export interface GymServiceInput {
   name: string;
   description?: string;
   price: number;
+  /** Bug S2-05: phụ phí khi khách chọn PT; bỏ trống = không tính thêm. */
+  ptSurcharge?: number;
   /** BE @NotNull (B-22). */
   durationMinutes: number;
   categoryId?: number;
@@ -238,6 +245,8 @@ export interface TrainingPackageResponse {
   name?: string;
   description?: string;
   price?: number;
+  /** Bug S2-05: phụ phí cộng thêm khi khách chọn PT; null/0 = không tính thêm. */
+  ptSurcharge?: number;
   sessionCount?: number;
   validityDays?: number;
   usageConditions?: string;
@@ -252,6 +261,8 @@ export interface TrainingPackageInput {
   name: string;
   description?: string;
   price: number;
+  /** Bug S2-05: phụ phí khi khách chọn PT; bỏ trống = không tính thêm. */
+  ptSurcharge?: number;
   sessionCount: number;
   validityDays?: number;
   usageConditions?: string;

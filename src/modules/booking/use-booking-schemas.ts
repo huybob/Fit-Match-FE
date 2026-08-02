@@ -7,6 +7,17 @@ import { useTranslations } from "next-intl";
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /**
+ * Hôm nay theo giờ MÁY, dạng "yyyy-MM-dd".
+ *
+ * toISOString() trả về UTC nên ở VN (UTC+7) khoảng 00:00–07:00 nó cho ra ngày hôm
+ * qua — ràng buộc "không được đặt lịch ở quá khứ" khi đó nới lỏng một ngày.
+ */
+function todayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
  * UC-031/032/049: đặt mới (chọn gym + dịch vụ/gói) hoặc dùng buổi từ gói đã mua.
  * mode="new" -> cần gymId + itemId; mode="package" -> cần customerPackageId.
  *
@@ -29,7 +40,7 @@ export function useBookingSchemas() {
         bookingDate: z
           .string()
           .min(1, { message: t("booking.validation.pickDate") })
-          .refine((value) => value >= new Date().toISOString().slice(0, 10), {
+          .refine((value) => value >= todayLocal(), {
             message: t("booking.validation.dateInvalid"),
           }),
         startTime: z.string().regex(TIME_RE, { message: t("booking.validation.invalidTime") }),

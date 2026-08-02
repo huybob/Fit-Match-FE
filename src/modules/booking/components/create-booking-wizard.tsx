@@ -71,10 +71,22 @@ function addMinutes(time: string, minutes: number) {
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
 }
 
+/**
+ * Ngày local dạng "yyyy-MM-dd".
+ *
+ * KHÔNG dùng toISOString(): nó trả về UTC, nên ở VN (UTC+7) mọi thời điểm trước
+ * 07:00 sáng sẽ ra ngày hôm qua — "Hôm nay" hiện sai và minDate chặn nhầm.
+ */
 function isoDate(offsetDays = 0) {
   const d = new Date();
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Bug S2-06: giờ hiện tại "HH:mm" — mốc sớm nhất được phép chọn khi đặt cho hôm nay. */
+function nowHhMm() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 /**
@@ -84,13 +96,15 @@ function isoDate(offsetDays = 0) {
  * nào phụ thuộc trường nào (chọn gym mới có dịch vụ, chọn gói thì không cần gym).
  * Chia thành các bước có thứ tự + tóm tắt trước khi gửi; payload gửi BE không đổi.
  */
-export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initialPackageId }: {
+export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId, initialPackageId, initialPtId }: {
   open: boolean;
   onClose: () => void;
   onCheckedOut: (bookingId: number, payable: number) => void;
   /** Bug 10: gym/gói chọn sẵn khi mở từ deep-link trang gym / gói tập. */
   initialGymId?: number;
   initialPackageId?: number;
+  /** Bug S2-13: PT chọn sẵn khi mở từ nút "Đặt lịch với PT này" ở trang PT. */
+  initialPtId?: number;
 }) {
   const t = useTranslations();
   const fmt = useFormatters();
@@ -166,9 +180,12 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
     queryFn: () => marketplaceService.getGymBranches(effectiveGymId),
     enabled: open && effectiveGymId > 0,
   });
+  // Bug S2-04: có PT chỉ phụ trách một chi nhánh. Chọn chi nhánh rồi thì chỉ hỏi BE
+  // những PT phục vụ chi nhánh đó — trước đây liệt kê hết PT của gym, khách chọn
+  // nhầm và mãi tới checkout mới bị báo "PT chưa được gán cho chi nhánh đã chọn".
   const pts = useQuery({
-    queryKey: ["marketplace", "gym", effectiveGymId, "pts"],
-    queryFn: () => marketplaceService.getGymPts(effectiveGymId),
+    queryKey: ["marketplace", "gym", effectiveGymId, "pts", values.branchId ?? null],
+    queryFn: () => marketplaceService.getGymPts(effectiveGymId, { branchId: values.branchId }),
     enabled: open && effectiveGymId > 0,
   });
 
@@ -227,12 +244,28 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
       form.setValue("itemType", "package");
       form.setValue("itemId", initialPackageId);
     }
+    // Bug S2-13: vào từ trang PT thì PT đã biết, nhưng dịch vụ thì chưa — dừng ở
+    // bước chọn dịch vụ (không nhảy thẳng tới "Địa điểm" như luồng deep-link gói).
+    if (initialPtId) form.setValue("ptId", initialPtId);
     if (initialGymId && initialPackageId) {
       setStepIndex(2);
       setFurthest(2);
+    } else if (initialGymId && initialPtId) {
+      setStepIndex(1);
+      setFurthest(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialGymId, initialPackageId]);
+  }, [open, initialGymId, initialPackageId, initialPtId]);
+
+  // Bug S2-04: đổi chi nhánh có thể làm PT đang chọn không còn phục vụ chi nhánh
+  // mới. Bỏ chọn ngay thay vì để khách đi tiếp rồi bị chặn ở checkout.
+  useEffect(() => {
+    if (!values.ptId || !pts.data) return;
+    if (!(pts.data.content ?? []).some((p) => p.id === values.ptId)) {
+      form.setValue("ptId", undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pts.data, values.ptId]);
 
   function reset() {
     form.reset();
@@ -257,6 +290,13 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
     if (current === "time") {
       const ok = await form.trigger(["bookingDate", "startTime", "endTime"]);
       if (!ok) return;
+      // Bug S2-06: chặn khung giờ đã qua của CHÍNH hôm nay. minDate của DatePicker
+      // chỉ chặn được ngày, không chặn được giờ, nên trước đây 02:00 hôm nay vẫn
+      // đi lọt tới bước cuối rồi mới bị BE từ chối.
+      if (values.bookingDate === isoDate() && (values.startTime ?? "") <= nowHhMm()) {
+        setStepError(t("booking.validation.timeInPast"));
+        return;
+      }
     }
     const next = Math.min(safeIndex + 1, steps.length - 1);
     setStepIndex(next);
@@ -419,6 +459,9 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
                 ptsLoading={pts.isLoading}
                 ptId={values.ptId}
                 onPickPt={(id) => form.setValue("ptId", id)}
+                /* Bug S2-05: khách được bỏ trống PT để tiết kiệm — nói rõ chênh lệch. */
+                ptSurcharge={mode === "package" ? undefined : selectedItem?.ptSurcharge}
+                branchPicked={!!values.branchId}
               />
             )}
 
@@ -450,6 +493,8 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
                 gymName={selectedGym?.gymName ?? selectedPackage?.gymName}
                 itemName={selectedItem?.name}
                 itemPrice={selectedItem?.price}
+                /* Bug S2-05: chỉ cộng khi thật sự có PT — khớp BookingPriceCalculator. */
+                ptSurcharge={values.ptId ? selectedItem?.ptSurcharge : undefined}
                 packageName={selectedPackage?.packageName}
                 branchName={selectedBranch?.name}
                 ptName={selectedPt?.displayName}
@@ -830,7 +875,10 @@ function CatalogStep({
 
 /* ------------------------------------------------------------- step: place */
 
-function PlaceStep({ branches, branchesLoading, branchId, onPickBranch, pts, ptsLoading, ptId, onPickPt }: {
+function PlaceStep({
+  branches, branchesLoading, branchId, onPickBranch,
+  pts, ptsLoading, ptId, onPickPt, ptSurcharge, branchPicked,
+}: {
   branches: PublicBranch[];
   branchesLoading: boolean;
   branchId?: number;
@@ -839,8 +887,13 @@ function PlaceStep({ branches, branchesLoading, branchId, onPickBranch, pts, pts
   ptsLoading: boolean;
   ptId?: number;
   onPickPt: (id?: number) => void;
+  /** Bug S2-05: phụ phí gym tính thêm khi có PT; 0/undefined = không tính thêm. */
+  ptSurcharge?: number;
+  /** Bug S2-04: đã chọn chi nhánh -> danh sách PT đang được thu hẹp theo chi nhánh. */
+  branchPicked: boolean;
 }) {
   const t = useTranslations();
+  const hasSurcharge = !!ptSurcharge && ptSurcharge > 0;
 
   return (
     <div>
@@ -872,6 +925,13 @@ function PlaceStep({ branches, branchesLoading, branchId, onPickBranch, pts, pts
       </StepSection>
 
       <StepSection title={t("booking.wizard.trainerStep")} hint={t("common.states.optional")}>
+        {/* Bug S2-05: giá có PT / không PT khác nhau và mức chênh do gym đặt — nói
+            trước để khách quyết định, thay vì để họ phát hiện ở bước xác nhận. */}
+        {hasSurcharge && (
+          <p className="mb-2 rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary">
+            {t("booking.wizard.ptSurchargeHint", { amount: money(ptSurcharge) })}
+          </p>
+        )}
         {ptsLoading ? <ListSkeleton /> : (
           <div className="grid gap-2 sm:grid-cols-2">
             <ChoiceCard
@@ -880,6 +940,7 @@ function PlaceStep({ branches, branchesLoading, branchId, onPickBranch, pts, pts
               icon={<Sparkles className="size-4" />}
               title={t("booking.wizard.autoAssign")}
               subtitle={t("booking.wizard.autoAssignDesc")}
+              meta={hasSurcharge ? t("booking.wizard.noPtSaves", { amount: money(ptSurcharge) }) : undefined}
             />
             {pts.map((p) => (
               <ChoiceCard
@@ -892,13 +953,17 @@ function PlaceStep({ branches, branchesLoading, branchId, onPickBranch, pts, pts
                   p.specialization,
                   p.experienceYears ? t("booking.wizard.yearsExp", { years: p.experienceYears }) : null,
                 ].filter(Boolean).join(" · ") || undefined}
+                meta={hasSurcharge ? `+ ${money(ptSurcharge)}` : undefined}
                 badge={p.averageRating ? <Badge variant="warning">★ {p.averageRating.toFixed(1)}</Badge> : undefined}
               />
             ))}
           </div>
         )}
+        {/* Bug S2-04: rỗng vì chi nhánh đó chưa có PT nào ≠ gym chưa có PT nào. */}
         {!ptsLoading && !pts.length && (
-          <p className="mt-2 text-xs text-muted-foreground">{t("booking.wizard.noPts")}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {branchPicked ? t("booking.wizard.noPtsForBranch") : t("booking.wizard.noPts")}
+          </p>
         )}
       </StepSection>
     </div>
@@ -918,6 +983,12 @@ function TimeStep({ form, precheckEnabled, precheck, precheckLoading }: {
   const errors = form.formState.errors;
   const startTime = form.watch("startTime");
   const bookingDate = form.watch("bookingDate");
+
+  // Bug S2-06: đặt cho hôm nay thì giờ nhỏ nhất chọn được là bây giờ. Với các ngày
+  // sau thì không giới hạn.
+  const isToday = bookingDate === isoDate();
+  const minStart = isToday ? nowHhMm() : undefined;
+  const startInPast = isToday && !!startTime && startTime <= nowHhMm();
 
   const quickDays = [0, 1, 2, 3].map((offset) => ({
     value: isoDate(offset),
@@ -961,17 +1032,28 @@ function TimeStep({ form, precheckEnabled, precheck, precheckLoading }: {
             <Controller
               control={form.control}
               name="startTime"
-              render={({ field }) => <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />}
+              render={({ field }) => (
+                <TimePicker value={field.value} minTime={minStart} onChange={(v) => field.onChange(v ?? "")} />
+              )}
             />
           </FieldShell>
           <FieldShell label={t("booking.endTime")} error={errors.endTime}>
             <Controller
               control={form.control}
               name="endTime"
-              render={({ field }) => <TimePicker value={field.value} onChange={(v) => field.onChange(v ?? "")} />}
+              render={({ field }) => (
+                // Giờ kết thúc luôn phải sau giờ bắt đầu — chặn ngay ở picker.
+                <TimePicker value={field.value} minTime={startTime || minStart} onChange={(v) => field.onChange(v ?? "")} />
+              )}
             />
           </FieldShell>
         </div>
+        {/* Bug S2-06: cảnh báo ngay tại chỗ, không đợi bấm "Tiếp". */}
+        {startInPast && (
+          <p role="alert" className="mt-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-bold text-destructive">
+            {t("booking.validation.timeInPast")}
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-black uppercase tracking-wide text-muted-foreground">
             {t("booking.wizard.durationLabel")}
@@ -1081,13 +1163,15 @@ function ExtrasStep({ mode, voucherCode, onVoucher, points, onPoints, balance, n
 /* ------------------------------------------------------------ step: review */
 
 function ReviewStep({
-  mode, gymName, itemName, itemPrice, packageName, branchName, ptName, when, note,
+  mode, gymName, itemName, itemPrice, ptSurcharge, packageName, branchName, ptName, when, note,
   voucherCode, points, precheckEnabled, precheck, onEdit,
 }: {
   mode: "new" | "package";
   gymName?: string;
   itemName?: string;
   itemPrice?: number;
+  /** Bug S2-05: phụ phí PT đã áp (undefined khi khách không chọn PT). */
+  ptSurcharge?: number;
   packageName?: string;
   branchName?: string;
   ptName?: string;
@@ -1100,6 +1184,9 @@ function ReviewStep({
   onEdit: (step: StepId) => void;
 }) {
   const t = useTranslations();
+  // Bug S2-05: tổng tạm tính = giá niêm yết (không PT) + phụ phí PT nếu có chọn PT.
+  const surcharge = ptSurcharge && ptSurcharge > 0 ? ptSurcharge : 0;
+  const estimated = (itemPrice ?? 0) + surcharge;
 
   const rows: Array<{ label: string; value?: string; step: StepId; icon: typeof MapPin }> = [
     { label: t("booking.wizard.summaryGym"), value: gymName, step: mode === "package" ? "mode" : "catalog", icon: Building2 },
@@ -1110,6 +1197,9 @@ function ReviewStep({
     { label: t("booking.wizard.summaryTrainer"), value: ptName ?? t("booking.wizard.autoAssign"), step: "place", icon: UserRound },
     { label: t("booking.wizard.summaryTime"), value: when, step: "time", icon: CalendarDays },
   ];
+  if (surcharge > 0) {
+    rows.push({ label: t("booking.wizard.summaryPtSurcharge"), value: `+ ${money(surcharge)}`, step: "place", icon: UserRound });
+  }
   if (voucherCode.trim()) rows.push({ label: t("booking.wizard.summaryVoucher"), value: voucherCode.trim(), step: "extras", icon: Ticket });
   if (points > 0) rows.push({ label: t("booking.wizard.summaryPoints"), value: `${points} ${t("booking.pointsUnit")}`, step: "extras", icon: Wallet });
   if (note?.trim()) rows.push({ label: t("booking.wizard.summaryNote"), value: note.trim(), step: "extras", icon: StickyNote });
@@ -1140,9 +1230,14 @@ function ReviewStep({
             {t("booking.wizard.estimatedTotal")}
           </span>
           <strong className="text-2xl font-black text-foreground">
-            {mode === "package" ? t("booking.fromPurchasedPackage") : money(itemPrice)}
+            {mode === "package" ? t("booking.fromPurchasedPackage") : money(estimated)}
           </strong>
         </div>
+        {surcharge > 0 && (
+          <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+            {money(itemPrice)} + {money(surcharge)} {t("booking.wizard.ptSurchargeLabel")}
+          </p>
+        )}
         <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
           {mode === "package" ? t("booking.fromPackageNote") : t("booking.wizard.estimateHint")}
         </p>
