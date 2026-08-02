@@ -77,11 +77,12 @@ function itemName(booking: Booking, fallback: string) {
 export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const t = useTranslations();
   const fmt = useFormatters();
+  const qc = useQueryClient();
   const [status, setStatus] = useState<BookingStatus | "">("");
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
-  const [prefill, setPrefill] = useState<{ gymId?: number; packageId?: number }>({});
+  const [prefill, setPrefill] = useState<{ gymId?: number; packageId?: number; ptId?: number }>({});
   const [payingId, setPayingId] = useState<number | null>(null);
   const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
@@ -92,11 +93,15 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
     if (scope !== "customer" || typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
     if (sp.get("create") === "1") {
-      const gymId = Number(sp.get("gymId") ?? "");
-      const packageId = Number(sp.get("packageId") ?? "");
+      const positive = (name: string) => {
+        const value = Number(sp.get(name) ?? "");
+        return Number.isFinite(value) && value > 0 ? value : undefined;
+      };
       setPrefill({
-        gymId: Number.isFinite(gymId) && gymId > 0 ? gymId : undefined,
-        packageId: Number.isFinite(packageId) && packageId > 0 ? packageId : undefined,
+        gymId: positive("gymId"),
+        packageId: positive("packageId"),
+        // Bug S2-13: đến từ nút "Đặt lịch với PT này" ở trang PT.
+        ptId: positive("ptId"),
       });
       setCreating(true);
     }
@@ -195,11 +200,20 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
           open={creating}
           initialGymId={prefill.gymId}
           initialPackageId={prefill.packageId}
+          initialPtId={prefill.ptId}
           onClose={() => setCreating(false)}
           onCheckedOut={(id, payable) => { setCreating(false); if (payable > 0) setPayingId(id); }}
         />
       )}
-      <PaymentDialog bookingId={payingId} onClose={() => setPayingId(null)} />
+      {/* Bug S2-03: đóng cửa sổ thanh toán là làm mới danh sách ngay — trạng thái
+          booking phải phản ánh kết quả vừa xảy ra, không bắt khách reload trang. */}
+      <PaymentDialog
+        bookingId={payingId}
+        onClose={() => {
+          setPayingId(null);
+          qc.invalidateQueries({ queryKey: bookingKeys.all });
+        }}
+      />
     </div>
   );
 }
@@ -543,6 +557,18 @@ function PaymentDialog({ bookingId, onClose }: { bookingId: number | null; onClo
     },
     onError: (e) => toast({ type: "error", title: t("booking.paySimulateFailed"), description: toErrorMessage(e) }),
   });
+
+  // Bug S2-03: đơn chuyển PENDING -> PAID/EXPIRED/CANCELLED nhờ webhook Casso, nhưng
+  // chỉ query của riêng dialog này biết. Danh sách booking phía sau vẫn giữ trạng thái
+  // cũ nên khách đóng cửa sổ thanh toán ra là thấy "Chờ thanh toán" và phải F5.
+  // Thấy trạng thái chốt -> làm mới luôn danh sách; và làm mới lần nữa khi đóng dialog
+  // (phòng khi tiền về đúng lúc dialog vừa đóng).
+  const orderStatus = query.data?.status;
+  const settled = orderStatus != null && orderStatus !== "PENDING";
+  useEffect(() => {
+    if (settled) qc.invalidateQueries({ queryKey: bookingKeys.all });
+  }, [settled, orderStatus, qc]);
+
   if (bookingId === null) return null;
   const order = query.data;
 
