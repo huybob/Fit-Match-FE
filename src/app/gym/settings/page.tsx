@@ -166,6 +166,14 @@ export default function GymSettingsPage() {
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
                     <Input value={address} onChange={e => setAddress(e.target.value)} />
+                    {/* Bug S2-01: admin yêu cầu xác minh lại địa chỉ — hiện ngay cạnh ô
+                        cần sửa, kèm lý do. Cờ tự gỡ sau khi lưu địa chỉ mới. */}
+                    {status?.addressVerified === false && (
+                      <p className="mt-1.5 rounded-lg border border-warning/30 bg-warning-muted px-2.5 py-2 text-[11px] font-semibold text-warning">
+                        {t("gym.settings.addressRecheckNotice")}
+                        {status.addressReviewNote ? ` — ${status.addressReviewNote}` : ""}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>

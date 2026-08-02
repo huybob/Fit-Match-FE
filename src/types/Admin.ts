@@ -99,6 +99,9 @@ export interface GymVerificationResponse {
   rejectionReason?: string;
   /** B-10: ghi chú admin khi request-info/suspend (BE GymProfileResponse.reviewNote). */
   reviewNote?: string;
+  /** Bug S2-01: false = admin đã yêu cầu gym xác minh lại địa chỉ. */
+  addressVerified?: boolean;
+  addressReviewNote?: string;
   active?: boolean;
   documents?: PtDocumentDto[];
 }

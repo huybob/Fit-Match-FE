@@ -99,6 +99,13 @@ export const adminService = {
   requestGymInfo: (id: number, payload: RejectRequest) =>
     api.postRaw(`/admin/gym-verifications/${id}/request-info`, payload),
 
+  /**
+   * Bug S2-01: địa chỉ không đúng chuẩn -> yêu cầu gym xác minh lại. KHÔNG đổi
+   * trạng thái duyệt và không ẩn gym khỏi marketplace, chỉ gắn cờ + gửi thông báo.
+   */
+  requestGymAddressRecheck: (id: number, payload: RejectRequest) =>
+    api.postRaw(`/admin/gym-verifications/${id}/request-address-recheck`, payload),
+
   // ── Admin PT management (UC-021) ──
   suspendPt: (id: number, payload: RejectRequest) =>
     api.postRaw(`/admin/pts/${id}/suspend`, payload),

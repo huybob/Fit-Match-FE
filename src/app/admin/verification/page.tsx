@@ -345,7 +345,7 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
   const { toast } = useToast();
   const qc = useQueryClient();
   const [reason, setReason] = useState("");
-  const [mode, setMode] = useState<null | "reject" | "request" | "suspend">(null);
+  const [mode, setMode] = useState<null | "reject" | "request" | "suspend" | "address">(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "gym-verif", id],
@@ -364,13 +364,20 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
   const reject = useMutation({ mutationFn: () => adminService.rejectGymVerification(id, { reason }), onSuccess: () => done(t("admin.verification.gymRejected")), onError: fail });
   const requestInfo = useMutation({ mutationFn: () => adminService.requestGymInfo(id, { reason }), onSuccess: () => done(t("admin.verification.infoRequested")), onError: fail });
   const suspend = useMutation({ mutationFn: () => adminService.suspendGymVerification(id, { reason }), onSuccess: () => done(t("admin.verification.gymSuspended")), onError: fail });
+  // Bug S2-01: nhắc gym sửa địa chỉ mà KHÔNG đình chỉ — gym vẫn nhận booking bình thường.
+  const requestAddress = useMutation({
+    mutationFn: () => adminService.requestGymAddressRecheck(id, { reason }),
+    onSuccess: () => done(t("admin.verification.addressRecheckRequested")),
+    onError: fail,
+  });
 
-  const reasonPending = reject.isPending || requestInfo.isPending || suspend.isPending;
+  const reasonPending = reject.isPending || requestInfo.isPending || suspend.isPending || requestAddress.isPending;
   function submitReason() {
     if (!reason.trim()) { toast({ type: "warning", title: t("admin.verification.reasonRequired") }); return; }
     if (mode === "reject") reject.mutate();
     else if (mode === "request") requestInfo.mutate();
     else if (mode === "suspend") suspend.mutate();
+    else if (mode === "address") requestAddress.mutate();
   }
 
   if (isLoading) return (
@@ -428,6 +435,15 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
               <div className="mt-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{t("admin.verification.address")}</p>
                 <p className="text-sm text-foreground">{gym.address}</p>
+                {/* Bug S2-01: đã yêu cầu xác minh lại thì hiện nguyên trạng để admin
+                    khỏi gửi lại lần nữa; cờ tự gỡ khi gym lưu địa chỉ mới. */}
+                {gym.addressVerified === false && (
+                  <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-warning-muted px-2.5 py-1 text-[11px] font-semibold text-warning">
+                    <MapPin className="size-3" />
+                    {t("admin.verification.addressRecheckPending")}
+                    {gym.addressReviewNote ? ` — ${gym.addressReviewNote}` : ""}
+                  </p>
+                )}
               </div>
             )}
             {gym?.rejectionReason && (
@@ -480,7 +496,13 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
                 <Textarea
                   value={reason}
                   onChange={e => setReason(e.target.value)}
-                  placeholder={mode === "request" ? t("admin.verification.requestInfoPlaceholder") : t("admin.verification.reasonPlaceholder")}
+                  placeholder={
+                    mode === "request"
+                      ? t("admin.verification.requestInfoPlaceholder")
+                      : mode === "address"
+                        ? t("admin.verification.addressRecheckPlaceholder")
+                        : t("admin.verification.reasonPlaceholder")
+                  }
                   rows={3}
                   maxLength={500}
                   className="resize-none"
@@ -508,6 +530,11 @@ function GymVerificationDetail({ id, onBack }: { id: number; onBack: () => void 
                       <XCircle className="size-4" />{t("common.actions.reject")}</Button>
                   </>
                 )}
+                {/* Bug S2-01: địa chỉ sai chuẩn thì nhắc gym sửa, không phải đình chỉ.
+                    Dùng được ở mọi trạng thái vì địa chỉ lệch cũng gặp ở hồ sơ đang chờ duyệt. */}
+                <Button onClick={() => { setReason(""); setMode("address"); }} className="w-full gap-2 border border-border bg-card text-muted-foreground hover:bg-muted/40 shadow-none">
+                  <MapPin className="size-4" /> {t("admin.verification.requestAddressRecheck")}
+                </Button>
                 {st === "APPROVED" && (
                   <Button onClick={() => { setReason(""); setMode("suspend"); }} className="w-full gap-2 border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/10 shadow-none">
                     <XCircle className="size-4" /> {t("admin.verification.suspendGym")}
