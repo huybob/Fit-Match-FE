@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Ban, GitBranch, MapPin, Phone, Loader2, Clock } from "lucide-react";
+import { Plus, Pencil, Ban, GitBranch, MapPin, Phone, Loader2, Clock, CopyPlus } from "lucide-react";
 import { gymService } from "@/services/gym.service";
 import type { BranchInput, BranchResponse, OperatingHour } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
@@ -18,6 +18,7 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import { CheckboxField } from "@/shared/components/ui/checkbox-field";
 import { TimePicker } from "@/shared/components/ui/time-picker";
+import { IconButton } from "@/shared/components/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { weekdayKey } from "@/shared/utils/enum-label.util";
 import { DataTable } from "@/shared/components/common/data-table";
@@ -75,6 +76,24 @@ function OperatingHoursDialog({ branch, onClose }: { branch: BranchResponse; onC
     setRows((prev) => prev.map((r) => (r.dayOfWeek === day ? { ...r, ...patch } : r)));
   }
 
+  /**
+   * Bug S2-15: set từng giờ cho từng ngày quá bất tiện — hầu hết phòng gym mở cùng
+   * khung giờ cả tuần. Copy khung giờ của một ngày sang 6 ngày còn lại (và mở cửa
+   * luôn các ngày đó); ngày nào khác biệt thì sửa lại sau.
+   */
+  function copyToOtherDays(day: number) {
+    const source = rows.find((r) => r.dayOfWeek === day);
+    if (!source || source.closed) return;
+    setRows((prev) =>
+      prev.map((r) =>
+        r.dayOfWeek === day
+          ? r
+          : { ...r, closed: false, openTime: source.openTime, closeTime: source.closeTime },
+      ),
+    );
+    toast({ type: "success", title: t("common.datetime.copiedToOtherDays") });
+  }
+
   return (
     <Dialog open title={t("gym.branches.hoursDialogTitle", { name: branch.name ?? "" })} onClose={onClose}>
       {query.isLoading ? (
@@ -97,6 +116,15 @@ function OperatingHoursDialog({ branch, onClose }: { branch: BranchResponse; onC
                   <span className="text-xs text-muted-foreground">→</span>
                   <TimePicker value={r.closeTime ?? ""} className="h-8 w-28 text-xs"
                     onChange={(v) => patchRow(r.dayOfWeek, { closeTime: v ?? "" })} />
+                  {/* Bug S2-15: đặt 1 ngày rồi nhân ra cả tuần. */}
+                  <IconButton
+                    tooltip={t("common.datetime.copyToOtherDays")}
+                    disabled={!r.openTime || !r.closeTime}
+                    onClick={() => copyToOtherDays(r.dayOfWeek)}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <CopyPlus className="size-4" />
+                  </IconButton>
                 </>
               )}
             </div>

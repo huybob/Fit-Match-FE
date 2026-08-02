@@ -6,7 +6,7 @@
 // - Thời gian chặn cá nhân (blocked time): tạo/xóa từng khoảng.
 
 import { useEffect, useState } from "react";
-import { CalendarClock, Loader2, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, CopyPlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/lib/toast-provider";
 import {
   useCreateMyBlockedTime,
@@ -75,6 +75,26 @@ export default function TrainerAvailabilityPage() {
   function removeRow(key: number) {
     setRows((prev) => prev.filter((r) => r.key !== key));
     setDirty(true);
+  }
+
+  /**
+   * Bug S2-16: khai báo lịch rảnh từng ngày một quá mất công khi lịch gần như
+   * giống nhau cả tuần. Nhân khung giờ của dòng này ra 6 ngày còn lại; ngày nào
+   * đã có đúng khung giờ đó thì bỏ qua để không tạo slot trùng (BE từ chối overlap).
+   */
+  function copyRowToOtherDays(key: number) {
+    const source = rows.find((r) => r.key === key);
+    if (!source?.startTime || !source.endTime) return;
+    setRows((prev) => {
+      const added = WEEKDAY_ORDER.filter(
+        (d) =>
+          d !== source.dayOfWeek
+          && !prev.some((r) => r.dayOfWeek === d && r.startTime === source.startTime && r.endTime === source.endTime),
+      ).map((d) => ({ key: rowKey++, dayOfWeek: d, startTime: source.startTime, endTime: source.endTime }));
+      return [...prev, ...added];
+    });
+    setDirty(true);
+    toast({ type: "success", title: t("common.datetime.copiedToOtherDays") });
   }
 
   const invalid = rows.some((r) => !r.startTime || !r.endTime || r.startTime >= r.endTime);
@@ -156,6 +176,15 @@ export default function TrainerAvailabilityPage() {
                   <span className="text-xs text-muted-foreground">→</span>
                   <TimePicker value={r.endTime} className="h-9 w-28 text-sm"
                     onChange={(v) => patchRow(r.key, { endTime: v ?? "" })} />
+                  {/* Bug S2-16: đặt 1 ngày rồi nhân ra các ngày còn lại. */}
+                  <IconButton
+                    tooltip={t("common.datetime.copyToOtherDays")}
+                    disabled={!r.startTime || !r.endTime}
+                    onClick={() => copyRowToOtherDays(r.key)}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <CopyPlus className="size-4" />
+                  </IconButton>
                   <IconButton tooltip={t("gym.ptOps.deleteSlot")} onClick={() => removeRow(r.key)} className="text-muted-foreground hover:text-destructive">
                     <Trash2 className="size-4" />
                   </IconButton>

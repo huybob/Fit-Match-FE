@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { CopyPlus, Loader2, Plus, Trash2 } from "lucide-react";
 import { gymService } from "@/services/gym.service";
 import type { GymPtResponse } from "@/types/Gym";
 import type { AvailabilitySlot, PtAssignmentInput } from "@/types/Trainer";
@@ -103,6 +103,30 @@ function AvailabilityTab({ ptId }: { ptId: number }) {
 
   const invalid = rows.some((r) => !r.startTime || !r.endTime || r.startTime >= r.endTime);
 
+  /**
+   * Bug S2-16: nhân khung giờ của một dòng ra các ngày còn lại. Bỏ qua ngày đã có
+   * đúng khung giờ đó để không tạo slot trùng (BE từ chối overlap trong cùng ngày).
+   */
+  function copyRowToOtherDays(key: number) {
+    const source = rows.find((r) => r.key === key);
+    if (!source?.startTime || !source.endTime) return;
+    setRows((prev) => {
+      const added = WEEKDAY_ORDER.filter(
+        (d) =>
+          d !== source.dayOfWeek
+          && !prev.some((r) => r.dayOfWeek === d && r.startTime === source.startTime && r.endTime === source.endTime),
+      ).map((d, i) => ({
+        key: Date.now() + i,
+        dayOfWeek: d,
+        startTime: source.startTime,
+        endTime: source.endTime,
+      }));
+      return [...prev, ...added];
+    });
+    setDirty(true);
+    toast({ type: "success", title: t("common.datetime.copiedToOtherDays") });
+  }
+
   if (query.isLoading) return <div className="flex justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>;
   if (query.isError) return <p className="text-sm text-destructive">{toErrorMessage(query.error)}</p>;
 
@@ -129,6 +153,15 @@ function AvailabilityTab({ ptId }: { ptId: number }) {
           <span className="text-xs text-muted-foreground">→</span>
           <TimePicker value={r.endTime} className="h-9 w-26 text-sm"
             onChange={(v) => { setRows((p) => p.map((x) => x.key === r.key ? { ...x, endTime: v ?? "" } : x)); setDirty(true); }} />
+          {/* Bug S2-16: đặt 1 ngày rồi nhân ra các ngày còn lại. */}
+          <IconButton
+            tooltip={t("common.datetime.copyToOtherDays")}
+            disabled={!r.startTime || !r.endTime}
+            onClick={() => copyRowToOtherDays(r.key)}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <CopyPlus className="size-4" />
+          </IconButton>
           <IconButton
             tooltip={t("gym.ptOps.deleteSlot")}
             onClick={() => { setRows((p) => p.filter((x) => x.key !== r.key)); setDirty(true); }}
