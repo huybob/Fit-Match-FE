@@ -39,6 +39,7 @@ import {
 } from "@/shared/components/ui/select";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { formatCurrency } from "@/utils/format.util";
+import { PRICE_RANGES, findPriceRange, priceInRange } from "@/shared/constants/vn-locations";
 
 function useCanBook() {
   const { user, status } = useAuthStore();
@@ -52,13 +53,9 @@ function perSession(item: PublicTrainingPackage) {
   return Math.round(item.price / item.sessionCount);
 }
 
-const priceRanges = [
-  { value: "all", label: "Tất cả mức giá" },
-  { value: "under1m", label: "Dưới 1 triệu", min: 0, max: 1_000_000 },
-  { value: "m1to3", label: "1 – 3 triệu", min: 1_000_000, max: 3_000_000 },
-  { value: "m3to10", label: "3 – 10 triệu", min: 3_000_000, max: 10_000_000 },
-  { value: "over10", label: "Trên 10 triệu", min: 10_000_000, max: Infinity },
-] as const;
+// Bug S2-19: trước đây trang này tự khai một bảng khoảng giá RIÊNG (over10 dùng
+// max: Infinity) lệch với bảng dùng cho trang Phòng gym, nên cùng một gói lại rơi
+// vào hai khoảng khác nhau tuỳ trang. Nay dùng chung PRICE_RANGES + priceInRange.
 
 const sortOptions = [
   { value: "default", label: "Mặc định" },
@@ -114,7 +111,7 @@ export function PackagesPublicPage() {
     setSort("default");
   }
 
-  const range = priceRanges.find((r) => r.value === priceFilter);
+  const range = findPriceRange(priceFilter);
   const filtered = allPackages
     .filter((item) => {
       if (appliedKeyword) {
@@ -125,10 +122,7 @@ export function PackagesPublicPage() {
         if (!haystack.includes(appliedKeyword)) return false;
       }
       if (gymFilter !== "all" && String(item.gym.id) !== gymFilter) return false;
-      if (range && "min" in range) {
-        const price = item.price ?? 0;
-        if (price < range.min || price >= range.max) return false;
-      }
+      if (!priceInRange(item.price ?? 0, range)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -176,7 +170,7 @@ export function PackagesPublicPage() {
                 <Select value={priceFilter} onValueChange={setPriceFilter}>
                   <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {priceRanges.map((r) => (
+                    {PRICE_RANGES.map((r) => (
                       <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                     ))}
                   </SelectContent>

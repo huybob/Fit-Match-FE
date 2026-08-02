@@ -20,7 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { PRICE_RANGES, VN_CITIES, type PriceRangeValue } from "@/shared/constants/vn-locations";
+import {
+  PRICE_RANGES,
+  VN_CITIES,
+  findPriceRange,
+  maxPriceParam,
+  minPriceParam,
+  type PriceRangeValue,
+} from "@/shared/constants/vn-locations";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { formatCurrency } from "@/utils/format.util";
 import { useTranslations } from "next-intl";
@@ -80,7 +87,10 @@ export function GymsPublicPage() {
   const [city, setCity] = useState("all");
   const [district, setDistrict] = useState("all");
   const [priceFilter, setPriceFilter] = useState<PriceRangeValue>("all");
-  const [params, setParams] = useState<GymSearchParams>({});
+  // Bug S2-19: các dropdown (thành phố/quận/mức giá) áp dụng NGAY khi đổi. Trước đây
+  // mọi bộ lọc đều nằm chờ nút "Áp dụng" ở cuối form nên chọn mức giá xong thấy
+  // danh sách y nguyên -> tưởng filter hỏng. Chỉ ô từ khoá còn chờ submit.
+  const [appliedKeyword, setAppliedKeyword] = useState("");
   // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
   const [sort, setSort] = useState("createdAt,desc");
   // UC-18 (V55): tâm + bán kính tìm kiếm. KHÔNG gộp vào `params` vì hai nhóm này
@@ -89,6 +99,21 @@ export function GymsPublicPage() {
   const [location, setLocation] = useState<SearchLocation | null>(null);
   const [radiusKm, setRadiusKm] = useState(5);
   const [activeGymId, setActiveGymId] = useState<number | null>(null);
+
+  // Bug S2-19: `min: 0` là giá trị hợp lệ nhưng falsy — code cũ (`range.min ? … :
+  // undefined`) âm thầm bỏ nó đi. Và `maxPrice` phải trừ 1 vì BE so sánh `<=` còn
+  // khoảng giá là nửa mở: nếu không, gói đúng 1.000.000 đ khớp cả "Dưới 1 triệu"
+  // lẫn "1 – 3 triệu" và người dùng thấy kết quả mâu thuẫn giữa hai lựa chọn.
+  const params: GymSearchParams = useMemo(() => {
+    const range = findPriceRange(priceFilter);
+    return {
+      keyword: appliedKeyword || undefined,
+      city: city !== "all" ? city : undefined,
+      district: district !== "all" ? district : undefined,
+      minPrice: minPriceParam(range),
+      maxPrice: maxPriceParam(range),
+    };
+  }, [appliedKeyword, city, district, priceFilter]);
 
   const query = useQuery({
     queryKey: ["marketplace", "gyms", params, sort, location, radiusKm],
@@ -107,17 +132,11 @@ export function GymsPublicPage() {
 
   function apply(event?: FormEvent) {
     event?.preventDefault();
-    const range = PRICE_RANGES.find((r) => r.value === priceFilter);
-    setParams({
-      keyword: keyword || undefined,
-      city: city !== "all" ? city : undefined,
-      district: district !== "all" ? district : undefined,
-      minPrice: range && "min" in range && range.min ? range.min : undefined,
-      maxPrice: range && "max" in range ? range.max : undefined,
-    });
+    setAppliedKeyword(keyword);
   }
   function clearAll() {
-    setKeyword(""); setCity("all"); setDistrict("all"); setPriceFilter("all"); setParams({});
+    setKeyword(""); setAppliedKeyword("");
+    setCity("all"); setDistrict("all"); setPriceFilter("all");
     setLocation(null); setActiveGymId(null);
   }
 

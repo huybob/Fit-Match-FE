@@ -38,7 +38,14 @@ export const VN_CITIES: VnCity[] = [
   },
 ];
 
-/** Khoảng giá gói tập dùng chung cho bộ lọc (đồng bộ với trang Gói tập). */
+/**
+ * Khoảng giá gói tập dùng chung cho bộ lọc (trang Phòng gym và trang Gói tập).
+ *
+ * Bug S2-19: quy ước NỬA MỞ [min, max) — `max` là giá đầu tiên KHÔNG thuộc khoảng.
+ * Trước đây FE lọc `price < max` còn BE lọc `price <= maxPrice`, nên gói đúng
+ * 1.000.000 đ rơi vào cả "Dưới 1 triệu" lẫn "1 – 3 triệu" tuỳ trang đang xem.
+ * Ai dùng `max` để gọi API phải trừ 1 (xem `maxPriceParam`).
+ */
 export const PRICE_RANGES = [
   { value: "all", label: "Tất cả mức giá" },
   { value: "under1m", label: "Dưới 1 triệu", min: 0, max: 1_000_000 },
@@ -48,3 +55,30 @@ export const PRICE_RANGES = [
 ] as const;
 
 export type PriceRangeValue = (typeof PRICE_RANGES)[number]["value"];
+
+export type PriceRange = (typeof PRICE_RANGES)[number];
+
+export function findPriceRange(value: string): PriceRange | undefined {
+  return PRICE_RANGES.find((r) => r.value === value);
+}
+
+/** Cận dưới gửi lên API; undefined = không giới hạn. */
+export function minPriceParam(range?: PriceRange) {
+  return range && "min" in range ? range.min : undefined;
+}
+
+/**
+ * Cận trên gửi lên API. BE so sánh `price <= maxPrice` nên phải trừ 1 để giữ đúng
+ * nghĩa nửa mở — nếu không, gói đúng bằng `max` lọt vào cả hai khoảng liền kề.
+ */
+export function maxPriceParam(range?: PriceRange) {
+  const max = range && "max" in range ? range.max : undefined;
+  return max != null ? max - 1 : undefined;
+}
+
+/** Giá có nằm trong khoảng không — dùng cho các trang lọc phía client. */
+export function priceInRange(price: number, range?: PriceRange) {
+  if (!range || !("min" in range)) return true;
+  if (price < range.min) return false;
+  return range.max == null || price < range.max;
+}
