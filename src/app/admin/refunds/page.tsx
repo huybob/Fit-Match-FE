@@ -203,12 +203,16 @@ export default function AdminRefundsPage() {
           onRetry={() => query.refetch()}
           emptyTitle={t("admin.refunds.empty")}
           columns={[
-            { key: "id", header: t("common.table.code"), cell: (r) => `#${r.id}` },
+            // Bug S2-10: sắp xếp được ở các cột có thứ tự ý nghĩa (mã, số tiền,
+            // người yêu cầu, trạng thái) — đặc biệt là số tiền, để duyệt các khoản
+            // lớn trước.
+            { key: "id", header: t("common.table.code"), cell: (r) => `#${r.id}`, sortValue: (r) => r.id },
             {
               key: "bookingId",
               header: t("admin.refunds.colBooking"),
               hideBelow: "sm",
               cell: (r) => `#${r.bookingId}`,
+              sortValue: (r) => r.bookingId,
             },
             {
               key: "amount",
@@ -216,6 +220,7 @@ export default function AdminRefundsPage() {
               align: "right",
               cellClassName: "font-semibold text-foreground",
               cell: (r) => formatCurrency(r.amount),
+              sortValue: (r) => r.amount,
             },
             {
               key: "reason",
@@ -230,10 +235,12 @@ export default function AdminRefundsPage() {
               hideBelow: "lg",
               cellClassName: "text-muted-foreground",
               cell: (r) => r.requestedBy ?? "—",
+              sortValue: (r) => r.requestedBy,
             },
             {
               key: "status",
               header: t("common.table.status"),
+              sortValue: (r) => r.status,
               cell: (r) => (
                 <>
                   <Badge variant={STATUS_VARIANT[r.status]}>{t(`common.refundStatus.${r.status}`)}</Badge>

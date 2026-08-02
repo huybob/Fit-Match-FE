@@ -361,8 +361,10 @@ function UserManagementContent() {
             emptyTitle={t("admin.users.empty")}
             columns={[
               {
+                // Bug S2-10: bấm tiêu đề cột để sắp xếp tăng/giảm dần.
                 key: "user",
                 header: t("admin.users.colUser"),
+                sortValue: (u) => u.fullName ?? u.username,
                 cell: (u) => (
                   <div className="flex items-center gap-3">
                     <UserInitials user={u} />
@@ -378,6 +380,7 @@ function UserManagementContent() {
               {
                 key: "role",
                 header: t("admin.users.colRole"),
+                sortValue: (u) => u.role,
                 cell: (u) => (
                   <span className="inline-block rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                     {t(roleLabelKey(u.role))}
@@ -387,6 +390,7 @@ function UserManagementContent() {
               {
                 key: "status",
                 header: t("admin.users.colStatus"),
+                sortValue: (u) => u.status ?? "ACTIVE",
                 cell: (u) => (
                   <Badge variant={statusVariant[u.status ?? "ACTIVE"] ?? "default"}>
                     {t(`admin.users.status.${u.status ?? "ACTIVE"}`)}
@@ -398,6 +402,7 @@ function UserManagementContent() {
                 header: t("admin.users.colCreatedAt"),
                 hideBelow: "md",
                 cellClassName: "text-xs text-muted-foreground",
+                sortValue: (u) => u.createdAt,
                 cell: (u) => (u.createdAt ? dateFmt.format(new Date(u.createdAt)) : "—"),
               },
               {

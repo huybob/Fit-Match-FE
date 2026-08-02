@@ -247,17 +247,20 @@ export default function AdminBookingsRoute() {
           emptyTitle={t("admin.bookings.empty")}
           onRowClick={(b) => setSelected(b)}
           columns={[
-            { key: "id", header: t("common.table.code"), cell: (b) => `#${b.id}` },
+            // Bug S2-10: bấm tiêu đề cột để sắp xếp tăng/giảm dần.
+            { key: "id", header: t("common.table.code"), cell: (b) => `#${b.id}`, sortValue: (b) => b.id },
             {
               key: "customer",
               header: t("admin.bookings.customer"),
               cell: (b) => b.customerUsername ?? "—",
+              sortValue: (b) => b.customerUsername,
             },
             {
               key: "gym",
               header: t("admin.bookings.gym"),
               hideBelow: "sm",
               cell: (b) => b.gymName ?? "—",
+              sortValue: (b) => b.gymName,
             },
             {
               key: "item",
@@ -272,16 +275,19 @@ export default function AdminBookingsRoute() {
               hideBelow: "md",
               cellClassName: "text-xs text-muted-foreground",
               cell: (b) => fmt.dateTime(b.startAt),
+              sortValue: (b) => b.startAt,
             },
             {
               key: "payable",
               header: t("admin.bookings.payable"),
               align: "right",
               cell: (b) => (b.payableAmount != null ? formatCurrency(b.payableAmount) : "—"),
+              sortValue: (b) => b.payableAmount,
             },
             {
               key: "status",
               header: t("common.table.status"),
+              sortValue: (b) => b.status,
               cell: (b) => (
                 <Badge variant={STATUS_VARIANT[b.status]}>
                   {t(`common.bookingStatus.${b.status}`)}

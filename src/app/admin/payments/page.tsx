@@ -327,8 +327,10 @@ export default function AdminPaymentReconciliationPage() {
           emptyTitle={t("admin.payments.empty")}
           columns={[
             {
+              // Bug S2-10: bấm tiêu đề cột để sắp xếp tăng/giảm dần.
               key: "txn",
               header: t("admin.payments.colTxn"),
+              sortValue: (txn) => txn.id,
               cell: (txn) => (
                 <>
                   <p className="font-medium text-foreground">#{txn.id}</p>
@@ -340,6 +342,7 @@ export default function AdminPaymentReconciliationPage() {
               key: "amount",
               header: t("common.table.amount"),
               align: "right",
+              sortValue: (txn) => txn.amount,
               cell: (txn) => (
                 <>
                   <p className="font-semibold text-foreground">{formatCurrency(txn.amount)}</p>
@@ -405,6 +408,7 @@ export default function AdminPaymentReconciliationPage() {
             {
               key: "reconStatus",
               header: t("common.table.status"),
+              sortValue: (txn) => txn.reconStatus,
               cell: (txn) => (
                 <>
                   <Badge variant={RECON_VARIANT[txn.reconStatus]}>

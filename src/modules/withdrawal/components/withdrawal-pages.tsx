@@ -228,15 +228,18 @@ function WalletLedger() {
             rowKey={(txn) => String(txn.id)}
             columns={[
               {
+                // Bug S2-10: bấm tiêu đề cột để sắp xếp tăng/giảm dần.
                 key: "createdAt",
                 header: t("common.table.time"),
                 cellClassName: "text-xs text-muted-foreground",
+                sortValue: (txn) => txn.createdAt,
                 cell: (txn) => fmt.dateTime(txn.createdAt),
               },
               {
                 key: "type",
                 header: t("admin.cms.fieldType"),
                 cellClassName: "text-xs font-semibold text-foreground",
+                sortValue: (txn) => txn.type,
                 cell: (txn) =>
                   txn.type ? t(`withdrawal.ledger.${txn.type as WalletTxnType}`) : "—",
               },
@@ -245,6 +248,7 @@ function WalletLedger() {
                 header: t("common.table.amount"),
                 align: "right",
                 cellClassName: "font-semibold",
+                sortValue: (txn) => txn.amount,
                 cell: (txn) => money(txn.amount),
               },
               {

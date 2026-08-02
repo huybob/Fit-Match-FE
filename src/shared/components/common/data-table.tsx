@@ -25,6 +25,16 @@ export interface DataTableColumn<T> {
   /** Nội dung ô. */
   cell: (row: T, index: number) => React.ReactNode;
   sortable?: boolean;
+  /**
+   * Bug S2-10: giá trị dùng để sắp xếp phía client. Khai báo `sortValue` là cột
+   * tự sắp xếp được (cao→thấp / thấp→cao) mà trang gọi KHÔNG phải tự giữ state —
+   * `cell` thường trả JSX nên không so sánh trực tiếp được.
+   *
+   * Chỉ dùng cho bảng đã tải hết dữ liệu của trang hiện tại. Bảng phân trang
+   * server-side muốn sắp xếp trên toàn bộ tập dữ liệu thì vẫn truyền
+   * `sortable` + `sort` + `onSortChange` như cũ (server-side thắng).
+   */
+  sortValue?: (row: T) => string | number | boolean | null | undefined;
   /** Căn phải cho cột số/tiền. */
   align?: "left" | "right" | "center";
   headClassName?: string;
@@ -104,9 +114,37 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const t = useTranslations();
 
+  // Bug S2-10: sắp xếp phía client cho các bảng chưa nối sort server-side.
+  // Chỉ bật khi trang gọi KHÔNG tự quản lý sort — server-side luôn thắng.
+  const [localSort, setLocalSort] = React.useState<{ key: string; direction: SortDirection } | null>(null);
+  const clientSort = !onSortChange;
+  const activeSort = clientSort ? localSort : sort;
+
+  const sortedRows = React.useMemo(() => {
+    if (!clientSort || !activeSort?.direction) return rows;
+    const column = columns.find((c) => c.key === activeSort.key);
+    if (!column?.sortValue) return rows;
+    const factor = activeSort.direction === "asc" ? 1 : -1;
+    // Bản sao: rows là prop, sort() tại chỗ sẽ đột biến state của trang gọi.
+    return [...rows].sort((a, b) => {
+      const va = column.sortValue!(a);
+      const vb = column.sortValue!(b);
+      // Ô trống luôn xuống cuối, bất kể chiều sắp xếp — "chưa có dữ liệu" không
+      // phải là "nhỏ nhất", và đẩy chúng lên đầu khi asc chỉ gây nhiễu.
+      const emptyA = va == null || va === "";
+      const emptyB = vb == null || vb === "";
+      if (emptyA || emptyB) return emptyA && emptyB ? 0 : emptyA ? 1 : -1;
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
+      return String(va).localeCompare(String(vb), undefined, { numeric: true }) * factor;
+    });
+  }, [clientSort, activeSort, columns, rows]);
+
   const headerCells = columns.map((column) => {
     const direction: SortDirection =
-      sort?.key === column.key ? (sort.direction ?? null) : null;
+      activeSort?.key === column.key ? (activeSort.direction ?? null) : null;
+    const canSort = clientSort ? !!column.sortValue : !!(column.sortable && onSortChange);
+    const handleSort = (next: SortDirection) =>
+      clientSort ? setLocalSort({ key: column.key, direction: next }) : onSortChange!(column.key, next);
 
     return (
       <TableHead
@@ -120,12 +158,8 @@ export function DataTable<T>({
           column.headClassName,
         )}
       >
-        {column.sortable && onSortChange ? (
-          <TableSortButton
-            label={column.header}
-            direction={direction}
-            onSort={(next) => onSortChange(column.key, next)}
-          />
+        {canSort ? (
+          <TableSortButton label={column.header} direction={direction} onSort={handleSort} />
         ) : (
           column.header
         )}
@@ -176,7 +210,7 @@ export function DataTable<T>({
       );
     }
 
-    if (rows.length === 0) {
+    if (sortedRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
           <TableCell colSpan={columns.length} className="py-14 text-center">
@@ -192,7 +226,7 @@ export function DataTable<T>({
       );
     }
 
-    return rows.map((row, index) => (
+    return sortedRows.map((row, index) => (
       <TableRow
         key={rowKey(row, index)}
         clickable={!!onRowClick}

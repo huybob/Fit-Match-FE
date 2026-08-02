@@ -92,14 +92,17 @@ export default function AdminAuditLogsRoute() {
         emptyDescription={t("admin.auditLogs.emptyDescription")}
         columns={[
           {
+            // Bug S2-10: bấm tiêu đề cột để sắp xếp tăng/giảm dần.
             key: "time",
             header: t("admin.auditLogs.time"),
             cellClassName: "whitespace-nowrap text-muted-foreground",
+            sortValue: (l) => l.timestamp,
             cell: (l) => fmt.dateTimeSeconds(l.timestamp),
           },
           {
             key: "action",
             header: t("admin.auditLogs.action"),
+            sortValue: (l) => l.action,
             cell: (l) => (
               <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-black">
                 <ClipboardList className="size-3" />
@@ -111,12 +114,14 @@ export default function AdminAuditLogsRoute() {
             key: "target",
             header: t("admin.auditLogs.target"),
             hideBelow: "sm",
+            sortValue: (l) => `${l.targetType}${l.targetId ?? ""}`,
             cell: (l) => `${l.targetType}${l.targetId ? ` #${l.targetId}` : ""}`,
           },
           {
             key: "actor",
             header: t("admin.auditLogs.actor"),
             cellClassName: "font-semibold",
+            sortValue: (l) => l.actor,
             cell: (l) => l.actor,
           },
           {
