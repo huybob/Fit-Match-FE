@@ -2,7 +2,8 @@
 
 import { formatCurrency } from "@/utils/format.util";
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Gift, HelpCircle, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { loyaltyService } from "@/services/loyalty.service";
@@ -54,6 +55,35 @@ function LoyaltyContent() {
           })}{" "}
           {t("member.loyalty.useHint")}
         </p>
+      </section>
+
+      {/* Bug S2-12: tester phản hồi "chưa hiểu chỗ điểm tiêu dùng" — dòng quy đổi
+          nói được TỶ LỆ nhưng không nói điểm đến từ đâu và tiêu ở đâu. Tách rõ
+          "tích" / "tiêu" / "lưu ý" kèm lối đi thẳng tới chỗ dùng điểm. */}
+      <section className="mb-6 rounded-2xl border border-border bg-card p-5">
+        <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-muted-foreground">
+          <HelpCircle className="size-4 text-primary" /> {t("member.loyalty.howItWorks")}
+        </h2>
+        <ol className="mt-3 space-y-2.5 text-sm text-muted-foreground">
+          <li className="flex gap-2.5">
+            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-black text-primary">1</span>
+            <span>{t("member.loyalty.step1", { vndPerPoint: money(data.vndPerPoint) })}</span>
+          </li>
+          <li className="flex gap-2.5">
+            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-black text-primary">2</span>
+            <span>{t("member.loyalty.step2", { pointValue: money(data.pointValue) })}</span>
+          </li>
+          <li className="flex gap-2.5">
+            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-[11px] font-black text-primary">3</span>
+            <span>{t("member.loyalty.step3")}</span>
+          </li>
+        </ol>
+        <Link
+          href="/profile/bookings?create=1"
+          className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <Sparkles className="size-4" /> {t("member.loyalty.usePointsCta")}
+        </Link>
       </section>
 
       <h2 className="mb-3 text-lg font-black">{t("member.loyalty.history")}</h2>
