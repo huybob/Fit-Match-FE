@@ -12,20 +12,26 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("relative p-3", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row gap-2",
+        // Bug S2-17: react-day-picker v9+ render <nav> là CON của `months`, KHÔNG
+        // nằm trong `month_caption`. Hai nút điều hướng lại được đặt `absolute
+        // left-1 / right-1` nên chúng neo vào tổ tiên có position gần nhất — tức là
+        // khung popover, không phải hàng tiêu đề. Kết quả: mũi tên văng ra rìa
+        // popover, đè lên cột giờ/phút của DateTimePicker và nút "sang tháng" bấm
+        // không ăn. Nay `months` là mốc position, `nav` trải đúng hàng caption.
+        months: "relative flex flex-col gap-2 sm:flex-row",
         month: "flex flex-col gap-4",
-        month_caption: "flex justify-center pt-1 relative items-center w-full",
+        month_caption: "flex h-8 w-full items-center justify-center px-9",
         caption_label: "text-sm font-bold",
-        nav: "flex items-center gap-1",
+        nav: "absolute inset-x-0 top-0 z-10 flex h-8 items-center justify-between px-1",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "absolute left-1 size-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "size-7 bg-transparent p-0 opacity-60 hover:opacity-100",
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "absolute right-1 size-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+          "size-7 bg-transparent p-0 opacity-60 hover:opacity-100",
         ),
         month_grid: "w-full border-collapse",
         weekdays: "flex",
