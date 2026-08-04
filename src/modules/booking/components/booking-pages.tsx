@@ -288,7 +288,12 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
     if (["DRAFT", "PENDING_PAYMENT", "PENDING_GYM", "CONFIRMED"].includes(status)) {
       actions.push({ action: "cancel", label: t("booking.cancelBooking") });
     }
-    if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status)) {
+    // Sheet3 "yêu cầu hoàn tiền lỗi": BE đòi HAI điều kiện — trạng thái booking
+    // VÀ settlementStatus == HELD (còn tiền đang giữ). Trước đây chỉ xét trạng
+    // thái, nên booking đã huỷ mà chưa từng thanh toán (hoặc đã hoàn/đã giải ngân)
+    // vẫn hiện nút, bấm vào là 409 INVALID_STATE "No held funds for this booking".
+    // Yêu cầu đã gửi vẫn theo dõi được ở mục "Hoàn tiền của tôi".
+    if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status) && booking.settlementStatus === "HELD") {
       actions.push({ action: "refund", label: t("booking.requestRefund"), requireMessage: true });
     }
   }

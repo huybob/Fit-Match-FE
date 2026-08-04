@@ -41,7 +41,21 @@ export interface Booking {
   payableAmount?: number;
   lateCancellation?: boolean;
   createdAt?: string;
+  /**
+   * Sheet3 "yêu cầu hoàn tiền lỗi": chỉ HELD mới thật sự còn tiền để hoàn.
+   * BE (RefundServiceImpl.open) chặn mọi giá trị khác bằng 409 INVALID_STATE
+   * "No held funds for this booking" — FE phải gate bằng CÙNG điều kiện này,
+   * nếu không nút "Yêu cầu hoàn tiền" hiện ra nhưng bấm vào chắc chắn lỗi.
+   */
+  settlementStatus?: SettlementStatus;
 }
+
+/** Trạng thái dòng tiền của một booking (BE: common.enums.SettlementStatus). */
+export type SettlementStatus =
+  | "HELD"
+  | "REFUND_PENDING"
+  | "RELEASED"
+  | "REFUNDED";
 
 /** UC-044 (C-2): hàng chờ khi slot bận. */
 export interface WaitlistEntry {
