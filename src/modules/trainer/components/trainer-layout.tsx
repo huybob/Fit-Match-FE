@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { TrainerSidebar } from "@/modules/trainer/components/trainer-sidebar";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
+import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 
 export function TrainerLayout({ children }: { children: ReactNode }) {
   return (
@@ -13,7 +14,9 @@ export function TrainerLayout({ children }: { children: ReactNode }) {
         <ResponsiveSidebar>
           <TrainerSidebar />
         </ResponsiveSidebar>
+        {/* Header ở LAYOUT — xem ghi chú tại gym-layout.tsx. */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          <WorkspaceHeader />
           {children}
         </div>
       </div>

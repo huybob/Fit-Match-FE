@@ -13,7 +13,8 @@ const IMAGE_RE = /\.(png|jpe?g|gif|webp|bmp|svg|avif)(\?|$)/i;
 function fileNameOf(url: string) {
   try {
     const clean = url.split("?")[0];
-    return decodeURIComponent(clean.substring(clean.lastIndexOf("/") + 1)) || "Tệp đã tải lên";
+    // Trả null khi không rút được tên; nhãn dự phòng do component đặt để còn dịch được.
+    return decodeURIComponent(clean.substring(clean.lastIndexOf("/") + 1)) || null;
   } catch {
     return null;
   }
@@ -63,6 +64,7 @@ export function FileUpload({
   folder = "documents",
   label,
   accept = "image/*,application/pdf",
+  maxSizeMb = 10,
   disabled = false,
   className = "",
 }: {
@@ -71,6 +73,8 @@ export function FileUpload({
   folder?: UploadFolder;
   label?: string;
   accept?: string;
+  /** Giới hạn dung lượng (MB). Mặc định 10 — khớp MAX_FILE_SIZE_BYTES của FileController. */
+  maxSizeMb?: number;
   disabled?: boolean;
   className?: string;
 }) {
@@ -91,6 +95,22 @@ export function FileUpload({
         type: "error",
         title: t("upload.unsupportedType"),
         description: t("upload.allowedFormats", { formats: acceptLabel(accept) }),
+      });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    // BE (FileController.MAX_FILE_SIZE_BYTES) chặn ở 10MB. Không kiểm ở đây thì
+    // người dùng phải chờ upload xong cả tệp mới biết là bị từ chối — với ảnh
+    // chụp từ điện thoại (20-40MB) đó là cả phút chờ vô ích.
+    const maxBytes = maxSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast({
+        type: "error",
+        title: t("upload.tooLarge"),
+        description: t("upload.maxSize", {
+          max: maxSizeMb,
+          size: (file.size / 1024 / 1024).toFixed(1),
+        }),
       });
       if (inputRef.current) inputRef.current.value = "";
       return;
@@ -117,7 +137,7 @@ export function FileUpload({
     onChange("");
   }
 
-  const displayName = localName || fileNameOf(value ?? "");
+  const displayName = localName || (value ? (fileNameOf(value) ?? t("upload.uploaded")) : null);
   const isImage = !!preview || (!!value && IMAGE_RE.test(value));
   const imgSrc = preview || resolveFileUrl(value);
 

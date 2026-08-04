@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Pencil, Users, Loader2, Award, FileText, Trash2, X, CalendarClock
+  Plus, Pencil, Loader2, Award, FileText, Trash2, X, CalendarClock
 } from "lucide-react";
 import { PtOpsDialog } from "@/modules/gym/components/pt-ops-dialog";
 import { gymService } from "@/services/gym.service";
@@ -22,7 +22,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/shared/components/ui/select";
 import { FileUpload } from "@/shared/components/common/file-upload";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import { IconButton } from "@/shared/components/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { DataTable } from "@/shared/components/common/data-table";
@@ -252,11 +251,11 @@ export default function GymPtsPage() {
     resetNewCertDraft();
   }
 
-  const { data, isLoading } = useQuery({
+  const ptsQuery = useQuery({
     queryKey: ["gym-pts"],
     queryFn: () => gymService.listPts({ page: 0, size: 100 })
   });
-  const pts = data?.content ?? [];
+  const pts = ptsQuery.data?.content ?? [];
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -347,8 +346,6 @@ export default function GymPtsPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -361,18 +358,16 @@ export default function GymPtsPage() {
         </div>
 
         <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
-          ) : pts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Users className="size-10 mb-3" />
-              <p className="text-sm">{t("gym.trainers.empty")}</p>
-            </div>
-          ) : (
+          {/* DataTable đã có sẵn loading / lỗi / rỗng. Hai nhánh viết tay trước đây
+              nuốt mất nhánh LỖI: API hỏng cũng ra "chưa có huấn luyện viên nào". */}
             <DataTable
               minWidth="35rem"
               rows={pts}
               rowKey={(pt) => String(pt.id)}
+              loading={ptsQuery.isLoading}
+              error={ptsQuery.isError}
+              errorDescription={ptsQuery.error ? toErrorMessage(ptsQuery.error) : undefined}
+              onRetry={() => ptsQuery.refetch()}
               emptyTitle={t("gym.trainers.empty")}
               columns={[
                 {
@@ -481,7 +476,6 @@ export default function GymPtsPage() {
                 },
               ]}
             />
-          )}
         </div>
       </div>
 

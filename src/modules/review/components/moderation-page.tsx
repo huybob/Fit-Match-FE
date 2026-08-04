@@ -109,7 +109,7 @@ function ReportCard({ report }: { report: ReviewReport }) {
       <div className="mt-4 rounded-xl bg-muted/40 p-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-black uppercase text-muted-foreground">
-            Đánh giá #{r.id} · {r.customerName} → {r.gymName}{r.ptName ? ` · ${r.ptName}` : ""}
+            {t("review.reviewNumber", { id: r.id })} · {r.customerName} → {r.gymName}{r.ptName ? ` · ${r.ptName}` : ""}
           </span>
           <span className="flex items-center gap-1 font-black text-accent">
             <Star className="size-4 fill-current" />{r.rating}/5

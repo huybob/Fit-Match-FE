@@ -357,7 +357,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-card px-4 py-2.5 text-sm font-bold text-primary hover:bg-primary/10 transition-colors"
               >
                 <Heart className={`size-4 ${fav ? "fill-destructive text-destructive" : ""}`} />
-                {fav ? t("marketplace.favorited") : "Yêu thích"}
+                {fav ? t("marketplace.favorited") : t("marketplace.favorite")}
               </button>
             )}
           </div>

@@ -5,7 +5,7 @@ import { formatCurrency } from "@/utils/format.util";
 // C-7 breakdown giá, C-11 timeline, C-6 session notes + hiệu chỉnh điểm danh,
 // C-4 dời lịch, C-12 trạng thái hoàn tiền, C-2 danh sách chờ.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock3, Loader2, NotebookPen, Trash2 } from "lucide-react";
 import { useToast } from "@/lib/toast-provider";
@@ -208,24 +208,53 @@ export function RescheduleDialog({
   const t = useTranslations();
   const [start, setStart] = useState(booking.startAt?.slice(0, 16) ?? "");
   const [end, setEnd] = useState(booking.endAt?.slice(0, 16) ?? "");
-  const invalid = !start || !end || start >= end;
+
+  /**
+   * Dời lịch phải chặn quá khứ GIỐNG màn đặt lịch (create-booking-wizard chặn bằng
+   * minDate/minTime). Trước đây hai picker ở đây không có mốc nào: khách chọn được
+   * ngày tuần trước, bấm "Dời lịch", và chỉ biết mình sai khi BE trả 409.
+   * `slice(0,16)` khớp định dạng "yyyy-MM-ddTHH:mm" mà DateTimePicker dùng.
+   */
+  const nowLocal = useMemo(
+    () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16),
+    [],
+  );
+  const startInPast = !!start && start < nowLocal;
+  const orderInvalid = !!start && !!end && start >= end;
+  const invalid = !start || !end || orderInvalid || startInPast;
 
   return (
     <Dialog open title={t("booking.rescheduleTitle", { id: booking.id })} onClose={onClose}>
       <p className="text-sm text-muted-foreground">
         {t("booking.rescheduleHint")}
       </p>
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      {/* 2 cột cứng bóp hai picker xuống ~150px trên điện thoại. */}
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">{t("booking.start")}</label>
-          <DateTimePicker value={start} onChange={(v) => setStart(v ?? "")} />
+          <DateTimePicker
+            value={start}
+            onChange={(v) => setStart(v ?? "")}
+            minDateTime={nowLocal}
+            aria-invalid={startInPast}
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-muted-foreground">{t("booking.end")}</label>
-          <DateTimePicker value={end} onChange={(v) => setEnd(v ?? "")} />
+          <DateTimePicker
+            value={end}
+            onChange={(v) => setEnd(v ?? "")}
+            minDateTime={start || nowLocal}
+            aria-invalid={orderInvalid}
+          />
         </div>
       </div>
-      {invalid && (start || end) && <p className="mt-2 text-xs text-destructive">{t("booking.timeInvalid")}</p>}
+      {startInPast && (
+        <p role="alert" className="mt-2 text-xs font-semibold text-destructive">
+          {t("booking.validation.timeInPast")}
+        </p>
+      )}
+      {orderInvalid && <p role="alert" className="mt-2 text-xs text-destructive">{t("booking.timeInvalid")}</p>}
       <div className="mt-4 flex justify-end gap-2">
         <Button variant="outline" onClick={onClose}>{t("common.actions.cancel")}</Button>
         <Button disabled={invalid || pending} onClick={() => onSubmit(start + ":00", end + ":00")}
@@ -327,7 +356,7 @@ export function WaitlistSection() {
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground">{w.serviceName ?? w.packageName ?? "—"}</p>
                   <p className="text-xs text-muted-foreground">
-                    Mong muốn: {fmt.dateTime(w.preferredStart)}{w.note ? ` · ${w.note}` : ""}
+                    {t("booking.preferred")} {fmt.dateTime(w.preferredStart)}{w.note ? ` · ${w.note}` : ""}
                   </p>
                 </div>
                 <IconButton tooltip={t("booking.leaveWaitlist")} onClick={() => w.id != null && leave.mutate(w.id)} disabled={leave.isPending}

@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Ban, GitBranch, MapPin, Phone, Loader2, Clock, CopyPlus } from "lucide-react";
+import { Plus, Pencil, Ban, MapPin, Phone, Loader2, Clock, CopyPlus } from "lucide-react";
 import { gymService } from "@/services/gym.service";
 import type { BranchInput, BranchResponse, OperatingHour } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
@@ -15,7 +15,6 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import { CheckboxField } from "@/shared/components/ui/checkbox-field";
 import { TimePicker } from "@/shared/components/ui/time-picker";
 import { IconButton } from "@/shared/components/ui/icon-button";
@@ -160,10 +159,11 @@ export default function GymBranchesPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
 
-  const { data: branches = [], isLoading } = useQuery({
+  const branchesQuery = useQuery({
     queryKey: ["gym-branches"],
     queryFn: gymService.listOwnBranches
   });
+  const branches = branchesQuery.data ?? [];
 
   const saveMut = useMutation({
     mutationFn: (payload: BranchInput) =>
@@ -223,8 +223,6 @@ export default function GymBranchesPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -238,18 +236,16 @@ export default function GymBranchesPage() {
 
         <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
           <h2 className="text-sm font-semibold text-foreground mb-4">{t("gym.branches.listTitle")}</h2>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
-          ) : branches.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <GitBranch className="size-10 mb-3" />
-              <p className="text-sm">{t("gym.branches.empty")}</p>
-            </div>
-          ) : (
+          {/* DataTable đã tự lo loading / lỗi / rỗng. Bọc thêm hai nhánh viết tay
+              như trước sẽ nuốt mất nhánh LỖI: API hỏng cũng ra "chưa có chi nhánh". */}
             <DataTable
               minWidth="35rem"
               rows={branches}
               rowKey={(b) => String(b.id)}
+              loading={branchesQuery.isLoading}
+              error={branchesQuery.isError}
+              errorDescription={branchesQuery.error ? toErrorMessage(branchesQuery.error) : undefined}
+              onRetry={() => branchesQuery.refetch()}
               emptyTitle={t("gym.branches.empty")}
               columns={[
                 {
@@ -345,7 +341,6 @@ export default function GymBranchesPage() {
                 },
               ]}
             />
-          )}
         </div>
       </div>
 

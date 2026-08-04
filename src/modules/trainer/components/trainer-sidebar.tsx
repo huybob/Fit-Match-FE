@@ -7,6 +7,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { IconButton } from "@/shared/components/ui/icon-button";
+import { roleLabelKey } from "@/shared/utils/enum-label.util";
 import { useTranslations } from "next-intl";
 
 // PTs are managed by their Gym; the PT workspace is a lean self-service
@@ -39,7 +40,8 @@ export function TrainerSidebar() {
           </div>
           <div>
             <p className="text-sm font-bold text-foreground leading-tight">FitMatch</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Trainer Hub</p>
+            {/* "Trainer Hub" từng bị hardcode — không dịch sang tiếng Việt. */}
+            <p className="text-[10px] text-muted-foreground mt-0.5">{t("trainer.workspace")}</p>
           </div>
         </div>
       </Link>
@@ -71,7 +73,7 @@ export function TrainerSidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-foreground truncate">{user?.fullName ?? user?.username}</p>
-            <p className="text-[10px] text-muted-foreground">Professional PT</p>
+            <p className="text-[10px] text-muted-foreground">{t(roleLabelKey(user?.role))}</p>
           </div>
           <IconButton tooltip={t("common.menu.logout")} onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
             <LogOut className="size-3.5" />

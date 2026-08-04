@@ -136,9 +136,10 @@ function AdminHeader({ onLogout }: { onLogout: () => void }) {
   const role = t(roleLabelKey(user?.role));
 
   return (
-    <header className="bg-card border-b border-border px-4 sm:px-6 h-14 flex items-center justify-between shrink-0">
-      <p className="text-sm font-bold text-foreground">{t("admin.console")}</p>
-      <div className="flex items-center gap-2">
+    <header className="bg-card border-b border-border px-4 sm:px-6 h-14 flex items-center justify-between gap-2 shrink-0">
+      {/* min-w-0 + truncate: không có thì tiêu đề xuống dòng và đội cao header 56px. */}
+      <p className="min-w-0 truncate text-sm font-bold text-foreground">{t("admin.console")}</p>
+      <div className="flex shrink-0 items-center gap-2">
         <LocaleSwitch />
         <ThemeSwitch />
         {/* E-6: badge số chưa đọc thật — chấm đỏ hardcode cũ luôn sáng bất kể có thông báo */}

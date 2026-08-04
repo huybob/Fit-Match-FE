@@ -4,7 +4,28 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, MapPin } from "lucide-react";
 import { marketplaceService } from "@/services/marketplace.service";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useTranslations } from "next-intl";
+
+/**
+ * Khung chờ cho hai section trang chủ. Trước đây lúc `isLoading` section vẫn
+ * render tiêu đề + link "Xem tất cả" nhưng lưới bên dưới TRỐNG, rồi nếu API trả
+ * rỗng thì cả section biến mất — người dùng thấy một mảng trắng có tiêu đề nhấp
+ * nháy rồi mất, và trang bị nhảy (CLS).
+ */
+function CardSkeletons({ count = 3 }: { count?: number }) {
+  return (
+    <div aria-busy="true" aria-live="polite" className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <Skeleton className="h-6 w-2/3 rounded-full" />
+          <Skeleton className="mt-3 h-4 w-full rounded-full" />
+          <Skeleton className="mt-2 h-4 w-4/5 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** UC-074/009: phòng tập nổi bật lấy từ marketplace thật (thay dữ liệu mock). */
 export function RealGymsSection() {
@@ -28,6 +49,7 @@ export function RealGymsSection() {
           <Link href="/gyms" className="mt-3 flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline sm:mt-0">{t("common.actions.viewAll")}<ArrowRight className="size-4" />
           </Link>
         </div>
+        {query.isLoading ? <CardSkeletons /> : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {gyms.map((g) => (
             <Link key={g.id} href={`/gyms/${g.id}`} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -39,6 +61,7 @@ export function RealGymsSection() {
             </Link>
           ))}
         </div>
+        )}
       </div>
     </section>
   );
@@ -66,6 +89,7 @@ export function RealTrainersSection() {
           <Link href="/trainers" className="mt-3 flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline sm:mt-0">{t("common.actions.viewAll")}<ArrowRight className="size-4" />
           </Link>
         </div>
+        {query.isLoading ? <CardSkeletons /> : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {pts.map((p) => (
             <Link key={p.id} href={`/trainers/${p.id}`} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -78,6 +102,7 @@ export function RealTrainersSection() {
             </Link>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

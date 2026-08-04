@@ -110,12 +110,15 @@ function ReportBody({ report: r, showWallet }: { report: OperationalReport; show
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label={t("reportPage.totalBookings")} value={String(r.totalBookings)} />
+        {/* String(undefined) in ra chữ "undefined" ngay trên thẻ số liệu khi BE
+            trả thiếu field. money() và BreakdownTable đã chống bằng ?? — hai ô
+            đếm này thì chưa. */}
+        <Stat label={t("reportPage.totalBookings")} value={String(r.totalBookings ?? 0)} />
         <Stat label={t("reportPage.collected")} value={money(r.grossHeld)} />
         <Stat label={t("reportPage.released")} value={money(r.releasedNet)} />
         <Stat label={t("reportPage.commission")} value={money(r.commission)} />
         <Stat label={t("reportPage.refunded")} value={money(r.refunded)} />
-        <Stat label={t("reportPage.totalDisputes")} value={String(r.totalDisputes)} />
+        <Stat label={t("reportPage.totalDisputes")} value={String(r.totalDisputes ?? 0)} />
       </div>
 
       {showWallet && (

@@ -179,11 +179,11 @@
       "time": "Time",
       "datePlaceholder": "Pick a date",
       "timePlaceholder": "Pick a time",
-    "typeTime": "Type a time",
-    "typeTimePlaceholder": "Type a time, e.g. 0600",
-    "typeTimeInvalid": "Invalid time, or outside the allowed range",
-    "copyToOtherDays": "Apply to the other days",
-    "copiedToOtherDays": "Applied this time range to the other days",
+      "typeTime": "Type a time",
+      "typeTimePlaceholder": "Type a time, e.g. 0600",
+      "typeTimeInvalid": "Invalid time, or outside the allowed range",
+      "copyToOtherDays": "Apply to the other days",
+      "copiedToOtherDays": "Applied this time range to the other days",
       "dateTimePlaceholder": "Pick date and time",
       "dateRangePlaceholder": "Pick a date range",
       "from": "From",
@@ -996,8 +996,11 @@
       "uploadDoc": "Upload document",
       "addDoc": "Add document",
       "docRequired": "Enter a document type and upload a file",
-      "certAddFailed": "Couldn’t add certificate “{name}”"
-    }
+      "certAddFailed": "Couldn’t add certificate “{name}”",
+      "assigned": "Trainer assigned",
+      "blockAdded": "Blocked time added"
+    },
+    "workspace": "Gym Operator Workspace"
   },
   "marketplace": {
     "filters": "Filters",
@@ -1129,7 +1132,8 @@
       "mapLoading": "Loading map…",
       "mapDisabled": "The map is not configured. All results are still listed below.",
       "mapError": "The map failed to load. All results are still listed below."
-    }
+    },
+    "compareMax": "Compare up to {max} items"
   },
   "trainer": {
     "nav": {
@@ -1176,7 +1180,8 @@
       "addBlockTitle": "Add a blocked range",
       "addBlock": "Add blocked range",
       "slotsInvalid": "Each slot needs start time < end time."
-    }
+    },
+    "workspace": "Trainer Workspace"
   },
   "member": {
     "nav": {
@@ -1709,9 +1714,12 @@
       "pickBank": "Select a bank",
       "accountInvalid": "Invalid account number",
       "holderRequired": "Enter the account holder",
-      "noteRequired": "Enter a reason"
+      "noteRequired": "Enter a reason",
+      "payoutRefRequired": "Enter the transfer reference"
     },
-    "colBooking": "Booking"
+    "colBooking": "Booking",
+    "frozen": "Frozen",
+    "submitRequest": "Submit request"
   },
   "reportPage": {
     "title": "Operations report",
@@ -1784,7 +1792,7 @@
     "evidenceDescRequired": "Enter an evidence description",
     "evidenceSent": "Evidence submitted",
     "detailTitle": "Dispute #{id}",
-    "heldAmount": "Amount held:",
+    "heldAmount": "holding {amount}",
     "moderator": "Moderator:",
     "openFileFailed": "Couldn’t open the file",
     "fileWord": "File",
@@ -1859,7 +1867,8 @@
       "pickBooking": "Please choose a completed session",
       "rating": "Please pick a rating from 1 to 5",
       "replyRequired": "Please enter your reply"
-    }
+    },
+    "reviewNumber": "Review #{id}"
   },
   "auth": {
     "back": "← Back",
@@ -2096,7 +2105,9 @@
     "uploading": "Uploading…",
     "unsupportedType": "Unsupported file type",
     "allowedFormats": "Accepted formats: {formats}",
-    "failed": "Upload failed"
+    "failed": "Upload failed",
+    "tooLarge": "File is too large",
+    "maxSize": "Maximum size is {max} MB (yours is {size} MB)"
   },
   "cms": {
     "featuredTitle": "Featured on FitMatch",

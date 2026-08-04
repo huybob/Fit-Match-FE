@@ -214,7 +214,7 @@ function AssignmentsTab({ ptId }: { ptId: number }) {
       if (targetType === "package") payload.packageId = Number(targetId);
       return gymService.addPtAssignment(ptId, payload);
     },
-    onSuccess: () => { invalidate(); setTargetId(""); toast({ type: "success", title: "Đã phân công PT" }); },
+    onSuccess: () => { invalidate(); setTargetId(""); toast({ type: "success", title: t("gym.trainers.assigned") }); },
     onError: (e) => toast({ type: "error", title: t("gym.ptOps.assignFailed"), description: toErrorMessage(e) }),
   });
 
@@ -345,7 +345,7 @@ function BlockedTab({ ptId }: { ptId: number }) {
 
   const create = useMutation({
     mutationFn: () => gymService.createBlockedTime({ ptId, startAt: start + ":00", endAt: end + ":00", reason: reason.trim() || undefined }),
-    onSuccess: () => { invalidate(); setStart(""); setEnd(""); setReason(""); toast({ type: "success", title: "Đã thêm khoảng chặn" }); },
+    onSuccess: () => { invalidate(); setStart(""); setEnd(""); setReason(""); toast({ type: "success", title: t("gym.trainers.blockAdded") }); },
     // BE chặn tạo blocked time đè booking HOLDING (P1-15).
     onError: (e) => toast({ type: "error", title: t("gym.ptOps.addFailed"), description: toErrorMessage(e) }),
   });

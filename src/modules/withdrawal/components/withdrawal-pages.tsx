@@ -183,7 +183,7 @@ function WalletSummary() {
     { key: "held", label: t("withdrawal.held"), value: wallet.data?.heldBalance, hint: t("withdrawal.heldHint") },
     { key: "pending", label: t("withdrawal.pending"), value: wallet.data?.pendingBalance, hint: t("withdrawal.pendingHint") },
     { key: "available", label: t("withdrawal.available"), value: wallet.data?.availableBalance, hint: t("withdrawal.availableHint") },
-    { key: "frozen", label: "Đóng băng", value: wallet.data?.frozenBalance, hint: t("withdrawal.frozenHint") },
+    { key: "frozen", label: t("withdrawal.frozen"), value: wallet.data?.frozenBalance, hint: t("withdrawal.frozenHint") },
   ];
   return (
     <section className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -369,7 +369,7 @@ function CreateWithdrawalDialog({ open, onClose }: { open: boolean; onClose: () 
         </FieldShell>
         <Button disabled={mutation.isPending}>
           <Banknote className="size-4" />
-          {mutation.isPending ? t("common.states.processing") : "Gửi yêu cầu"}
+          {mutation.isPending ? t("common.states.processing") : t("withdrawal.submitRequest")}
         </Button>
       </form>
     </Dialog>
@@ -397,11 +397,11 @@ function DecisionDialog({ withdrawal, decision, onClose }: {
 
   async function run() {
     if (meta.requireNote && !note.trim()) {
-      toast({ type: "warning", title: "Vui lòng nhập lý do" });
+      toast({ type: "warning", title: t("withdrawal.validation.noteRequired") });
       return;
     }
     if (decision === "markPaid" && !payoutReference.trim()) {
-      toast({ type: "warning", title: "Vui lòng nhập mã giao dịch chuyển khoản" });
+      toast({ type: "warning", title: t("withdrawal.validation.payoutRefRequired") });
       return;
     }
     try {

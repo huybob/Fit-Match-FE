@@ -179,11 +179,11 @@
       "time": "Giờ",
       "datePlaceholder": "Chọn ngày",
       "timePlaceholder": "Chọn giờ",
-    "typeTime": "Nhập giờ",
-    "typeTimePlaceholder": "Nhập giờ, vd 0600",
-    "typeTimeInvalid": "Giờ không hợp lệ hoặc ngoài khoảng cho phép",
-    "copyToOtherDays": "Áp dụng cho các ngày còn lại",
-    "copiedToOtherDays": "Đã áp dụng khung giờ này cho các ngày còn lại",
+      "typeTime": "Nhập giờ",
+      "typeTimePlaceholder": "Nhập giờ, vd 0600",
+      "typeTimeInvalid": "Giờ không hợp lệ hoặc ngoài khoảng cho phép",
+      "copyToOtherDays": "Áp dụng cho các ngày còn lại",
+      "copiedToOtherDays": "Đã áp dụng khung giờ này cho các ngày còn lại",
       "dateTimePlaceholder": "Chọn ngày và giờ",
       "dateRangePlaceholder": "Chọn khoảng ngày",
       "from": "Từ",
@@ -996,8 +996,11 @@
       "uploadDoc": "Tải tài liệu lên",
       "addDoc": "Thêm tài liệu",
       "docRequired": "Nhập loại tài liệu và tải tệp lên",
-      "certAddFailed": "Không thêm được chứng chỉ “{name}”"
-    }
+      "certAddFailed": "Không thêm được chứng chỉ “{name}”",
+      "assigned": "Đã phân công PT",
+      "blockAdded": "Đã thêm khoảng chặn"
+    },
+    "workspace": "Không gian Chủ phòng gym"
   },
   "marketplace": {
     "filters": "Bộ lọc",
@@ -1129,7 +1132,8 @@
       "mapLoading": "Đang tải bản đồ...",
       "mapDisabled": "Bản đồ chưa được cấu hình. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới.",
       "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
-    }
+    },
+    "compareMax": "So sánh tối đa {max} mục"
   },
   "trainer": {
     "nav": {
@@ -1176,7 +1180,8 @@
       "addBlockTitle": "Thêm khoảng chặn mới",
       "addBlock": "Thêm khoảng chặn",
       "slotsInvalid": "Mỗi khung giờ cần giờ bắt đầu < giờ kết thúc."
-    }
+    },
+    "workspace": "Không gian Huấn luyện viên"
   },
   "member": {
     "nav": {
@@ -1709,9 +1714,12 @@
       "pickBank": "Chọn ngân hàng",
       "accountInvalid": "Số tài khoản không hợp lệ",
       "holderRequired": "Nhập chủ tài khoản",
-      "noteRequired": "Nhập lý do"
+      "noteRequired": "Nhập lý do",
+      "payoutRefRequired": "Nhập mã giao dịch chuyển khoản"
     },
-    "colBooking": "Buổi đặt"
+    "colBooking": "Buổi đặt",
+    "frozen": "Đóng băng",
+    "submitRequest": "Gửi yêu cầu"
   },
   "reportPage": {
     "title": "Báo cáo vận hành",
@@ -1784,7 +1792,7 @@
     "evidenceDescRequired": "Nhập mô tả bằng chứng",
     "evidenceSent": "Đã gửi bằng chứng",
     "detailTitle": "Tranh chấp #{id}",
-    "heldAmount": "Số tiền đang giữ:",
+    "heldAmount": "giữ {amount}",
     "moderator": "Điều phối viên:",
     "openFileFailed": "Không mở được tệp",
     "fileWord": "Tệp",
@@ -1859,7 +1867,8 @@
       "pickBooking": "Vui lòng chọn buổi tập đã hoàn thành",
       "rating": "Vui lòng chọn số sao từ 1 đến 5",
       "replyRequired": "Vui lòng nhập nội dung phản hồi"
-    }
+    },
+    "reviewNumber": "Đánh giá #{id}"
   },
   "auth": {
     "back": "← Quay lại",
@@ -2096,7 +2105,9 @@
     "uploading": "Đang tải lên...",
     "unsupportedType": "Định dạng tệp không được hỗ trợ",
     "allowedFormats": "Chỉ chấp nhận: {formats}",
-    "failed": "Tải lên thất bại"
+    "failed": "Tải lên thất bại",
+    "tooLarge": "Tệp quá lớn",
+    "maxSize": "Dung lượng tối đa {max} MB (tệp của bạn {size} MB)"
   },
   "cms": {
     "featuredTitle": "Nổi bật trên FitMatch",

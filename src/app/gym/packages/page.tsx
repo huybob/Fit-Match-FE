@@ -16,7 +16,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import {
   Select,
   SelectContent,
@@ -125,8 +124,6 @@ export default function GymPackagesPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -147,7 +144,7 @@ export default function GymPackagesPage() {
         ) : packages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-2xl border border-border">
             <Package className="size-10 mb-3" />
-            <p className="text-sm">Chưa có gói tập nào. Bấm &quot;{t("gym.packages.create")}&quot; để bắt đầu.</p>
+            <p className="text-sm">{t("gym.packages.empty")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

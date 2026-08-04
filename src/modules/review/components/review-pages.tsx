@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquareReply, Plus, Star } from "lucide-react";
+import { AlertTriangle, MessageSquareReply, Plus, Star } from "lucide-react";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -40,9 +40,29 @@ export function CustomerReviewsPage() {
 }
 
 export function TrainerReviewsPage() {
+  const t = useTranslations();
   const q = useGetMyTrainerProfile();
   if (q.isLoading) return <LoadingSkeleton />;
-  return <ReviewPage scope="pt" targetId={q.data?.id ?? 0} />;
+  /**
+   * Hồ sơ PT hỏng -> targetId = 0 -> useReviews bị `enabled: id > 0` tắt hẳn, nên
+   * query không loading cũng không error và màn hình báo "Chưa có đánh giá".
+   * PT tưởng chưa ai đánh giá mình trong khi thực ra là request hồ sơ lỗi.
+   */
+  if (q.isError || !q.data?.id) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title={t("common.states.errorTitle")}
+        description={q.isError ? toErrorMessage(q.error) : t("common.states.errorDescription")}
+        action={
+          <Button type="button" variant="outline" onClick={() => q.refetch()}>
+            {t("common.actions.retry")}
+          </Button>
+        }
+      />
+    );
+  }
+  return <ReviewPage scope="pt" targetId={q.data.id} />;
 }
 
 export function GymReviewsPage() {

@@ -125,7 +125,7 @@ export default function ForgotPasswordPage() {
                     className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-normal rounded-lg"
                     disabled={form.formState.isSubmitting}
                   >
-                    {form.formState.isSubmitting ? t("common.states.submitting") : "Đặt lại mật khẩu"}
+                    {form.formState.isSubmitting ? t("common.states.submitting") : t("auth.resetTitle")}
                   </Button>
                 </form>
 
