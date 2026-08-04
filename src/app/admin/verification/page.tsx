@@ -229,8 +229,12 @@ function VerificationQueue() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-foreground">{t("admin.verification.listTitle")}</h2>
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
-            <SelectTrigger className="h-9 w-40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 w-40 text-xs"><SelectValue placeholder={t("common.filters.allStatuses")} /></SelectTrigger>
             <SelectContent>
+              {/* Sheet1#14: chỉ có các trạng thái lẻ nên admin mở trang luôn thấy
+                  mỗi hàng PENDING và tưởng "mọi PT đều chưa xác thực", trong khi
+                  marketplace hiển thị đúng hồ sơ APPROVED. */}
+              <SelectItem value="">{t("common.filters.allStatuses")}</SelectItem>
               <SelectItem value="PENDING">{t("admin.verification.status.PENDING")}</SelectItem>
               <SelectItem value="APPROVED">{t("admin.verification.status.APPROVED")}</SelectItem>
               <SelectItem value="REJECTED">{t("common.actions.reject")}</SelectItem>
@@ -692,8 +696,10 @@ function GymVerificationQueue() {
           <h2 className="text-sm font-semibold text-foreground">{t("admin.verification.recentApplications")}</h2>
           {/* B-7: đủ trạng thái — REQUIRES_INFO/SUSPENDED để admin theo dõi bổ sung + kích hoạt lại */}
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(0); }}>
-            <SelectTrigger className="h-9 w-40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-9 w-40 text-xs"><SelectValue placeholder={t("common.filters.allStatuses")} /></SelectTrigger>
             <SelectContent>
+              {/* Sheet1#14 — xem ghi chú ở bảng PT phía trên. */}
+              <SelectItem value="">{t("common.filters.allStatuses")}</SelectItem>
               <SelectItem value="PENDING">{t("admin.verification.status.PENDING")}</SelectItem>
               <SelectItem value="REQUIRES_INFO">{t("admin.verification.status.REQUIRES_INFO")}</SelectItem>
               <SelectItem value="APPROVED">{t("admin.verification.status.APPROVED")}</SelectItem>

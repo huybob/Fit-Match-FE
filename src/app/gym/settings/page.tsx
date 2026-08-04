@@ -13,6 +13,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { FieldShell } from "@/modules/forms/form-controls";
+import { PlaceAutocompleteInput } from "@/shared/components/map/place-autocomplete-input";
 import { useTranslations } from "next-intl";
 
 /** UC-017 (B-11): chính sách đặt lịch/hủy/no-show/nội quy — BE có sẵn, trước đây FE = 0. */
@@ -179,8 +180,17 @@ export default function GymSettingsPage() {
                 </FieldShell>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <FieldShell label={t("common.table.address")}>
-                      <Input value={address} onChange={e => setAddress(e.target.value)} />
+                    {/* Sheet2#1 + Sheet3: địa chỉ gõ tay hay sai chuẩn nên admin
+                        phải bắt xác minh lại. Dùng chung ô Places Autocomplete
+                        như /gym/branches để ra địa chỉ chuẩn ngay từ đầu; không
+                        có Maps key thì ô này vẫn gõ tay được bình thường. */}
+                    <FieldShell label={t("common.table.address")} htmlFor="gym-address">
+                      <PlaceAutocompleteInput
+                        value={address}
+                        onValueChange={setAddress}
+                        onPlacePicked={(place) => setAddress(place.label)}
+                        onError={(message) => toast({ type: "error", title: message })}
+                      />
                     </FieldShell>
                     {/* Bug S2-01: admin yêu cầu xác minh lại địa chỉ — hiện ngay cạnh ô
                         cần sửa, kèm lý do. Cờ tự gỡ sau khi lưu địa chỉ mới. */}
