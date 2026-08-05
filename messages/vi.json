@@ -1585,7 +1585,20 @@
       "requireItem": "Vui lòng chọn dịch vụ hoặc gói tập",
       "requirePackage": "Vui lòng chọn gói đã mua"
     },
-    "checkInLabel": "Giờ check-in"
+    "checkInLabel": "Giờ check-in",
+    "timetable": {
+      "title": "Thời gian biểu",
+      "viewLabel": "Kiểu xem",
+      "week": "Tuần",
+      "month": "Tháng",
+      "today": "Hôm nay",
+      "prev": "Kỳ trước",
+      "next": "Kỳ sau",
+      "noSession": "Không có buổi tập",
+      "more": "+{count} buổi nữa",
+      "emptyTitle": "Không có buổi tập nào trong kỳ này",
+      "emptyBody": "Chuyển sang tuần/tháng khác hoặc đặt một buổi tập mới."
+    }
   },
   "notification": {
     "title": "Thông báo",

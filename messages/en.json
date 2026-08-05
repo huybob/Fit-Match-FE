@@ -1585,7 +1585,20 @@
       "requireItem": "Please choose a service or package",
       "requirePackage": "Please choose a purchased package"
     },
-    "checkInLabel": "Check-in"
+    "checkInLabel": "Check-in",
+    "timetable": {
+      "title": "Timetable",
+      "viewLabel": "View mode",
+      "week": "Week",
+      "month": "Month",
+      "today": "Today",
+      "prev": "Previous period",
+      "next": "Next period",
+      "noSession": "No sessions",
+      "more": "+{count} more",
+      "emptyTitle": "No sessions in this period",
+      "emptyBody": "Switch to another week/month, or book a new session."
+    }
   },
   "notification": {
     "title": "Notifications",
