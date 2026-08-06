@@ -2,45 +2,45 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  withdrawalService,
+  walletService,
   type WithdrawalStatus,
   type WithdrawalRequestDto,
-} from "@/services/withdrawal.service";
-import { withdrawalKeys } from "../query-keys";
+} from "@/services/wallet.service";
+import { walletKeys } from "../query-keys";
 
 const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
-  c.invalidateQueries({ queryKey: withdrawalKeys.all });
+  c.invalidateQueries({ queryKey: walletKeys.all });
 
 export function useWithdrawals(scope: "gym" | "admin", status?: WithdrawalStatus) {
   return useQuery({
-    queryKey: withdrawalKeys.list(scope, status),
+    queryKey: walletKeys.list(scope, status),
     queryFn: () =>
       scope === "gym"
-        ? withdrawalService.getMine(status)
-        : withdrawalService.getAll(status),
+        ? walletService.getMine(status)
+        : walletService.getAll(status),
   });
 }
 
 /** UC-061: số dư ví gym. */
 export function useGymWallet() {
-  return useQuery({ queryKey: withdrawalKeys.wallet, queryFn: withdrawalService.getWallet });
+  return useQuery({ queryKey: walletKeys.wallet, queryFn: walletService.getWallet });
 }
 
 /** UC-061: sổ cái ví gym. */
 export function useGymWalletTransactions(page: number) {
   return useQuery({
-    queryKey: [...withdrawalKeys.wallet, "transactions", page],
-    queryFn: () => withdrawalService.getWalletTransactions({ page, size: 20 }),
+    queryKey: [...walletKeys.wallet, "transactions", page],
+    queryFn: () => walletService.getWalletTransactions({ page, size: 20 }),
   });
 }
 
 export function useCreateWithdrawal() {
   const c = useQueryClient();
   return useMutation({
-    mutationFn: (payload: WithdrawalRequestDto) => withdrawalService.create(payload),
+    mutationFn: (payload: WithdrawalRequestDto) => walletService.create(payload),
     onSuccess: () => {
       refresh(c)();
-      c.invalidateQueries({ queryKey: withdrawalKeys.wallet });
+      c.invalidateQueries({ queryKey: walletKeys.wallet });
     },
   });
 }
@@ -56,10 +56,10 @@ export function useWithdrawalDecision() {
       payoutReference?: string;
     }) =>
       decision === "approve"
-        ? withdrawalService.approve(id, note)
+        ? walletService.approve(id, note)
         : decision === "reject"
-          ? withdrawalService.reject(id, note ?? "")
-          : withdrawalService.markPaid(id, payoutReference ?? "", note),
+          ? walletService.reject(id, note ?? "")
+          : walletService.markPaid(id, payoutReference ?? "", note),
     onSuccess: refresh(c),
   });
 }

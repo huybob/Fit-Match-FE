@@ -25,7 +25,7 @@ const gymLinks = [
   { href: "/gym/packages", navKey: "packages", icon: Package },
   { href: "/gym/bookings", navKey: "bookings", icon: CalendarCheck2 },
   { href: "/gym/revenue", navKey: "revenue", icon: DollarSign },
-  { href: "/gym/withdrawals", navKey: "withdrawals", icon: Banknote },
+  { href: "/gym/wallet", navKey: "wallet", icon: Banknote },
   { href: "/gym/settings", navKey: "settings", icon: Settings },
 ] as const;
 
