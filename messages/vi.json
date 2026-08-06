@@ -179,11 +179,11 @@
       "time": "Giờ",
       "datePlaceholder": "Chọn ngày",
       "timePlaceholder": "Chọn giờ",
-    "typeTime": "Nhập giờ",
-    "typeTimePlaceholder": "Nhập giờ, vd 0600",
-    "typeTimeInvalid": "Giờ không hợp lệ hoặc ngoài khoảng cho phép",
-    "copyToOtherDays": "Áp dụng cho các ngày còn lại",
-    "copiedToOtherDays": "Đã áp dụng khung giờ này cho các ngày còn lại",
+      "typeTime": "Nhập giờ",
+      "typeTimePlaceholder": "Nhập giờ, vd 0600",
+      "typeTimeInvalid": "Giờ không hợp lệ hoặc ngoài khoảng cho phép",
+      "copyToOtherDays": "Áp dụng cho các ngày còn lại",
+      "copiedToOtherDays": "Đã áp dụng khung giờ này cho các ngày còn lại",
       "dateTimePlaceholder": "Chọn ngày và giờ",
       "dateRangePlaceholder": "Chọn khoảng ngày",
       "from": "Từ",
@@ -664,7 +664,7 @@
       "packages": "Gói tập",
       "bookings": "Đặt lịch",
       "revenue": "Doanh thu",
-      "withdrawals": "Rút tiền",
+      "wallet": "Ví",
       "settings": "Cài đặt"
     },
     "suspendedTitle": "Phòng tập đang bị đình chỉ",
@@ -996,8 +996,11 @@
       "uploadDoc": "Tải tài liệu lên",
       "addDoc": "Thêm tài liệu",
       "docRequired": "Nhập loại tài liệu và tải tệp lên",
-      "certAddFailed": "Không thêm được chứng chỉ “{name}”"
-    }
+      "certAddFailed": "Không thêm được chứng chỉ “{name}”",
+      "assigned": "Đã phân công PT",
+      "blockAdded": "Đã thêm khoảng chặn"
+    },
+    "workspace": "Không gian Chủ phòng gym"
   },
   "marketplace": {
     "filters": "Bộ lọc",
@@ -1129,7 +1132,8 @@
       "mapLoading": "Đang tải bản đồ...",
       "mapDisabled": "Bản đồ chưa được cấu hình. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới.",
       "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
-    }
+    },
+    "compareMax": "So sánh tối đa {max} mục"
   },
   "trainer": {
     "nav": {
@@ -1176,7 +1180,8 @@
       "addBlockTitle": "Thêm khoảng chặn mới",
       "addBlock": "Thêm khoảng chặn",
       "slotsInvalid": "Mỗi khung giờ cần giờ bắt đầu < giờ kết thúc."
-    }
+    },
+    "workspace": "Không gian Huấn luyện viên"
   },
   "member": {
     "nav": {
@@ -1580,7 +1585,20 @@
       "requireItem": "Vui lòng chọn dịch vụ hoặc gói tập",
       "requirePackage": "Vui lòng chọn gói đã mua"
     },
-    "checkInLabel": "Giờ check-in"
+    "checkInLabel": "Giờ check-in",
+    "timetable": {
+      "title": "Thời gian biểu",
+      "viewLabel": "Kiểu xem",
+      "week": "Tuần",
+      "month": "Tháng",
+      "today": "Hôm nay",
+      "prev": "Kỳ trước",
+      "next": "Kỳ sau",
+      "noSession": "Không có buổi tập",
+      "more": "+{count} buổi nữa",
+      "emptyTitle": "Không có buổi tập nào trong kỳ này",
+      "emptyBody": "Chuyển sang tuần/tháng khác hoặc đặt một buổi tập mới."
+    }
   },
   "notification": {
     "title": "Thông báo",
@@ -1624,7 +1642,7 @@
     "placeholder": "Tối thiểu 10 ký tự...",
     "submit": "Gửi báo cáo"
   },
-  "withdrawal": {
+  "wallet": {
     "ledger": {
       "HOLD": "Giữ tiền booking (escrow)",
       "REFUND": "Hoàn tiền cho khách",
@@ -1642,9 +1660,9 @@
       "REJECTED": "Đã từ chối",
       "PAID": "Đã chi trả"
     },
-    "gymTitle": "Ví & rút tiền",
+    "gymTitle": "Ví phòng gym",
     "adminTitle": "Quản lý rút tiền",
-    "gymDescription": "Theo dõi số dư và gửi yêu cầu rút tiền về tài khoản ngân hàng của phòng gym.",
+    "gymDescription": "Theo dõi số dư, lịch sử giao dịch ví và gửi yêu cầu rút tiền về tài khoản ngân hàng của phòng gym.",
     "adminDescription": "Duyệt, từ chối và xác nhận chi trả các yêu cầu rút tiền của phòng gym.",
     "create": "Tạo yêu cầu rút tiền",
     "loadError": "Lỗi tải dữ liệu",
@@ -1709,9 +1727,12 @@
       "pickBank": "Chọn ngân hàng",
       "accountInvalid": "Số tài khoản không hợp lệ",
       "holderRequired": "Nhập chủ tài khoản",
-      "noteRequired": "Nhập lý do"
+      "noteRequired": "Nhập lý do",
+      "payoutRefRequired": "Nhập mã giao dịch chuyển khoản"
     },
-    "colBooking": "Buổi đặt"
+    "colBooking": "Buổi đặt",
+    "frozen": "Đóng băng",
+    "submitRequest": "Gửi yêu cầu"
   },
   "reportPage": {
     "title": "Báo cáo vận hành",
@@ -1784,7 +1805,7 @@
     "evidenceDescRequired": "Nhập mô tả bằng chứng",
     "evidenceSent": "Đã gửi bằng chứng",
     "detailTitle": "Tranh chấp #{id}",
-    "heldAmount": "Số tiền đang giữ:",
+    "heldAmount": "giữ {amount}",
     "moderator": "Điều phối viên:",
     "openFileFailed": "Không mở được tệp",
     "fileWord": "Tệp",
@@ -1802,7 +1823,7 @@
     "customerTitle": "Đánh giá của tôi",
     "gymTitle": "Đánh giá phòng gym",
     "customerDescription": "Xem và quản lý các đánh giá bạn đã gửi.",
-    "gymDescription": "Xem các đánh giá từ khách hàng về phòng gym.",
+    "gymDescription": "Xem các đánh giá từ khách hàng về phòng gym (chỉ đọc).",
     "write": "Viết đánh giá",
     "loadError": "Không thể tải đánh giá",
     "empty": "Chưa có đánh giá",
@@ -1811,7 +1832,6 @@
     "deleteTitle": "Xóa đánh giá này?",
     "deleteBody": "Đánh giá sẽ bị gỡ vĩnh viễn. Bạn có thể viết lại sau.",
     "deleted": "Đã xóa đánh giá",
-    "reply": "Phản hồi",
     "reportViolation": "Báo cáo vi phạm",
     "reportTitle": "Báo cáo đánh giá của {name}",
     "reportHint": "Đánh giá sẽ được kiểm duyệt viên xem xét (ẩn/gỡ nếu vi phạm). Mỗi đánh giá chỉ báo cáo một lần khi đang mở.",
@@ -1828,8 +1848,6 @@
     "selectBooking": "Chọn buổi đặt lịch",
     "ratingLabel": "Điểm đánh giá",
     "contentLabel": "Nội dung",
-    "replySent": "Đã gửi phản hồi",
-    "sendReply": "Gửi phản hồi",
     "mod": {
       "RESOLVED": "Đã xử lý",
       "DISMISSED": "Đã bỏ qua",
@@ -1854,12 +1872,15 @@
     "dismiss": "Bỏ qua",
     "applyToReview": "Áp dụng cho đánh giá #{id}. Ghi chú kiểm duyệt (tùy chọn):",
     "ptTitle": "Đánh giá của huấn luyện viên",
-    "ptDescription": "Xem các đánh giá từ khách hàng về bạn.",
+    "ptDescription": "Xem các đánh giá từ khách hàng về bạn (chỉ đọc).",
     "validation": {
       "pickBooking": "Vui lòng chọn buổi tập đã hoàn thành",
-      "rating": "Vui lòng chọn số sao từ 1 đến 5",
-      "replyRequired": "Vui lòng nhập nội dung phản hồi"
-    }
+      "rating": "Vui lòng chọn số sao từ 1 đến 5"
+    },
+    "reviewNumber": "Đánh giá #{id}",
+    "publicTitle": "Đánh giá từ khách hàng",
+    "publicEmptyHint": "Hãy là người đầu tiên đánh giá sau khi hoàn thành buổi tập.",
+    "showMore": "Xem thêm {count} đánh giá"
   },
   "auth": {
     "back": "← Quay lại",
@@ -2096,7 +2117,9 @@
     "uploading": "Đang tải lên...",
     "unsupportedType": "Định dạng tệp không được hỗ trợ",
     "allowedFormats": "Chỉ chấp nhận: {formats}",
-    "failed": "Tải lên thất bại"
+    "failed": "Tải lên thất bại",
+    "tooLarge": "Tệp quá lớn",
+    "maxSize": "Dung lượng tối đa {max} MB (tệp của bạn {size} MB)"
   },
   "cms": {
     "featuredTitle": "Nổi bật trên FitMatch",

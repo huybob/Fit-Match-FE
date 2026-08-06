@@ -11,7 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { EmptyState } from "@/shared/components/common/empty-state";
 import { useTranslations } from "next-intl";
 
 /* Chỉ giữ class + icon; nhãn lấy từ trainer.verifyStatus.* trong component. */
@@ -35,10 +35,12 @@ export default function TrainerSelfServicePage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
 
-  const { data: profile, isLoading } = useQuery({
+  const profileQuery = useQuery({
     queryKey: ["pt-my-profile"],
     queryFn: trainerService.getMyProfilePreview
   });
+  const profile = profileQuery.data;
+  const isLoading = profileQuery.isLoading;
   // A-6 (audit 2026-07-17): badge trước đây đọc verificationStatus từ preview —
   // response không có field đó nên luôn hiện "Chưa xác minh". Gọi đúng endpoint.
   const { data: verification } = useQuery({
@@ -81,8 +83,6 @@ export default function TrainerSelfServicePage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -93,6 +93,20 @@ export default function TrainerSelfServicePage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+        ) : profileQuery.isError ? (
+          /* Không có nhánh này thì hồ sơ tải lỗi vẫn render ra một hồ sơ RỖNG
+             ("T", "—", "Chưa xác minh") — PT tưởng hồ sơ mình trống chứ không
+             biết là request hỏng, và không có cách thử lại. */
+          <EmptyState
+            icon={AlertCircle}
+            title={t("common.states.errorTitle")}
+            description={toErrorMessage(profileQuery.error)}
+            action={
+              <Button type="button" variant="outline" onClick={() => profileQuery.refetch()}>
+                {t("common.actions.retry")}
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2 space-y-5">
@@ -118,7 +132,7 @@ export default function TrainerSelfServicePage() {
                   <div className="mt-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-sm text-destructive">{verification.rejectionReason}</div>
                 )}
                 <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">{t("trainer.profile.experienceLabel")}</p><p className="mt-0.5 text-foreground">{profile?.experienceYears != null ? `${profile.experienceYears} năm` : "—"}</p></div>
+                  <div><p className="text-xs font-semibold text-muted-foreground uppercase">{t("trainer.profile.experienceLabel")}</p><p className="mt-0.5 text-foreground">{profile?.experienceYears != null ? t("trainer.profile.years", { years: profile.experienceYears }) : "—"}</p></div>
                   <div><p className="text-xs font-semibold text-muted-foreground uppercase">{t("trainer.profile.areaLabel")}</p><p className="mt-0.5 flex items-center gap-1 text-foreground">{profile?.serviceArea ? <><MapPin className="size-3.5 text-muted-foreground" />{profile.serviceArea}</> : "—"}</p></div>
                 </div>
                 {profile?.bio && (

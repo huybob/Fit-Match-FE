@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   User,
   Camera,
@@ -21,7 +24,7 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import type { AuthUser } from "@/services/auth.service";
 
-import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
+import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
 import {
   Select,
   SelectContent,
@@ -35,6 +38,9 @@ import { useTranslations } from "next-intl";
 import { roleLabelKey } from "@/shared/utils/enum-label.util";
 import { initialsOf, UserAvatar } from "@/shared/components/common/user-avatar";
 import { useFormatters } from "@/i18n/use-formatters";
+import { ConfirmActionDialog } from "@/shared/components/common/confirm-dialog";
+import { FieldShell } from "@/modules/forms/form-controls";
+import { useValidators } from "@/shared/validations/use-validators";
 
 function ProfileHeader({ user }: { user: AuthUser }) {
   const t = useTranslations();
@@ -126,30 +132,56 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
   const t = useTranslations();
   const { toast } = useToast();
   const { updateUser } = useAuthStore();
-  const [fullName, setFullName] = useState(user.fullName ?? "");
-  const [email, setEmail] = useState(user.email ?? "");
-  const [phone, setPhone] = useState(user.phone ?? "");
-  const [gender, setGender] = useState(user.gender ?? "");
-  const [location, setLocation] = useState(user.location ?? "");
+  const v = useValidators();
   const [saving, setSaving] = useState(false);
+  /**
+   * A-22: đổi email làm BE reset emailVerified=false — lần login sau bị chặn cho
+   * tới khi xác thực lại, nên phải hỏi trước. Trước đây dùng window.confirm():
+   * hộp thoại của TRÌNH DUYỆT — không theo theme, không dịch được nút OK/Cancel,
+   * không đóng bằng Escape có trả focus, và khác hoàn toàn với AlertDialog mà mọi
+   * hành động nguy hiểm khác trong app đang dùng.
+   */
+  const [confirmEmailOpen, setConfirmEmailOpen] = useState(false);
 
-  async function handleSave() {
-    // A-22 (audit 2026-07-17): đổi email làm BE reset emailVerified=false — lần login
-    // sau bị chặn cho tới khi xác thực lại. Trước đây điều này diễn ra âm thầm.
-    const emailChanged = !!email && email !== user.email;
-    if (emailChanged && !window.confirm(t("member.profile.emailChangeWarning"))) {
-      return;
-    }
+  const schema = useMemo(
+    () =>
+      z.object({
+        fullName: v.personName(t("member.profile.fullName"), 2, 100),
+        email: v.email(),
+        phone: v.phoneOptional(),
+        gender: z.union([z.literal(""), z.enum(["MALE", "FEMALE", "OTHER"])]),
+        location: v.optionalText(t("member.profile.locationLabel"), 255),
+      }),
+    [v, t],
+  );
+  type Values = z.infer<typeof schema>;
+
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    mode: "onTouched",
+    defaultValues: {
+      fullName: user.fullName ?? "",
+      email: user.email ?? "",
+      phone: user.phone ?? "",
+      gender: user.gender ?? "",
+      location: user.location ?? "",
+    },
+  });
+  const errors = form.formState.errors;
+
+  async function save(values: Values) {
+    const emailChanged = values.email !== user.email;
     setSaving(true);
     try {
       const updated = await authService.updateProfile({
-        fullName: fullName || undefined,
-        email: email || undefined,
-        phone: phone || undefined,
-        gender: (gender as AuthUser["gender"]) || undefined,
-        location: location || undefined,
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone || undefined,
+        gender: (values.gender as AuthUser["gender"]) || undefined,
+        location: values.location || undefined,
       });
       updateUser(updated);
+      form.reset(values);
       toast({
         type: "success",
         title: t("member.profile.infoUpdated"),
@@ -162,6 +194,15 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
     }
   }
 
+  // Chỉ hỏi khi email THẬT SỰ đổi; các thay đổi khác lưu thẳng.
+  const onSubmit = form.handleSubmit((values) => {
+    if (values.email !== user.email) {
+      setConfirmEmailOpen(true);
+      return;
+    }
+    return save(values);
+  });
+
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex items-center gap-3 mb-6">
@@ -169,74 +210,88 @@ function PersonalInfoCard({ user }: { user: AuthUser }) {
         <h2 className="text-2xl font-semibold text-foreground">{t("member.profile.personalInfo")}</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.fullName")}</label>
-          <Input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder={t("member.profile.fullNamePlaceholder")}
-            className="h-11 border-border rounded-lg text-base text-foreground"
+      {/* grid-cols-2 cứng trước đây ép 2 cột cả trên điện thoại 375px. */}
+      <form noValidate onSubmit={onSubmit}>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <FieldShell label={t("member.profile.fullName")} error={errors.fullName}>
+            <Input
+              {...form.register("fullName")}
+              aria-invalid={!!errors.fullName}
+              placeholder={t("member.profile.fullNamePlaceholder")}
+              className="h-11 border-border rounded-lg text-base text-foreground"
+            />
+          </FieldShell>
+          <FieldShell label={t("member.profile.emailLabel")} error={errors.email}>
+            <Input
+              type="email"
+              {...form.register("email")}
+              aria-invalid={!!errors.email}
+              className="h-11 border-border rounded-lg text-base text-foreground"
+            />
+          </FieldShell>
+          <FieldShell label={t("common.table.phone")} error={errors.phone}>
+            <Input
+              type="tel"
+              inputMode="tel"
+              {...form.register("phone")}
+              aria-invalid={!!errors.phone}
+              className="h-11 border-border rounded-lg text-base text-foreground"
+              placeholder="0901 234 567"
+            />
+          </FieldShell>
+          <FieldShell label={t("member.profile.roleLabel")}>
+            <Input
+              value={t(roleLabelKey(user.role))}
+              readOnly
+              className="h-11 border-border rounded-lg bg-muted/40 text-base text-foreground"
+            />
+          </FieldShell>
+          <Controller
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FieldShell label={t("member.profile.genderLabel")} error={errors.gender}>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger><SelectValue placeholder={t("member.profile.genderPlaceholder")} /></SelectTrigger>
+                  <SelectContent>
+                    {/* "Nam" từng bị hardcode ở đây — tiếng Anh hiện "Nam / Female / Other". */}
+                    <SelectItem value="MALE">{t("member.profile.genderMale")}</SelectItem>
+                    <SelectItem value="FEMALE">{t("member.profile.genderFemale")}</SelectItem>
+                    <SelectItem value="OTHER">{t("member.profile.genderOther")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FieldShell>
+            )}
           />
+          <FieldShell label={t("member.profile.locationLabel")} error={errors.location}>
+            <Input
+              {...form.register("location")}
+              aria-invalid={!!errors.location}
+              placeholder={t("gym.branches.cityPlaceholder")}
+              className="h-11 border-border rounded-lg text-base text-foreground"
+            />
+          </FieldShell>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.emailLabel")}</label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-11 border-border rounded-lg text-base text-foreground"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("common.table.phone")}</label>
-          <Input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="h-11 border-border rounded-lg text-base text-foreground"
-            placeholder="0901 234 567"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.roleLabel")}</label>
-          <Input
-            value={t(roleLabelKey(user.role))}
-            readOnly
-            className="h-11 border-border rounded-lg bg-muted/40 text-base text-foreground"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.genderLabel")}</label>
-          <Select value={gender} onValueChange={setGender}>
-            <SelectTrigger><SelectValue placeholder={t("member.profile.genderPlaceholder")} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MALE">Nam</SelectItem>
-              <SelectItem value="FEMALE">{t("member.profile.genderFemale")}</SelectItem>
-              <SelectItem value="OTHER">{t("member.profile.genderOther")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">{t("member.profile.locationLabel")}</label>
-          <Input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder={t("gym.branches.cityPlaceholder")}
-            className="h-11 border-border rounded-lg text-base text-foreground"
-          />
-        </div>
-      </div>
 
-      <div className="mt-6 flex justify-end">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 rounded-lg gap-2"
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {t("common.actions.saveChanges")}
-        </Button>
-      </div>
+        <div className="mt-6 flex justify-end">
+          <Button
+            type="submit"
+            disabled={saving}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-6 rounded-lg gap-2"
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {t("common.actions.saveChanges")}
+          </Button>
+        </div>
+      </form>
+
+      <ConfirmActionDialog
+        open={confirmEmailOpen}
+        onOpenChange={setConfirmEmailOpen}
+        title={t("member.profile.emailLabel")}
+        description={t("member.profile.emailChangeWarning")}
+        onConfirm={() => save(form.getValues())}
+      />
     </div>
   );
 }
@@ -250,13 +305,29 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
   const [mainGoal, setMainGoal] = useState(user.mainGoal ?? "");
   const [saving, setSaving] = useState(false);
 
+  /**
+   * Ô cao/nặng là <input type="text">, nên "abc" đi thẳng vào Number() -> NaN,
+   * và JSON.stringify(NaN) là `null`: chiều cao bị XOÁ mà không báo gì.
+   * Kiểm tra tại chỗ, chặn lưu và nói rõ khoảng hợp lệ.
+   */
+  const heightError =
+    height.trim() !== "" && !(Number(height) >= 50 && Number(height) <= 300)
+      ? t("common.validation.between", { field: t("member.profile.heightLabel"), min: 50, max: 300 })
+      : undefined;
+  const weightError =
+    weight.trim() !== "" && !(Number(weight) >= 20 && Number(weight) <= 500)
+      ? t("common.validation.between", { field: t("member.profile.weightLabel"), min: 20, max: 500 })
+      : undefined;
+  const metricsInvalid = !!heightError || !!weightError;
+
   async function handleSave() {
+    if (metricsInvalid) return;
     setSaving(true);
     try {
       const updated = await authService.updateProfile({
-        height: height ? Number(height) : undefined,
-        weight: weight ? Number(weight) : undefined,
-        mainGoal: mainGoal || undefined,
+        height: height.trim() ? Number(height) : undefined,
+        weight: weight.trim() ? Number(weight) : undefined,
+        mainGoal: mainGoal.trim() || undefined,
       });
       updateUser(updated);
       toast({ type: "success", title: t("member.profile.metricsUpdated") });
@@ -282,8 +353,12 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
             value={height}
             onChange={(e) => setHeight(e.target.value)}
             placeholder="—"
+            aria-invalid={!!heightError}
             className="text-xl bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 border-primary-foreground/20 hover:border-primary-foreground/40 focus-visible:border-primary-foreground/60 focus-visible:ring-primary-foreground/20"
           />
+          {heightError && (
+            <p role="alert" className="text-[11px] font-semibold text-primary-foreground">{heightError}</p>
+          )}
         </div>
         <div className="space-y-1">
           <p className="text-xs font-medium text-white/70">{t("member.profile.weightLabel")}</p>
@@ -293,8 +368,12 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
             placeholder="—"
+            aria-invalid={!!weightError}
             className="text-xl bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 border-primary-foreground/20 hover:border-primary-foreground/40 focus-visible:border-primary-foreground/60 focus-visible:ring-primary-foreground/20"
           />
+          {weightError && (
+            <p role="alert" className="text-[11px] font-semibold text-primary-foreground">{weightError}</p>
+          )}
         </div>
         <div className="space-y-1 sm:col-span-2">
           <p className="text-xs font-medium text-white/70">{t("member.profile.mainGoalLabel")}</p>
@@ -309,9 +388,10 @@ function FitnessMetricsCard({ user }: { user: AuthUser }) {
         </div>
       </div>
       <button
+        type="button"
         onClick={handleSave}
-        disabled={saving}
-        className="w-full flex items-center justify-center gap-2 bg-card/15 hover:bg-card/25 text-white text-sm font-medium rounded-lg h-9 transition-colors"
+        disabled={saving || metricsInvalid}
+        className="w-full flex items-center justify-center gap-2 bg-card/15 hover:bg-card/25 text-white text-sm font-medium rounded-lg h-9 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
       >
         {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
         {t("member.profile.saveMetrics")}
@@ -447,7 +527,9 @@ function FitnessPreferencesCard({ user }: { user: AuthUser }) {
           {t("common.actions.save")}
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-6">
+      {/* grid-cols-4 cứng trước đây ép 4 cột trên mọi bề rộng — ở 375px mỗi cột
+          chỉ còn ~70px, radio và ô ghi chú chấn thương bị bóp không đọc được. */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-3">
           <p className="text-sm font-medium text-foreground">{t("member.profile.favoriteStyles")}</p>
           <div className="flex flex-wrap gap-2">

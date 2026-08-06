@@ -86,7 +86,7 @@ export function AdminDisputesPage() {
                 <p className="mt-2 text-sm text-muted-foreground">{d.reason}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {d.customerName} → {d.gymName}{d.ptName ? ` · ${d.ptName}` : ""}
-                  {d.frozenAmount ? ` · giữ ${money(d.frozenAmount)}` : ""}
+                  {d.frozenAmount ? ` · ${t("dispute.heldAmount", { amount: money(d.frozenAmount) })}` : ""}
                 </p>
                 <div className="mt-3">
                   <Button variant="outline" onClick={() => setSelected(d)}>
@@ -155,7 +155,7 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
         <p><b>{t("dispute.reasonLabel")}</b> {dispute.reason}</p>
         <p className="mt-1 text-muted-foreground">
           Booking #{dispute.bookingId} · {dispute.customerName} → {dispute.gymName}
-          {dispute.frozenAmount ? ` · giữ ${money(dispute.frozenAmount)}` : ""}
+          {dispute.frozenAmount ? ` · ${t("dispute.heldAmount", { amount: money(dispute.frozenAmount) })}` : ""}
         </p>
         {dispute.assignedModerator && (
           <p className="mt-1 text-xs font-semibold text-primary">

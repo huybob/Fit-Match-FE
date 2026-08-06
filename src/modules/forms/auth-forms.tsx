@@ -247,7 +247,7 @@ export function RegisterForm() {
       <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-1.5">
           <label className="text-base text-foreground">{t("auth.accountType")}</label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {(
               [
                 { value: "CUSTOMER", label: t("auth.roleCustomer"), hint: t("auth.roleCustomerHint") },
@@ -272,7 +272,7 @@ export function RegisterForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-base text-foreground">{t("auth.fullName")}</label>
             <Input
@@ -299,7 +299,7 @@ export function RegisterForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-base text-foreground">{t("auth.email")}</label>
             <Input
@@ -711,7 +711,7 @@ export function ChangePasswordForm() {
         />
       </FieldShell>
       <Button className="w-full" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? t("common.states.processing") : "Lưu thay đổi"}
+        {form.formState.isSubmitting ? t("common.states.processing") : t("common.actions.saveChanges")}
       </Button>
     </form>
   );

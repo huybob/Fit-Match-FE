@@ -40,7 +40,7 @@ import { TimePicker } from "@/shared/components/ui/time-picker";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/shared/utils/cn.util";
-import { toErrorMessage } from "@/shared/utils/error.util";
+import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   marketplaceService,
@@ -351,8 +351,16 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
       toast({ type: "error", title: t("booking.createFailed"), description: toErrorMessage(error) });
       // C-2 (UC-044): chỉ mời vào danh sách chờ khi slot thật sự kín/bận (409 do
       // capacity hoặc PT trùng lịch) — không mời khi lỗi cấu hình giờ hoạt động.
-      const status = (error as { status?: number })?.status;
-      const slotTaken = /kín chỗ|đã có lịch/i.test(toErrorMessage(error));
+      //
+      // HttpError phơi ra `statusCode`, KHÔNG phải `status`: đọc `error.status`
+      // luôn cho undefined nên điều kiện dưới đây không bao giờ đúng và lời mời
+      // vào danh sách chờ chưa từng hiện ra. getErrorStatus() là cách đọc chuẩn
+      // đã dùng ở những chỗ khác.
+      const status = getErrorStatus(error);
+      const message = toErrorMessage(error);
+      // "Bạn đã có lịch đặt khác trùng khung giờ này" là xung đột của CHÍNH khách,
+      // không phải hết chỗ — chờ thêm cũng không giải quyết được, nên không mời.
+      const slotTaken = /kín chỗ/i.test(message) || /PT đã có lịch/i.test(message);
       if (status === 409 && slotTaken && v.mode === "new" && v.itemId) {
         setWaitlistOffer({
           serviceId: v.itemType === "service" ? v.itemId : undefined,

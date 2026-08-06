@@ -470,7 +470,7 @@
     "saved": "Đã lưu thay đổi",
     "deleted": "Đã xóa mục"
   },
-  "withdrawal": {
+  "wallet": {
     "navigation": "Rút tiền",
     "ptTitle": "Yêu cầu rút tiền",
     "ptDescription": "Tạo và theo dõi các yêu cầu rút thu nhập về tài khoản ngân hàng.",

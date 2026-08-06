@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { gymService } from "@/services/gym.service";
+import { roleLabelKey } from "@/shared/utils/enum-label.util";
 import { useTranslations } from "next-intl";
 
 // Links available before the gym is approved (submit + track verification only).
@@ -24,7 +25,7 @@ const gymLinks = [
   { href: "/gym/packages", navKey: "packages", icon: Package },
   { href: "/gym/bookings", navKey: "bookings", icon: CalendarCheck2 },
   { href: "/gym/revenue", navKey: "revenue", icon: DollarSign },
-  { href: "/gym/withdrawals", navKey: "withdrawals", icon: Banknote },
+  { href: "/gym/wallet", navKey: "wallet", icon: Banknote },
   { href: "/gym/settings", navKey: "settings", icon: Settings },
 ] as const;
 
@@ -63,7 +64,8 @@ export function GymSidebar() {
           </div>
           <div>
             <p className="text-sm font-bold text-foreground leading-tight">FitMatch</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Gym Operator Workspace</p>
+            {/* "Gym Operator Workspace" từng bị hardcode — không dịch sang tiếng Việt. */}
+            <p className="text-[10px] text-muted-foreground mt-0.5">{t("gym.workspace")}</p>
           </div>
         </div>
       </Link>
@@ -76,7 +78,7 @@ export function GymSidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[13px] font-semibold text-foreground truncate">{displayName}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Gym Operator</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{t(roleLabelKey(user?.role))}</p>
           </div>
         </div>
       </div>

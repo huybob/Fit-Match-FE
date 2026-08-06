@@ -18,6 +18,11 @@
   --popover: #ffffff;
   --popover-foreground: #12171a;
 
+  /* Nền mờ phía sau modal/drawer. PHẢI tối ở CẢ hai theme: trước đây các overlay
+     dùng `bg-foreground/70`, mà --foreground ở dark là màu gần trắng — nền mờ
+     lật thành màn trắng chói, còn hộp thoại thì chìm vào đó. */
+  --overlay: #05100f;
+
   --primary: #00767f;
   --primary-foreground: #ffffff;
 
@@ -93,6 +98,8 @@
   --popover: #0f1a19;
   --popover-foreground: #eef5f3;
 
+  --overlay: #000000;
+
   /* Trên nền tối, teal/orange được đẩy sáng lên nên chữ đi cùng phải là mực đậm
      (không phải trắng) mới đủ tương phản. */
   --primary: #1fd1c6;
@@ -156,6 +163,8 @@
 
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+
+  --color-overlay: var(--overlay);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);

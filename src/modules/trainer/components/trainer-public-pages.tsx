@@ -14,6 +14,7 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import { PublicReviews } from "@/modules/review/components/public-reviews";
 import {
   Select,
   SelectContent,
@@ -62,9 +63,14 @@ const SPECIALIZATIONS = [
 export function TrainersDirectoryPage() {
   const t = useTranslations();
   const [keyword, setKeyword] = useState("");
-  const [specialization, setSpecialization] = useState("");
+  /**
+   * Sheet1#17: danh sách chuyên môn hiển thị bằng CHECKBOX (ngụ ý chọn nhiều)
+   * nhưng state trước đây là một chuỗi đơn, nên tick ô này lại bỏ ô kia — người
+   * dùng thấy "filter chỉ chọn được 1". Giữ nguyên giao diện, đổi state sang mảng.
+   */
+  const [specializations, setSpecializations] = useState<string[]>([]);
   const [serviceArea, setServiceArea] = useState("");
-  const [params, setParams] = useState<{ keyword?: string; specialization?: string; serviceArea?: string }>({});
+  const [params, setParams] = useState<{ keyword?: string; specialization?: string[]; serviceArea?: string }>({});
   // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
   const [sort, setSort] = useState("createdAt,desc");
   const query = useQuery({
@@ -77,12 +83,12 @@ export function TrainersDirectoryPage() {
     event?.preventDefault();
     setParams({
       keyword: keyword || undefined,
-      specialization: specialization || undefined,
+      specialization: specializations.length ? specializations : undefined,
       serviceArea: serviceArea || undefined,
     });
   }
   function clearAll() {
-    setKeyword(""); setSpecialization(""); setServiceArea(""); setParams({});
+    setKeyword(""); setSpecializations([]); setServiceArea(""); setParams({});
   }
 
   const items = query.data?.content ?? [];
@@ -116,9 +122,11 @@ export function TrainersDirectoryPage() {
                   {SPECIALIZATIONS.map((spec) => (
                     <CheckboxField
                       key={spec.value}
-                      checked={specialization === spec.value}
-                      onCheckedChange={() =>
-                        setSpecialization(specialization === spec.value ? "" : spec.value)
+                      checked={specializations.includes(spec.value)}
+                      onCheckedChange={(checked) =>
+                        setSpecializations((prev) =>
+                          checked ? [...prev, spec.value] : prev.filter((v) => v !== spec.value),
+                        )
                       }
                       label={spec.labelKey ? t(spec.labelKey) : spec.value}
                       labelClassName="font-medium"
@@ -357,7 +365,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-card px-4 py-2.5 text-sm font-bold text-primary hover:bg-primary/10 transition-colors"
               >
                 <Heart className={`size-4 ${fav ? "fill-destructive text-destructive" : ""}`} />
-                {fav ? t("marketplace.favorited") : "Yêu thích"}
+                {fav ? t("marketplace.favorited") : t("marketplace.favorite")}
               </button>
             )}
           </div>
@@ -483,6 +491,16 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
           </aside>
         </div>
+
+        {/* UC-009: đánh giá công khai từ khách đã đặt buổi tập với PT này. */}
+        {pt.id != null && (
+          <PublicReviews
+            scope="pt"
+            targetId={pt.id}
+            average={pt.averageRating}
+            count={pt.reviewCount}
+          />
+        )}
       </main>
     </SiteLayout>
   );

@@ -20,7 +20,7 @@ import { authService } from "@/services/auth.service";
 import { useAuthSchemas } from "@/modules/forms/use-auth-schemas";
 import { useToast } from "@/lib/toast-provider";
 import { AuthGuard } from "@/modules/auth/auth-guard";
-import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
+import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
 import { Button } from "@/shared/components/ui/button";
 import { PasswordInput } from "@/shared/components/ui/password-input";
 import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";

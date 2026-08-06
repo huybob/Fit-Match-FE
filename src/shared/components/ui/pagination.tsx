@@ -111,6 +111,14 @@ export function Pagination({
         ? current * pageSize
         : undefined;
 
+  /**
+   * Danh sách rỗng hoặc chỉ có một trang thì thanh phân trang không điều khiển
+   * được gì — trước đây nó vẫn hiện dưới mọi empty state (cụm «‹ 1 › ») và gợi ý
+   * sai rằng "còn trang khác". Vẫn hiện nếu có ô chọn số dòng/trang vì đó là
+   * điều khiển thật. Đặt SAU các hook để không phá thứ tự hook.
+   */
+  if (totalPages <= 1 && !onPageSizeChange) return null;
+
   return (
     <nav
       aria-label={t("common.pagination.label")}

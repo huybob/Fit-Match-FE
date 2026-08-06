@@ -6,7 +6,7 @@ import type {
   WithdrawalPage,
   WithdrawalRequestDto,
   WithdrawalStatus,
-} from "@/types/Withdrawal";
+} from "@/types/Wallet";
 
 export type {
   Wallet,
@@ -16,13 +16,13 @@ export type {
   WithdrawalPage,
   WithdrawalRequestDto,
   WithdrawalStatus,
-} from "@/types/Withdrawal";
+} from "@/types/Wallet";
 
 /**
  * Contract BE: gym dùng /gym/wallet/**; admin/finance dùng /admin/withdrawals.
  * Duyệt 2 bước: approve -> (chuyển khoản thủ công) -> mark-paid; reject trả tiền về available.
  */
-export const withdrawalService = {
+export const walletService = {
   // ---- Gym (UC-061/062) ----
   getWallet: () => api.get<Wallet>("/gym/wallet"),
   getWalletTransactions: (params: { page?: number; size?: number } = {}) =>

@@ -31,6 +31,8 @@ import {
   useRescheduleBooking,
 } from "../hooks/use-booking";
 import { CreateBookingDialog } from "./create-booking-wizard";
+import { BookingTimetable } from "./booking-timetable";
+import { itemName, statusVariant } from "../booking-status";
 import { gymService } from "@/services/gym.service";
 import { healthService } from "@/services/health.service";
 import {
@@ -62,17 +64,8 @@ const statuses: BookingStatus[] = [
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
-function statusVariant(status?: BookingStatus): React.ComponentProps<typeof Badge>["variant"] {
-  if (status === "COMPLETED") return "success";
-  if (status === "REJECTED" || status === "CANCELLED" || status === "NO_SHOW") return "destructive";
-  if (status === "CONFIRMED") return "info";
-  if (status === "PENDING_PAYMENT" || status === "PENDING_GYM") return "warning";
-  return "default";
-}
-/** `fallback` truyền từ component vì helper thường không gọi được hook. */
-function itemName(booking: Booking, fallback: string) {
-  return booking.serviceName ?? booking.packageName ?? fallback;
-}
+/* statusVariant + itemName chuyển sang ../booking-status để bảng thời gian biểu
+   dùng chung (import ngược từ đây sẽ tạo vòng lặp). */
 
 export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const t = useTranslations();
@@ -86,6 +79,14 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
   const [payingId, setPayingId] = useState<number | null>(null);
   const query = useBookings(scope, { status: status || undefined, page, size: 10, sort: ["id,desc"] });
   const items = query.data?.content ?? [];
+
+  /**
+   * Bảng thời gian biểu cần lịch của CẢ tuần/tháng đang xem, trong khi danh sách
+   * chỉ có 10 mục của trang hiện tại. BE chưa có bộ lọc theo khoảng ngày cho
+   * /bookings/my nên lấy một trang lớn rồi gom theo ngày ở client — đủ cho lịch
+   * cá nhân; khi nào BE có `from`/`to` thì đổi sang lọc phía server.
+   */
+  const timetableQuery = useBookings(scope, { page: 0, size: 200, sort: ["startAt,asc"] });
 
   // Bug 10: deep-link ?create=1&gymId=&packageId= từ trang gym/gói tập ->
   // tự mở dialog tạo lịch với gym/gói đã chọn sẵn.
@@ -124,6 +125,15 @@ export function BookingWorkspacePage({ scope }: { scope: BookingScope }) {
           )}
         </div>
       </section>
+
+      {/* Bảng thời gian biểu: danh sách phân trang không cho thấy "tuần này tập
+          hôm nào" — bảng lịch tuần/tháng cho cái nhìn trực quan, bấm vào một buổi
+          mở đúng dialog chi tiết bên dưới. */}
+      <BookingTimetable
+        bookings={timetableQuery.data?.content ?? []}
+        loading={timetableQuery.isLoading}
+        onSelect={setSelected}
+      />
 
       {/* C-12 + C-2: khách theo dõi hoàn tiền + danh sách chờ ngay trong workspace */}
       {scope === "customer" && <RefundStatusSection />}
@@ -288,7 +298,12 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
     if (["DRAFT", "PENDING_PAYMENT", "PENDING_GYM", "CONFIRMED"].includes(status)) {
       actions.push({ action: "cancel", label: t("booking.cancelBooking") });
     }
-    if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status)) {
+    // Sheet3 "yêu cầu hoàn tiền lỗi": BE đòi HAI điều kiện — trạng thái booking
+    // VÀ settlementStatus == HELD (còn tiền đang giữ). Trước đây chỉ xét trạng
+    // thái, nên booking đã huỷ mà chưa từng thanh toán (hoặc đã hoàn/đã giải ngân)
+    // vẫn hiện nút, bấm vào là 409 INVALID_STATE "No held funds for this booking".
+    // Yêu cầu đã gửi vẫn theo dõi được ở mục "Hoàn tiền của tôi".
+    if (["REJECTED", "CANCELLED", "NO_SHOW"].includes(status) && booking.settlementStatus === "HELD") {
       actions.push({ action: "refund", label: t("booking.requestRefund"), requireMessage: true });
     }
   }

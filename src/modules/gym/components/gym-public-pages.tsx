@@ -12,6 +12,7 @@ import { SiteLayout } from "@/modules/layout/site-layout";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import { PublicReviews } from "@/modules/review/components/public-reviews";
 import { Button } from "@/shared/components/ui/button";
 import {
   Select,
@@ -655,6 +656,14 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
             </div>
           )}
         </section>
+
+        {/* UC-009: đánh giá công khai của khách đã tập tại gym (chỉ hiển thị). */}
+        <PublicReviews
+          scope="gym"
+          targetId={gymId}
+          average={g.averageRating}
+          count={g.reviewCount}
+        />
 
         {/* Bug 10: nút đặt lịch ở cuối trang. */}
         <div className="mt-8">

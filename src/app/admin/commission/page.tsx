@@ -11,6 +11,7 @@ import { adminService, type CommissionConfig } from "@/services/admin.service";
 import { useToast } from "@/lib/toast-provider";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { FieldShell } from "@/modules/forms/form-controls";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { useTranslations } from "next-intl";
 
@@ -70,28 +71,28 @@ export default function AdminCommissionPage() {
           <p className="text-sm text-destructive">{toErrorMessage(query.error)}</p>
         ) : (
           <div className="space-y-5">
+            {/* FieldShell nối nhãn với ô nhập (htmlFor/id) — <label> rời như trước
+                để lại 3 ô số không có tên khả truy cập. */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                {t("admin.commission.rateLabel")} <span className="text-destructive">*</span>
-              </label>
-              <div className="relative">
-                <Input type="number" min={0} max={100} step={0.5} value={commission}
-                  onChange={(e) => setCommission(e.target.value)} className="pr-9" />
-                <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <FieldShell label={`${t("admin.commission.rateLabel")} *`} htmlFor="commission-rate">
+                <div className="relative">
+                  <Input id="commission-rate" type="number" min={0} max={100} step={0.5} value={commission}
+                    onChange={(e) => setCommission(e.target.value)} className="pr-9" />
+                  <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </FieldShell>
               <p className="mt-1 text-[11px] text-muted-foreground">{t("admin.commission.rateHelp")}</p>
               {pctInvalid(commission) && <p className="mt-1 text-xs text-destructive">{t("common.validation.percentRange")}</p>}
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                {t("admin.commission.feeLabel")} <span className="text-destructive">*</span>
-              </label>
-              <div className="relative">
-                <Input type="number" min={0} max={100} step={0.5} value={platformFee}
-                  onChange={(e) => setPlatformFee(e.target.value)} className="pr-9" />
-                <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              </div>
+              <FieldShell label={`${t("admin.commission.feeLabel")} *`} htmlFor="commission-fee">
+                <div className="relative">
+                  <Input id="commission-fee" type="number" min={0} max={100} step={0.5} value={platformFee}
+                    onChange={(e) => setPlatformFee(e.target.value)} className="pr-9" />
+                  <Percent className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </FieldShell>
               <p className="mt-1 text-[11px] text-warning">
                 {t("admin.commission.feeNote")}
               </p>
@@ -99,10 +100,9 @@ export default function AdminCommissionPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-                {t("admin.commission.holdLabel")} <span className="text-destructive">*</span>
-              </label>
-              <Input type="number" min={0} value={holdDays} onChange={(e) => setHoldDays(e.target.value)} />
+              <FieldShell label={`${t("admin.commission.holdLabel")} *`}>
+                <Input type="number" min={0} value={holdDays} onChange={(e) => setHoldDays(e.target.value)} />
+              </FieldShell>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {t("admin.commission.holdHelp")}
               </p>

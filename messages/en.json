@@ -179,11 +179,11 @@
       "time": "Time",
       "datePlaceholder": "Pick a date",
       "timePlaceholder": "Pick a time",
-    "typeTime": "Type a time",
-    "typeTimePlaceholder": "Type a time, e.g. 0600",
-    "typeTimeInvalid": "Invalid time, or outside the allowed range",
-    "copyToOtherDays": "Apply to the other days",
-    "copiedToOtherDays": "Applied this time range to the other days",
+      "typeTime": "Type a time",
+      "typeTimePlaceholder": "Type a time, e.g. 0600",
+      "typeTimeInvalid": "Invalid time, or outside the allowed range",
+      "copyToOtherDays": "Apply to the other days",
+      "copiedToOtherDays": "Applied this time range to the other days",
       "dateTimePlaceholder": "Pick date and time",
       "dateRangePlaceholder": "Pick a date range",
       "from": "From",
@@ -664,7 +664,7 @@
       "packages": "Packages",
       "bookings": "Bookings",
       "revenue": "Revenue",
-      "withdrawals": "Withdrawals",
+      "wallet": "Wallet",
       "settings": "Settings"
     },
     "suspendedTitle": "This gym is suspended",
@@ -996,8 +996,11 @@
       "uploadDoc": "Upload document",
       "addDoc": "Add document",
       "docRequired": "Enter a document type and upload a file",
-      "certAddFailed": "Couldn’t add certificate “{name}”"
-    }
+      "certAddFailed": "Couldn’t add certificate “{name}”",
+      "assigned": "Trainer assigned",
+      "blockAdded": "Blocked time added"
+    },
+    "workspace": "Gym Operator Workspace"
   },
   "marketplace": {
     "filters": "Filters",
@@ -1129,7 +1132,8 @@
       "mapLoading": "Loading map…",
       "mapDisabled": "The map is not configured. All results are still listed below.",
       "mapError": "The map failed to load. All results are still listed below."
-    }
+    },
+    "compareMax": "Compare up to {max} items"
   },
   "trainer": {
     "nav": {
@@ -1176,7 +1180,8 @@
       "addBlockTitle": "Add a blocked range",
       "addBlock": "Add blocked range",
       "slotsInvalid": "Each slot needs start time < end time."
-    }
+    },
+    "workspace": "Trainer Workspace"
   },
   "member": {
     "nav": {
@@ -1580,7 +1585,20 @@
       "requireItem": "Please choose a service or package",
       "requirePackage": "Please choose a purchased package"
     },
-    "checkInLabel": "Check-in"
+    "checkInLabel": "Check-in",
+    "timetable": {
+      "title": "Timetable",
+      "viewLabel": "View mode",
+      "week": "Week",
+      "month": "Month",
+      "today": "Today",
+      "prev": "Previous period",
+      "next": "Next period",
+      "noSession": "No sessions",
+      "more": "+{count} more",
+      "emptyTitle": "No sessions in this period",
+      "emptyBody": "Switch to another week/month, or book a new session."
+    }
   },
   "notification": {
     "title": "Notifications",
@@ -1624,7 +1642,7 @@
     "placeholder": "At least 10 characters…",
     "submit": "Send report"
   },
-  "withdrawal": {
+  "wallet": {
     "ledger": {
       "HOLD": "Booking funds held (escrow)",
       "REFUND": "Refunded to customer",
@@ -1642,9 +1660,9 @@
       "REJECTED": "Rejected",
       "PAID": "Paid"
     },
-    "gymTitle": "Wallet & withdrawals",
+    "gymTitle": "Gym wallet",
     "adminTitle": "Withdrawal management",
-    "gymDescription": "Track your balance and request withdrawals to your gym’s bank account.",
+    "gymDescription": "Track your balance, wallet ledger and request withdrawals to your gym’s bank account.",
     "adminDescription": "Approve, reject and confirm payouts for gym withdrawal requests.",
     "create": "Create withdrawal request",
     "loadError": "Failed to load data",
@@ -1709,9 +1727,12 @@
       "pickBank": "Select a bank",
       "accountInvalid": "Invalid account number",
       "holderRequired": "Enter the account holder",
-      "noteRequired": "Enter a reason"
+      "noteRequired": "Enter a reason",
+      "payoutRefRequired": "Enter the transfer reference"
     },
-    "colBooking": "Booking"
+    "colBooking": "Booking",
+    "frozen": "Frozen",
+    "submitRequest": "Submit request"
   },
   "reportPage": {
     "title": "Operations report",
@@ -1784,7 +1805,7 @@
     "evidenceDescRequired": "Enter an evidence description",
     "evidenceSent": "Evidence submitted",
     "detailTitle": "Dispute #{id}",
-    "heldAmount": "Amount held:",
+    "heldAmount": "holding {amount}",
     "moderator": "Moderator:",
     "openFileFailed": "Couldn’t open the file",
     "fileWord": "File",
@@ -1802,7 +1823,7 @@
     "customerTitle": "My reviews",
     "gymTitle": "Gym reviews",
     "customerDescription": "View and manage the reviews you submitted.",
-    "gymDescription": "See customer reviews about the gym.",
+    "gymDescription": "See customer reviews about the gym (read-only).",
     "write": "Write a review",
     "loadError": "Couldn’t load reviews",
     "empty": "No reviews",
@@ -1811,7 +1832,6 @@
     "deleteTitle": "Delete this review?",
     "deleteBody": "The review is permanently removed. You can write a new one later.",
     "deleted": "Review deleted",
-    "reply": "Reply",
     "reportViolation": "Report a violation",
     "reportTitle": "Report {name}’s review",
     "reportHint": "A moderator will review it (hidden/removed if it violates policy). Each review can be reported once while open.",
@@ -1828,8 +1848,6 @@
     "selectBooking": "Select a booking",
     "ratingLabel": "Rating",
     "contentLabel": "Content",
-    "replySent": "Reply sent",
-    "sendReply": "Send reply",
     "mod": {
       "RESOLVED": "Resolved",
       "DISMISSED": "Dismissed",
@@ -1854,12 +1872,15 @@
     "dismiss": "Dismiss",
     "applyToReview": "Applying to review #{id}. Moderation note (optional):",
     "ptTitle": "Trainer reviews",
-    "ptDescription": "See customer reviews about you.",
+    "ptDescription": "See customer reviews about you (read-only).",
     "validation": {
       "pickBooking": "Please choose a completed session",
-      "rating": "Please pick a rating from 1 to 5",
-      "replyRequired": "Please enter your reply"
-    }
+      "rating": "Please pick a rating from 1 to 5"
+    },
+    "reviewNumber": "Review #{id}",
+    "publicTitle": "Customer reviews",
+    "publicEmptyHint": "Be the first to review after completing a session.",
+    "showMore": "Show {count} more reviews"
   },
   "auth": {
     "back": "← Back",
@@ -2096,7 +2117,9 @@
     "uploading": "Uploading…",
     "unsupportedType": "Unsupported file type",
     "allowedFormats": "Accepted formats: {formats}",
-    "failed": "Upload failed"
+    "failed": "Upload failed",
+    "tooLarge": "File is too large",
+    "maxSize": "Maximum size is {max} MB (yours is {size} MB)"
   },
   "cms": {
     "featuredTitle": "Featured on FitMatch",

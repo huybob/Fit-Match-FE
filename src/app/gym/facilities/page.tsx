@@ -11,7 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { ListState } from "@/shared/components/common/list-state";
 import {
   Select,
   SelectContent,
@@ -34,10 +34,11 @@ export default function GymFacilitiesPage() {
   const [branchId, setBranchId] = useState("");
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
-  const { data: facilities = [], isLoading } = useQuery({
+  const facilitiesQuery = useQuery({
     queryKey: ["gym-facilities"],
     queryFn: gymService.listOwnFacilities
   });
+  const facilities = facilitiesQuery.data ?? [];
   const { data: branches = [] } = useQuery({
     queryKey: ["gym-branches"],
     queryFn: gymService.listOwnBranches,
@@ -88,8 +89,6 @@ export default function GymFacilitiesPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
@@ -101,14 +100,15 @@ export default function GymFacilitiesPage() {
           </Button>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
-        ) : facilities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-card rounded-2xl border border-border">
-            <Dumbbell className="size-10 mb-3" />
-            <p className="text-sm">Chưa có tiện ích nào. Bấm &quot;{t("gym.facilities.addNew")}&quot; để bắt đầu.</p>
-          </div>
-        ) : (
+        {/* Trước đây API lỗi rơi vào nhánh "chưa có tiện ích nào" — hiểu nhầm là
+            chưa tạo gì, lại không có nút thử lại. ListState tách rõ 3 trạng thái. */}
+        <ListState
+          query={facilitiesQuery}
+          isEmpty={facilities.length === 0}
+          emptyIcon={Dumbbell}
+          emptyTitle={t("gym.facilities.title")}
+          emptyDescription={t("gym.facilities.empty")}
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {facilities.map((f) => (
               <div key={f.id} className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col">
@@ -119,7 +119,7 @@ export default function GymFacilitiesPage() {
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
                     f.active === false ? "bg-muted text-muted-foreground" : "bg-success-muted text-success"
                   }`}>
-                    {f.active === false ? t("common.states.stopped") : <><CheckCircle2 className="size-3" /> Đang hoạt động</>}
+                    {f.active === false ? t("common.states.stopped") : <><CheckCircle2 className="size-3" /> {t("common.states.active")}</>}
                   </span>
                 </div>
                 <h3 className="text-[15px] font-bold text-foreground">{f.name}</h3>
@@ -139,7 +139,7 @@ export default function GymFacilitiesPage() {
               </div>
             ))}
           </div>
-        )}
+        </ListState>
       </div>
 
       {/* Create / edit dialog */}

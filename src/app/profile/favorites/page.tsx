@@ -6,7 +6,7 @@ import { Heart, UserRound, MapPin, Building2, Scale } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { favoritesService } from "@/services/favorites.service";
 import { CompareGymsDialog, ComparePtsDialog } from "@/modules/favorite/compare-dialog";
-import { ProfileSidebar } from "@/modules/user/components/profile-sidebar";
+import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
@@ -19,6 +19,7 @@ const MAX_COMPARE = 3;
 
 /** UC-010: chọn 2-3 mục để so sánh side-by-side. */
 function useCompareSelection() {
+  const t = useTranslations();
   const { toast } = useToast();
   const [selected, setSelected] = useState<number[]>([]);
   const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ function useCompareSelection() {
     setSelected((prev) => {
       if (!checked) return prev.filter((x) => x !== id);
       if (prev.length >= MAX_COMPARE) {
-        toast({ type: "warning", title: `So sánh tối đa ${MAX_COMPARE} mục` });
+        toast({ type: "warning", title: t("marketplace.compareMax", { max: MAX_COMPARE }) });
         return prev;
       }
       return [...prev, id];

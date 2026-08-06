@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Loader2, Building2, Eye, ScrollText } from "lucide-react";
+import { AlertCircle, Loader2, Building2, Eye, ScrollText } from "lucide-react";
 import { gymService } from "@/services/gym.service";
 import type { GymPolicy, UpdateGymProfileInput } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
@@ -11,7 +11,9 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
+import { EmptyState } from "@/shared/components/common/empty-state";
+import { FieldShell } from "@/modules/forms/form-controls";
+import { PlaceAutocompleteInput } from "@/shared/components/map/place-autocomplete-input";
 import { useTranslations } from "next-intl";
 
 /** UC-017 (B-11): chính sách đặt lịch/hủy/no-show/nội quy — BE có sẵn, trước đây FE = 0. */
@@ -58,8 +60,7 @@ function PoliciesSection() {
       ) : (
         <div className="space-y-4">
           {fields.map(({ key, label, placeholder }) => (
-            <div key={key}>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{label}</label>
+            <FieldShell key={key} label={label}>
               <Textarea
                 value={(policy[key] as string) ?? ""}
                 onChange={(e) => setPolicy((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -67,7 +68,7 @@ function PoliciesSection() {
                 maxLength={2000}
                 placeholder={placeholder}
               />
-            </div>
+            </FieldShell>
           ))}
           <div className="flex justify-end">
             <Button onClick={() => save.mutate()} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -91,10 +92,12 @@ export default function GymSettingsPage() {
   const [phone, setPhone] = useState("");
   const [visible, setVisible] = useState(true);
 
-  const { data: status, isLoading } = useQuery({
+  const statusQuery = useQuery({
     queryKey: ["gym-verification-status"],
     queryFn: gymService.getVerificationStatus
   });
+  const status = statusQuery.data;
+  const isLoading = statusQuery.isLoading;
 
   useEffect(() => {
     if (!status) return;
@@ -139,8 +142,6 @@ export default function GymSettingsPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6 max-w-3xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">{t("gym.settings.title")}</h1>
@@ -149,23 +150,48 @@ export default function GymSettingsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>
+        ) : statusQuery.isError ? (
+          /* Không có nhánh này thì hồ sơ tải lỗi vẫn render ra form TRỐNG với nút
+             "Lưu hồ sơ" bật sẵn — operator gõ lại một phần rồi lưu là ghi đè
+             description/address/phone thật trên server bằng chuỗi rỗng. */
+          <EmptyState
+            icon={AlertCircle}
+            title={t("common.states.errorTitle")}
+            description={toErrorMessage(statusQuery.error)}
+            action={
+              <Button type="button" variant="outline" onClick={() => statusQuery.refetch()}>
+                {t("common.actions.retry")}
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-5">
             <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
               <h2 className="flex items-center gap-2 text-sm font-bold text-foreground mb-4"><Building2 className="size-4 text-primary" /> {t("gym.settings.profileTitle")}</h2>
+              {/* FieldShell thay cho <label> rời: nhãn được nối thật với ô nhập
+                  (htmlFor/id), nếu không trình đọc màn hình đọc các ô này là
+                  "edit text" không tên và bấm vào nhãn không focus vào ô. */}
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.settings.nameLabel")} <span className="text-destructive">*</span></label>
+                <FieldShell label={`${t("gym.settings.nameLabel")} *`}>
                   <Input value={gymName} onChange={e => setGymName(e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.description")}</label>
+                </FieldShell>
+                <FieldShell label={t("common.table.description")}>
                   <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                </FieldShell>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-                    <Input value={address} onChange={e => setAddress(e.target.value)} />
+                    {/* Sheet2#1 + Sheet3: địa chỉ gõ tay hay sai chuẩn nên admin
+                        phải bắt xác minh lại. Dùng chung ô Places Autocomplete
+                        như /gym/branches để ra địa chỉ chuẩn ngay từ đầu; không
+                        có Maps key thì ô này vẫn gõ tay được bình thường. */}
+                    <FieldShell label={t("common.table.address")} htmlFor="gym-address">
+                      <PlaceAutocompleteInput
+                        value={address}
+                        onValueChange={setAddress}
+                        onPlacePicked={(place) => setAddress(place.label)}
+                        onError={(message) => toast({ type: "error", title: message })}
+                      />
+                    </FieldShell>
                     {/* Bug S2-01: admin yêu cầu xác minh lại địa chỉ — hiện ngay cạnh ô
                         cần sửa, kèm lý do. Cờ tự gỡ sau khi lưu địa chỉ mới. */}
                     {status?.addressVerified === false && (
@@ -175,15 +201,13 @@ export default function GymSettingsPage() {
                       </p>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
+                  <FieldShell label={t("common.table.city")}>
                     <Input value={city} onChange={e => setCity(e.target.value)} />
-                  </div>
+                  </FieldShell>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
-                  <Input value={phone} onChange={e => setPhone(e.target.value)} />
-                </div>
+                <FieldShell label={t("common.table.phone")}>
+                  <Input type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+                </FieldShell>
                 <div className="flex justify-end">
                   <Button onClick={submit} disabled={saveProfile.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                     {saveProfile.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.settings.saveProfile")}
@@ -206,6 +230,9 @@ export default function GymSettingsPage() {
                   </p>
                 </div>
                 <Switch
+                  /* Switch là <button role="switch"> không có chữ bên trong —
+                     thiếu aria-label thì screen reader chỉ đọc "switch". */
+                  aria-label={t("gym.settings.visibilityTitle")}
                   checked={visible}
                   disabled={saveVisibility.isPending || notApproved}
                   onCheckedChange={(v) => { setVisible(v); saveVisibility.mutate(v); }}

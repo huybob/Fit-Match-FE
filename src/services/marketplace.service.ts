@@ -78,7 +78,12 @@ export interface GymSearchParams {
 
 export interface PtSearchParams {
   keyword?: string;
-  specialization?: string;
+  /**
+   * Sheet1#17: chọn được NHIỀU chuyên môn. paramsSerializer của axiosClient lặp
+   * key cho mảng (`?specialization=A&specialization=B`) — khớp `List<String>`
+   * mà MarketplacePtController nhận, và BE nối các giá trị bằng OR.
+   */
+  specialization?: string[];
   serviceArea?: string;
   page?: number;
   size?: number;

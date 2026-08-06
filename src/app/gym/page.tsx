@@ -17,7 +17,6 @@ import { gymService } from "@/services/gym.service";
 import { reportService } from "@/services/report.service";
 import { bookingService } from "@/services/booking.service";
 import { formatCurrency } from "@/utils/format.util";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import { useTranslations } from "next-intl";
 import type { BookingStatus } from "@/types/Booking";
 import { useFormatters } from "@/i18n/use-formatters";
@@ -70,8 +69,6 @@ export default function GymDashboardPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <WorkspaceHeader />
-
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Welcome banner */}
           <div className="flex items-center justify-between bg-card rounded-2xl border border-border px-6 py-4 shadow-sm">

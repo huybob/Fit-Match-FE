@@ -28,7 +28,6 @@ import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { FileUpload } from "@/shared/components/common/file-upload";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import {
   Select,
   SelectContent,
@@ -243,8 +242,6 @@ export default function GymVerificationPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <WorkspaceHeader />
-
         <div className="flex-1 overflow-y-auto p-6">
           {/* Page header */}
           <div className="flex items-start justify-between mb-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquareReply, Plus, Star } from "lucide-react";
+import { AlertTriangle, Plus, Star } from "lucide-react";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -27,7 +27,6 @@ import { toErrorMessage } from "@/shared/utils/error.util";
 import { useBookings } from "@/modules/booking/hooks/use-booking";
 import {
   useDeleteReview,
-  useReplyReview,
   useReportReview,
   useReviews,
   useSaveReview,
@@ -40,9 +39,29 @@ export function CustomerReviewsPage() {
 }
 
 export function TrainerReviewsPage() {
+  const t = useTranslations();
   const q = useGetMyTrainerProfile();
   if (q.isLoading) return <LoadingSkeleton />;
-  return <ReviewPage scope="pt" targetId={q.data?.id ?? 0} />;
+  /**
+   * Hồ sơ PT hỏng -> targetId = 0 -> useReviews bị `enabled: id > 0` tắt hẳn, nên
+   * query không loading cũng không error và màn hình báo "Chưa có đánh giá".
+   * PT tưởng chưa ai đánh giá mình trong khi thực ra là request hồ sơ lỗi.
+   */
+  if (q.isError || !q.data?.id) {
+    return (
+      <EmptyState
+        icon={AlertTriangle}
+        title={t("common.states.errorTitle")}
+        description={q.isError ? toErrorMessage(q.error) : t("common.states.errorDescription")}
+        action={
+          <Button type="button" variant="outline" onClick={() => q.refetch()}>
+            {t("common.actions.retry")}
+          </Button>
+        }
+      />
+    );
+  }
+  return <ReviewPage scope="pt" targetId={q.data.id} />;
 }
 
 export function GymReviewsPage() {
@@ -63,7 +82,6 @@ function ReviewPage({
 }) {
   const t = useTranslations();
   const [editing, setEditing] = useState<Review | null | undefined>();
-  const [replying, setReplying] = useState<Review | null>(null);
   const [reporting, setReporting] = useState<Review | null>(null);
   const query = useReviews(scope, targetId);
   const del = useDeleteReview();
@@ -122,11 +140,6 @@ function ReviewPage({
               <p className="mt-3 text-sm text-muted-foreground">
                 {r.comment || t("review.noContent")}
               </p>
-              {r.reply && (
-                <div className="mt-4 rounded-xl bg-muted/50 p-3 text-sm">
-                  <b>{r.repliedByName}:</b> {r.reply}
-                </div>
-              )}
               <div className="mt-4 flex gap-2">
                 {scope === "customer" ? (
                   <>
@@ -142,16 +155,11 @@ function ReviewPage({
                     />
                   </>
                 ) : (
-                  <>
-                    <Button onClick={() => setReplying(r)}>
-                      <MessageSquareReply className="size-4" />
-                      {t("review.reply")}
-                    </Button>
-                    {/* E-5 (UC-070): gym/PT báo cáo review vi phạm — hook có sẵn, trước đây 0 UI */}
-                    <Button variant="outline" onClick={() => setReporting(r)}>
-                      {t("review.reportViolation")}
-                    </Button>
-                  </>
+                  /* Review một chiều: gym/PT chỉ đọc, không phản hồi —
+                     lối duy nhất tác động là báo cáo vi phạm (UC-070). */
+                  <Button variant="outline" onClick={() => setReporting(r)}>
+                    {t("review.reportViolation")}
+                  </Button>
                 )}
               </div>
             </article>
@@ -161,9 +169,6 @@ function ReviewPage({
 
       {editing !== undefined && (
         <ReviewDialog review={editing} onClose={() => setEditing(undefined)} />
-      )}
-      {replying && (
-        <ReplyDialog review={replying} onClose={() => setReplying(null)} />
       )}
       {reporting && (
         <ReportReviewDialog review={reporting} onClose={() => setReporting(null)} />
@@ -319,45 +324,3 @@ function ReviewDialog({
   );
 }
 
-function ReplyDialog({
-  review,
-  onClose,
-}: {
-  review: Review;
-  onClose: () => void;
-}) {
-  const t = useTranslations();
-  const { toast } = useToast();
-  const mutation = useReplyReview();
-  const schemas = useReviewSchemas();
-  const form = useForm<z.infer<typeof schemas.reply>>({
-    resolver: zodResolver(schemas.reply),
-    defaultValues: { reply: review.reply ?? "" },
-  });
-
-  return (
-    <Dialog open title={t("review.reply")} onClose={onClose}>
-      <form
-        className="space-y-4"
-        onSubmit={form.handleSubmit(async (v) => {
-          try {
-            await mutation.mutateAsync({ id: review.id!, reply: v.reply });
-            toast({ type: "success", title: t("review.replySent") });
-            onClose();
-          } catch (e) {
-            toast({
-              type: "error",
-              title: t("review.requestFailed"),
-              description: toErrorMessage(e),
-            });
-          }
-        })}
-      >
-        <FieldShell label={t("review.reply")} error={form.formState.errors.reply}>
-          <Textarea {...form.register("reply")} aria-invalid={!!form.formState.errors.reply} />
-        </FieldShell>
-        <Button>{t("review.sendReply")}</Button>
-      </form>
-    </Dialog>
-  );
-}

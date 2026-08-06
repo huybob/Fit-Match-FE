@@ -49,14 +49,17 @@ export function AccountMenu({
           className,
         )}
       >
-        <UserAvatar className="size-8" src={avatarUrl} name={name} tintSeed={0} />
-        <span className="text-left leading-tight">
-          <span className="block text-sm font-semibold text-foreground">{name}</span>
+        <UserAvatar className="size-8 shrink-0" src={avatarUrl} name={name} tintSeed={0} />
+        {/* Ẩn phần chữ dưới sm: ở 375px tên + vai trò không đủ chỗ trong thanh
+            header cao 56px nên bị xuống dòng và tràn ra ngoài. Trigger đã có
+            aria-label nên ẩn chữ không làm mất tên khả truy cập. */}
+        <span className="hidden min-w-0 text-left leading-tight sm:block">
+          <span className="block truncate text-sm font-semibold text-foreground">{name}</span>
           {subLabel ? (
-            <span className="block text-[11px] text-muted-foreground">{subLabel}</span>
+            <span className="block truncate text-[11px] text-muted-foreground">{subLabel}</span>
           ) : null}
         </span>
-        <ChevronDown className="size-4 text-muted-foreground" />
+        <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-52">

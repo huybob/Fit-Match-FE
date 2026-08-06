@@ -470,7 +470,7 @@
     "saved": "Changes saved",
     "deleted": "Item deleted"
   },
-  "withdrawal": {
+  "wallet": {
     "navigation": "Withdrawals",
     "ptTitle": "Withdrawal requests",
     "ptDescription": "Create and track requests to withdraw earnings to your bank account.",

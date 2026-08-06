@@ -1,5 +1,10 @@
 "use client";
 
+// Chuyển từ modules/user/components/ sang đây khi xoá module `user` (cụm starter
+// template chết: gọi GET /users — endpoint BE không có — và trùng chức năng với
+// /admin/users). Đây là thành phần LAYOUT của khu vực thành viên, không thuộc
+// một module nghiệp vụ nào.
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {

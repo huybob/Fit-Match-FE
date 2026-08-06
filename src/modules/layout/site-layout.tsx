@@ -122,10 +122,15 @@ function SiteHeader() {
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
+                  /* `username` là optional trong AuthUser: khi BE chỉ trả fullName,
+                     nút này chỉ còn 2 icon và KHÔNG có tên khả truy cập nào — screen
+                     reader đọc thành "button". Dùng đúng chuỗi fallback như
+                     AccountMenu/WorkspaceUserMenu/sidebar, kèm aria-label cố định. */
+                  aria-label={t("common.menu.account")}
                   className="h-9 bg-primary px-3 text-primary-foreground hover:bg-primary/90"
                 >
                   <UserCircle className="size-4" />
-                  {user.username}
+                  {user.fullName ?? user.username ?? t("common.menu.accountFallback")}
                   <ChevronDown className="size-4" />
                 </Button>
               </DropdownMenuTrigger>

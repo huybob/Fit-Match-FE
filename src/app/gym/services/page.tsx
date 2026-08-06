@@ -18,7 +18,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { WorkspaceHeader } from "@/shared/components/common/workspace-header";
 import {
   Select,
   SelectContent,
@@ -124,8 +123,6 @@ export default function GymServicesPage() {
 
   return (
     <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
-      <WorkspaceHeader />
-
       <div className="flex-1 overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-6">
           <div>

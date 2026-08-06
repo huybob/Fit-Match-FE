@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     data-slot="dialog-overlay"
     className={cn(
-      "fixed inset-0 z-[90] bg-foreground/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[90] bg-overlay/70 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -42,7 +42,11 @@ const DialogContent = React.forwardRef<
         ref={ref}
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-[91] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-white/20 bg-gradient-to-b from-white to-muted/80 p-6 shadow-2xl ring-1 ring-black/5 duration-200 max-h-[90vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          // `from-white` là màu TUYỆT ĐỐI, không phải token: ở dark mode nửa trên
+          // hộp thoại vẫn trắng trong khi chữ là `text-foreground` gần trắng —
+          // tiêu đề và nút đóng gần như vô hình. Dùng `bg-card` giống
+          // AlertDialogContent để hai loại hộp thoại có cùng một mặt nền.
+          "fixed left-1/2 top-1/2 z-[91] grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl ring-1 ring-black/5 duration-200 max-h-[90vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className,
         )}
         {...props}
