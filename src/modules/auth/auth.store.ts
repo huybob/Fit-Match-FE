@@ -12,6 +12,7 @@ interface AuthState {
   status: AuthStatus;
   initialize: () => Promise<void>;
   login: (payload: LoginRequest) => Promise<AuthUser>;
+  loginWithGoogle: (idToken: string) => Promise<AuthUser>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   clearSession: () => void;
@@ -64,6 +65,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       tokenStorage.clear();
       // Chỉ ghi state khi thật sự đổi — tránh re-render thừa cả cây auth.
+      if (get().user || get().status !== "unauthenticated") {
+        set({ user: null, status: "unauthenticated" });
+      }
+      throw error;
+    }
+  },
+
+  // UC-003: cùng hậu xử lý với login() — chỉ khác ở chỗ danh tính đến từ ID token
+  // của Google thay vì username/password.
+  loginWithGoogle: async (idToken) => {
+    try {
+      saveAuthTokens(await authService.loginWithGoogle(idToken));
+      const user = await authService.getProfile();
+      set({ user, status: "authenticated" });
+      return user;
+    } catch (error) {
+      tokenStorage.clear();
       if (get().user || get().status !== "unauthenticated") {
         set({ user: null, status: "unauthenticated" });
       }

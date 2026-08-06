@@ -22,6 +22,18 @@ export function getHomeRouteForRole(role?: AuthUser["role"]) {
   }
 }
 
+/**
+ * F-8: sau khi đăng nhập, quay lại trang người dùng định vào (?returnUrl=...),
+ * mặc định là workspace của role. Chỉ nhận path nội bộ — "//evil.com" cũng bị
+ * loại vì trình duyệt hiểu đó là URL tuyệt đối (chống open-redirect).
+ */
+export function getPostLoginRoute(role: AuthUser["role"], search?: string) {
+  const query = search ?? (typeof window === "undefined" ? "" : window.location.search);
+  const returnUrl = new URLSearchParams(query).get("returnUrl");
+  const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
+  return safeReturn ?? getHomeRouteForRole(role);
+}
+
 // Role hierarchy: Customer (lowest) < PT / Gym / Moderator / Finance (middle, siblings)
 // < Admin (highest). A higher-ranked role inherits access to pages that a lower-ranked
 // role can open; siblings cannot access each other's pages.

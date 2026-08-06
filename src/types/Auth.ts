@@ -12,6 +12,11 @@ export interface RegisterRequest {
   accountType?: "CUSTOMER" | "GYM_OPERATOR";
 }
 
+/** UC-003: chỉ gửi ID token — BE đọc email/tên/avatar từ token đã ký, không tin client. */
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
