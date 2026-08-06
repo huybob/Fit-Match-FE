@@ -1962,7 +1962,10 @@
     "loginNow": "Đăng nhập ngay",
     "verifyFailedTitle": "Xác thực thất bại",
     "verifyFailedBody": "Link xác thực không hợp lệ hoặc đã hết hạn (24 giờ).",
-    "mustAgreeTerms": "Vui lòng đồng ý điều khoản sử dụng"
+    "mustAgreeTerms": "Vui lòng đồng ý điều khoản sử dụng",
+    "orContinueWith": "hoặc tiếp tục với",
+    "googleFailed": "Đăng nhập bằng Google thất bại",
+    "googleUnavailable": "Chưa dùng được đăng nhập bằng Google"
   },
   "security": {
     "subtitle": "Quản lý bảo mật tài khoản, các phiên hoạt động và lịch sử đăng nhập của bạn.",

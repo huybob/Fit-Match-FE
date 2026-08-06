@@ -8,8 +8,10 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
-import { getHomeRouteForRole } from "@/modules/auth/auth-routing";
+import { getPostLoginRoute } from "@/modules/auth/auth-routing";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { GoogleSignInButton } from "@/modules/auth/google-sign-in-button";
+import type { AuthUser } from "@/services/auth.service";
 import { authService } from "@/services/auth.service";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -57,14 +59,16 @@ export function LoginForm() {
     defaultValues: { username: "", password: "" },
   });
 
+  // Đăng nhập bằng mật khẩu và bằng Google về chung một chỗ: F-8 quay lại trang
+  // người dùng định vào, mặc định là workspace của role.
+  function afterLogin(user: AuthUser) {
+    toast({ type: "success", title: t("auth.loginSuccess") });
+    router.replace(getPostLoginRoute(user.role));
+  }
+
   async function onSubmit(values: z.infer<typeof schemas.login>) {
     try {
-      const user = await login(values);
-      toast({ type: "success", title: t("auth.loginSuccess") });
-      // F-8: quay lại trang người dùng định vào (chỉ nhận path nội bộ, chống open-redirect).
-      const returnUrl = new URLSearchParams(window.location.search).get("returnUrl");
-      const safeReturn = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : null;
-      router.replace(safeReturn ?? getHomeRouteForRole(user.role));
+      afterLogin(await login(values));
     } catch (error) {
       const code = getErrorCode(error);
       if (code === "EMAIL_NOT_VERIFIED") {
@@ -154,7 +158,8 @@ export function LoginForm() {
         </Button>
       </form>
 
-      {/* F-37: gỡ nút Google giả (không handler, BE không có OAuth) — thêm lại khi có OAuth thật. */}
+      {/* UC-003: nút thật của Google Identity Services; tự ẩn nếu chưa cấu hình client id. */}
+      <GoogleSignInButton onSuccess={afterLogin} />
 
       <p className="text-center text-sm text-muted-foreground">
         {t("auth.noAccount")}{" "}
@@ -172,6 +177,7 @@ export function RegisterForm() {
   const t = useTranslations();
   const schemas = useAuthSchemas();
   const { toast } = useToast();
+  const router = useRouter();
   const registerAccount = useAuthStore((state) => state.register);
   const [emailSent, setEmailSent] = useState(false);
   const form = useForm<z.infer<typeof schemas.register>>({
@@ -394,7 +400,17 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      {/* F-37: gỡ nút Google/Apple giả (không handler, BE không có OAuth). */}
+      {/* UC-003: đăng ký bằng Google luôn tạo tài khoản CUSTOMER (đã xác minh email
+          sẵn) — chủ phòng tập còn phải khai hồ sơ gym nên chỉ đi đường form. */}
+      {accountType === "CUSTOMER" && (
+        <GoogleSignInButton
+          text="signup_with"
+          onSuccess={(user) => {
+            toast({ type: "success", title: t("auth.loginSuccess") });
+            router.replace(getPostLoginRoute(user.role));
+          }}
+        />
+      )}
 
       <p className="text-center text-base text-muted-foreground pt-4">
         {t("auth.haveAccount")}{" "}

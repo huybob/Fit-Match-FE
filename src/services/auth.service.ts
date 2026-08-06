@@ -3,6 +3,7 @@ import type {
   AuthResponse,
   AuthUser,
   ChangePasswordRequest,
+  GoogleLoginRequest,
   LoginRequest,
   RegisterRequest,
   UpdateProfileRequest,
@@ -12,6 +13,7 @@ export type {
   AuthResponse,
   AuthUser,
   ChangePasswordRequest,
+  GoogleLoginRequest,
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
@@ -21,6 +23,11 @@ export type {
 export const authService = {
   async login(payload: LoginRequest): Promise<AuthResponse> {
     return api.post<AuthResponse, LoginRequest>("/auth/login", payload);
+  },
+
+  /** UC-003: đổi ID token của Google lấy cặp token FitMatch (tạo tài khoản nếu chưa có). */
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    return api.post<AuthResponse, GoogleLoginRequest>("/auth/google", { idToken });
   },
 
   async register(payload: RegisterRequest): Promise<AuthResponse> {

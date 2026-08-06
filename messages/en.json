@@ -1962,7 +1962,10 @@
     "loginNow": "Sign in now",
     "verifyFailedTitle": "Verification failed",
     "verifyFailedBody": "The verification link is invalid or has expired (24 hours).",
-    "mustAgreeTerms": "Please accept the terms of use"
+    "mustAgreeTerms": "Please accept the terms of use",
+    "orContinueWith": "or continue with",
+    "googleFailed": "Google sign-in failed",
+    "googleUnavailable": "Google sign-in is unavailable"
   },
   "security": {
     "subtitle": "Manage account security, active sessions and sign-in history.",
