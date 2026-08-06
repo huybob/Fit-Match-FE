@@ -664,7 +664,7 @@
       "packages": "Gói tập",
       "bookings": "Đặt lịch",
       "revenue": "Doanh thu",
-      "withdrawals": "Rút tiền",
+      "wallet": "Ví",
       "settings": "Cài đặt"
     },
     "suspendedTitle": "Phòng tập đang bị đình chỉ",
@@ -1642,7 +1642,7 @@
     "placeholder": "Tối thiểu 10 ký tự...",
     "submit": "Gửi báo cáo"
   },
-  "withdrawal": {
+  "wallet": {
     "ledger": {
       "HOLD": "Giữ tiền booking (escrow)",
       "REFUND": "Hoàn tiền cho khách",
@@ -1660,9 +1660,9 @@
       "REJECTED": "Đã từ chối",
       "PAID": "Đã chi trả"
     },
-    "gymTitle": "Ví & rút tiền",
+    "gymTitle": "Ví phòng gym",
     "adminTitle": "Quản lý rút tiền",
-    "gymDescription": "Theo dõi số dư và gửi yêu cầu rút tiền về tài khoản ngân hàng của phòng gym.",
+    "gymDescription": "Theo dõi số dư, lịch sử giao dịch ví và gửi yêu cầu rút tiền về tài khoản ngân hàng của phòng gym.",
     "adminDescription": "Duyệt, từ chối và xác nhận chi trả các yêu cầu rút tiền của phòng gym.",
     "create": "Tạo yêu cầu rút tiền",
     "loadError": "Lỗi tải dữ liệu",

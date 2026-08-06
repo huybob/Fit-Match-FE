@@ -664,7 +664,7 @@
       "packages": "Packages",
       "bookings": "Bookings",
       "revenue": "Revenue",
-      "withdrawals": "Withdrawals",
+      "wallet": "Wallet",
       "settings": "Settings"
     },
     "suspendedTitle": "This gym is suspended",
@@ -1642,7 +1642,7 @@
     "placeholder": "At least 10 characters…",
     "submit": "Send report"
   },
-  "withdrawal": {
+  "wallet": {
     "ledger": {
       "HOLD": "Booking funds held (escrow)",
       "REFUND": "Refunded to customer",
@@ -1660,9 +1660,9 @@
       "REJECTED": "Rejected",
       "PAID": "Paid"
     },
-    "gymTitle": "Wallet & withdrawals",
+    "gymTitle": "Gym wallet",
     "adminTitle": "Withdrawal management",
-    "gymDescription": "Track your balance and request withdrawals to your gym’s bank account.",
+    "gymDescription": "Track your balance, wallet ledger and request withdrawals to your gym’s bank account.",
     "adminDescription": "Approve, reject and confirm payouts for gym withdrawal requests.",
     "create": "Create withdrawal request",
     "loadError": "Failed to load data",

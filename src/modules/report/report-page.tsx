@@ -126,8 +126,8 @@ function ReportBody({ report: r, showWallet }: { report: OperationalReport; show
           <h3 className="mb-2 text-sm font-black uppercase text-muted-foreground">{t("reportPage.walletNow")}</h3>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Stat label={t("reportPage.held")} value={money(r.walletHeld)} />
-            <Stat label={t("withdrawal.pending")} value={money(r.walletPending)} />
-            <Stat label={t("withdrawal.available")} value={money(r.walletAvailable)} />
+            <Stat label={t("wallet.pending")} value={money(r.walletPending)} />
+            <Stat label={t("wallet.available")} value={money(r.walletAvailable)} />
             <Stat label={t("reportPage.frozen")} value={money(r.walletFrozen)} />
           </div>
         </div>
