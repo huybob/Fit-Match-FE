@@ -40,12 +40,19 @@ export function useDeleteReview() {
   return useMutation({ mutationFn: reviewService.remove, onSuccess: refresh(c) });
 }
 
-export function useReplyReview() {
-  const c = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, reply }: { id: number; reply: string }) =>
-      reviewService.reply(id, { reply }),
-    onSuccess: refresh(c),
+/**
+ * UC-009: review công khai (VISIBLE) của một gym/PT cho trang marketplace.
+ * Dùng cho khách vãng lai nên không cần đăng nhập; `size` để trang chi tiết
+ * hiển thị thêm khi bấm "Xem thêm".
+ */
+export function usePublicReviews(scope: "gym" | "pt", id: number, size = 5) {
+  return useQuery({
+    queryKey: [...reviewKeys.list(`public-${scope}`, id), size],
+    queryFn: () =>
+      scope === "gym"
+        ? reviewService.getGym(id, { page: 0, size })
+        : reviewService.getPt(id, { page: 0, size }),
+    enabled: id > 0,
   });
 }
 

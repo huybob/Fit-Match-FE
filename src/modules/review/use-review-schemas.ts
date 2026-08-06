@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useValidators } from "@/shared/validations/use-validators";
 
 /**
- * Schema đánh giá / phản hồi đánh giá.
+ * Schema đánh giá (review một chiều — không có phản hồi của gym).
  *
  * Schema tĩnh cũ không truyền message nên zod trả chuỗi mặc định tiếng Anh
  * ("Too small: expected number to be >=1"). Ràng buộc giữ NGUYÊN, chỉ bổ sung
@@ -30,10 +30,6 @@ export function useReviewSchemas() {
       comment: v.optionalText(t("review.contentLabel"), 2000).optional(),
     });
 
-    const reply = z.object({
-      reply: v.requiredText(t("review.reply"), { max: 2000 }),
-    });
-
-    return { review, reply };
+    return { review };
   }, [v, t]);
 }

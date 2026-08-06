@@ -1823,7 +1823,7 @@
     "customerTitle": "Đánh giá của tôi",
     "gymTitle": "Đánh giá phòng gym",
     "customerDescription": "Xem và quản lý các đánh giá bạn đã gửi.",
-    "gymDescription": "Xem các đánh giá từ khách hàng về phòng gym.",
+    "gymDescription": "Xem các đánh giá từ khách hàng về phòng gym (chỉ đọc).",
     "write": "Viết đánh giá",
     "loadError": "Không thể tải đánh giá",
     "empty": "Chưa có đánh giá",
@@ -1832,7 +1832,6 @@
     "deleteTitle": "Xóa đánh giá này?",
     "deleteBody": "Đánh giá sẽ bị gỡ vĩnh viễn. Bạn có thể viết lại sau.",
     "deleted": "Đã xóa đánh giá",
-    "reply": "Phản hồi",
     "reportViolation": "Báo cáo vi phạm",
     "reportTitle": "Báo cáo đánh giá của {name}",
     "reportHint": "Đánh giá sẽ được kiểm duyệt viên xem xét (ẩn/gỡ nếu vi phạm). Mỗi đánh giá chỉ báo cáo một lần khi đang mở.",
@@ -1849,8 +1848,6 @@
     "selectBooking": "Chọn buổi đặt lịch",
     "ratingLabel": "Điểm đánh giá",
     "contentLabel": "Nội dung",
-    "replySent": "Đã gửi phản hồi",
-    "sendReply": "Gửi phản hồi",
     "mod": {
       "RESOLVED": "Đã xử lý",
       "DISMISSED": "Đã bỏ qua",
@@ -1875,13 +1872,15 @@
     "dismiss": "Bỏ qua",
     "applyToReview": "Áp dụng cho đánh giá #{id}. Ghi chú kiểm duyệt (tùy chọn):",
     "ptTitle": "Đánh giá của huấn luyện viên",
-    "ptDescription": "Xem các đánh giá từ khách hàng về bạn.",
+    "ptDescription": "Xem các đánh giá từ khách hàng về bạn (chỉ đọc).",
     "validation": {
       "pickBooking": "Vui lòng chọn buổi tập đã hoàn thành",
-      "rating": "Vui lòng chọn số sao từ 1 đến 5",
-      "replyRequired": "Vui lòng nhập nội dung phản hồi"
+      "rating": "Vui lòng chọn số sao từ 1 đến 5"
     },
-    "reviewNumber": "Đánh giá #{id}"
+    "reviewNumber": "Đánh giá #{id}",
+    "publicTitle": "Đánh giá từ khách hàng",
+    "publicEmptyHint": "Hãy là người đầu tiên đánh giá sau khi hoàn thành buổi tập.",
+    "showMore": "Xem thêm {count} đánh giá"
   },
   "auth": {
     "back": "← Quay lại",

@@ -1823,7 +1823,7 @@
     "customerTitle": "My reviews",
     "gymTitle": "Gym reviews",
     "customerDescription": "View and manage the reviews you submitted.",
-    "gymDescription": "See customer reviews about the gym.",
+    "gymDescription": "See customer reviews about the gym (read-only).",
     "write": "Write a review",
     "loadError": "Couldn’t load reviews",
     "empty": "No reviews",
@@ -1832,7 +1832,6 @@
     "deleteTitle": "Delete this review?",
     "deleteBody": "The review is permanently removed. You can write a new one later.",
     "deleted": "Review deleted",
-    "reply": "Reply",
     "reportViolation": "Report a violation",
     "reportTitle": "Report {name}’s review",
     "reportHint": "A moderator will review it (hidden/removed if it violates policy). Each review can be reported once while open.",
@@ -1849,8 +1848,6 @@
     "selectBooking": "Select a booking",
     "ratingLabel": "Rating",
     "contentLabel": "Content",
-    "replySent": "Reply sent",
-    "sendReply": "Send reply",
     "mod": {
       "RESOLVED": "Resolved",
       "DISMISSED": "Dismissed",
@@ -1875,13 +1872,15 @@
     "dismiss": "Dismiss",
     "applyToReview": "Applying to review #{id}. Moderation note (optional):",
     "ptTitle": "Trainer reviews",
-    "ptDescription": "See customer reviews about you.",
+    "ptDescription": "See customer reviews about you (read-only).",
     "validation": {
       "pickBooking": "Please choose a completed session",
-      "rating": "Please pick a rating from 1 to 5",
-      "replyRequired": "Please enter your reply"
+      "rating": "Please pick a rating from 1 to 5"
     },
-    "reviewNumber": "Review #{id}"
+    "reviewNumber": "Review #{id}",
+    "publicTitle": "Customer reviews",
+    "publicEmptyHint": "Be the first to review after completing a session.",
+    "showMore": "Show {count} more reviews"
   },
   "auth": {
     "back": "← Back",
