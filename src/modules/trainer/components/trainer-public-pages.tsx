@@ -14,6 +14,7 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import { PublicReviews } from "@/modules/review/components/public-reviews";
 import {
   Select,
   SelectContent,
@@ -490,6 +491,16 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             </div>
           </aside>
         </div>
+
+        {/* UC-009: đánh giá công khai từ khách đã đặt buổi tập với PT này. */}
+        {pt.id != null && (
+          <PublicReviews
+            scope="pt"
+            targetId={pt.id}
+            average={pt.averageRating}
+            count={pt.reviewCount}
+          />
+        )}
       </main>
     </SiteLayout>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, MapPin } from "lucide-react";
 import { marketplaceService } from "@/services/marketplace.service";
+import { RatingStars } from "@/shared/components/common/rating-stars";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useTranslations } from "next-intl";
 
@@ -54,6 +55,7 @@ export function RealGymsSection() {
           {gyms.map((g) => (
             <Link key={g.id} href={`/gyms/${g.id}`} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
               <h3 className="text-lg font-black text-foreground group-hover:text-primary">{g.gymName}</h3>
+              <div className="mt-1"><RatingStars rating={g.averageRating} count={g.reviewCount} /></div>
               {g.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{g.description}</p>}
               <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                 {(g.city || g.address) && <span className="flex items-center gap-1"><MapPin className="size-3.5" />{g.city ?? g.address}</span>}
@@ -95,6 +97,7 @@ export function RealTrainersSection() {
             <Link key={p.id} href={`/trainers/${p.id}`} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
               <h3 className="text-lg font-black text-foreground group-hover:text-primary">{p.displayName}</h3>
               {p.specialization && <p className="mt-1 text-sm text-muted-foreground">{p.specialization}</p>}
+              <div className="mt-1"><RatingStars rating={p.averageRating} count={p.reviewCount} /></div>
               <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
                 {p.experienceYears ? <span>{t("marketplace.yearsExperienceShort", { years: p.experienceYears })}</span> : null}
                 {p.serviceArea ? <span className="flex items-center gap-1"><MapPin className="size-3.5" />{p.serviceArea}</span> : null}

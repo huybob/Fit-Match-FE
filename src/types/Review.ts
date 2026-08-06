@@ -3,7 +3,7 @@ import type { PageResponse } from "@/shared/types/api-response.type";
 export type ReviewStatus = "VISIBLE" | "HIDDEN" | "REMOVED";
 export type ReportStatus = "OPEN" | "RESOLVED" | "DISMISSED";
 
-/** ReviewResponse của BE (UC-069). */
+/** ReviewResponse của BE (UC-069). Review một chiều — không có phản hồi của gym. */
 export interface Review {
   id: number;
   bookingId?: number;
@@ -17,9 +17,6 @@ export interface Review {
   rating: number;
   comment?: string;
   status: ReviewStatus;
-  reply?: string;
-  repliedByName?: string;
-  repliedAt?: string;
   createdAt?: string;
 }
 
@@ -27,10 +24,6 @@ export interface ReviewRequest {
   bookingId: number;
   rating: number;
   comment?: string;
-}
-
-export interface ReplyRequest {
-  reply: string;
 }
 
 export interface ReportRequest {

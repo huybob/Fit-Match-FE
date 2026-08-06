@@ -1,7 +1,6 @@
 import { api } from "@/services/api";
 import type {
   ModerateReviewRequest,
-  ReplyRequest,
   ReportStatus,
   Review,
   ReviewPage,
@@ -11,7 +10,6 @@ import type {
 
 export type {
   ModerateReviewRequest,
-  ReplyRequest,
   ReportStatus,
   Review,
   ReviewPage,
@@ -27,6 +25,7 @@ function list(path: string, params?: Record<string, unknown>) {
 
 export const reviewService = {
   // ---- Customer (UC-069/070) ----
+  // Chỉ booking COMPLETED của chính khách mới đánh giá được — BE lấy gym/PT từ booking.
   getMine: () => list("/reviews/me"),
   create: (payload: ReviewRequest) => api.post<Review, ReviewRequest>("/reviews", payload),
   update: (id: number, payload: ReviewRequest) =>
@@ -37,14 +36,14 @@ export const reviewService = {
   report: (id: number, reason: string) =>
     api.post<void, { reason: string }>(`/reviews/${id}/report`, { reason }),
 
-  // ---- Public (UC-009) ----
-  getPt: (id: number) => list(`/reviews/pt/${id}`),
-  getGym: (id: number) => list(`/reviews/gym/${id}`),
+  // ---- Public (UC-009): chỉ review VISIBLE, dùng cho trang gym/PT công khai ----
+  getPt: (id: number, params?: { page?: number; size?: number }) =>
+    list(`/reviews/pt/${id}`, params),
+  getGym: (id: number, params?: { page?: number; size?: number }) =>
+    list(`/reviews/gym/${id}`, params),
 
-  // ---- Gym (UC-069/023) ----
+  // ---- Gym (UC-023): chỉ đọc để theo dõi chất lượng ----
   getGymOwn: (params?: { page?: number; size?: number }) => list("/gym/reviews", params),
-  reply: (id: number, payload: ReplyRequest) =>
-    api.put<Review, ReplyRequest>(`/reviews/${id}/reply`, payload),
 
   // ---- Moderator/Admin (UC-071) ----
   getReports: (status?: ReportStatus, params?: { page?: number; size?: number }) =>
