@@ -13,7 +13,11 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Switch } from "@/shared/components/ui/switch";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { FieldShell } from "@/modules/forms/form-controls";
-import { PlaceAutocompleteInput } from "@/shared/components/map/place-autocomplete-input";
+import {
+  PlaceAutocompleteInput,
+  type PinnedPlace,
+} from "@/shared/components/map/place-autocomplete-input";
+import { AddressPinMap } from "@/shared/components/map/address-pin-map";
 import { useTranslations } from "next-intl";
 
 /** UC-017 (B-11): chính sách đặt lịch/hủy/no-show/nội quy — BE có sẵn, trước đây FE = 0. */
@@ -89,8 +93,13 @@ export default function GymSettingsPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
   const [phone, setPhone] = useState("");
   const [visible, setVisible] = useState(true);
+  // UC-18 (V55): toạ độ trụ sở. Trước đây trang này gọi PlaceAutocompleteInput
+  // nhưng vứt bỏ lat/lng của gợi ý, nên trụ sở luôn phải nhờ BE đoán lại từ chuỗi
+  // chữ — ghim của Google chính xác hơn hẳn.
+  const [coords, setCoords] = useState<PinnedPlace | null>(null);
 
   const statusQuery = useQuery({
     queryKey: ["gym-verification-status"],
@@ -105,7 +114,16 @@ export default function GymSettingsPage() {
     setDescription(status.description ?? "");
     setAddress(status.address ?? "");
     setCity(status.city ?? "");
+    setDistrict(status.district ?? "");
     setPhone(status.phone ?? "");
+    // Nạp lại toạ độ đang lưu và gửi nguyên vẹn khi lưu: BE hiểu đó là "operator
+    // đã ghim" nên không geocode lại địa chỉ không đổi (đỡ một lượt gọi Google)
+    // và không đánh mất vị trí đã chỉnh tay.
+    setCoords(
+      status.latitude != null && status.longitude != null
+        ? { lat: status.latitude, lng: status.longitude, pinnedByUser: status.coordinatesPinned }
+        : null,
+    );
     // B-9/A-12: init toggle từ trạng thái thật trên server — trước đây hardcode true
     // khiến operator bật/tắt "mù" (tưởng đang public khi đang ẩn).
     setVisible(status.active ?? false);
@@ -136,7 +154,13 @@ export default function GymSettingsPage() {
       description: description.trim() || undefined,
       address: address.trim() || undefined,
       city: city.trim() || undefined,
-      phone: phone.trim() || undefined
+      district: district.trim() || undefined,
+      phone: phone.trim() || undefined,
+      latitude: coords?.lat,
+      longitude: coords?.lng,
+      placeId: coords?.placeId,
+      formattedAddress: coords?.formattedAddress,
+      coordinatesPinned: coords?.pinnedByUser
     });
   }
 
@@ -187,11 +211,51 @@ export default function GymSettingsPage() {
                     <FieldShell label={t("common.table.address")} htmlFor="gym-address">
                       <PlaceAutocompleteInput
                         value={address}
-                        onValueChange={setAddress}
-                        onPlacePicked={(place) => setAddress(place.label)}
+                        onValueChange={(value) => {
+                          setAddress(value);
+                          // Sửa lại chữ sau khi đã chọn gợi ý -> toạ độ cũ không còn
+                          // khớp; bỏ đi để BE geocode lại đúng chuỗi được lưu.
+                          setCoords(null);
+                        }}
+                        onPlacePicked={(place) => {
+                          // Lưu địa chỉ ĐẦY ĐỦ chứ không phải tên địa điểm: cột
+                          // address là thứ admin soát và BE geocode lại về sau.
+                          setAddress(place.formattedAddress);
+                          setCoords({
+                            lat: place.lat,
+                            lng: place.lng,
+                            placeId: place.placeId,
+                            formattedAddress: place.formattedAddress,
+                          });
+                          if (place.district) setDistrict(place.district);
+                          if (place.city) setCity(place.city);
+                        }}
                         onError={(message) => toast({ type: "error", title: message })}
                       />
                     </FieldShell>
+                    {/* UC-18 (V60): nhìn thấy ghim rơi ở đâu mới biết Google đặt sai. */}
+                    <AddressPinMap
+                      className="mt-2"
+                      value={coords ? { lat: coords.lat, lng: coords.lng } : null}
+                      onChange={(position) =>
+                        setCoords((prev) => ({
+                          ...prev,
+                          lat: position.lat,
+                          lng: position.lng,
+                          pinnedByUser: true,
+                        }))
+                      }
+                    />
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      {coords
+                        ? t(coords.pinnedByUser
+                            ? "gym.branches.coordsAdjusted"
+                            : "gym.branches.coordsPinned", {
+                            lat: coords.lat.toFixed(5),
+                            lng: coords.lng.toFixed(5),
+                          })
+                        : t("gym.branches.coordsAuto")}
+                    </p>
                     {/* Bug S2-01: admin yêu cầu xác minh lại địa chỉ — hiện ngay cạnh ô
                         cần sửa, kèm lý do. Cờ tự gỡ sau khi lưu địa chỉ mới. */}
                     {status?.addressVerified === false && (
@@ -201,9 +265,16 @@ export default function GymSettingsPage() {
                       </p>
                     )}
                   </div>
-                  <FieldShell label={t("common.table.city")}>
-                    <Input value={city} onChange={e => setCity(e.target.value)} />
-                  </FieldShell>
+                  <div className="space-y-4">
+                    <FieldShell label={t("common.table.city")}>
+                      <Input value={city} onChange={e => setCity(e.target.value)} />
+                    </FieldShell>
+                    {/* UC-18: quận/huyện đi vào chuỗi geocode của BE. Tự điền khi
+                        chọn gợi ý Google, vẫn gõ tay được khi không có Maps key. */}
+                    <FieldShell label={t("common.table.district")}>
+                      <Input value={district} onChange={e => setDistrict(e.target.value)} />
+                    </FieldShell>
+                  </div>
                 </div>
                 <FieldShell label={t("common.table.phone")}>
                   <Input type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} />

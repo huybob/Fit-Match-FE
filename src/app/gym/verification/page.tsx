@@ -26,6 +26,11 @@ import type {
 import { useToast } from "@/lib/toast-provider";
 import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { FileUpload } from "@/shared/components/common/file-upload";
+import {
+  PlaceAutocompleteInput,
+  type PinnedPlace,
+} from "@/shared/components/map/place-autocomplete-input";
+import { AddressPinMap } from "@/shared/components/map/address-pin-map";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -159,7 +164,12 @@ export default function GymVerificationPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
   const [phone, setPhone] = useState("");
+  // UC-18 (V55) / bug S2-01: gym mới trước đây gõ địa chỉ bằng <Input> thường nên
+  // sinh ra hồ sơ phi chuẩn ngay từ lúc đăng ký — đúng nguyên nhân Admin phải bắt
+  // xác minh lại địa chỉ. Chọn từ gợi ý Google là có sẵn toạ độ chuẩn.
+  const [coords, setCoords] = useState<PinnedPlace | null>(null);
   const [documents, setDocuments] = useState<GymDocumentDto[]>(
     DOC_TYPES.map((d) => ({ documentType: d.type, fileUrl: "" })),
   );
@@ -175,7 +185,15 @@ export default function GymVerificationPage() {
     if (status.description) setDescription(status.description);
     if (status.address) setAddress(status.address);
     if (status.city) setCity(status.city);
+    if (status.district) setDistrict(status.district);
     if (status.phone) setPhone(status.phone);
+    if (status.latitude != null && status.longitude != null) {
+      setCoords({
+        lat: status.latitude,
+        lng: status.longitude,
+        pinnedByUser: status.coordinatesPinned,
+      });
+    }
     if (status.documents?.length) setDocuments(status.documents);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.verificationStatus]);
@@ -230,7 +248,13 @@ export default function GymVerificationPage() {
       description: description.trim() || undefined,
       address: address.trim() || undefined,
       city: city.trim() || undefined,
+      district: district.trim() || undefined,
       phone: phone.trim() || undefined,
+      latitude: coords?.lat,
+      longitude: coords?.lng,
+      placeId: coords?.placeId,
+      formattedAddress: coords?.formattedAddress,
+      coordinatesPinned: coords?.pinnedByUser,
       documents: validDocs.map(({ documentType, fileUrl }) => ({ documentType, fileUrl })),
     });
   }
@@ -386,22 +410,75 @@ export default function GymVerificationPage() {
                       disabled={formLocked}
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
+                    {/* UC-18 (V55): chọn từ gợi ý Google để hồ sơ có toạ độ chuẩn
+                        ngay từ lúc đăng ký và xuất hiện đúng chỗ khi khách tìm
+                        "gym quanh đây". Không có Maps key thì ô này vẫn gõ tay
+                        được bình thường, BE sẽ tự geocode chuỗi địa chỉ khi lưu. */}
+                    <PlaceAutocompleteInput
+                      value={address}
+                      onValueChange={(value) => {
+                        setAddress(value);
+                        // Sửa chữ sau khi đã chọn gợi ý -> toạ độ cũ không còn khớp.
+                        setCoords(null);
+                      }}
+                      onPlacePicked={(place) => {
+                        setAddress(place.formattedAddress);
+                        setCoords({
+                          lat: place.lat,
+                          lng: place.lng,
+                          placeId: place.placeId,
+                          formattedAddress: place.formattedAddress,
+                        });
+                        if (place.district) setDistrict(place.district);
+                        if (place.city) setCity(place.city);
+                      }}
+                      onError={(message) => toast({ type: "warning", title: message })}
+                      placeholder={t("gym.branches.addressPlaceholder")}
+                      disabled={formLocked}
+                    />
+                    {/* UC-18 (V60): hồ sơ khoá (PENDING/APPROVED) chỉ xem, không kéo được. */}
+                    <AddressPinMap
+                      className="mt-2"
+                      disabled={formLocked}
+                      value={coords ? { lat: coords.lat, lng: coords.lng } : null}
+                      onChange={(position) =>
+                        setCoords((prev) => ({
+                          ...prev,
+                          lat: position.lat,
+                          lng: position.lng,
+                          pinnedByUser: true,
+                        }))
+                      }
+                    />
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      {coords
+                        ? t(coords.pinnedByUser
+                            ? "gym.branches.coordsAdjusted"
+                            : "gym.branches.coordsPinned", {
+                            lat: coords.lat.toFixed(5),
+                            lng: coords.lng.toFixed(5),
+                          })
+                        : t("gym.branches.coordsAuto")}
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-                      <Input
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder={t("gym.branches.addressPlaceholder")}
-                        disabled={formLocked}
-                      />
-                    </div>
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
                       <Input
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder={t("gym.branches.cityPlaceholder")}
+                        disabled={formLocked}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.district")}</label>
+                      <Input
+                        value={district}
+                        onChange={(e) => setDistrict(e.target.value)}
+                        placeholder={t("gym.branches.districtPlaceholder")}
                         disabled={formLocked}
                       />
                     </div>

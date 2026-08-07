@@ -160,6 +160,7 @@
       "time": "Time",
       "address": "Address",
       "city": "City",
+      "district": "District",
       "phone": "Phone"
     },
     "pagination": {
@@ -287,7 +288,8 @@
       "cms": "CMS",
       "notifications": "Notification templates",
       "masterData": "Master data",
-      "auditLogs": "Audit logs"
+      "auditLogs": "Audit logs",
+      "geocoding": "Map coordinates"
     },
     "auditLogs": {
       "title": "Audit logs",
@@ -651,6 +653,24 @@
       "title": "You do not have access to this page",
       "body": "The {role} account is not authorised for this area. Contact a system administrator if you need access.",
       "backToWorkspace": "Back to your workspace"
+    },
+    "geocoding": {
+      "title": "Map coordinates",
+      "subtitle": "Gyms without coordinates never show up in \"near me\" search. Geocoding runs silently, so nothing surfaces as an error — track it here.",
+      "runBackfill": "Backfill coordinates ({limit} records)",
+      "backfillDone": "Backfilled {updated} record(s), {remaining} remaining.",
+      "disabledNotice": "app.google-maps.api-key is not configured — geocoding is off and these numbers will not change.",
+      "gymsGeocoded": "Gyms with coordinates",
+      "branchesGeocoded": "Branches with coordinates",
+      "percentCovered": "{percent}% covered",
+      "imprecise": "Imprecise addresses",
+      "impreciseHint": "Matched only to ward/district; the gym has been asked to re-verify.",
+      "pinned": "Manually pinned",
+      "pinnedHint": "Pinned by the gym owner — the refresh job leaves these alone.",
+      "missing": "Missing coordinates",
+      "missingHint": "Records that cannot appear in radius search yet.",
+      "cached": "Cached answers",
+      "cachedHint": "Each one is a Google call already saved."
     }
   },
   "gym": {
@@ -784,6 +804,7 @@
       "namePlaceholder": "e.g. FitMatch District 1",
       "addressPlaceholder": "Street address…",
       "cityPlaceholder": "Ho Chi Minh City",
+      "districtPlaceholder": "District 1",
       "amenitiesInput": "Amenities (comma separated)",
       "capacityInput": "Max capacity per slot",
       "capacityPlaceholder": "Leave blank = unlimited",
@@ -796,7 +817,11 @@
       "open": "Open",
       "hoursInvalid": "Each open day needs open time < close time.",
       "coordsAuto": "Coordinates will be resolved from the address on save.",
-      "coordsPinned": "Pinned coordinates: {lat}, {lng}"
+      "coordsPinned": "Pinned coordinates: {lat}, {lng}",
+      "coordsAdjusted": "You adjusted the pin manually: {lat}, {lng}",
+      "pinMapDragHint": "Pin in the wrong spot? Drag it or click the map to correct it.",
+      "pinMapEmptyHint": "Pick an address from the suggestions, or click the map to drop a pin.",
+      "pinMapReadOnly": "Location on the map."
     },
     "services": {
       "title": "Services",
