@@ -1,5 +1,7 @@
 export const env = {
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  // `||` chứ không phải `??`: CI truyền biến chưa khai secret thành chuỗi RỖNG, mà
+  // chuỗi rỗng thì `??` không cứu — phải coi rỗng như chưa cấu hình.
+  appUrl: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api",
   /**
    * UC-18: key Maps JavaScript API dùng ở TRÌNH DUYỆT (bản đồ + Places
