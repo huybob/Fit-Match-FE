@@ -65,6 +65,22 @@ for (const f of files) {
     fail("class-sai", f, lineOf(s, m.index), m[0]);
 }
 
+// ── Gate 4b: cú pháp biến CSS của Tailwind v3 còn sót lại ───────────────────
+// `max-h-[--foo]` là cú pháp v3. Tailwind v4 dịch nó thành `max-height: --foo`
+// (ident trần) — CSS sai, trình duyệt vứt bỏ, utility im lặng biến mất.
+// Ví dụ thật: SelectContent mất max-height nên dropdown 42 ngân hàng tràn khỏi
+// màn hình và không scroll được. Dùng `[var(--foo)]` hoặc `(--foo)`.
+for (const f of files) {
+  const s = read(f);
+  const lines = s.split("\n");
+  for (const m of s.matchAll(/[\w-]+-\[--[a-zA-Z][\w-]*\]/g)) {
+    const line = lineOf(s, m.index);
+    // Comment được phép nhắc tới cú pháp sai để giải thích (xem select.tsx).
+    if (/^\s*(\/\/|\*|\{\/\*)/.test(lines[line - 1] ?? "")) continue;
+    fail("tw-v3-var", f, line, `${m[0]} → dùng [var(--…)] hoặc (--…)`);
+  }
+}
+
 // ── Gate 5: locale bị hardcode trong Intl / toLocale* ───────────────────────
 // Ngày phải theo ngôn ngữ đang chọn -> dùng useFormatters().
 for (const f of files) {

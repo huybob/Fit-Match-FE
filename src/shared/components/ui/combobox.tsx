@@ -110,7 +110,8 @@ export function Combobox({
 
       <PopoverContent
         align="start"
-        className={cn("w-[--radix-popover-trigger-width] min-w-52 p-0", contentClassName)}
+        // Tailwind v4 không hiểu cú pháp rút gọn `[--var]` của v3 (xem select.tsx).
+        className={cn("w-[var(--radix-popover-trigger-width)] min-w-52 p-0", contentClassName)}
       >
         <Command
           filter={(itemValue, search, keywords) => {

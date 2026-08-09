@@ -71,7 +71,11 @@ const SelectContent = React.forwardRef<
       ref={ref}
       data-slot="select-content"
       className={cn(
-        "relative z-[95] max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        // Phải là `max-h-[var(--…)]`, KHÔNG phải cú pháp rút gọn `max-h-[--…]` của
+        // Tailwind v3: v4 dịch cú pháp cũ thành `max-height: --radix-…` (ident trần,
+        // CSS sai) nên trình duyệt vứt bỏ dòng đó. Mất max-height thì danh sách dài
+        // (vd 42 ngân hàng) tràn khỏi màn hình và không scroll được.
+        "relative z-[95] max-h-[var(--radix-select-content-available-height)] min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-lg ring-1 ring-black/5 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,

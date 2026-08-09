@@ -131,7 +131,8 @@ export function MultiSelect({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="start" className="w-[--radix-popover-trigger-width] min-w-56 p-0">
+      {/* Tailwind v4 không hiểu cú pháp rút gọn `[--var]` của v3 (xem select.tsx). */}
+      <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] min-w-56 p-0">
         <Command
           filter={(itemValue, search, keywords) => {
             const haystack = `${itemValue} ${keywords?.join(" ") ?? ""}`.toLowerCase();
