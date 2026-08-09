@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Calendar, Heart, User, Shield, Bell, LogOut, TrendingUp,
+  LayoutDashboard, Calendar, Heart, User, Shield, Bell, LogOut, TrendingUp, Wallet, CreditCard,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
@@ -19,6 +19,9 @@ const links = [
   { href: "/profile/bookings", navKey: "bookings", icon: Calendar },
   { href: "/profile/measurements", navKey: "progress", icon: TrendingUp },
   { href: "/profile/favorites", navKey: "favorites", icon: Heart },
+  // V61: tiền hoàn từ refund/tranh chấp về ví thay vì chờ chuyển khoản tay.
+  { href: "/profile/wallet", navKey: "wallet", icon: Wallet },
+  { href: "/profile/bank-accounts", navKey: "bankAccounts", icon: CreditCard },
   { href: "/profile", navKey: "profile", icon: User },
   { href: "/change-password", navKey: "security", icon: Shield },
 ] as const;
