@@ -226,7 +226,11 @@ function AssignmentsTab({ ptId }: { ptId: number }) {
   });
 
   const options =
-    targetType === "branch" ? (branches.data ?? []).map((b) => ({ id: b.id, name: b.name }))
+    // /gym/branches trả về cả chi nhánh đã ngừng (màn quản lý cần thấy để bật
+    // lại), nhưng gán PT vào đó thì vô nghĩa — chi nhánh ngừng không nhận booking.
+    targetType === "branch" ? (branches.data ?? [])
+      .filter((b) => b.active !== false)
+      .map((b) => ({ id: b.id, name: b.name }))
       : targetType === "service" ? (services.data ?? []).map((s) => ({ id: s.id, name: s.name }))
         : (packages.data ?? []).map((p) => ({ id: p.id, name: p.name }));
 
