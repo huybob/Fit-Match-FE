@@ -1190,7 +1190,9 @@
       "progress": "Tiến trình",
       "favorites": "Yêu thích",
       "profile": "Hồ sơ",
-      "security": "Bảo mật"
+      "security": "Bảo mật",
+      "wallet": "Ví của tôi",
+      "bankAccounts": "Tài khoản ngân hàng"
     },
     "sidebar": {
       "tagline": "Quản lý hành trình thể hình",
@@ -1652,7 +1654,8 @@
       "UNFREEZE": "Gỡ đóng băng",
       "DISPUTE_HOLD": "Giữ lại do tranh chấp",
       "MOVE_TO_PENDING": "Chuyển sang chờ giải ngân",
-      "WITHDRAWAL": "Chi trả rút tiền"
+      "WITHDRAWAL": "Chi trả rút tiền",
+      "REFUND_CREDIT": "Tiền hoàn vào ví"
     },
     "status": {
       "PENDING": "Chờ duyệt",
@@ -1728,11 +1731,57 @@
       "accountInvalid": "Số tài khoản không hợp lệ",
       "holderRequired": "Nhập chủ tài khoản",
       "noteRequired": "Nhập lý do",
-      "payoutRefRequired": "Nhập mã giao dịch chuyển khoản"
+      "payoutRefRequired": "Nhập mã giao dịch chuyển khoản",
+      "amountWhole": "Số tiền phải là số nguyên đồng",
+      "pickAccount": "Chọn tài khoản nhận tiền",
+      "accountFormat": "Số tài khoản chỉ gồm chữ và số"
     },
     "colBooking": "Buổi đặt",
     "frozen": "Đóng băng",
-    "submitRequest": "Gửi yêu cầu"
+    "submitRequest": "Gửi yêu cầu",
+    "title": {
+      "gym": "Ví phòng gym",
+      "customer": "Ví của tôi",
+      "admin": "Quản lý rút tiền"
+    },
+    "description": {
+      "gym": "Theo dõi số dư, lịch sử giao dịch ví, trả tiền công cho PT và gửi yêu cầu rút tiền về tài khoản ngân hàng của phòng gym.",
+      "customer": "Tiền hoàn từ các yêu cầu hoàn tiền và tranh chấp được cộng vào đây; bạn có thể rút về tài khoản ngân hàng bất cứ lúc nào.",
+      "admin": "Duyệt, từ chối và xác nhận chi trả yêu cầu rút tiền của phòng gym, huấn luyện viên và khách hàng."
+    },
+    "ownerType": {
+      "GYM": "Phòng gym",
+      "CUSTOMER": "Khách hàng"
+    },
+    "allOwnerTypes": "Tất cả loại chủ ví",
+    "refCode": "Mã đối soát:",
+    "autoMatched": "Tự động xác nhận từ biến động số dư ngân hàng",
+    "scanToPay": "Quét mã để chuyển khoản",
+    "transferContent": "Nội dung CK:",
+    "autoMatchHint": "Chuyển khoản đúng số tiền và giữ nguyên nội dung; hệ thống sẽ tự chuyển lệnh sang “Đã chi trả” khi ngân hàng báo trừ tiền.",
+    "qrUnavailable": "Lệnh này thiếu mã ngân hàng nên không dựng được QR — chuyển khoản thủ công rồi bấm “Đã chuyển khoản”.",
+    "approveHint": "Sau khi duyệt, hệ thống sinh mã QR trỏ tới tài khoản người thụ hưởng để bạn quét và chuyển khoản.",
+    "beneficiaryLabel": "Tài khoản nhận tiền",
+    "selectAccount": "Chọn tài khoản ngân hàng",
+    "noBankAccount": "Chưa có tài khoản ngân hàng",
+    "noBankAccountHint": "Thêm ít nhất một tài khoản thụ hưởng trước khi tạo lệnh rút tiền.",
+    "manageBankAccounts": "Quản lý tài khoản ngân hàng",
+    "bankAccounts": {
+      "title": "Tài khoản ngân hàng",
+      "description": "Tài khoản dùng để nhận tiền rút. Quản trị viên dựa vào thông tin này để chuyển khoản, nên hãy kiểm tra kỹ số tài khoản và tên chủ tài khoản.",
+      "add": "Thêm tài khoản",
+      "edit": "Sửa tài khoản",
+      "empty": "Chưa có tài khoản ngân hàng nào",
+      "emptyHint": "Thêm tài khoản để có thể tạo lệnh rút tiền.",
+      "default": "Mặc định",
+      "setDefault": "Đặt mặc định",
+      "defaultUpdated": "Đã đổi tài khoản mặc định",
+      "markDefault": "Dùng làm tài khoản mặc định",
+      "saved": "Đã lưu tài khoản ngân hàng",
+      "deleted": "Đã xoá tài khoản ngân hàng",
+      "deleteTitle": "Xoá tài khoản ngân hàng",
+      "deleteConfirm": "Xoá {bank} — {account}? Các lệnh rút đã gửi vẫn giữ thông tin cũ và không bị ảnh hưởng."
+    }
   },
   "reportPage": {
     "title": "Báo cáo vận hành",

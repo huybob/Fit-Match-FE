@@ -1190,7 +1190,9 @@
       "progress": "Progress",
       "favorites": "Favourites",
       "profile": "Profile",
-      "security": "Security"
+      "security": "Security",
+      "wallet": "My wallet",
+      "bankAccounts": "Bank accounts"
     },
     "sidebar": {
       "tagline": "Manage your fitness journey",
@@ -1652,7 +1654,8 @@
       "UNFREEZE": "Unfrozen",
       "DISPUTE_HOLD": "Held for dispute",
       "MOVE_TO_PENDING": "Moved to pending payout",
-      "WITHDRAWAL": "Withdrawal payout"
+      "WITHDRAWAL": "Withdrawal payout",
+      "REFUND_CREDIT": "Refund credited to wallet"
     },
     "status": {
       "PENDING": "Pending",
@@ -1728,11 +1731,57 @@
       "accountInvalid": "Invalid account number",
       "holderRequired": "Enter the account holder",
       "noteRequired": "Enter a reason",
-      "payoutRefRequired": "Enter the transfer reference"
+      "payoutRefRequired": "Enter the transfer reference",
+      "amountWhole": "Amount must be a whole number of VND",
+      "pickAccount": "Select a beneficiary account",
+      "accountFormat": "Account number may contain letters and digits only"
     },
     "colBooking": "Booking",
     "frozen": "Frozen",
-    "submitRequest": "Submit request"
+    "submitRequest": "Submit request",
+    "title": {
+      "gym": "Gym wallet",
+      "customer": "My wallet",
+      "admin": "Withdrawal management"
+    },
+    "description": {
+      "gym": "Track your balance and ledger, pay your trainers, and request withdrawals to the gym's bank account.",
+      "customer": "Refunds from refund requests and disputes land here; withdraw to your bank account any time.",
+      "admin": "Approve, reject and settle withdrawal requests from gyms, trainers and customers."
+    },
+    "ownerType": {
+      "GYM": "Gym",
+      "CUSTOMER": "Customer"
+    },
+    "allOwnerTypes": "All wallet owners",
+    "refCode": "Reconciliation code:",
+    "autoMatched": "Auto-confirmed from the bank statement",
+    "scanToPay": "Scan to transfer",
+    "transferContent": "Transfer note:",
+    "autoMatchHint": "Transfer the exact amount and keep the note unchanged; the request flips to “Paid” automatically once the bank reports the debit.",
+    "qrUnavailable": "This request has no bank code, so no QR can be built — transfer manually, then click “Marked as transferred”.",
+    "approveHint": "Once approved, a QR code pointing at the beneficiary account is generated for you to scan and transfer.",
+    "beneficiaryLabel": "Beneficiary account",
+    "selectAccount": "Select a bank account",
+    "noBankAccount": "No bank account yet",
+    "noBankAccountHint": "Add at least one beneficiary account before requesting a withdrawal.",
+    "manageBankAccounts": "Manage bank accounts",
+    "bankAccounts": {
+      "title": "Bank accounts",
+      "description": "Accounts used to receive withdrawals. Admins transfer based on these details, so double-check the account number and holder name.",
+      "add": "Add account",
+      "edit": "Edit account",
+      "empty": "No bank accounts yet",
+      "emptyHint": "Add an account so you can request withdrawals.",
+      "default": "Default",
+      "setDefault": "Set as default",
+      "defaultUpdated": "Default account updated",
+      "markDefault": "Use as default account",
+      "saved": "Bank account saved",
+      "deleted": "Bank account removed",
+      "deleteTitle": "Remove bank account",
+      "deleteConfirm": "Remove {bank} — {account}? Withdrawal requests already submitted keep their own copy and are unaffected."
+    }
   },
   "reportPage": {
     "title": "Operations report",
