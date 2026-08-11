@@ -12,6 +12,8 @@ import { SiteLayout } from "@/modules/layout/site-layout";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import { ImageGallery } from "@/shared/components/media/image-gallery";
+import { toGalleryImages } from "@/shared/utils/media.util";
 import { PublicReviews } from "@/modules/review/components/public-reviews";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -427,9 +429,9 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
   const hoursLabel = allHours.length
     ? `${allHours.reduce((min, h) => (h.openTime! < min ? h.openTime! : min), allHours[0].openTime!).slice(0, 5)}–${allHours.reduce((max, h) => (h.closeTime! > max ? h.closeTime! : max), allHours[0].closeTime!).slice(0, 5)}`
     : t("common.states.notSet");
-  const gymPhotos = (media.data ?? []).filter((m) => m.branchId == null && m.url);
+  const gymPhotos = toGalleryImages((media.data ?? []).filter((m) => m.branchId == null));
   const photosOfBranch = (branchId?: number) =>
-    (media.data ?? []).filter((m) => m.url && m.branchId != null && m.branchId === branchId);
+    toGalleryImages((media.data ?? []).filter((m) => m.branchId != null && m.branchId === branchId));
   const bookingHref = `/profile/bookings?create=1&gymId=${gymId}`;
   return (
     <SiteLayout>
@@ -527,12 +529,9 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
         {!!gymPhotos.length && (
           <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 className="flex items-center gap-2 text-lg font-bold text-foreground"><Sparkles className="size-5 text-primary" /> {t("marketplace.photos")}</h2>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {gymPhotos.map((m) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={m.id} src={m.url} alt={m.caption || t("marketplace.gymPhoto")} className="h-32 w-full rounded-xl object-cover" />
-              ))}
-            </div>
+            {/* V64: lưới dùng thumbnail + mở lightbox; ảnh hỏng/URL hết hạn rơi
+                về ô dự phòng thay vì icon "ảnh vỡ" của trình duyệt. */}
+            <ImageGallery images={gymPhotos} columns={4} className="mt-4" />
           </section>
         )}
 
@@ -622,14 +621,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                     </div>
                   )}
                   {/* Bug 10/11: ảnh riêng của từng chi nhánh. */}
-                  {!!photosOfBranch(b.id).length && (
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {photosOfBranch(b.id).map((m) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={m.id} src={m.url} alt={m.caption || b.name || t("marketplace.branchPhoto")} className="h-20 w-full rounded-lg object-cover" />
-                      ))}
-                    </div>
-                  )}
+                  <ImageGallery images={photosOfBranch(b.id)} columns={3} className="mt-3" />
                 </div>
               ))}
             </div>

@@ -37,6 +37,7 @@ import { gymService } from "@/services/gym.service";
 import { healthService } from "@/services/health.service";
 import {
   BookingTimeline,
+  CheckInPhotosSection,
   CorrectAttendanceDialog,
   PriceBreakdown,
   RefundStatusSection,
@@ -378,6 +379,8 @@ function BookingDetailDialog({ booking, scope, onClose, onPay }: {
         )}
         {/* C-11 + C-6: timeline trạng thái + ghi chú buổi tập */}
         <BookingTimeline bookingId={booking.id} scope={scope} />
+        {/* UC-046 (V64): ảnh check-in làm bằng chứng buổi tập. */}
+        <CheckInPhotosSection booking={booking} scope={scope} />
         <SessionNotesSection booking={booking} scope={scope} />
       </div>
 

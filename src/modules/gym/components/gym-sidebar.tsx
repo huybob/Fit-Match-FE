@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
-  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users, Package,
+  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users, Package, Images,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ const gymLinks = [
   { href: "/gym/verification", navKey: "verification", icon: ShieldCheck },
   { href: "/gym/facilities", navKey: "facilities", icon: Dumbbell },
   { href: "/gym/branches", navKey: "branches", icon: GitBranch },
+  { href: "/gym/media", navKey: "media", icon: Images },
   { href: "/gym/pts", navKey: "trainers", icon: Users },
   { href: "/gym/services", navKey: "services", icon: Sparkles },
   { href: "/gym/packages", navKey: "packages", icon: Package },

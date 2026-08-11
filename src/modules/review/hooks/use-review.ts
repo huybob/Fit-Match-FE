@@ -56,6 +56,16 @@ export function usePublicReviews(scope: "gym" | "pt", id: number, size = 5) {
   });
 }
 
+/** UC-009: điểm trung bình + phổ điểm sao của gym/PT cho trang chi tiết. */
+export function useRatingSummary(scope: "gym" | "pt", id: number) {
+  return useQuery({
+    queryKey: [...reviewKeys.all, "rating", scope, id],
+    queryFn: () =>
+      scope === "gym" ? reviewService.getGymRating(id) : reviewService.getPtRating(id),
+    enabled: id > 0,
+  });
+}
+
 /** UC-070: báo cáo review công khai có vấn đề. */
 export function useReportReview() {
   return useMutation({

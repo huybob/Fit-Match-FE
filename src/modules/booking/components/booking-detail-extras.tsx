@@ -7,9 +7,12 @@ import { formatCurrency } from "@/utils/format.util";
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, Loader2, NotebookPen, Trash2 } from "lucide-react";
+import { Camera, Clock3, Loader2, NotebookPen, Trash2 } from "lucide-react";
 import { useToast } from "@/lib/toast-provider";
 import { bookingService, type Booking, type BookingStatus } from "@/services/booking.service";
+import { mediaService } from "@/services/media.service";
+import { ImageGallery } from "@/shared/components/media/image-gallery";
+import { ImageUploader } from "@/shared/components/media/image-uploader";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
@@ -106,6 +109,83 @@ export function BookingTimeline({ bookingId, scope }: { bookingId: number; scope
             ))}
           </ul>
         )
+      )}
+    </div>
+  );
+}
+
+/**
+ * UC-046 (V64): ảnh check-in của buổi tập — khách chụp làm bằng chứng đã tới,
+ * gym/PT xem được khi xử lý tranh chấp điểm danh.
+ *
+ * Ảnh gắn với booking qua Media system dùng chung (entityType CHECK_IN). Khác với
+ * ảnh gym/đánh giá, đây KHÔNG phải ảnh công khai: BE chỉ trả cho chủ booking,
+ * gym chủ quản và Admin.
+ */
+export function CheckInPhotosSection({ booking, scope }: { booking: Booking; scope: BookingScope }) {
+  const t = useTranslations();
+  const { toast } = useToast();
+  const client = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const bookingId = booking.id;
+
+  // Chưa check-in thì chưa có gì để chụp; buổi đã hủy cũng không cần bằng chứng.
+  const relevant = !!booking.checkedInAt
+    || ["CONFIRMED", "COMPLETED", "NO_SHOW"].includes(booking.status);
+  // Chỉ khách sở hữu booking mới được thêm/xoá — gym và PT chỉ xem.
+  const canEdit = scope === "customer" && !!booking.checkedInAt;
+
+  const query = useQuery({
+    queryKey: [...bookingKeys.detail(bookingId), "check-in-media"],
+    queryFn: () => mediaService.list("CHECK_IN", bookingId, "CHECKIN_IMAGE"),
+    enabled: open && relevant,
+  });
+  const images = query.data ?? [];
+
+  const refresh = () =>
+    client.invalidateQueries({ queryKey: [...bookingKeys.detail(bookingId), "check-in-media"] });
+
+  const remove = useMutation({
+    mutationFn: mediaService.remove,
+    onSuccess: () => {
+      refresh();
+      toast({ type: "success", title: t("media.deleted") });
+    },
+    onError: (e) =>
+      toast({ type: "error", title: t("media.deleteFailed"), description: toErrorMessage(e) }),
+  });
+
+  if (!relevant) return null;
+
+  return (
+    <div className="mt-3">
+      <Button variant="link" size="inline" type="button" onClick={() => setOpen((v) => !v)}
+        className="flex gap-1.5 text-sm text-primary">
+        <Camera className="size-4" />
+        {open ? t("booking.hideCheckInPhotos") : t("booking.showCheckInPhotos")}
+      </Button>
+      {open && (
+        <div className="mt-2">
+          {query.isLoading ? (
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+          ) : query.isError ? (
+            <p className="text-xs text-destructive">{toErrorMessage(query.error)}</p>
+          ) : canEdit ? (
+            <ImageUploader
+              entityType="CHECK_IN"
+              entityId={bookingId}
+              imageType="CHECKIN_IMAGE"
+              value={images}
+              onChange={() => refresh()}
+              onRemove={(m) => remove.mutateAsync(m.id).then(() => undefined)}
+              max={5}
+            />
+          ) : !images.length ? (
+            <p className="text-xs text-muted-foreground">{t("booking.noCheckInPhotos")}</p>
+          ) : (
+            <ImageGallery images={images} columns={4} />
+          )}
+        </div>
       )}
     </div>
   );

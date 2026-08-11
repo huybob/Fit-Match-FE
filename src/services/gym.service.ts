@@ -35,6 +35,22 @@ import type {
   PtPerformance,
 } from "@/types/Trainer";
 import type { PaginationParams } from "@/shared/types/pagination.type";
+import type { MediaImageType } from "@/types/Media";
+
+/**
+ * GymMediaResponse của BE (UC-016). Từ V64 ảnh nằm trong bảng media_assets nên
+ * có thêm thumbnail/imageType/primary; các trường cũ giữ nguyên tên.
+ */
+export interface GymMediaItem {
+  id: number;
+  url: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  branchId?: number | null;
+  imageType?: MediaImageType;
+  sortOrder?: number;
+  primary?: boolean;
+}
 
 // Phase 2 cleanup: đã xóa cụm hàm legacy gọi endpoint không tồn tại trên BE
 // (/gyms, /gyms/me, /gyms/{id}/close|reopen|logo|cover, /pt/partnerships/*).
@@ -65,6 +81,32 @@ export const gymService = {
     api.putRaw("/gym/profile", payload),
   setVisibility: (visible: boolean) =>
     api.putRaw("/gym/profile/visibility", { visible }),
+
+  // ── Ảnh Gym/chi nhánh (UC-016, V64) ──
+  // BE tự suy ra gym từ token nên FE không cần biết gymProfileId; file đi thẳng
+  // lên Google Cloud Storage qua Media system dùng chung.
+  listMedia: (branchId?: number) =>
+    api.get<GymMediaItem[]>("/gym/media", { params: { branchId } }),
+  uploadMedia: (
+    files: File[],
+    options: { branchId?: number; imageType?: MediaImageType; caption?: string } = {},
+    onProgress?: (percent: number) => void,
+  ) => {
+    const form = new FormData();
+    files.forEach((file) => form.append("files", file));
+    return api.post<GymMediaItem[], FormData>("/gym/media", form, {
+      params: {
+        branchId: options.branchId,
+        imageType: options.imageType,
+        caption: options.caption,
+      },
+      onUploadProgress: (event) => {
+        if (!onProgress || !event.total) return;
+        onProgress(Math.round((event.loaded * 100) / event.total));
+      },
+    });
+  },
+  deleteMedia: (id: number) => api.deleteRaw(`/gym/media/${id}`),
 
   // ── Operator workspace: branches (UC-50..52) ──
   listOwnBranches: () => api.get<BranchResponse[]>("/gym/branches"),

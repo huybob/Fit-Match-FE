@@ -1,5 +1,6 @@
 import { api } from "@/services/api";
 import type { PageResponse } from "@/shared/types/api-response.type";
+import type { MediaImageType } from "@/types/Media";
 
 export interface GymPublicProfile {
   id?: number;
@@ -167,9 +168,14 @@ export interface PublicTrainingPackage {
 export interface PublicGymMedia {
   id?: number;
   url?: string;
+  /** Bản thu nhỏ do BE sinh (V64) — lưới ảnh dùng cái này, ảnh gốc để lightbox. */
+  thumbnailUrl?: string;
   caption?: string;
   /** Media gắn với chi nhánh cụ thể; null = ảnh chung của gym. */
   branchId?: number;
+  imageType?: MediaImageType;
+  sortOrder?: number;
+  primary?: boolean;
   [key: string]: unknown;
 }
 

@@ -28,6 +28,9 @@ export function useReviewSchemas() {
         .min(1, { message: t("review.validation.rating") })
         .max(5, { message: t("review.validation.rating") }),
       comment: v.optionalText(t("review.contentLabel"), 2000).optional(),
+      // Ảnh đã upload xong (có id) tại thời điểm submit — BE gắn vào review trong
+      // cùng giao dịch tạo/sửa.
+      mediaIds: z.array(z.number().int().positive()).max(10).optional(),
     });
 
     return { review };

@@ -10,6 +10,9 @@ import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
 import { useGetMyTrainerProfile } from "@/modules/trainer/hooks/use-trainer";
 import type { Review } from "@/services/review.service";
+import type { Media } from "@/types/Media";
+import { ImageGallery } from "@/shared/components/media/image-gallery";
+import { ImageUploader } from "@/shared/components/media/image-uploader";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
@@ -140,6 +143,9 @@ function ReviewPage({
               <p className="mt-3 text-sm text-muted-foreground">
                 {r.comment || t("review.noContent")}
               </p>
+              {!!r.images?.length && (
+                <ImageGallery images={r.images} columns={4} className="mt-3" />
+              )}
               <div className="mt-4 flex gap-2">
                 {scope === "customer" ? (
                   <>
@@ -173,6 +179,45 @@ function ReviewPage({
       {reporting && (
         <ReportReviewDialog review={reporting} onClose={() => setReporting(null)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * Chọn sao bằng cách bấm thẳng vào sao. Dropdown "5/5" cũ đúng về dữ liệu nhưng
+ * không ai đọc "đánh giá 4 sao" từ một ô select — với form đánh giá thì thanh sao
+ * là kỳ vọng mặc định của người dùng.
+ */
+function StarRatingInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const t = useTranslations();
+  const [hover, setHover] = useState(0);
+  const shown = hover || value;
+
+  return (
+    <div className="flex items-center gap-2" onMouseLeave={() => setHover(0)}>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            aria-label={t("review.rateStars", { count: star })}
+            aria-pressed={value === star}
+            className="rounded p-0.5 text-warning transition hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring"
+            onMouseEnter={() => setHover(star)}
+            onFocus={() => setHover(star)}
+            onClick={() => onChange(star)}
+          >
+            <Star className={`size-7 ${star <= shown ? "fill-current" : "fill-transparent"}`} />
+          </button>
+        ))}
+      </div>
+      <span className="text-sm font-bold text-muted-foreground">{shown}/5</span>
     </div>
   );
 }
@@ -235,12 +280,14 @@ function ReviewDialog({
   });
   const completed = bookingsQuery.data?.content ?? [];
   const schemas = useReviewSchemas();
+  const [images, setImages] = useState<Media[]>(review?.images ?? []);
   const form = useForm<z.infer<typeof schemas.review>>({
     resolver: zodResolver(schemas.review),
     defaultValues: {
       bookingId: review?.bookingId ?? 0,
       rating: review?.rating ?? 5,
       comment: review?.comment ?? "",
+      mediaIds: (review?.images ?? []).map((m) => m.id),
     },
   });
 
@@ -304,21 +351,32 @@ function ReviewDialog({
             control={form.control}
             name="rating"
             render={({ field }) => (
-              <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[5, 4, 3, 2, 1].map((v) => (
-                    <SelectItem key={v} value={String(v)}>{v}/5</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <StarRatingInput value={field.value} onChange={field.onChange} />
             )}
           />
         </FieldShell>
         <FieldShell label={t("review.contentLabel")} error={form.formState.errors.comment}>
           <Textarea {...form.register("comment")} aria-invalid={!!form.formState.errors.comment} />
         </FieldShell>
-        <Button>{t("common.actions.saveChanges")}</Button>
+        <FieldShell label={t("review.imagesLabel")}>
+          {/*
+            entityId bỏ trống khi tạo mới: ảnh lên GCS ngay dưới dạng "nháp" và chỉ
+            được gắn vào review khi bấm Lưu. Bỏ dở form thì job dọn rác của BE xoá.
+            Khi sửa, entityId là id review nên ảnh gắn thẳng vào đúng bản ghi.
+          */}
+          <ImageUploader
+            entityType="REVIEW"
+            entityId={review?.id}
+            imageType="REVIEW_IMAGE"
+            value={images}
+            onChange={(next) => {
+              setImages(next);
+              form.setValue("mediaIds", next.map((m) => m.id));
+            }}
+            max={5}
+          />
+        </FieldShell>
+        <Button disabled={save.isPending}>{t("common.actions.saveChanges")}</Button>
       </form>
     </Dialog>
   );

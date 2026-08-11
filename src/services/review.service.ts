@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import type {
   ModerateReviewRequest,
+  RatingSummary,
   ReportStatus,
   Review,
   ReviewPage,
@@ -10,6 +11,7 @@ import type {
 
 export type {
   ModerateReviewRequest,
+  RatingSummary,
   ReportStatus,
   Review,
   ReviewPage,
@@ -41,6 +43,11 @@ export const reviewService = {
     list(`/reviews/pt/${id}`, params),
   getGym: (id: number, params?: { page?: number; size?: number }) =>
     list(`/reviews/gym/${id}`, params),
+
+  // Điểm TB + phổ điểm 1..5 sao (UC-009). Tách khỏi danh sách review để trang
+  // chi tiết vẽ được biểu đồ mà không phải tải hết review về đếm ở client.
+  getGymRating: (id: number) => api.get<RatingSummary>(`/reviews/gym/${id}/rating`),
+  getPtRating: (id: number) => api.get<RatingSummary>(`/reviews/pt/${id}/rating`),
 
   // ---- Gym (UC-023): chỉ đọc để theo dõi chất lượng ----
   getGymOwn: (params?: { page?: number; size?: number }) => list("/gym/reviews", params),
