@@ -12,6 +12,7 @@ import {
   Check,
   ChevronRight,
   Clock,
+  Dumbbell,
   Loader2,
   MapPin,
   Search,
@@ -40,6 +41,7 @@ import { TimePicker } from "@/shared/components/ui/time-picker";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/shared/utils/cn.util";
+import { weekdayKey } from "@/shared/utils/enum-label.util";
 import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -87,6 +89,34 @@ function isoDate(offsetDays = 0) {
 function nowHhMm() {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+/** Số phút giữa hai mốc "HH:mm"; <= 0 nếu dữ liệu không hợp lệ. */
+function minutesBetween(from: string, to: string) {
+  if (!TIME_RE.test(from) || !TIME_RE.test(to)) return 0;
+  const [fh, fm] = from.split(":").map(Number);
+  const [th, tm] = to.split(":").map(Number);
+  return th * 60 + tm - (fh * 60 + fm);
+}
+
+/** dayOfWeek (1=T2..7=CN) của một chuỗi "yyyy-MM-dd" theo giờ máy. */
+function weekdayOf(isoDay: string) {
+  const [y, m, d] = isoDay.split("-").map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  return dow === 0 ? 7 : dow;
+}
+
+/**
+ * Ngày sắp tới rơi vào thứ `day` (1=T2..7=CN), dạng "yyyy-MM-dd".
+ *
+ * Lịch rảnh của PT lặp theo TUẦN nên phải quy ra một ngày cụ thể thì mới đặt
+ * được. Nếu hôm nay đúng thứ đó nhưng khung giờ đã trôi qua thì nhảy sang tuần
+ * sau — bấm vào một khung giờ quá khứ rồi bị form báo lỗi là vô nghĩa.
+ */
+function nextDateForWeekday(day: number, slotStart: string) {
+  let delta = (day - weekdayOf(isoDate()) + 7) % 7;
+  if (delta === 0 && slotStart <= nowHhMm()) delta = 7;
+  return isoDate(delta);
 }
 
 /**
@@ -476,6 +506,8 @@ export function CreateBookingDialog({ open, onClose, onCheckedOut, initialGymId,
             {current === "time" && (
               <TimeStep
                 form={form}
+                ptId={values.ptId}
+                ptName={selectedPt?.displayName}
                 precheckEnabled={precheckEnabled}
                 precheck={precheck.data}
                 precheckLoading={precheck.isFetching}
@@ -942,12 +974,16 @@ function PlaceStep({
         )}
         {ptsLoading ? <ListSkeleton /> : (
           <div className="grid gap-2 sm:grid-cols-2">
+            {/* Không chọn PT là một lựa chọn THẬT, không phải "chờ gym phân công":
+                BE để booking.ptProfile = null và không có auto-assign nào (gym chỉ
+                gán tay qua UC-039 nếu cần). Đây cũng là mặc định — khách tự tập thì
+                không phải bấm gì, muốn có PT mới chọn thêm. */}
             <ChoiceCard
               selected={!ptId}
               onClick={() => onPickPt(undefined)}
-              icon={<Sparkles className="size-4" />}
-              title={t("booking.wizard.autoAssign")}
-              subtitle={t("booking.wizard.autoAssignDesc")}
+              icon={<Dumbbell className="size-4" />}
+              title={t("booking.wizard.noPt")}
+              subtitle={t("booking.wizard.noPtDesc")}
               meta={hasSurcharge ? t("booking.wizard.noPtSaves", { amount: money(ptSurcharge) }) : undefined}
             />
             {pts.map((p) => (
@@ -980,8 +1016,112 @@ function PlaceStep({
 
 /* -------------------------------------------------------------- step: time */
 
-function TimeStep({ form, precheckEnabled, precheck, precheckLoading }: {
+/**
+ * Lịch rảnh tuần của PT ngay trong bước chọn giờ — bấm một khung là điền luôn
+ * ngày + giờ, khỏi phải mở hồ sơ PT ở tab khác để tra rồi gõ tay.
+ *
+ * Chỉ liệt kê ngày CÓ khung rảnh (khác trang hồ sơ PT liệt kê đủ 7 ngày kèm
+ * "Nghỉ"): ở đây mỗi dòng là một hành động, dòng "Nghỉ" không bấm được chỉ làm
+ * dài thêm dialog. Mỗi dòng hiện luôn ngày cụ thể sắp tới để không mơ hồ
+ * "thứ 3 nào".
+ *
+ * Đây là khung giờ PT NHẬN buổi tập, chưa trừ buổi đã có người đặt — chỗ trống
+ * thật vẫn do pre-check /availability/check ngay bên dưới quyết định.
+ */
+function PtWeeklySchedule({ ptId, ptName, bookingDate, startTime, endTime, onPick }: {
+  ptId: number;
+  ptName?: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  onPick: (date: string, start: string, end: string) => void;
+}) {
+  const t = useTranslations();
+  const fmt = useFormatters();
+  // Cùng queryKey với trang hồ sơ PT -> dùng lại cache nếu khách vừa xem ở đó.
+  const query = useQuery({
+    queryKey: ["marketplace", "pt", ptId, "availability"],
+    queryFn: () => marketplaceService.getPtAvailability(ptId),
+  });
+
+  // Giữ nguyên thời lượng khách đang chọn; gói vào khung rảnh nếu khung ngắn hơn.
+  const duration = Math.max(minutesBetween(startTime, endTime), 15) || 60;
+
+  /**
+   * Gom theo NGÀY đã quy đổi, không theo thứ.
+   *
+   * Cùng một thứ nhưng hai khung có thể rơi vào hai ngày khác nhau: hôm nay là
+   * thứ 6, khung 06:00 đã trôi qua (-> thứ 6 tuần sau) trong khi khung 17:00 vẫn
+   * còn (-> hôm nay). Gom theo thứ thì nhãn ngày của dòng sẽ sai với một trong
+   * hai chip. Xếp tăng dần nên khung gần nhất luôn nằm trên cùng.
+   */
+  const byDate = new Map<string, { start: string; end: string }[]>();
+  for (const slot of query.data ?? []) {
+    const start = slot.startTime?.slice(0, 5);
+    const end = slot.endTime?.slice(0, 5);
+    if (slot.dayOfWeek == null || !start || !end || minutesBetween(start, end) <= 0) continue;
+    const date = nextDateForWeekday(slot.dayOfWeek, start);
+    byDate.set(date, [...(byDate.get(date) ?? []), { start, end }]);
+  }
+  const dates = [...byDate.keys()].sort();
+  for (const list of byDate.values()) list.sort((a, b) => a.start.localeCompare(b.start));
+
+  return (
+    <StepSection
+      title={ptName ? t("booking.wizard.ptScheduleTitle", { name: ptName }) : t("marketplace.weeklySchedule")}
+      hint={t("common.states.optional")}
+    >
+      {query.isLoading ? (
+        <ListSkeleton />
+      ) : !dates.length ? (
+        <p className="text-xs text-muted-foreground">{t("marketplace.noSchedule")}</p>
+      ) : (
+        <>
+          <ul className="divide-y divide-border rounded-xl border border-border">
+            {dates.map((date) => (
+              <li key={date} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2">
+                <span className="w-32 shrink-0 text-xs font-bold text-foreground">
+                  {t(weekdayKey(weekdayOf(date)))} · {fmt.dateShort(date)}
+                </span>
+                <span className="flex flex-wrap gap-1.5">
+                  {byDate.get(date)!.map((slot) => {
+                    const selected = bookingDate === date && startTime === slot.start;
+                    return (
+                      <button
+                        key={`${slot.start}-${slot.end}`}
+                        type="button"
+                        onClick={() => {
+                          const end = addMinutes(slot.start, duration);
+                          onPick(date, slot.start, end > slot.end ? slot.end : end);
+                        }}
+                        aria-pressed={selected}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums transition",
+                          selected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-primary/25 bg-primary/10 text-primary hover:border-primary hover:bg-primary/20",
+                        )}
+                      >
+                        {slot.start}–{slot.end}
+                      </button>
+                    );
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">{t("marketplace.scheduleHint")}</p>
+        </>
+      )}
+    </StepSection>
+  );
+}
+
+function TimeStep({ form, ptId, ptName, precheckEnabled, precheck, precheckLoading }: {
   form: ReturnType<typeof useForm<z.infer<ReturnType<typeof useBookingSchemas>["createBooking"]>>>;
+  /** Có chọn PT thì hiện lịch rảnh của PT đó để bấm chọn nhanh. */
+  ptId?: number;
+  ptName?: string;
   precheckEnabled: boolean;
   precheck?: { available: boolean; reasons: string[] };
   precheckLoading: boolean;
@@ -990,6 +1130,7 @@ function TimeStep({ form, precheckEnabled, precheck, precheckLoading }: {
   const fmt = useFormatters();
   const errors = form.formState.errors;
   const startTime = form.watch("startTime");
+  const endTime = form.watch("endTime");
   const bookingDate = form.watch("bookingDate");
 
   // Bug S2-06: đặt cho hôm nay thì giờ nhỏ nhất chọn được là bây giờ. Với các ngày
@@ -1005,6 +1146,23 @@ function TimeStep({ form, precheckEnabled, precheck, precheckLoading }: {
 
   return (
     <div>
+      {/* Trước bộ chọn ngày/giờ: thấy PT rảnh lúc nào rồi mới chọn, thay vì chọn
+          bừa xong đợi pre-check báo bận. */}
+      {ptId != null && ptId > 0 && (
+        <PtWeeklySchedule
+          ptId={ptId}
+          ptName={ptName}
+          bookingDate={bookingDate}
+          startTime={startTime}
+          endTime={endTime}
+          onPick={(date, start, end) => {
+            form.setValue("bookingDate", date, { shouldValidate: true });
+            form.setValue("startTime", start, { shouldValidate: true });
+            form.setValue("endTime", end, { shouldValidate: true });
+          }}
+        />
+      )}
+
       <StepSection title={t("booking.bookingDate")}>
         <div className="mb-3 flex flex-wrap gap-2">
           {quickDays.map((d) => (
@@ -1202,7 +1360,7 @@ function ReviewStep({
       ? { label: t("booking.wizard.summaryPackage"), value: packageName, step: "mode" as StepId, icon: Ticket }
       : { label: t("booking.wizard.summaryItem"), value: itemName, step: "catalog" as StepId, icon: Sparkles },
     { label: t("booking.wizard.summaryBranch"), value: branchName ?? t("booking.wizard.anyBranch"), step: "place", icon: MapPin },
-    { label: t("booking.wizard.summaryTrainer"), value: ptName ?? t("booking.wizard.autoAssign"), step: "place", icon: UserRound },
+    { label: t("booking.wizard.summaryTrainer"), value: ptName ?? t("booking.wizard.noPt"), step: "place", icon: UserRound },
     { label: t("booking.wizard.summaryTime"), value: when, step: "time", icon: CalendarDays },
   ];
   if (surcharge > 0) {

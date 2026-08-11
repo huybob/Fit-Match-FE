@@ -21,7 +21,11 @@ import { IconButton } from "@/shared/components/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { weekdayKey } from "@/shared/utils/enum-label.util";
 import { DataTable } from "@/shared/components/common/data-table";
-import { PlaceAutocompleteInput } from "@/shared/components/map/place-autocomplete-input";
+import {
+  PlaceAutocompleteInput,
+  type PinnedPlace,
+} from "@/shared/components/map/place-autocomplete-input";
+import { AddressPinMap } from "@/shared/components/map/address-pin-map";
 
 
 /** UC-017: editor giờ mở cửa 7 ngày (dayOfWeek 1-7 khớp BE). */
@@ -151,11 +155,14 @@ export default function GymBranchesPage() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  // UC-18: BE ghép "address, district, city, Việt Nam" khi geocode — trước đây FE
+  // không hề gửi district nên chuỗi tra cứu luôn thiếu một cấp hành chính.
+  const [district, setDistrict] = useState("");
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState("");
   const [capacity, setCapacity] = useState("");
-  // UC-18 (V55): toạ độ chọn từ gợi ý Places. null = để BE tự geocode từ địa chỉ.
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // UC-18 (V55): địa điểm chọn từ gợi ý Places. null = để BE tự geocode từ địa chỉ.
+  const [coords, setCoords] = useState<PinnedPlace | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
 
@@ -189,16 +196,21 @@ export default function GymBranchesPage() {
   });
 
   function openCreate() {
-    setEditing(null); setName(""); setAddress(""); setCity(""); setPhone("");
+    setEditing(null); setName(""); setAddress(""); setCity(""); setDistrict(""); setPhone("");
     setAmenities(""); setCapacity(""); setCoords(null); setFormOpen(true);
   }
   function openEdit(b: BranchResponse) {
-    setEditing(b); setName(b.name ?? ""); setAddress(b.address ?? ""); setCity(b.city ?? ""); setPhone(b.phone ?? "");
+    setEditing(b); setName(b.name ?? ""); setAddress(b.address ?? ""); setCity(b.city ?? "");
+    setDistrict(b.district ?? ""); setPhone(b.phone ?? "");
     // B-13: pre-fill amenities/capacity — thiếu chúng trong payload update là mất dữ liệu.
     setAmenities(b.amenities ?? ""); setCapacity(b.capacity != null ? String(b.capacity) : "");
     // Giữ lại toạ độ đã có: gửi lên nguyên vẹn thì BE không geocode lại một địa
     // chỉ không đổi (đỡ tốn quota) và không đánh mất vị trí đã chỉnh thủ công.
-    setCoords(b.latitude != null && b.longitude != null ? { lat: b.latitude, lng: b.longitude } : null);
+    // Giữ cả cờ ghim tay: thiếu nó thì mỗi lần sửa số điện thoại là toạ độ chủ gym
+    // đã kéo bị hạ cấp về "Google đoán" và job làm mới sẽ kéo đi chỗ khác.
+    setCoords(b.latitude != null && b.longitude != null
+      ? { lat: b.latitude, lng: b.longitude, pinnedByUser: b.coordinatesPinned }
+      : null);
     setFormOpen(true);
   }
   function closeForm() {
@@ -213,11 +225,15 @@ export default function GymBranchesPage() {
       name: name.trim(),
       address: address.trim() || undefined,
       city: city.trim() || undefined,
+      district: district.trim() || undefined,
       phone: phone.trim() || undefined,
       amenities: amenities.trim() || undefined,
       capacity: capacity ? Number(capacity) : undefined,
       latitude: coords?.lat,
       longitude: coords?.lng,
+      placeId: coords?.placeId,
+      formattedAddress: coords?.formattedAddress,
+      coordinatesPinned: coords?.pinnedByUser,
     });
   }
 
@@ -364,15 +380,41 @@ export default function GymBranchesPage() {
                 setCoords(null);
               }}
               onPlacePicked={(place) => {
-                setAddress(place.label);
-                setCoords({ lat: place.lat, lng: place.lng });
+                // Lưu địa chỉ ĐẦY ĐỦ chứ không phải tên địa điểm: chọn gợi ý
+                // "California Fitness" trước đây ghi đúng chữ đó vào cột address.
+                setAddress(place.formattedAddress);
+                setCoords({
+                  lat: place.lat,
+                  lng: place.lng,
+                  placeId: place.placeId,
+                  formattedAddress: place.formattedAddress,
+                });
+                if (place.district) setDistrict(place.district);
+                if (place.city) setCity(place.city);
               }}
               onError={(message) => toast({ type: "warning", title: message })}
               placeholder={t("gym.branches.addressPlaceholder")}
             />
+            {/* UC-18 (V60): thấy ghim rơi ở đâu thì mới biết Google đặt sai —
+                trước đây chủ gym lưu xong mới phát hiện khách bị dẫn nhầm chỗ. */}
+            <AddressPinMap
+              className="mt-2"
+              value={coords ? { lat: coords.lat, lng: coords.lng } : null}
+              onChange={(position) =>
+                setCoords((prev) => ({
+                  ...prev,
+                  lat: position.lat,
+                  lng: position.lng,
+                  // Kéo tay = toạ độ của con người, chính xác hơn máy đoán. Cờ này
+                  // giữ job làm mới định kỳ không kéo ghim về lại chỗ Google nói.
+                  pinnedByUser: true,
+                }))
+              }
+            />
             <p className="mt-1.5 text-[11px] text-muted-foreground">
               {coords
-                ? t("gym.branches.coordsPinned", { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
+                ? t(coords.pinnedByUser ? "gym.branches.coordsAdjusted" : "gym.branches.coordsPinned",
+                    { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
                 : t("gym.branches.coordsAuto")}
             </p>
           </div>
@@ -382,9 +424,14 @@ export default function GymBranchesPage() {
               <Input value={city} onChange={e => setCity(e.target.value)} placeholder={t("gym.branches.cityPlaceholder")} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
+              {/* UC-18: tự điền khi chọn gợi ý Google, gõ tay được khi không có Maps key. */}
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.district")}</label>
+              <Input value={district} onChange={e => setDistrict(e.target.value)} placeholder={t("gym.branches.districtPlaceholder")} />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.branches.amenitiesInput")}</label>

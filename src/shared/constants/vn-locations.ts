@@ -39,6 +39,47 @@ export const VN_CITIES: VnCity[] = [
 ];
 
 /**
+ * Bỏ tiền tố đơn vị hành chính để so khớp tên địa danh.
+ *
+ * Google trả `administrative_area_level_*` theo tên đầy đủ ("Thành phố Hồ Chí
+ * Minh", "Quận Cầu Giấy") còn danh mục trên lại dùng dạng rút gọn quen thuộc
+ * ("TP. Hồ Chí Minh", "Cầu Giấy) — so chuỗi thô là trượt.
+ */
+function stripAdminPrefix(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/^(thành phố|tp\.?|tỉnh|quận|huyện|thị xã|thị trấn)\s+/u, "")
+    .trim();
+}
+
+/**
+ * Đưa tên thành phố của Google về ĐÚNG chuỗi trong {@link VN_CITIES}.
+ *
+ * Bắt buộc phải có: bộ lọc marketplace gửi lên đúng chuỗi của danh mục và BE so
+ * khớp bằng LIKE trên cột `city`. Lưu "Thành phố Hồ Chí Minh" trong khi bộ lọc
+ * hỏi "%tp. hồ chí minh%" là gym tự biến mất khỏi kết quả lọc theo thành phố.
+ *
+ * Trả về null khi địa danh nằm ngoài danh mục (tỉnh chưa hỗ trợ) — khi đó giữ
+ * nguyên chuỗi của Google, vì bộ lọc cũng không chào tỉnh đó nên không có gì để vỡ.
+ */
+export function canonicalCityName(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const key = stripAdminPrefix(raw);
+  return VN_CITIES.find((c) => stripAdminPrefix(c.name) === key)?.name ?? null;
+}
+
+/** Như {@link canonicalCityName} nhưng cho quận/huyện; dò trên toàn bộ danh mục. */
+export function canonicalDistrictName(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const key = stripAdminPrefix(raw);
+  for (const city of VN_CITIES) {
+    const match = city.districts.find((d) => stripAdminPrefix(d) === key);
+    if (match) return match;
+  }
+  return null;
+}
+
+/**
  * Khoảng giá gói tập dùng chung cho bộ lọc (trang Phòng gym và trang Gói tập).
  *
  * Bug S2-19: quy ước NỬA MỞ [min, max) — `max` là giá đầu tiên KHÔNG thuộc khoảng.

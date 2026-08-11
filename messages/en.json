@@ -160,6 +160,7 @@
       "time": "Time",
       "address": "Address",
       "city": "City",
+      "district": "District",
       "phone": "Phone"
     },
     "pagination": {
@@ -287,7 +288,8 @@
       "cms": "CMS",
       "notifications": "Notification templates",
       "masterData": "Master data",
-      "auditLogs": "Audit logs"
+      "auditLogs": "Audit logs",
+      "geocoding": "Map coordinates"
     },
     "auditLogs": {
       "title": "Audit logs",
@@ -651,6 +653,24 @@
       "title": "You do not have access to this page",
       "body": "The {role} account is not authorised for this area. Contact a system administrator if you need access.",
       "backToWorkspace": "Back to your workspace"
+    },
+    "geocoding": {
+      "title": "Map coordinates",
+      "subtitle": "Gyms without coordinates never show up in \"near me\" search. Geocoding runs silently, so nothing surfaces as an error — track it here.",
+      "runBackfill": "Backfill coordinates ({limit} records)",
+      "backfillDone": "Backfilled {updated} record(s), {remaining} remaining.",
+      "disabledNotice": "app.google-maps.api-key is not configured — geocoding is off and these numbers will not change.",
+      "gymsGeocoded": "Gyms with coordinates",
+      "branchesGeocoded": "Branches with coordinates",
+      "percentCovered": "{percent}% covered",
+      "imprecise": "Imprecise addresses",
+      "impreciseHint": "Matched only to ward/district; the gym has been asked to re-verify.",
+      "pinned": "Manually pinned",
+      "pinnedHint": "Pinned by the gym owner — the refresh job leaves these alone.",
+      "missing": "Missing coordinates",
+      "missingHint": "Records that cannot appear in radius search yet.",
+      "cached": "Cached answers",
+      "cachedHint": "Each one is a Google call already saved."
     }
   },
   "gym": {
@@ -784,6 +804,7 @@
       "namePlaceholder": "e.g. FitMatch District 1",
       "addressPlaceholder": "Street address…",
       "cityPlaceholder": "Ho Chi Minh City",
+      "districtPlaceholder": "District 1",
       "amenitiesInput": "Amenities (comma separated)",
       "capacityInput": "Max capacity per slot",
       "capacityPlaceholder": "Leave blank = unlimited",
@@ -796,7 +817,11 @@
       "open": "Open",
       "hoursInvalid": "Each open day needs open time < close time.",
       "coordsAuto": "Coordinates will be resolved from the address on save.",
-      "coordsPinned": "Pinned coordinates: {lat}, {lng}"
+      "coordsPinned": "Pinned coordinates: {lat}, {lng}",
+      "coordsAdjusted": "You adjusted the pin manually: {lat}, {lng}",
+      "pinMapDragHint": "Pin in the wrong spot? Drag it or click the map to correct it.",
+      "pinMapEmptyHint": "Pick an address from the suggestions, or click the map to drop a pin.",
+      "pinMapReadOnly": "Location on the map."
     },
     "services": {
       "title": "Services",
@@ -974,6 +999,11 @@
       "credentialsRequired": "Enter a username, email and password",
       "passwordRule": "Password must be 8–100 characters with at least one letter and one digit",
       "displayNameRequired": "Enter a display name",
+      "branchesLabel": "Assigned branches",
+      "branchesPlaceholder": "Pick at least one branch",
+      "branchesHint": "A trainer must belong to at least one branch to receive bookings. You can change this later on the Assignments tab.",
+      "branchRequired": "Pick at least one branch for this trainer",
+      "noActiveBranch": "No active branch yet. Create or re-enable a branch before adding a trainer.",
       "certsDialogTitle": "Certificates & documents · {name}",
       "certsTitle": "Certificates",
       "noCerts": "No certificates yet.",
@@ -1542,17 +1572,17 @@
       "sessions": "{count} sessions",
       "validDays": "Valid {days} days",
       "placeTitle": "Branch & trainer",
-      "placeSubtitle": "Leave it to the gym if you have no preference.",
+      "placeSubtitle": "Both are optional — you can book to train on your own, with no trainer.",
       "branchStep": "Branch",
       "trainerStep": "Trainer",
       "anyBranch": "Any branch",
       "anyBranchDesc": "Let the gym pick a suitable branch.",
-      "autoAssign": "Gym assigns",
-      "autoAssignDesc": "The gym picks a trainer available in your slot.",
+      "noPt": "Train on my own",
+      "noPtDesc": "You train this session yourself. The gym may still assign a trainer if the service requires one.",
       "noBranches": "This gym has not published any branch.",
-      "noPts": "This gym has not published any trainer.",
-      "noPtsForBranch": "No trainer covers this branch yet. Pick another branch, or let the gym assign one.",
-      "ptSurchargeHint": "Picking a trainer adds {amount}. Let the gym assign one if you want to keep it cheaper.",
+      "noPts": "This gym has not published any trainer. You can still book and train on your own.",
+      "noPtsForBranch": "No trainer covers this branch yet. Pick another branch, or train without one.",
+      "ptSurchargeHint": "Picking a trainer adds {amount}. Skip the trainer and you don't pay it.",
       "noPtSaves": "Saves {amount}",
       "ptSurchargeLabel": "trainer surcharge",
       "summaryPtSurcharge": "Trainer surcharge",
@@ -1560,6 +1590,7 @@
       "timeTitle": "Date & time slot",
       "timeSubtitle": "Pick a date and slot — availability is checked instantly.",
       "timeRangeStep": "Time slot",
+      "ptScheduleTitle": "{name}'s availability",
       "today": "Today",
       "tomorrow": "Tomorrow",
       "durationLabel": "Quick duration",
@@ -2059,6 +2090,7 @@
       "home": "Home",
       "gyms": "Gyms",
       "trainers": "Trainers",
+      "packages": "Training packages",
       "bookings": "Bookings"
     },
     "workspace": {
@@ -2078,6 +2110,27 @@
     "terms": "Terms of service",
     "support": "Support",
     "copyright": "© 2024 FitMatch Marketplace. All rights reserved."
+  },
+  "packages": {
+    "title": "Training packages",
+    "searchPlaceholder": "Package or gym name...",
+    "found": "Found {count} packages across {gyms} gyms.",
+    "partialScan": "Scanning {scanned} of {total} matching gyms. Narrow by city or district to see every package.",
+    "loadError": "Could not load training packages",
+    "none": "No packages found",
+    "noneHint": "Try removing a filter or keyword to see more packages.",
+    "book": "Book this package",
+    "ptSurcharge": "Trainer surcharge",
+    "ptSurchargeShort": "+{amount} with a trainer",
+    "overview": "Package details",
+    "rules": "Booking & payment rules",
+    "freeCancellation": "Free cancellation up to {hours}h before",
+    "minNotice": "Must book at least {hours}h in advance",
+    "defaultRules": "Platform default rules apply.",
+    "missingGym": "Missing gym context",
+    "missingGymHint": "A package detail link must include its gym. Open the package from the Training packages list.",
+    "notFound": "Package not found",
+    "notFoundHint": "This package may have been withdrawn or is no longer published by the gym."
   },
   "compare": {
     "gyms": "Compare {count} gyms",
@@ -2136,6 +2189,14 @@
     "gyms": {
       "title": "Gyms",
       "description": "Find verified gyms by area — browse services, packages, opening hours and book online."
+    },
+    "packages": {
+      "title": "Training packages",
+      "description": "Compare multi-session packages from verified gyms — sessions, validity, price and booking rules."
+    },
+    "packageDetail": {
+      "title": "Package details",
+      "description": "Sessions, validity, usage conditions and booking rules for a training package."
     },
     "gymDetail": {
       "title": "Gym details",

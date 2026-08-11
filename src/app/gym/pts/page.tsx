@@ -17,6 +17,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { MultiSelect } from "@/shared/components/ui/multi-select";
 import { DatePicker } from "@/shared/components/ui/date-picker";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -223,6 +224,8 @@ export default function GymPtsPage() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
+  /** id chi nhánh dạng chuỗi — MultiSelect làm việc với string[]. */
+  const [branchIds, setBranchIds] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [serviceArea, setServiceArea] = useState("");
@@ -257,6 +260,11 @@ export default function GymPtsPage() {
   });
   const pts = ptsQuery.data?.content ?? [];
 
+  // Chỉ chi nhánh đang hoạt động mới gán được PT (BE từ chối chi nhánh đã tắt) —
+  // lọc ngay ở nguồn thay vì để người dùng chọn rồi mới báo lỗi.
+  const branchesQuery = useQuery({ queryKey: ["gym-branches"], queryFn: gymService.listOwnBranches });
+  const activeBranches = (branchesQuery.data ?? []).filter((b) => b.active && b.id != null);
+
   const saveMut = useMutation({
     mutationFn: async () => {
       if (editing?.id != null) {
@@ -265,7 +273,9 @@ export default function GymPtsPage() {
           bio: bio.trim() || undefined,
           specialization: specialization.trim() || undefined,
           serviceArea: serviceArea.trim() || undefined,
-          experienceYears: experienceYears ? Number(experienceYears) : undefined
+          experienceYears: experienceYears ? Number(experienceYears) : undefined,
+          // Gửi cả chuỗi rỗng (khác undefined) để xoá được số điện thoại đang có.
+          phone: phone.trim(),
         };
         return gymService.updatePt(editing.id, payload);
       }
@@ -278,7 +288,8 @@ export default function GymPtsPage() {
         bio: bio.trim() || undefined,
         specialization: specialization.trim() || undefined,
         serviceArea: serviceArea.trim() || undefined,
-        experienceYears: experienceYears ? Number(experienceYears) : undefined
+        experienceYears: experienceYears ? Number(experienceYears) : undefined,
+        branchIds: branchIds.map(Number),
       };
       const created = await gymService.createPt(payload);
       // Bug 15: BE cần PT tồn tại trước (FK) — tạo xong mới thêm từng chứng chỉ.
@@ -319,6 +330,8 @@ export default function GymPtsPage() {
     setEditing(null);
     setUsername(""); setEmail(""); setPassword(""); setPhone("");
     setDisplayName(""); setBio(""); setSpecialization(""); setServiceArea(""); setExperienceYears("");
+    // Chỉ có đúng một chi nhánh đang hoạt động thì chọn sẵn — không bắt bấm thừa.
+    setBranchIds(activeBranches.length === 1 ? [String(activeBranches[0].id)] : []);
     setNewCerts([]); resetNewCertDraft();
     setFormOpen(true);
   }
@@ -327,6 +340,7 @@ export default function GymPtsPage() {
     setDisplayName(pt.displayName ?? ""); setBio(pt.bio ?? "");
     setSpecialization(pt.specialization ?? ""); setServiceArea(pt.serviceArea ?? "");
     setExperienceYears(pt.experienceYears != null ? String(pt.experienceYears) : "");
+    setPhone(pt.phone ?? "");
     setFormOpen(true);
   }
   function closeForm() { setFormOpen(false); setEditing(null); }
@@ -338,6 +352,10 @@ export default function GymPtsPage() {
       // Khớp rule @StrongPassword phía BE: 8-100 ký tự, có ít nhất 1 chữ và 1 số
       if (password.length < 8 || password.length > 100 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
         toast({ type: "warning", title: t("gym.trainers.passwordRule") }); return;
+      }
+      // Khớp @NotEmpty branchIds phía BE — chặn trước để khỏi mất công gửi.
+      if (!branchIds.length) {
+        toast({ type: "warning", title: t("gym.trainers.branchRequired") }); return;
       }
     }
     if (!displayName.trim()) { toast({ type: "warning", title: t("gym.trainers.displayNameRequired") }); return; }
@@ -496,15 +514,40 @@ export default function GymPtsPage() {
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.passwordLabel")} <span className="text-destructive">*</span></label>
                 <Input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="••••••••" />
               </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
-                <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
-              </div>
             </div>
           )}
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.displayNameLabel")} <span className="text-destructive">*</span></label>
-            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t("gym.trainers.displayNamePlaceholder")} />
+
+          {/* UC-019/022: PT phải thuộc ít nhất một chi nhánh ĐANG HOẠT ĐỘNG. Chỉ hỏi
+              khi tạo; sau đó đổi phân công ở tab "Phân công" (thêm/gỡ có luật riêng). */}
+          {!editing && (
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                {t("gym.trainers.branchesLabel")} <span className="text-destructive">*</span>
+              </label>
+              <MultiSelect
+                options={activeBranches.map((b) => ({ value: String(b.id), label: b.name ?? `#${b.id}` }))}
+                value={branchIds}
+                onValueChange={setBranchIds}
+                placeholder={t("gym.trainers.branchesPlaceholder")}
+                emptyMessage={t("gym.trainers.noActiveBranch")}
+                aria-label={t("gym.trainers.branchesLabel")}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {activeBranches.length ? t("gym.trainers.branchesHint") : t("gym.trainers.noActiveBranch")}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.trainers.displayNameLabel")} <span className="text-destructive">*</span></label>
+              <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder={t("gym.trainers.displayNamePlaceholder")} />
+            </div>
+            {/* Sửa được cả khi tạo lẫn khi cập nhật — PT đổi số thì gym sửa ở đây. */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
+              <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>

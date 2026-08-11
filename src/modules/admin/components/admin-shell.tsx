@@ -9,7 +9,7 @@ import {
   FileText, ClipboardList, LogOut,
   Database,
   ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent, Flag, BellRing,
-  Landmark,
+  Landmark, MapPin,
 } from "lucide-react";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
@@ -48,6 +48,8 @@ const adminLinks = [
   // UC-075: template thông báo theo sự kiện
   { href: "/admin/notification-templates", navKey: "notifications", icon: BellRing, roles: ["ROLE_ADMIN"] },
   { href: "/admin/master-data", navKey: "masterData", icon: Database, roles: ["ROLE_ADMIN"] },
+  // UC-18 (V59/V60): gym thiếu toạ độ thì vô hình trong "tìm quanh đây" — cần chỗ nhìn thấy điều đó.
+  { href: "/admin/geocoding", navKey: "geocoding", icon: MapPin, roles: ["ROLE_ADMIN"] },
   { href: "/admin/audit-logs", navKey: "auditLogs", icon: ClipboardList, roles: ["ROLE_ADMIN"] },
 ] as const;
 

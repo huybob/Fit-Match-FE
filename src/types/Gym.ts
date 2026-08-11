@@ -119,7 +119,25 @@ export interface SubmitGymRegistrationRequest {
   description?: string;
   address?: string;
   city?: string;
+  /** UC-18: quận/huyện — BE ghép vào chuỗi geocode, thiếu thì dễ khớp nhầm phường trùng tên. */
+  district?: string;
   phone?: string;
+  /**
+   * UC-18 (V55): toạ độ chọn từ gợi ý Places. Bỏ trống thì BE geocode từ địa chỉ;
+   * gửi kèm sẽ ghi đè — vị trí Google trả về cho đúng địa điểm chính xác hơn
+   * việc geocode lại chuỗi chữ.
+   */
+  latitude?: number;
+  longitude?: number;
+  /**
+   * Metadata của chính gợi ý Places đã chọn. Gửi kèm toạ độ để BE khỏi phải
+   * geocode lại chỉ nhằm lấy hai giá trị FE đang cầm sẵn; bỏ trống thì BE giữ
+   * nguyên giá trị đang lưu.
+   */
+  placeId?: string;
+  formattedAddress?: string;
+  /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
+  coordinatesPinned?: boolean;
   documents: GymDocumentDto[];
 }
 
@@ -132,7 +150,17 @@ export interface GymVerificationStatusResponse {
   description?: string;
   address?: string;
   city?: string;
+  district?: string;
   phone?: string;
+  /**
+   * UC-18 (V55): toạ độ đang lưu. Form phải nạp lại và gửi nguyên vẹn khi lưu —
+   * bỏ đi thì BE coi như operator chưa ghim và geocode lại một địa chỉ không đổi.
+   */
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — form phải gửi lại khi lưu. */
+  coordinatesPinned?: boolean;
   documents?: GymDocumentDto[];
   rejectionReason?: string;
   /** Ghi chú của admin khi request-info / suspend. */
@@ -164,6 +192,7 @@ export interface BranchResponse {
   name?: string;
   address?: string;
   city?: string;
+  district?: string;
   phone?: string;
   /** B-14: tiện ích, phân tách dấu phẩy (vd "Parking,Sauna"). */
   amenities?: string;
@@ -174,12 +203,19 @@ export interface BranchResponse {
   latitude?: number;
   longitude?: number;
   formattedAddress?: string;
+  /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — form phải gửi lại khi lưu. */
+  coordinatesPinned?: boolean;
 }
 
 export interface BranchInput {
   name: string;
   address?: string;
   city?: string;
+  /**
+   * UC-18: BE geocode "address, district, city, Việt Nam" — thiếu district thì
+   * chuỗi tra cứu yếu hẳn ở những tên đường trùng nhau giữa các quận.
+   */
+  district?: string;
   phone?: string;
   // B-13 (DATA LOSS): BE set vô điều kiện 2 field này khi update —
   // thiếu chúng trong payload là xóa trắng dữ liệu đã có.
@@ -191,6 +227,11 @@ export interface BranchInput {
    */
   latitude?: number;
   longitude?: number;
+  /** Metadata của gợi ý Places đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
+  placeId?: string;
+  formattedAddress?: string;
+  /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
+  coordinatesPinned?: boolean;
 }
 
 export interface FacilityResponse {
@@ -292,7 +333,20 @@ export interface UpdateGymProfileInput {
   description?: string;
   address?: string;
   city?: string;
+  /** UC-18: BE ghép address + district + city khi geocode. */
+  district?: string;
   phone?: string;
+  /**
+   * UC-18 (V55): toạ độ trụ sở chọn từ gợi ý Places. BE chỉ geocode lại khi địa
+   * chỉ đổi / thiếu toạ độ, nên gửi lại giá trị cũ cũng không tốn lượt gọi Google.
+   */
+  latitude?: number;
+  longitude?: number;
+  /** Metadata của gợi ý Places đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
+  placeId?: string;
+  formattedAddress?: string;
+  /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
+  coordinatesPinned?: boolean;
 }
 
 // ── Gym-managed PTs (UC-019..021) ──
@@ -303,6 +357,8 @@ export interface GymPtResponse {
   id?: number;
   username?: string;
   email?: string;
+  /** Liên hệ của PT (User.phone) — gym sửa được qua UpdateGymPtInput. */
+  phone?: string;
   displayName?: string;
   bio?: string;
   specialization?: string;
@@ -325,6 +381,8 @@ export interface CreateGymPtInput {
   specialization?: string;
   serviceArea?: string;
   experienceYears?: number;
+  /** UC-019/022: bắt buộc >= 1 chi nhánh đang hoạt động — BE trả 400 nếu rỗng. */
+  branchIds: number[];
 }
 
 export interface UpdateGymPtInput {
@@ -333,6 +391,7 @@ export interface UpdateGymPtInput {
   specialization?: string;
   serviceArea?: string;
   experienceYears?: number;
+  phone?: string;
 }
 
 export interface PtStatusInput {

@@ -5,6 +5,7 @@ import { Loader2, MapPin, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { marketplaceService } from "@/services/marketplace.service";
 import { useGoogleMaps } from "@/shared/hooks/use-google-maps";
+import { canonicalCityName, canonicalDistrictName } from "@/shared/constants/vn-locations";
 import { Input } from "@/shared/components/ui/input";
 import { IconButton } from "@/shared/components/ui/icon-button";
 import { cn } from "@/shared/utils/cn.util";
@@ -13,7 +14,62 @@ import { cn } from "@/shared/utils/cn.util";
 export interface PickedPlace {
   lat: number;
   lng: number;
+  /**
+   * Nhãn NGẮN để hiển thị lại trong ô nhập — tên địa điểm nếu Google có, không
+   * thì rơi về địa chỉ đầy đủ. Dùng cho ô "tìm quanh đây", KHÔNG dùng để lưu.
+   */
   label: string;
+  /**
+   * Địa chỉ đầy đủ đã chuẩn hoá của Google — đây mới là thứ được LƯU vào cột
+   * address. Trước đây form lưu `label`, nghĩa là chọn "California Fitness" sẽ
+   * ghi đúng chữ đó vào địa chỉ và BE geocode lại một cái tên thay vì một địa chỉ.
+   */
+  formattedAddress: string;
+  /** Định danh ổn định của Google — dùng để đối chiếu/khử trùng địa chỉ về sau. */
+  placeId?: string;
+  /** Tách sẵn từ address_components để form khỏi bắt operator gõ lại. */
+  district?: string;
+  city?: string;
+}
+
+/**
+ * Địa điểm operator đã ghim, ở dạng form giữ trong state và gửi lên khi lưu.
+ *
+ * Metadata đi kèm toạ độ chứ không tách rời: BE dùng nó thay cho một lượt geocode
+ * chỉ để lấy lại đúng hai giá trị FE đang cầm sẵn. Prefill từ bản ghi cũ chỉ có
+ * lat/lng — BE giữ nguyên metadata đang lưu khi không nhận được giá trị mới.
+ */
+export interface PinnedPlace {
+  lat: number;
+  lng: number;
+  placeId?: string;
+  formattedAddress?: string;
+  /**
+   * Toạ độ này do người kéo ghim trên bản đồ, không phải lấy nguyên từ gợi ý
+   * Places. BE dùng cờ này để job làm mới định kỳ KHÔNG kéo ghim về chỗ Google
+   * nói — nếu không, công sửa tay bị xoá sau 180 ngày mà không ai hiểu vì sao.
+   */
+  pinnedByUser?: boolean;
+}
+
+/**
+ * Bóc quận/huyện + tỉnh/thành từ `address_components`.
+ *
+ * Ở Việt Nam Google trả quận/huyện ở `administrative_area_level_2` và tỉnh/thành
+ * trực thuộc trung ương ở `administrative_area_level_1`. Một số phường/xã lại chỉ
+ * có `sublocality_level_1`, nên lấy nó làm phương án dự phòng cho quận.
+ *
+ * Kết quả được chuẩn hoá về đúng chuỗi trong danh mục VN_CITIES khi khớp: bộ lọc
+ * marketplace gửi lên chuỗi của danh mục, lưu tên dạng khác là gym rớt khỏi bộ lọc.
+ */
+function splitAdminAreas(components: google.maps.GeocoderAddressComponent[] | undefined) {
+  const find = (type: string) => components?.find((c) => c.types.includes(type))?.long_name;
+  const district = find("administrative_area_level_2") ?? find("sublocality_level_1");
+  const city = find("administrative_area_level_1");
+  return {
+    district: canonicalDistrictName(district) ?? district,
+    city: canonicalCityName(city) ?? city,
+  };
 }
 
 interface PlaceAutocompleteInputProps {
@@ -64,7 +120,9 @@ export function PlaceAutocompleteInput({
 
     const autocomplete = new maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: "vn" },
-      fields: ["geometry.location", "formatted_address", "name"],
+      // address_components + place_id vẫn thuộc nhóm Basic Data như các field cũ
+      // nên không đẩy Place Details lên bậc giá cao hơn.
+      fields: ["geometry.location", "formatted_address", "name", "address_components", "place_id"],
       types: ["geocode", "establishment"],
     });
     const listener = autocomplete.addListener("place_changed", () => {
@@ -76,9 +134,19 @@ export function PlaceAutocompleteInput({
         errorRef.current?.(t("marketplace.nearby.placeNotFound"));
         return;
       }
-      const label = place.name ?? place.formatted_address ?? "";
+      const formattedAddress = place.formatted_address ?? place.name ?? "";
+      const label = place.name ?? formattedAddress;
+      const { district, city } = splitAdminAreas(place.address_components);
       valueChangeRef.current(label);
-      pickedRef.current({ lat: location.lat(), lng: location.lng(), label });
+      pickedRef.current({
+        lat: location.lat(),
+        lng: location.lng(),
+        label,
+        formattedAddress,
+        placeId: place.place_id,
+        district,
+        city,
+      });
     });
 
     return () => {
@@ -102,7 +170,15 @@ export function PlaceAutocompleteInput({
       }
       const label = result.formattedAddress ?? query;
       onValueChange(label);
-      onPlacePicked({ lat: result.latitude, lng: result.longitude, label });
+      // Proxy BE không trả address_components nên district/city để trống — form
+      // giữ nguyên giá trị operator đã gõ thay vì bị xoá trắng.
+      onPlacePicked({
+        lat: result.latitude,
+        lng: result.longitude,
+        label,
+        formattedAddress: label,
+        placeId: result.placeId,
+      });
     } catch {
       onError?.(t("marketplace.nearby.placeLookupFailed"));
     } finally {

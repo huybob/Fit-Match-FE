@@ -32,6 +32,7 @@ const navItems = [
   { labelKey: "site.nav.home", label: null, href: appRoutes.home },
   { labelKey: "site.nav.gyms", label: null, href: appRoutes.gyms },
   { labelKey: "site.nav.trainers", label: null, href: appRoutes.trainers },
+  { labelKey: "site.nav.packages", label: null, href: appRoutes.packages },
   { labelKey: "site.nav.bookings", label: null, href: appRoutes.booking },
   // Bug 13: FAQ/Blog do CMS quản lý đã có trang nhưng không được link ở đâu cả.
   { labelKey: null, label: "Blog", href: appRoutes.blog },

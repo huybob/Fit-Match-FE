@@ -120,3 +120,28 @@ export interface ServiceCategoryRequest {
   description?: string;
   active?: boolean;
 }
+
+// ── Geocoding (UC-18, V59/V60) ──
+
+/** Tình trạng phủ toạ độ: gym chưa có toạ độ thì không xuất hiện trong "tìm quanh đây". */
+export interface GeocodingCoverage {
+  gymsTotal?: number;
+  gymsGeocoded?: number;
+  /** Google chỉ khớp tới mức phường/quận — ghim có thể lệch hàng km. */
+  gymsImprecise?: number;
+  /** Chủ gym tự kéo ghim; job làm mới định kỳ không đụng vào. */
+  gymsPinned?: number;
+  branchesTotal?: number;
+  branchesGeocoded?: number;
+  cachedQueries?: number;
+  /** false = chưa cấu hình app.google-maps.api-key, mọi thứ đang tắt. */
+  enabled?: boolean;
+}
+
+export interface GeocodingBackfillResult {
+  gymsScanned?: number;
+  gymsUpdated?: number;
+  branchesScanned?: number;
+  branchesUpdated?: number;
+  remaining?: number;
+}
