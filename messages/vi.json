@@ -2032,6 +2032,7 @@
       "home": "Trang chủ",
       "gyms": "Phòng gym",
       "trainers": "Huấn luyện viên",
+      "packages": "Gói tập",
       "bookings": "Đặt lịch"
     },
     "workspace": {
@@ -2051,6 +2052,27 @@
     "terms": "Điều khoản dịch vụ",
     "support": "Hỗ trợ",
     "copyright": "© 2024 FitMatch Marketplace. Bảo lưu mọi quyền."
+  },
+  "packages": {
+    "title": "Gói tập",
+    "searchPlaceholder": "Tên gói, phòng gym...",
+    "found": "Tìm thấy {count} gói tập từ {gyms} phòng gym.",
+    "partialScan": "Đang xét {scanned} trong {total} phòng gym khớp bộ lọc. Hãy chọn thành phố hoặc quận để thu hẹp và thấy đủ gói.",
+    "loadError": "Không thể tải danh sách gói tập",
+    "none": "Không tìm thấy gói tập",
+    "noneHint": "Thử bỏ bớt bộ lọc hoặc từ khoá để xem thêm gói tập.",
+    "book": "Đặt gói này",
+    "ptSurcharge": "Phụ phí chọn PT",
+    "ptSurchargeShort": "+{amount} nếu chọn PT",
+    "overview": "Thông tin gói",
+    "rules": "Quy tắc đặt & thanh toán",
+    "freeCancellation": "Miễn phí huỷ trước {hours} giờ",
+    "minNotice": "Phải đặt trước tối thiểu {hours} giờ",
+    "defaultRules": "Áp dụng quy tắc mặc định của nền tảng.",
+    "missingGym": "Thiếu thông tin phòng gym",
+    "missingGymHint": "Đường dẫn chi tiết gói cần kèm phòng gym. Hãy mở gói từ danh sách Gói tập.",
+    "notFound": "Không tìm thấy gói tập",
+    "notFoundHint": "Gói tập có thể đã ngừng bán hoặc không còn được phòng gym công bố."
   },
   "compare": {
     "gyms": "So sánh {count} phòng gym",
@@ -2113,6 +2135,14 @@
     "gymDetail": {
       "title": "Chi tiết phòng tập",
       "description": "Thông tin phòng gym: dịch vụ, gói tập, chi nhánh, giờ mở cửa và huấn luyện viên."
+    },
+    "packages": {
+      "title": "Gói tập",
+      "description": "So sánh gói tập nhiều buổi của các phòng gym đã xác minh — số buổi, hạn dùng, giá và quy tắc đặt lịch."
+    },
+    "packageDetail": {
+      "title": "Chi tiết gói tập",
+      "description": "Số buổi, hạn dùng, điều kiện sử dụng và quy tắc đặt lịch của gói tập."
     },
     "root": {
       "ogTitle": "FitMatch OS - Workspace quản lý phòng gym",

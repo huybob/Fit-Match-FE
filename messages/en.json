@@ -2032,6 +2032,7 @@
       "home": "Home",
       "gyms": "Gyms",
       "trainers": "Trainers",
+      "packages": "Training packages",
       "bookings": "Bookings"
     },
     "workspace": {
@@ -2051,6 +2052,27 @@
     "terms": "Terms of service",
     "support": "Support",
     "copyright": "© 2024 FitMatch Marketplace. All rights reserved."
+  },
+  "packages": {
+    "title": "Training packages",
+    "searchPlaceholder": "Package or gym name...",
+    "found": "Found {count} packages across {gyms} gyms.",
+    "partialScan": "Scanning {scanned} of {total} matching gyms. Narrow by city or district to see every package.",
+    "loadError": "Could not load training packages",
+    "none": "No packages found",
+    "noneHint": "Try removing a filter or keyword to see more packages.",
+    "book": "Book this package",
+    "ptSurcharge": "Trainer surcharge",
+    "ptSurchargeShort": "+{amount} with a trainer",
+    "overview": "Package details",
+    "rules": "Booking & payment rules",
+    "freeCancellation": "Free cancellation up to {hours}h before",
+    "minNotice": "Must book at least {hours}h in advance",
+    "defaultRules": "Platform default rules apply.",
+    "missingGym": "Missing gym context",
+    "missingGymHint": "A package detail link must include its gym. Open the package from the Training packages list.",
+    "notFound": "Package not found",
+    "notFoundHint": "This package may have been withdrawn or is no longer published by the gym."
   },
   "compare": {
     "gyms": "Compare {count} gyms",
@@ -2109,6 +2131,14 @@
     "gyms": {
       "title": "Gyms",
       "description": "Find verified gyms by area — browse services, packages, opening hours and book online."
+    },
+    "packages": {
+      "title": "Training packages",
+      "description": "Compare multi-session packages from verified gyms — sessions, validity, price and booking rules."
+    },
+    "packageDetail": {
+      "title": "Package details",
+      "description": "Sessions, validity, usage conditions and booking rules for a training package."
     },
     "gymDetail": {
       "title": "Gym details",
