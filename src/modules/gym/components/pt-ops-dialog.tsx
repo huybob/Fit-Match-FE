@@ -226,7 +226,8 @@ function AssignmentsTab({ ptId }: { ptId: number }) {
   });
 
   const options =
-    targetType === "branch" ? (branches.data ?? []).map((b) => ({ id: b.id, name: b.name }))
+    // Chi nhánh đã ngừng hoạt động không gán được (BE trả 409) — không chào ra ở đây.
+    targetType === "branch" ? (branches.data ?? []).filter((b) => b.active).map((b) => ({ id: b.id, name: b.name }))
       : targetType === "service" ? (services.data ?? []).map((s) => ({ id: s.id, name: s.name }))
         : (packages.data ?? []).map((p) => ({ id: p.id, name: p.name }));
 

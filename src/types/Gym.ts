@@ -357,6 +357,8 @@ export interface GymPtResponse {
   id?: number;
   username?: string;
   email?: string;
+  /** Liên hệ của PT (User.phone) — gym sửa được qua UpdateGymPtInput. */
+  phone?: string;
   displayName?: string;
   bio?: string;
   specialization?: string;
@@ -379,6 +381,8 @@ export interface CreateGymPtInput {
   specialization?: string;
   serviceArea?: string;
   experienceYears?: number;
+  /** UC-019/022: bắt buộc >= 1 chi nhánh đang hoạt động — BE trả 400 nếu rỗng. */
+  branchIds: number[];
 }
 
 export interface UpdateGymPtInput {
@@ -387,6 +391,7 @@ export interface UpdateGymPtInput {
   specialization?: string;
   serviceArea?: string;
   experienceYears?: number;
+  phone?: string;
 }
 
 export interface PtStatusInput {
