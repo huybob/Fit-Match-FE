@@ -674,11 +674,21 @@
     }
   },
   "gym": {
+    "media": {
+      "title": "Ảnh phòng gym",
+      "subtitle": "Ảnh hiển thị cho khách trên trang gym công khai. Chọn ảnh bìa và thêm ảnh thư viện cho toàn gym hoặc từng chi nhánh.",
+      "scopeLabel": "Áp dụng cho",
+      "wholeGym": "Toàn bộ gym",
+      "typeLabel": "Loại ảnh",
+      "gallery": "Thư viện",
+      "cover": "Ảnh bìa"
+    },
     "nav": {
       "dashboard": "Bảng điều hành",
       "verification": "Xác minh",
       "facilities": "Cơ sở vật chất",
       "branches": "Chi nhánh",
+      "media": "Ảnh",
       "trainers": "Huấn luyện viên",
       "services": "Dịch vụ",
       "packages": "Gói tập",
@@ -1619,6 +1629,9 @@
       "requirePackage": "Vui lòng chọn gói đã mua"
     },
     "checkInLabel": "Giờ check-in",
+    "showCheckInPhotos": "Ảnh check-in",
+    "hideCheckInPhotos": "Ẩn ảnh check-in",
+    "noCheckInPhotos": "Chưa có ảnh check-in",
     "timetable": {
       "title": "Thời gian biểu",
       "viewLabel": "Kiểu xem",
@@ -1928,6 +1941,9 @@
     "selectBooking": "Chọn buổi đặt lịch",
     "ratingLabel": "Điểm đánh giá",
     "contentLabel": "Nội dung",
+    "imagesLabel": "Ảnh (không bắt buộc)",
+    "rateStars": "Chấm {count} trên 5 sao",
+    "starsCount": "{stars} sao: {count} đánh giá",
     "mod": {
       "RESOLVED": "Đã xử lý",
       "DISMISSED": "Đã bỏ qua",
@@ -2220,6 +2236,34 @@
     "body": "Tham gia mạng lưới hàng đầu dành cho các chuyên gia thể hình và phòng gym cao cấp. Sự thay đổi của bạn bắt đầu từ đây.",
     "proTrainers": "HLV Chuyên Nghiệp",
     "premiumGyms": "Phòng Gym Cao Cấp"
+  },
+  "media": {
+    "addImages": "Thêm ảnh",
+    "hint": "Tối đa {max} ảnh, mỗi ảnh {size} MB (JPG, PNG, WebP)",
+    "imageAlt": "Ảnh",
+    "openImage": "Mở ảnh {index}",
+    "removeImage": "Xoá ảnh",
+    "setPrimary": "Đặt làm ảnh chính",
+    "primary": "Ảnh chính",
+    "previous": "Ảnh trước",
+    "next": "Ảnh sau",
+    "viewerTitle": "Xem ảnh",
+    "rejected": "Ảnh không hợp lệ",
+    "unsupportedType": "\"{name}\" không phải ảnh được hỗ trợ (chỉ JPG, PNG hoặc WebP)",
+    "tooLarge": "\"{name}\" nặng {size} MB - giới hạn là {max} MB",
+    "duplicate": "\"{name}\" đã được thêm rồi",
+    "tooMany": "Quá nhiều ảnh",
+    "tooManyHint": "Mục này chỉ cho phép tối đa {max} ảnh",
+    "uploadFailed": "Tải ảnh lên thất bại",
+    "deleteFailed": "Không xoá được ảnh",
+    "failed": "Lỗi",
+    "galleryTitle": "Thư viện ảnh",
+    "galleryEmpty": "Chưa có ảnh nào",
+    "galleryEmptyHint": "Thêm ảnh để khách hình dung được không gian tập.",
+    "uploaded": "Đã tải ảnh lên",
+    "deleted": "Đã xoá ảnh",
+    "primarySet": "Đã cập nhật ảnh chính",
+    "reviewImages": "Ảnh ({count})"
   },
   "upload": {
     "uploaded": "Tệp đã tải lên",

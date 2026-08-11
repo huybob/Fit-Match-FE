@@ -674,11 +674,21 @@
     }
   },
   "gym": {
+    "media": {
+      "title": "Gym photos",
+      "subtitle": "Photos shown to customers on your public gym page. Pick a cover and add gallery shots for the gym or a specific branch.",
+      "scopeLabel": "Applies to",
+      "wholeGym": "Whole gym",
+      "typeLabel": "Photo type",
+      "gallery": "Gallery",
+      "cover": "Cover photo"
+    },
     "nav": {
       "dashboard": "Dashboard",
       "verification": "Verification",
       "facilities": "Facilities",
       "branches": "Branches",
+      "media": "Photos",
       "trainers": "Trainers",
       "services": "Services",
       "packages": "Packages",
@@ -1619,6 +1629,9 @@
       "requirePackage": "Please choose a purchased package"
     },
     "checkInLabel": "Check-in",
+    "showCheckInPhotos": "Check-in photos",
+    "hideCheckInPhotos": "Hide check-in photos",
+    "noCheckInPhotos": "No check-in photos",
     "timetable": {
       "title": "Timetable",
       "viewLabel": "View mode",
@@ -1928,6 +1941,9 @@
     "selectBooking": "Select a booking",
     "ratingLabel": "Rating",
     "contentLabel": "Content",
+    "imagesLabel": "Photos (optional)",
+    "rateStars": "Rate {count} out of 5 stars",
+    "starsCount": "{stars} stars: {count} reviews",
     "mod": {
       "RESOLVED": "Resolved",
       "DISMISSED": "Dismissed",
@@ -2220,6 +2236,34 @@
     "body": "Join the leading network of fitness professionals and premium gyms. Your transformation starts here.",
     "proTrainers": "Professional trainers",
     "premiumGyms": "Premium gyms"
+  },
+  "media": {
+    "addImages": "Add photos",
+    "hint": "Up to {max} photos, {size} MB each (JPG, PNG, WebP)",
+    "imageAlt": "Photo",
+    "openImage": "Open photo {index}",
+    "removeImage": "Remove photo",
+    "setPrimary": "Set as main photo",
+    "primary": "Main",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "viewerTitle": "Photo viewer",
+    "rejected": "Photo not accepted",
+    "unsupportedType": "\"{name}\" is not a supported image (JPG, PNG or WebP only)",
+    "tooLarge": "\"{name}\" is {size} MB - the limit is {max} MB",
+    "duplicate": "\"{name}\" has already been added",
+    "tooMany": "Too many photos",
+    "tooManyHint": "You can upload at most {max} photos here",
+    "uploadFailed": "Upload failed",
+    "deleteFailed": "Could not delete the photo",
+    "failed": "Failed",
+    "galleryTitle": "Photos",
+    "galleryEmpty": "No photos yet",
+    "galleryEmptyHint": "Add photos so customers can see your space.",
+    "uploaded": "Photos uploaded",
+    "deleted": "Photo deleted",
+    "primarySet": "Main photo updated",
+    "reviewImages": "Photos ({count})"
   },
   "upload": {
     "uploaded": "Uploaded file",
