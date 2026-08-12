@@ -280,17 +280,24 @@ function SiteFooter() {
   const visibleNavItems = useVisibleNavItems();
 
   return (
-    <footer className="border-t border-border bg-foreground px-4 py-10 text-background sm:px-6 lg:px-8">
+    // Chân trang là bề mặt TỐI ở cả hai theme (token --footer). Chữ phụ vì thế
+    // dùng độ mờ của chính màu chữ chân trang, KHÔNG dùng text-muted-foreground:
+    // token đó sáng lên ở dark và trước đây chìm hẳn vào nền.
+    <footer className="border-t border-border bg-footer px-4 py-10 text-footer-foreground sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-lg font-black text-white">FitMatch</p>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          <p className="text-lg font-black">FitMatch</p>
+          <p className="mt-2 max-w-md text-sm text-footer-foreground/70">
             {t("site.footerTagline")}
           </p>
         </div>
-        <div className="flex flex-wrap gap-4 text-sm font-semibold text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-sm font-semibold text-footer-foreground/70">
           {visibleNavItems.map(({ labelKey, label, href }) => (
-            <Link key={href} href={href} className={cn("hover:text-white transition")}>
+            <Link
+              key={href}
+              href={href}
+              className={cn("transition hover:text-footer-foreground")}
+            >
               {labelKey ? t(labelKey) : label}
             </Link>
           ))}

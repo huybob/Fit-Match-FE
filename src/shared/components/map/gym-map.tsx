@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPinOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useGoogleMaps } from "@/shared/hooks/use-google-maps";
+import type { Circle, CircleMarker, Map as LeafletMap, Marker } from "leaflet";
+import { useLeaflet } from "@/shared/hooks/use-leaflet";
+import { addBaseTiles, gymPinIcon } from "@/shared/components/map/leaflet-config";
 import { cn } from "@/shared/utils/cn.util";
 
 /** Một ghim gym trên bản đồ. */
@@ -12,7 +14,7 @@ export interface GymMapMarker {
   title: string;
   lat: number;
   lng: number;
-  /** Dòng phụ trong InfoWindow: địa chỉ hoặc "Chi nhánh X". */
+  /** Dòng phụ trong popup: địa chỉ hoặc "Chi nhánh X". */
   subtitle?: string;
   distanceLabel?: string;
 }
@@ -22,7 +24,7 @@ interface GymMapProps {
   center: { lat: number; lng: number } | null;
   radiusKm?: number;
   markers: GymMapMarker[];
-  /** Gym đang được trỏ tới ở danh sách — ghim tương ứng mở InfoWindow. */
+  /** Gym đang được trỏ tới ở danh sách — ghim tương ứng mở popup. */
   activeId?: number | null;
   onMarkerClick?: (id: number) => void;
   /** Cho phép người dùng đổi tâm bằng cách bấm thẳng lên bản đồ. */
@@ -41,10 +43,18 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
+function popupHtml(item: GymMapMarker) {
+  return `<div style="min-width:160px">
+            <strong>${escapeHtml(item.title)}</strong>
+            ${item.subtitle ? `<div style="font-size:12px;opacity:.75">${escapeHtml(item.subtitle)}</div>` : ""}
+            ${item.distanceLabel ? `<div style="font-size:12px;font-weight:600">${escapeHtml(item.distanceLabel)}</div>` : ""}
+          </div>`;
+}
+
 /**
- * Bản đồ kết quả tìm gym theo bán kính (UC-18).
+ * Bản đồ kết quả tìm gym theo bán kính (UC-18) — Leaflet + tile OpenStreetMap.
  *
- * Bản đồ là lớp bổ trợ: thiếu key hoặc script lỗi thì component chỉ hiện một ô
+ * Bản đồ là lớp bổ trợ: chunk Leaflet tải hỏng thì component chỉ hiện một ô
  * thông báo, danh sách kết quả bên cạnh vẫn hoạt động đầy đủ.
  */
 export function GymMap({
@@ -57,126 +67,127 @@ export function GymMap({
   className,
 }: GymMapProps) {
   const t = useTranslations();
-  const { status, maps } = useGoogleMaps();
+  const { status, L } = useLeaflet();
 
   const containerRef = useRef<HTMLDivElement>(null);
   // State (không phải ref) vì các effect vẽ ghim/vòng tròn phải chạy lại NGAY khi
   // bản đồ vừa được tạo — gán vào ref không kích hoạt render nào cả.
   const [mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const circleRef = useRef<google.maps.Circle | null>(null);
-  const centerMarkerRef = useRef<google.maps.Marker | null>(null);
-  const gymMarkersRef = useRef(new Map<number, google.maps.Marker>());
+  const mapRef = useRef<LeafletMap | null>(null);
+  const circleRef = useRef<Circle | null>(null);
+  const centerMarkerRef = useRef<CircleMarker | null>(null);
+  const gymMarkersRef = useRef(new Map<number, Marker>());
 
-  // Handler đi vào listener của Google (ngoài vòng đời React) nên đọc qua ref để
+  // Handler đi vào listener của Leaflet (ngoài vòng đời React) nên đọc qua ref để
   // luôn gọi bản mới nhất thay vì bản bị bắt trong closure lúc khởi tạo.
   const markerClickRef = useRef(onMarkerClick);
   markerClickRef.current = onMarkerClick;
   const centerPickRef = useRef(onCenterPick);
   centerPickRef.current = onCenterPick;
 
-  // ── Khởi tạo bản đồ một lần ──────────────────────────────────────────────
-  // Việc tạo bản đồ và việc gắn listener PHẢI tách làm hai effect. Gộp chung thì
-  // ở StrictMode (dev) effect chạy 2 lần: lần 1 tạo bản đồ rồi cleanup gỡ
-  // listener, lần 2 thấy mapRef đã có nên return sớm -> listener không bao giờ
-  // được gắn lại và tính năng bấm bản đồ chết im lặng khi chạy dev.
+  // ── Khởi tạo bản đồ ──────────────────────────────────────────────────────
+  // Listener bấm-bản-đồ gắn ngay trong effect này chứ không tách riêng: khác với
+  // Google Maps (không có API huỷ, nên bản đồ buộc phải sống sót qua cleanup),
+  // Leaflet có `map.remove()` huỷ sạch. Cleanup huỷ hẳn rồi mount lại dựng mới,
+  // nên listener luôn nằm trên một bản đồ còn sống — kể cả ở StrictMode.
   useEffect(() => {
-    if (status !== "ready" || !maps || !containerRef.current || mapRef.current) return;
+    if (status !== "ready" || !L || !containerRef.current) return;
 
-    mapRef.current = new maps.Map(containerRef.current, {
-      center: center ?? FALLBACK_CENTER,
+    const map = L.map(containerRef.current, {
+      center: [center?.lat ?? FALLBACK_CENTER.lat, center?.lng ?? FALLBACK_CENTER.lng],
       zoom: 13,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-      clickableIcons: false,
+      // Cuộn trang bằng bánh xe khi con trỏ vô tình đi qua bản đồ là hành vi khó
+      // chịu nhất của bản đồ nhúng; Google mặc định cũng đòi Ctrl để zoom.
+      scrollWheelZoom: false,
     });
-    infoWindowRef.current = new maps.InfoWindow();
+    addBaseTiles(L, map);
+    map.on("click", (event) => {
+      centerPickRef.current?.({ lat: event.latlng.lat, lng: event.latlng.lng });
+    });
+
+    mapRef.current = map;
     setMapReady(true);
-    // Chỉ tạo bản đồ khi API sẵn sàng; `center` ban đầu chỉ dùng làm tâm khởi tạo.
+
+    const gymMarkers = gymMarkersRef.current;
+    return () => {
+      // `map.remove()` gỡ mọi layer, listener và cả thuộc tính `_leaflet_id` trên
+      // container. Bỏ bước này thì lần mount sau Leaflet ném "Map container is
+      // already initialized" — đúng kịch bản StrictMode chạy effect hai lần.
+      map.remove();
+      mapRef.current = null;
+      // Layer đã chết theo bản đồ, nhưng ref thì chưa — không xoá thì effect sau
+      // tưởng ghim còn sống và chỉ gọi setLatLng trên object mồ côi.
+      gymMarkers.clear();
+      circleRef.current = null;
+      centerMarkerRef.current = null;
+      setMapReady(false);
+    };
+    // `center` ban đầu chỉ dùng làm tâm khởi tạo; effect bên dưới lo đồng bộ tiếp.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, maps]);
-
-  // ── Bấm lên bản đồ để đổi tâm ────────────────────────────────────────────
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!mapReady || !map) return;
-
-    const listener = map.addListener("click", (event: google.maps.MapMouseEvent) => {
-      const position = event.latLng;
-      if (position && centerPickRef.current) {
-        centerPickRef.current({ lat: position.lat(), lng: position.lng() });
-      }
-    });
-    return () => listener.remove();
-  }, [mapReady]);
+  }, [status, L]);
 
   // ── Tâm + vòng tròn bán kính ─────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
-    if (!maps || !map) return;
+    if (!L || !map) return;
 
     if (!center) {
-      centerMarkerRef.current?.setMap(null);
+      centerMarkerRef.current?.remove();
       centerMarkerRef.current = null;
-      circleRef.current?.setMap(null);
+      circleRef.current?.remove();
       circleRef.current = null;
       return;
     }
 
+    const position: [number, number] = [center.lat, center.lng];
+
     if (!centerMarkerRef.current) {
-      centerMarkerRef.current = new maps.Marker({
-        map,
-        position: center,
-        zIndex: 999,
-        icon: {
-          path: maps.SymbolPath.CIRCLE,
-          scale: 8,
-          fillColor: "#2563eb",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 3,
-        },
-      });
+      // circleMarker (bán kính tính bằng PIXEL) chứ không phải circle (bán kính
+      // tính bằng mét): đây là chấm đánh dấu vị trí, nó phải giữ nguyên kích thước
+      // khi người dùng zoom.
+      centerMarkerRef.current = L.circleMarker(position, {
+        radius: 8,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+        color: "#ffffff",
+        weight: 3,
+        interactive: false,
+      }).addTo(map);
     } else {
-      centerMarkerRef.current.setPosition(center);
+      centerMarkerRef.current.setLatLng(position);
     }
 
     const radiusMeters = (radiusKm ?? 0) * 1000;
     if (radiusMeters > 0) {
       if (!circleRef.current) {
-        circleRef.current = new maps.Circle({
-          map,
-          center,
+        circleRef.current = L.circle(position, {
           radius: radiusMeters,
-          strokeColor: "#2563eb",
-          strokeOpacity: 0.5,
-          strokeWeight: 1,
+          color: "#2563eb",
+          opacity: 0.5,
+          weight: 1,
           fillColor: "#2563eb",
           fillOpacity: 0.07,
-          clickable: false,
-        });
+          interactive: false,
+        }).addTo(map);
       } else {
-        circleRef.current.setCenter(center);
+        circleRef.current.setLatLng(position);
         circleRef.current.setRadius(radiusMeters);
       }
       // Khớp khung nhìn với vòng tròn để người dùng thấy đúng phạm vi đang lọc.
-      const bounds = circleRef.current.getBounds();
-      if (bounds) map.fitBounds(bounds);
+      map.fitBounds(circleRef.current.getBounds());
     } else {
-      circleRef.current?.setMap(null);
+      circleRef.current?.remove();
       circleRef.current = null;
-      map.panTo(center);
+      map.panTo(position);
     }
     // `mapReady` trong deps: hiệu ứng phải chạy lại ngay sau khi bản đồ được tạo
-    // và sau mỗi lần cleanup xoá ref (StrictMode), không phụ thuộc thứ tự effect.
-  }, [maps, mapReady, center, radiusKm]);
+    // và sau mỗi lần cleanup xoá ref, không phụ thuộc thứ tự effect.
+  }, [L, mapReady, center, radiusKm]);
 
   // ── Ghim các gym ─────────────────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
-    if (!maps || !map) return;
+    if (!L || !map) return;
 
     const live = gymMarkersRef.current;
     const nextIds = new Set(markers.map((m) => m.id));
@@ -185,66 +196,41 @@ export function GymMap({
     // bộ lọc bản đồ lại chồng thêm một lớp ghim cũ.
     for (const [id, marker] of live) {
       if (!nextIds.has(id)) {
-        marker.setMap(null);
+        marker.remove();
         live.delete(id);
       }
     }
 
     for (const item of markers) {
-      const position = { lat: item.lat, lng: item.lng };
+      const position: [number, number] = [item.lat, item.lng];
       const existing = live.get(item.id);
       if (existing) {
-        existing.setPosition(position);
+        existing.setLatLng(position);
+        // Nội dung phải cập nhật theo: cùng một gym có thể đổi khoảng cách khi
+        // người dùng dời tâm tìm kiếm mà id thì không đổi.
+        existing.setPopupContent(popupHtml(item));
         continue;
       }
-      const marker = new maps.Marker({ map, position, title: item.title });
-      marker.addListener("click", () => markerClickRef.current?.(item.id));
+      const marker = L.marker(position, { icon: gymPinIcon(L), title: item.title })
+        .bindPopup(popupHtml(item))
+        .addTo(map);
+      marker.on("click", () => markerClickRef.current?.(item.id));
       live.set(item.id, marker);
     }
-  }, [maps, mapReady, markers]);
+  }, [L, mapReady, markers]);
 
-  // ── Đồng bộ InfoWindow với gym đang chọn ở danh sách ──────────────────────
+  // ── Đồng bộ popup với gym đang chọn ở danh sách ───────────────────────────
   useEffect(() => {
     const map = mapRef.current;
-    const infoWindow = infoWindowRef.current;
-    if (!map || !infoWindow) return;
+    if (!map) return;
 
-    const target = activeId == null ? null : markers.find((m) => m.id === activeId);
     const marker = activeId == null ? null : gymMarkersRef.current.get(activeId);
-    if (!target || !marker) {
-      infoWindow.close();
+    if (!marker) {
+      map.closePopup();
       return;
     }
-    infoWindow.setContent(
-      `<div style="min-width:160px">
-         <strong>${escapeHtml(target.title)}</strong>
-         ${target.subtitle ? `<div style="font-size:12px;opacity:.75">${escapeHtml(target.subtitle)}</div>` : ""}
-         ${target.distanceLabel ? `<div style="font-size:12px;font-weight:600">${escapeHtml(target.distanceLabel)}</div>` : ""}
-       </div>`,
-    );
-    infoWindow.open({ map, anchor: marker });
+    marker.openPopup();
   }, [mapReady, activeId, markers]);
-
-  // ── Dọn dẹp khi unmount ──────────────────────────────────────────────────
-  // Gỡ khỏi bản đồ PHẢI đi kèm xoá ref: ở StrictMode (dev) cleanup này chạy giữa
-  // hai lần mount, effect vẽ lại sau đó thấy ref còn khác null nên chỉ gọi
-  // setCenter/setRadius mà không gắn lại vào bản đồ -> vòng tròn bán kính và ghim
-  // vị trí người dùng biến mất khi chạy dev.
-  //
-  // Riêng bản đồ thì giữ lại (Google Maps không có API huỷ, và container không
-  // bị remount) — effect khởi tạo tự bỏ qua nhờ mapRef đã có.
-  useEffect(() => {
-    const gymMarkers = gymMarkersRef.current;
-    return () => {
-      gymMarkers.forEach((marker) => marker.setMap(null));
-      gymMarkers.clear();
-      circleRef.current?.setMap(null);
-      circleRef.current = null;
-      centerMarkerRef.current?.setMap(null);
-      centerMarkerRef.current = null;
-      infoWindowRef.current?.close();
-    };
-  }, []);
 
   if (status !== "ready") {
     return (
@@ -262,11 +248,7 @@ export function GymMap({
         ) : (
           <>
             <MapPinOff className="size-5" />
-            <p className="max-w-xs px-4">
-              {status === "disabled"
-                ? t("marketplace.nearby.mapDisabled")
-                : t("marketplace.nearby.mapError")}
-            </p>
+            <p className="max-w-xs px-4">{t("marketplace.nearby.mapError")}</p>
           </>
         )}
       </div>

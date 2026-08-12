@@ -122,12 +122,35 @@ export interface PublicBranch {
   formattedAddress?: string;
 }
 
+/** Dịch vụ geocoding đã cấp một `placeId` (V65) — gửi ngược lên BE khi lưu. */
+export type PlaceProvider = "GOOGLE" | "GEOAPIFY" | "NOMINATIM";
+
 /** UC-18 (V55): kết quả ánh xạ địa chỉ <-> toạ độ từ proxy geocode của BE. */
 export interface GeocodeResult {
   latitude?: number;
   longitude?: number;
   formattedAddress?: string;
   placeId?: string;
+  placeProvider?: PlaceProvider;
+}
+
+/**
+ * UC-18 (V65): một gợi ý địa điểm từ proxy của BE — thay Places Autocomplete
+ * chạy phía trình duyệt.
+ *
+ * `district`/`city` là chuỗi THÔ của nhà cung cấp; phải chuẩn hoá về danh mục
+ * VN_CITIES trước khi điền vào form, vì bộ lọc marketplace so khớp theo đúng
+ * chuỗi của danh mục đó.
+ */
+export interface PlaceSuggestion {
+  label?: string;
+  formattedAddress?: string;
+  latitude?: number;
+  longitude?: number;
+  placeId?: string;
+  placeProvider?: PlaceProvider;
+  district?: string;
+  city?: string;
 }
 
 /** Bug S2-14: một khung giờ rảnh lặp hàng tuần của PT (dayOfWeek 1-7, 1 = Thứ 2). */
@@ -221,4 +244,10 @@ export const marketplaceService = {
     api.get<GeocodeResult>("/marketplace/geocode", { params: { address } }),
   reverseGeocode: (lat: number, lng: number) =>
     api.get<GeocodeResult>("/marketplace/geocode/reverse", { params: { lat, lng } }),
+  // V65: gợi ý địa điểm. Mảng rỗng là hợp lệ ("nhà cung cấp hiện tại không hỗ trợ
+  // gợi ý"), không phải lỗi — ô nhập tự lui về chế độ nhấn Enter tra cả chuỗi.
+  autocompletePlaces: (query: string, limit = 5) =>
+    api.get<PlaceSuggestion[]>("/marketplace/geocode/autocomplete", {
+      params: { q: query, limit },
+    }),
 };

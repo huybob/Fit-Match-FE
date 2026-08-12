@@ -1,4 +1,5 @@
 import type { PageResponse } from "@/shared/types/api-response.type";
+import type { PlaceProvider } from "@/services/marketplace.service";
 
 export interface Gym {
   id?: number;
@@ -123,18 +124,20 @@ export interface SubmitGymRegistrationRequest {
   district?: string;
   phone?: string;
   /**
-   * UC-18 (V55): toạ độ chọn từ gợi ý Places. Bỏ trống thì BE geocode từ địa chỉ;
-   * gửi kèm sẽ ghi đè — vị trí Google trả về cho đúng địa điểm chính xác hơn
+   * UC-18 (V55): toạ độ chọn từ gợi ý địa chỉ. Bỏ trống thì BE geocode từ địa chỉ;
+   * gửi kèm sẽ ghi đè — vị trí dịch vụ trả về cho đúng địa điểm chính xác hơn
    * việc geocode lại chuỗi chữ.
    */
   latitude?: number;
   longitude?: number;
   /**
-   * Metadata của chính gợi ý Places đã chọn. Gửi kèm toạ độ để BE khỏi phải
+   * Metadata của chính gợi ý địa chỉ đã chọn. Gửi kèm toạ độ để BE khỏi phải
    * geocode lại chỉ nhằm lấy hai giá trị FE đang cầm sẵn; bỏ trống thì BE giữ
    * nguyên giá trị đang lưu.
    */
   placeId?: string;
+  /** V65 — dịch vụ đã cấp `placeId`; thiếu nó thì job làm mới toạ độ bỏ qua bản ghi. */
+  placeProvider?: PlaceProvider;
   formattedAddress?: string;
   /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
   coordinatesPinned?: boolean;
@@ -222,13 +225,15 @@ export interface BranchInput {
   amenities?: string;
   capacity?: number;
   /**
-   * UC-18 (V55): toạ độ chọn từ gợi ý Places. Bỏ trống thì BE geocode từ địa chỉ;
+   * UC-18 (V55): toạ độ chọn từ gợi ý địa chỉ. Bỏ trống thì BE geocode từ địa chỉ;
    * gửi kèm sẽ ghi đè — chủ gym biết vị trí thật chính xác hơn máy đoán.
    */
   latitude?: number;
   longitude?: number;
-  /** Metadata của gợi ý Places đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
+  /** Metadata của gợi ý địa chỉ đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
   placeId?: string;
+  /** V65 — dịch vụ đã cấp `placeId`; thiếu nó thì job làm mới toạ độ bỏ qua bản ghi. */
+  placeProvider?: PlaceProvider;
   formattedAddress?: string;
   /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
   coordinatesPinned?: boolean;
@@ -337,13 +342,15 @@ export interface UpdateGymProfileInput {
   district?: string;
   phone?: string;
   /**
-   * UC-18 (V55): toạ độ trụ sở chọn từ gợi ý Places. BE chỉ geocode lại khi địa
-   * chỉ đổi / thiếu toạ độ, nên gửi lại giá trị cũ cũng không tốn lượt gọi Google.
+   * UC-18 (V55): toạ độ trụ sở chọn từ gợi ý địa chỉ. BE chỉ geocode lại khi địa
+   * chỉ đổi / thiếu toạ độ, nên gửi lại giá trị cũ cũng không tốn lượt gọi dịch vụ.
    */
   latitude?: number;
   longitude?: number;
-  /** Metadata của gợi ý Places đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
+  /** Metadata của gợi ý địa chỉ đi kèm toạ độ; bỏ trống thì BE giữ nguyên giá trị đang lưu. */
   placeId?: string;
+  /** V65 — dịch vụ đã cấp `placeId`; thiếu nó thì job làm mới toạ độ bỏ qua bản ghi. */
+  placeProvider?: PlaceProvider;
   formattedAddress?: string;
   /** UC-18 (V60): toạ độ do chủ gym kéo ghim tay — job làm mới định kỳ sẽ bỏ qua. */
   coordinatesPinned?: boolean;

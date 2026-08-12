@@ -161,7 +161,7 @@ export default function GymBranchesPage() {
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState("");
   const [capacity, setCapacity] = useState("");
-  // UC-18 (V55): địa điểm chọn từ gợi ý Places. null = để BE tự geocode từ địa chỉ.
+  // UC-18 (V55): địa điểm chọn từ gợi ý địa chỉ. null = để BE tự geocode từ địa chỉ.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
@@ -207,7 +207,7 @@ export default function GymBranchesPage() {
     // Giữ lại toạ độ đã có: gửi lên nguyên vẹn thì BE không geocode lại một địa
     // chỉ không đổi (đỡ tốn quota) và không đánh mất vị trí đã chỉnh thủ công.
     // Giữ cả cờ ghim tay: thiếu nó thì mỗi lần sửa số điện thoại là toạ độ chủ gym
-    // đã kéo bị hạ cấp về "Google đoán" và job làm mới sẽ kéo đi chỗ khác.
+    // đã kéo bị hạ cấp về "máy đoán" và job làm mới sẽ kéo đi chỗ khác.
     setCoords(b.latitude != null && b.longitude != null
       ? { lat: b.latitude, lng: b.longitude, pinnedByUser: b.coordinatesPinned }
       : null);
@@ -232,6 +232,9 @@ export default function GymBranchesPage() {
       latitude: coords?.lat,
       longitude: coords?.lng,
       placeId: coords?.placeId,
+      // V65: nhan nguon cua placeId — thieu no thi BE coi la "khong ro nguon"
+      // va job lam moi toa do se bo qua ban ghi.
+      placeProvider: coords?.placeProvider,
       formattedAddress: coords?.formattedAddress,
       coordinatesPinned: coords?.pinnedByUser,
     });
@@ -368,7 +371,7 @@ export default function GymBranchesPage() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-            {/* UC-18 (V55): chọn từ gợi ý Google để chi nhánh có toạ độ chuẩn và
+            {/* UC-18 (V55): chọn từ gợi ý địa chỉ để chi nhánh có toạ độ chuẩn và
                 xuất hiện đúng chỗ khi khách tìm "gym quanh đây". Gõ tay vẫn được:
                 BE sẽ tự geocode chuỗi địa chỉ khi lưu. */}
             <PlaceAutocompleteInput
@@ -387,6 +390,7 @@ export default function GymBranchesPage() {
                   lat: place.lat,
                   lng: place.lng,
                   placeId: place.placeId,
+                  placeProvider: place.placeProvider,
                   formattedAddress: place.formattedAddress,
                 });
                 if (place.district) setDistrict(place.district);
@@ -395,7 +399,7 @@ export default function GymBranchesPage() {
               onError={(message) => toast({ type: "warning", title: message })}
               placeholder={t("gym.branches.addressPlaceholder")}
             />
-            {/* UC-18 (V60): thấy ghim rơi ở đâu thì mới biết Google đặt sai —
+            {/* UC-18 (V60): thấy ghim rơi ở đâu thì mới biết dịch vụ geocoding đặt sai —
                 trước đây chủ gym lưu xong mới phát hiện khách bị dẫn nhầm chỗ. */}
             <AddressPinMap
               className="mt-2"
@@ -406,7 +410,7 @@ export default function GymBranchesPage() {
                   lat: position.lat,
                   lng: position.lng,
                   // Kéo tay = toạ độ của con người, chính xác hơn máy đoán. Cờ này
-                  // giữ job làm mới định kỳ không kéo ghim về lại chỗ Google nói.
+                  // giữ job làm mới định kỳ không kéo ghim về lại chỗ dịch vụ geocoding nói.
                   pinnedByUser: true,
                 }))
               }
@@ -424,7 +428,7 @@ export default function GymBranchesPage() {
               <Input value={city} onChange={e => setCity(e.target.value)} placeholder={t("gym.branches.cityPlaceholder")} />
             </div>
             <div>
-              {/* UC-18: tự điền khi chọn gợi ý Google, gõ tay được khi không có Maps key. */}
+              {/* UC-18: tự điền khi chọn gợi ý địa chỉ, gõ tay được khi không có gợi ý nào. */}
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.district")}</label>
               <Input value={district} onChange={e => setDistrict(e.target.value)} placeholder={t("gym.branches.districtPlaceholder")} />
             </div>

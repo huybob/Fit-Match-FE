@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Crosshair, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { marketplaceService } from "@/services/marketplace.service";
-import { useGoogleMaps } from "@/shared/hooks/use-google-maps";
 import {
   PlaceAutocompleteInput,
   type PickedPlace,
@@ -52,24 +51,19 @@ export function NearbyLocationPicker({
   onError,
 }: NearbyLocationPickerProps) {
   const t = useTranslations();
-  const { status, maps } = useGoogleMaps();
   const [query, setQuery] = useState(location?.label ?? "");
   const [locating, setLocating] = useState(false);
 
   /**
-   * Đổi toạ độ GPS thành địa chỉ đọc được. Ưu tiên Geocoder phía trình duyệt (đã
-   * có sẵn khi bản đồ chạy); không có thì thử proxy của BE. Cả hai hỏng vẫn không
-   * chặn luồng — toạ độ mới là thứ dùng để tìm kiếm, nhãn chỉ để hiển thị.
+   * Đổi toạ độ GPS thành địa chỉ đọc được, qua proxy của BE.
+   *
+   * V65: trước đây ưu tiên Geocoder phía trình duyệt của Google rồi mới lui về
+   * proxy. Giờ chỉ còn một đường — FE không nạp SDK bản đồ nào nữa.
+   *
+   * Hỏng cũng không chặn luồng: toạ độ mới là thứ dùng để tìm kiếm, nhãn chỉ để
+   * hiển thị cho người dùng biết mình đang tìm quanh đâu.
    */
   async function describe(lat: number, lng: number): Promise<string> {
-    if (status === "ready" && maps) {
-      try {
-        const { results } = await new maps.Geocoder().geocode({ location: { lat, lng } });
-        if (results[0]?.formatted_address) return results[0].formatted_address;
-      } catch {
-        /* rơi xuống nhánh dưới */
-      }
-    }
     try {
       const result = await marketplaceService.reverseGeocode(lat, lng);
       if (result.formattedAddress) return result.formattedAddress;

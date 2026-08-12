@@ -168,7 +168,7 @@ export default function GymVerificationPage() {
   const [phone, setPhone] = useState("");
   // UC-18 (V55) / bug S2-01: gym mới trước đây gõ địa chỉ bằng <Input> thường nên
   // sinh ra hồ sơ phi chuẩn ngay từ lúc đăng ký — đúng nguyên nhân Admin phải bắt
-  // xác minh lại địa chỉ. Chọn từ gợi ý Google là có sẵn toạ độ chuẩn.
+  // xác minh lại địa chỉ. Chọn từ gợi ý địa chỉ là có sẵn toạ độ chuẩn.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
   const [documents, setDocuments] = useState<GymDocumentDto[]>(
     DOC_TYPES.map((d) => ({ documentType: d.type, fileUrl: "" })),
@@ -253,6 +253,9 @@ export default function GymVerificationPage() {
       latitude: coords?.lat,
       longitude: coords?.lng,
       placeId: coords?.placeId,
+      // V65: nhan nguon cua placeId — thieu no thi BE coi la "khong ro nguon"
+      // va job lam moi toa do se bo qua ban ghi.
+      placeProvider: coords?.placeProvider,
       formattedAddress: coords?.formattedAddress,
       coordinatesPinned: coords?.pinnedByUser,
       documents: validDocs.map(({ documentType, fileUrl }) => ({ documentType, fileUrl })),
@@ -412,9 +415,9 @@ export default function GymVerificationPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-                    {/* UC-18 (V55): chọn từ gợi ý Google để hồ sơ có toạ độ chuẩn
+                    {/* UC-18 (V55): chọn từ gợi ý địa chỉ để hồ sơ có toạ độ chuẩn
                         ngay từ lúc đăng ký và xuất hiện đúng chỗ khi khách tìm
-                        "gym quanh đây". Không có Maps key thì ô này vẫn gõ tay
+                        "gym quanh đây". Không có gợi ý nào thì ô này vẫn gõ tay
                         được bình thường, BE sẽ tự geocode chuỗi địa chỉ khi lưu. */}
                     <PlaceAutocompleteInput
                       value={address}
@@ -429,6 +432,7 @@ export default function GymVerificationPage() {
                           lat: place.lat,
                           lng: place.lng,
                           placeId: place.placeId,
+                          placeProvider: place.placeProvider,
                           formattedAddress: place.formattedAddress,
                         });
                         if (place.district) setDistrict(place.district);

@@ -44,8 +44,12 @@ const SCRIPT_ID = "google-identity-services";
 const SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
 /**
- * `window.google` đã được @types/google.maps khai báo cho namespace `maps`; đọc
- * nhánh `accounts` qua ép kiểu để không phải mở rộng global namespace của Google.
+ * Đọc `window.google.accounts.id` qua ép kiểu thay vì mở rộng global namespace.
+ *
+ * V65: trước đây `window.google` được @types/google.maps khai báo sẵn, nhưng gói
+ * đó đã bị gỡ cùng Google Maps JavaScript API. Đăng nhập Google (UC-003) không
+ * liên quan tới bản đồ và vẫn chạy — nó chỉ cần script gsi/client, không cần
+ * kiểu toàn cục nào.
  */
 function readIdentity(): GoogleIdentity | undefined {
   if (typeof window === "undefined") return undefined;
