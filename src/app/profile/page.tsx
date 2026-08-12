@@ -24,7 +24,7 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import type { AuthUser } from "@/services/auth.service";
 
-import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
+import { ProfileShell } from "@/modules/layout/profile-shell";
 import {
   Select,
   SelectContent,
@@ -626,27 +626,21 @@ export default function UserProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-10 xl:px-20">
-        <ProfileSidebar />
+    <ProfileShell>
+      <ProfileHeader user={user} />
 
-        <main className="flex-1 min-w-0 flex flex-col gap-6">
-          <ProfileHeader user={user} />
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="lg:col-span-8">
-              <PersonalInfoCard user={user} />
-            </div>
-            <div className="flex flex-col gap-6 lg:col-span-4">
-              <FitnessMetricsCard user={user} />
-              <EmergencyContactCard user={user} />
-            </div>
-          </div>
-
-          <FitnessPreferencesCard user={user} />
-        </main>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <PersonalInfoCard user={user} />
+        </div>
+        <div className="flex flex-col gap-6 lg:col-span-4">
+          <FitnessMetricsCard user={user} />
+          <EmergencyContactCard user={user} />
+        </div>
       </div>
-    </div>
+
+      <FitnessPreferencesCard user={user} />
+    </ProfileShell>
   );
 }
 
