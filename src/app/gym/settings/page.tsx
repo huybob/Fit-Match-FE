@@ -98,7 +98,7 @@ export default function GymSettingsPage() {
   const [visible, setVisible] = useState(true);
   // UC-18 (V55): toạ độ trụ sở. Trước đây trang này gọi PlaceAutocompleteInput
   // nhưng vứt bỏ lat/lng của gợi ý, nên trụ sở luôn phải nhờ BE đoán lại từ chuỗi
-  // chữ — ghim của Google chính xác hơn hẳn.
+  // chữ — ghim từ gợi ý địa chỉ chính xác hơn hẳn.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
 
   const statusQuery = useQuery({
@@ -117,7 +117,7 @@ export default function GymSettingsPage() {
     setDistrict(status.district ?? "");
     setPhone(status.phone ?? "");
     // Nạp lại toạ độ đang lưu và gửi nguyên vẹn khi lưu: BE hiểu đó là "operator
-    // đã ghim" nên không geocode lại địa chỉ không đổi (đỡ một lượt gọi Google)
+    // đã ghim" nên không geocode lại địa chỉ không đổi (đỡ một lượt gọi dịch vụ geocoding)
     // và không đánh mất vị trí đã chỉnh tay.
     setCoords(
       status.latitude != null && status.longitude != null
@@ -159,6 +159,9 @@ export default function GymSettingsPage() {
       latitude: coords?.lat,
       longitude: coords?.lng,
       placeId: coords?.placeId,
+      // V65: nhan nguon cua placeId — thieu no thi BE coi la "khong ro nguon"
+      // va job lam moi toa do se bo qua ban ghi.
+      placeProvider: coords?.placeProvider,
       formattedAddress: coords?.formattedAddress,
       coordinatesPinned: coords?.pinnedByUser
     });
@@ -205,9 +208,9 @@ export default function GymSettingsPage() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     {/* Sheet2#1 + Sheet3: địa chỉ gõ tay hay sai chuẩn nên admin
-                        phải bắt xác minh lại. Dùng chung ô Places Autocomplete
+                        phải bắt xác minh lại. Dùng chung ô gợi ý địa chỉ
                         như /gym/branches để ra địa chỉ chuẩn ngay từ đầu; không
-                        có Maps key thì ô này vẫn gõ tay được bình thường. */}
+                        có gợi ý nào thì ô này vẫn gõ tay được bình thường. */}
                     <FieldShell label={t("common.table.address")} htmlFor="gym-address">
                       <PlaceAutocompleteInput
                         value={address}
@@ -225,6 +228,7 @@ export default function GymSettingsPage() {
                             lat: place.lat,
                             lng: place.lng,
                             placeId: place.placeId,
+                            placeProvider: place.placeProvider,
                             formattedAddress: place.formattedAddress,
                           });
                           if (place.district) setDistrict(place.district);
@@ -233,7 +237,7 @@ export default function GymSettingsPage() {
                         onError={(message) => toast({ type: "error", title: message })}
                       />
                     </FieldShell>
-                    {/* UC-18 (V60): nhìn thấy ghim rơi ở đâu mới biết Google đặt sai. */}
+                    {/* UC-18 (V60): nhìn thấy ghim rơi ở đâu mới biết dịch vụ geocoding đặt sai. */}
                     <AddressPinMap
                       className="mt-2"
                       value={coords ? { lat: coords.lat, lng: coords.lng } : null}
@@ -270,7 +274,7 @@ export default function GymSettingsPage() {
                       <Input value={city} onChange={e => setCity(e.target.value)} />
                     </FieldShell>
                     {/* UC-18: quận/huyện đi vào chuỗi geocode của BE. Tự điền khi
-                        chọn gợi ý Google, vẫn gõ tay được khi không có Maps key. */}
+                        chọn gợi ý địa chỉ, vẫn gõ tay được khi không có gợi ý nào. */}
                     <FieldShell label={t("common.table.district")}>
                       <Input value={district} onChange={e => setDistrict(e.target.value)} />
                     </FieldShell>

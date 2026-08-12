@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Loader2, MapPin, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { marketplaceService } from "@/services/marketplace.service";
-import { useGoogleMaps } from "@/shared/hooks/use-google-maps";
+import {
+  marketplaceService,
+  type PlaceProvider,
+  type PlaceSuggestion,
+} from "@/services/marketplace.service";
 import { canonicalCityName, canonicalDistrictName } from "@/shared/constants/vn-locations";
 import { Input } from "@/shared/components/ui/input";
 import { IconButton } from "@/shared/components/ui/icon-button";
@@ -15,19 +18,24 @@ export interface PickedPlace {
   lat: number;
   lng: number;
   /**
-   * Nhãn NGẮN để hiển thị lại trong ô nhập — tên địa điểm nếu Google có, không
-   * thì rơi về địa chỉ đầy đủ. Dùng cho ô "tìm quanh đây", KHÔNG dùng để lưu.
+   * Nhãn NGẮN để hiển thị lại trong ô nhập — tên địa điểm nếu có, không thì rơi
+   * về địa chỉ đầy đủ. Dùng cho ô "tìm quanh đây", KHÔNG dùng để lưu.
    */
   label: string;
   /**
-   * Địa chỉ đầy đủ đã chuẩn hoá của Google — đây mới là thứ được LƯU vào cột
-   * address. Trước đây form lưu `label`, nghĩa là chọn "California Fitness" sẽ
-   * ghi đúng chữ đó vào địa chỉ và BE geocode lại một cái tên thay vì một địa chỉ.
+   * Địa chỉ đầy đủ đã chuẩn hoá — đây mới là thứ được LƯU vào cột address.
+   * Trước đây form lưu `label`, nghĩa là chọn "California Fitness" sẽ ghi đúng
+   * chữ đó vào địa chỉ và BE geocode lại một cái tên thay vì một địa chỉ.
    */
   formattedAddress: string;
-  /** Định danh ổn định của Google — dùng để đối chiếu/khử trùng địa chỉ về sau. */
+  /** Định danh ổn định phía nhà cung cấp — dùng để đối chiếu/khử trùng về sau. */
   placeId?: string;
-  /** Tách sẵn từ address_components để form khỏi bắt operator gõ lại. */
+  /**
+   * V65 — dịch vụ đã cấp `placeId`. Phải gửi ngược lên BE khi lưu: không có nhãn
+   * này, BE coi bản ghi là "không rõ nguồn" và job làm mới toạ độ bỏ qua nó.
+   */
+  placeProvider?: PlaceProvider;
+  /** Tách sẵn để form khỏi bắt operator gõ lại. */
   district?: string;
   city?: string;
 }
@@ -36,41 +44,27 @@ export interface PickedPlace {
  * Địa điểm operator đã ghim, ở dạng form giữ trong state và gửi lên khi lưu.
  *
  * Metadata đi kèm toạ độ chứ không tách rời: BE dùng nó thay cho một lượt geocode
- * chỉ để lấy lại đúng hai giá trị FE đang cầm sẵn. Prefill từ bản ghi cũ chỉ có
+ * chỉ để lấy lại đúng những giá trị FE đang cầm sẵn. Prefill từ bản ghi cũ chỉ có
  * lat/lng — BE giữ nguyên metadata đang lưu khi không nhận được giá trị mới.
  */
 export interface PinnedPlace {
   lat: number;
   lng: number;
   placeId?: string;
+  placeProvider?: PlaceProvider;
   formattedAddress?: string;
   /**
-   * Toạ độ này do người kéo ghim trên bản đồ, không phải lấy nguyên từ gợi ý
-   * Places. BE dùng cờ này để job làm mới định kỳ KHÔNG kéo ghim về chỗ Google
-   * nói — nếu không, công sửa tay bị xoá sau 180 ngày mà không ai hiểu vì sao.
+   * Toạ độ này do người kéo ghim trên bản đồ, không phải lấy nguyên từ gợi ý.
+   * BE dùng cờ này để job làm mới định kỳ KHÔNG kéo ghim về chỗ dịch vụ nói —
+   * nếu không, công sửa tay bị xoá sau 180 ngày mà không ai hiểu vì sao.
    */
   pinnedByUser?: boolean;
 }
 
-/**
- * Bóc quận/huyện + tỉnh/thành từ `address_components`.
- *
- * Ở Việt Nam Google trả quận/huyện ở `administrative_area_level_2` và tỉnh/thành
- * trực thuộc trung ương ở `administrative_area_level_1`. Một số phường/xã lại chỉ
- * có `sublocality_level_1`, nên lấy nó làm phương án dự phòng cho quận.
- *
- * Kết quả được chuẩn hoá về đúng chuỗi trong danh mục VN_CITIES khi khớp: bộ lọc
- * marketplace gửi lên chuỗi của danh mục, lưu tên dạng khác là gym rớt khỏi bộ lọc.
- */
-function splitAdminAreas(components: google.maps.GeocoderAddressComponent[] | undefined) {
-  const find = (type: string) => components?.find((c) => c.types.includes(type))?.long_name;
-  const district = find("administrative_area_level_2") ?? find("sublocality_level_1");
-  const city = find("administrative_area_level_1");
-  return {
-    district: canonicalDistrictName(district) ?? district,
-    city: canonicalCityName(city) ?? city,
-  };
-}
+/** Nhịp chờ trước khi hỏi server. Mỗi lượt gõ là một lượt tiêu hạn mức. */
+const DEBOUNCE_MS = 350;
+/** Dưới ngưỡng này thì gợi ý chỉ là nhiễu, không đáng một vòng gọi mạng. */
+const MIN_QUERY_LENGTH = 3;
 
 interface PlaceAutocompleteInputProps {
   value: string;
@@ -84,11 +78,15 @@ interface PlaceAutocompleteInputProps {
 }
 
 /**
- * Ô "tìm theo địa điểm tự chọn" (UC-18).
+ * Ô "tìm theo địa điểm tự chọn" / ô nhập địa chỉ gym (UC-18).
  *
- * Có key Maps JavaScript -> gợi ý Places Autocomplete ngay khi gõ (giới hạn
- * trong Việt Nam). Không có key -> vẫn dùng được: nhấn Enter sẽ gọi proxy
- * geocode của BE. Người dùng không bao giờ gặp một ô nhập chết.
+ * V65: gợi ý lấy từ proxy `/marketplace/geocode/autocomplete` của BE thay vì
+ * Places Autocomplete chạy trong trình duyệt. Khoá API vì thế nằm lại phía
+ * server, và FE không còn nạp SDK của nhà cung cấp nào.
+ *
+ * Không bao giờ để người dùng gặp một ô nhập chết: nhà cung cấp không hỗ trợ gợi
+ * ý (hoặc chưa cấu hình khoá) thì mảng trả về rỗng, và nhấn Enter sẽ tra nguyên
+ * chuỗi qua `/marketplace/geocode`.
  */
 export function PlaceAutocompleteInput({
   value,
@@ -100,65 +98,99 @@ export function PlaceAutocompleteInput({
   disabled,
 }: PlaceAutocompleteInputProps) {
   const t = useTranslations();
-  const { status, maps } = useGoogleMaps();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
+
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [resolving, setResolving] = useState(false);
 
-  // Autocomplete gọi callback từ bên ngoài React nên phải đọc bản mới nhất qua
-  // ref — bắt vào closure sẽ gọi phiên bản của lần render đầu tiên. Áp dụng cho
-  // MỌI callback đi vào listener, không riêng onPlacePicked: chỉ cần một prop
-  // đổi theo state của trang là bản cũ sẽ ghi đè bằng dữ liệu đã lỗi thời.
-  const pickedRef = useRef(onPlacePicked);
-  pickedRef.current = onPlacePicked;
-  const valueChangeRef = useRef(onValueChange);
-  valueChangeRef.current = onValueChange;
-  const errorRef = useRef(onError);
-  errorRef.current = onError;
+  // Người dùng vừa chọn một gợi ý -> `value` đổi theo, nhưng lần đổi đó KHÔNG
+  // được kích hoạt một vòng gợi ý mới (nếu không danh sách bật lại ngay sau khi
+  // vừa chọn xong).
+  const skipNextQueryRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // ── Gợi ý theo nhịp gõ ────────────────────────────────────────────────────
   useEffect(() => {
-    if (status !== "ready" || !maps || !inputRef.current) return;
+    if (skipNextQueryRef.current) {
+      skipNextQueryRef.current = false;
+      return;
+    }
+    const query = value.trim();
+    if (disabled || query.length < MIN_QUERY_LENGTH) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
+    }
 
-    const autocomplete = new maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: "vn" },
-      // address_components + place_id vẫn thuộc nhóm Basic Data như các field cũ
-      // nên không đẩy Place Details lên bậc giá cao hơn.
-      fields: ["geometry.location", "formatted_address", "name", "address_components", "place_id"],
-      types: ["geocode", "establishment"],
-    });
-    const listener = autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      const location = place.geometry?.location;
-      if (!location) {
-        // Người dùng nhấn Enter trên chuỗi tự gõ thay vì chọn một gợi ý —
-        // Google trả về place không có geometry.
-        errorRef.current?.(t("marketplace.nearby.placeNotFound"));
-        return;
+    // Cờ này vừa huỷ debounce vừa vô hiệu hoá response đến muộn: gõ nhanh thì
+    // request cũ có thể về SAU request mới và ghi đè bằng kết quả đã lỗi thời.
+    let active = true;
+    const timer = setTimeout(async () => {
+      try {
+        const results = await marketplaceService.autocompletePlaces(query);
+        if (!active) return;
+        setSuggestions(results);
+        setActiveIndex(-1);
+        setOpen(results.length > 0);
+      } catch {
+        // Gợi ý hỏng không phải lỗi người dùng cần biết — ô nhập vẫn dùng được
+        // bằng cách nhấn Enter. Báo toast ở đây chỉ tổ nhiễu khi mạng chập chờn.
+        if (active) {
+          setSuggestions([]);
+          setOpen(false);
+        }
       }
-      const formattedAddress = place.formatted_address ?? place.name ?? "";
-      const label = place.name ?? formattedAddress;
-      const { district, city } = splitAdminAreas(place.address_components);
-      valueChangeRef.current(label);
-      pickedRef.current({
-        lat: location.lat(),
-        lng: location.lng(),
-        label,
-        formattedAddress,
-        placeId: place.place_id,
-        district,
-        city,
-      });
-    });
+    }, DEBOUNCE_MS);
 
     return () => {
-      listener.remove();
-      maps.event.clearInstanceListeners(autocomplete);
+      active = false;
+      clearTimeout(timer);
     };
-    // Mọi callback đọc qua ref nên chỉ cần gắn lại khi API sẵn sàng.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, maps]);
+  }, [value, disabled]);
 
-  /** Đường lui khi không có key browser: nhờ BE geocode chuỗi vừa gõ. */
-  async function geocodeViaBackend() {
+  // ── Bấm ra ngoài thì đóng ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  function pick(suggestion: PlaceSuggestion) {
+    if (suggestion.latitude == null || suggestion.longitude == null) {
+      onError?.(t("marketplace.nearby.placeNotFound"));
+      return;
+    }
+    const formattedAddress = suggestion.formattedAddress ?? suggestion.label ?? "";
+    const label = suggestion.label ?? formattedAddress;
+
+    skipNextQueryRef.current = true;
+    onValueChange(label);
+    setOpen(false);
+    setSuggestions([]);
+    setActiveIndex(-1);
+
+    onPlacePicked({
+      lat: suggestion.latitude,
+      lng: suggestion.longitude,
+      label,
+      formattedAddress,
+      placeId: suggestion.placeId,
+      placeProvider: suggestion.placeProvider,
+      // Chuẩn hoá về đúng chuỗi trong danh mục VN_CITIES khi khớp: bộ lọc
+      // marketplace gửi lên chuỗi của danh mục, lưu tên dạng khác là gym rớt
+      // khỏi bộ lọc.
+      district: canonicalDistrictName(suggestion.district) ?? suggestion.district,
+      city: canonicalCityName(suggestion.city) ?? suggestion.city,
+    });
+  }
+
+  /** Đường lui khi không có gợi ý nào: nhờ BE geocode nguyên chuỗi vừa gõ. */
+  async function geocodeWholeQuery() {
     const query = value.trim();
     if (!query || resolving) return;
     setResolving(true);
@@ -169,15 +201,18 @@ export function PlaceAutocompleteInput({
         return;
       }
       const label = result.formattedAddress ?? query;
+      skipNextQueryRef.current = true;
       onValueChange(label);
-      // Proxy BE không trả address_components nên district/city để trống — form
-      // giữ nguyên giá trị operator đã gõ thay vì bị xoá trắng.
+      setOpen(false);
+      // Nhánh này không trả district/city — form giữ nguyên giá trị operator đã
+      // gõ thay vì bị xoá trắng.
       onPlacePicked({
         lat: result.latitude,
         lng: result.longitude,
         label,
         formattedAddress: label,
         placeId: result.placeId,
+        placeProvider: result.placeProvider,
       });
     } catch {
       onError?.(t("marketplace.nearby.placeLookupFailed"));
@@ -186,36 +221,109 @@ export function PlaceAutocompleteInput({
     }
   }
 
-  const usesBackendFallback = status !== "ready";
+  function onKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setOpen(false);
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (!open || suggestions.length === 0) return;
+      event.preventDefault();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((current) => {
+        const next = current + step;
+        // Cuộn vòng: từ mục cuối xuống lại về đầu danh sách.
+        if (next < 0) return suggestions.length - 1;
+        if (next >= suggestions.length) return 0;
+        return next;
+      });
+      return;
+    }
+    if (event.key === "Enter") {
+      // Enter trong ô này KHÔNG bao giờ được submit form bộ lọc bao ngoài.
+      event.preventDefault();
+      if (open && activeIndex >= 0 && suggestions[activeIndex]) {
+        pick(suggestions[activeIndex]);
+      } else {
+        void geocodeWholeQuery();
+      }
+    }
+  }
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <MapPin className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
-        ref={inputRef}
         value={value}
         disabled={disabled}
         placeholder={placeholder ?? t("marketplace.nearby.placePlaceholder")}
         onChange={(event) => onValueChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== "Enter") return;
-          // Enter trong ô này không bao giờ được submit form bộ lọc: khi có
-          // Autocomplete, Enter là để chọn gợi ý đang sáng.
-          event.preventDefault();
-          if (usesBackendFallback) void geocodeViaBackend();
-        }}
-        className={cn("pl-10", usesBackendFallback && "pr-11", className)}
+        onKeyDown={onKeyDown}
+        onFocus={() => setOpen(suggestions.length > 0)}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-autocomplete="list"
+        aria-activedescendant={
+          open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
+        }
+        className={cn("pl-10 pr-11", className)}
       />
-      {usesBackendFallback && (
+      {/*
+        Định vị tuyệt đối đặt ở SPAN BỌC NGOÀI, không đặt thẳng lên IconButton.
+        Khi bị disabled, IconButton tự bọc nút trong một <span> để tooltip vẫn
+        nhận được hover — span đó nằm trong luồng bình thường và làm container
+        `relative` cao thêm, khiến mốc `top-1/2` tụt xuống dưới tâm ô nhập và
+        icon lệch hẳn xuống đáy. Nút này disabled ngay từ đầu (ô còn trống) nên
+        lỗi hiện ra ở mọi lần tải trang.
+      */}
+      <span className="absolute right-1 top-1/2 -translate-y-1/2">
         <IconButton
           type="button"
           tooltip={t("marketplace.nearby.lookupPlace")}
           disabled={disabled || resolving || !value.trim()}
-          onClick={() => void geocodeViaBackend()}
-          className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground"
+          onClick={() => void geocodeWholeQuery()}
+          className="text-muted-foreground"
         >
           {resolving ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
         </IconButton>
+      </span>
+
+      {open && suggestions.length > 0 && (
+        <ul
+          id={listboxId}
+          role="listbox"
+          className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-popover p-1 shadow-lg"
+        >
+          {suggestions.map((suggestion, index) => (
+            <li key={`${suggestion.placeId ?? "s"}-${index}`}>
+              <button
+                type="button"
+                id={`${listboxId}-${index}`}
+                role="option"
+                aria-selected={index === activeIndex}
+                // pointerdown chứ không click: listener đóng-khi-bấm-ra-ngoài cũng
+                // chạy ở pointerdown, và input mất focus trước khi click kịp bắn.
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  pick(suggestion);
+                }}
+                onMouseEnter={() => setActiveIndex(index)}
+                className={cn(
+                  "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                  index === activeIndex ? "bg-accent text-accent-foreground" : "hover:bg-muted",
+                )}
+              >
+                <span className="block font-medium">{suggestion.label}</span>
+                {suggestion.formattedAddress && suggestion.formattedAddress !== suggestion.label && (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {suggestion.formattedAddress}
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

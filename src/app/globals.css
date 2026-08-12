@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* UC-18: Leaflet + tile OpenStreetMap (thay Google Maps JavaScript API).
+   PHẢI đứng sau "tailwindcss": preflight của Tailwind đặt `img { max-width: 100% }`
+   làm vỡ cách Leaflet xếp tile. Leaflet tự chống bằng `!important` nhưng vẫn giữ
+   đúng thứ tự để khỏi phụ thuộc vào chi tiết đó. */
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -22,6 +27,13 @@
      dùng `bg-foreground/70`, mà --foreground ở dark là màu gần trắng — nền mờ
      lật thành màn trắng chói, còn hộp thoại thì chìm vào đó. */
   --overlay: #05100f;
+
+  /* Chân trang. Cùng lớp lỗi với --overlay ở trên: trước đây footer dùng
+     `bg-foreground` + `text-background` để đảo màu, mà ở dark hai token đó đổi
+     chỗ cho nhau — chân trang lật thành dải gần trắng, chữ "FitMatch" (text-white)
+     biến mất hẳn vào nền. Footer là bề mặt tối có chủ đích ở CẢ hai theme. */
+  --footer: #12171a;
+  --footer-foreground: #fbfaf5;
 
   --primary: #00767f;
   --primary-foreground: #ffffff;
@@ -100,6 +112,11 @@
 
   --overlay: #000000;
 
+  /* Tối hơn --card một bậc để chân trang vẫn tách khỏi nội dung phía trên, thay
+     vì hoà làm một mảng đen phẳng. */
+  --footer: #0b1413;
+  --footer-foreground: #eef5f3;
+
   /* Trên nền tối, teal/orange được đẩy sáng lên nên chữ đi cùng phải là mực đậm
      (không phải trắng) mới đủ tương phản. */
   --primary: #1fd1c6;
@@ -165,6 +182,9 @@
   --color-popover-foreground: var(--popover-foreground);
 
   --color-overlay: var(--overlay);
+
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -407,4 +427,19 @@ summary:focus-visible {
 /* Tránh cắt anchor dưới header sticky khi nhảy tới #id. */
 :target {
   scroll-margin-top: 96px;
+}
+
+/* UC-18: nhốt thang z-index của Leaflet vào trong bản đồ.
+
+   Leaflet đặt z-index tới 1000 cho control/popup, còn Radix (dialog, select,
+   popover, tooltip) portal ra body ở mức thấp hơn nhiều. `.leaflet-container`
+   chỉ có `position: relative` nên KHÔNG tự tạo stacking context — hệ quả là nút
+   zoom của bản đồ nổi đè lên cả dialog đang mở. Thêm `z-index: 0` là đủ tạo
+   stacking context, mọi z-index bên trong bản đồ từ đó chỉ so với nhau.
+
+   `font: inherit` để popup và dòng attribution dùng font của app thay vì mặc
+   định của Leaflet. */
+.leaflet-container {
+  z-index: 0;
+  font: inherit;
 }

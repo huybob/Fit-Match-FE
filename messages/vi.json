@@ -1170,7 +1170,6 @@
       "geolocationDenied": "Bạn đã từ chối quyền truy cập vị trí. Hãy bật lại trong cài đặt trình duyệt.",
       "geolocationFailed": "Không lấy được vị trí hiện tại. Vui lòng thử lại.",
       "mapLoading": "Đang tải bản đồ...",
-      "mapDisabled": "Bản đồ chưa được cấu hình. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới.",
       "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
     },
     "compareMax": "So sánh tối đa {max} mục"

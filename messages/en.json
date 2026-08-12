@@ -1170,7 +1170,6 @@
       "geolocationDenied": "Location access was denied. Re-enable it in your browser settings.",
       "geolocationFailed": "Could not get your current location. Please try again.",
       "mapLoading": "Loading map…",
-      "mapDisabled": "The map is not configured. All results are still listed below.",
       "mapError": "The map failed to load. All results are still listed below."
     },
     "compareMax": "Compare up to {max} items"
