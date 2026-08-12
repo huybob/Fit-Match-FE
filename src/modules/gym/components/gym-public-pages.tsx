@@ -18,6 +18,7 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { RatingStars } from "@/shared/components/common/rating-stars";
 import { ImageGallery } from "@/shared/components/media/image-gallery";
+import { SmartImage } from "@/shared/components/media/smart-image";
 import { toGalleryImages } from "@/shared/utils/media.util";
 import { PublicReviews } from "@/modules/review/components/public-reviews";
 import { Button } from "@/shared/components/ui/button";
@@ -602,8 +603,13 @@ export function GymsPublicPage() {
                     {/* A-19: gỡ badge t("marketplace.openNow") hardcode — giờ mở cửa thật ở trang chi tiết */}
                     {/* Bug 11: ảnh thật của gym nếu có media, fallback gradient. */}
                     {gym.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={gym.coverUrl} alt={gym.gymName ?? t("marketplace.gym")} className="h-36 w-full object-cover" />
+                      // SmartImage: signed URL hết hạn / ảnh đã bị xoá thì rơi về ô
+                      // dự phòng thay vì icon "ảnh vỡ" của trình duyệt.
+                      <SmartImage
+                        src={gym.coverUrl}
+                        alt={gym.gymName ?? t("marketplace.gym")}
+                        className="h-36 w-full bg-muted/40 object-cover"
+                      />
                     ) : (
                       <div className="relative grid h-36 place-items-center bg-gradient-to-br from-primary to-primary text-primary-foreground">
                         <Building2 className="size-12 opacity-90" />
@@ -796,7 +802,20 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
         {/* Hero cover */}
         <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
           <div className="relative h-48 bg-gradient-to-br from-primary via-primary to-primary sm:h-56">
-            <div className="absolute inset-0 grid place-items-center opacity-20"><Building2 className="size-28 text-success-foreground" /></div>
+            {/* Ảnh bìa giống hệt card danh sách — mở chi tiết mà mất ảnh thì trông
+                như vào nhầm gym. Chưa đặt bìa thì rơi về nền gradient + icon. */}
+            {g.coverUrl ? (
+              <SmartImage
+                src={g.coverUrl}
+                alt={g.gymName ?? t("marketplace.gym")}
+                loading="eager"
+                className="absolute inset-0 size-full object-cover"
+                fallbackClassName="bg-transparent"
+                fallback={<Building2 className="size-28 text-success-foreground opacity-20" />}
+              />
+            ) : (
+              <div className="absolute inset-0 grid place-items-center opacity-20"><Building2 className="size-28 text-success-foreground" /></div>
+            )}
             {/* Bug 14: badge data-driven — chỉ hiện khi hồ sơ thật sự APPROVED. */}
             {g.verified && (
               <span className="absolute left-5 top-5 inline-flex items-center gap-1.5 rounded-full bg-success px-3 py-1 text-xs font-bold text-success-foreground">

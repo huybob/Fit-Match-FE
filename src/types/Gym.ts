@@ -1,5 +1,6 @@
 import type { PageResponse } from "@/shared/types/api-response.type";
 import type { PlaceProvider } from "@/services/marketplace.service";
+import type { Media } from "@/types/Media";
 
 export interface Gym {
   id?: number;
@@ -247,12 +248,21 @@ export interface FacilityResponse {
   branchId?: number;
   branchName?: string;
   active?: boolean;
+  /** Ảnh minh hoạ (media FACILITY/GALLERY) theo thứ tự thư viện. */
+  images?: Media[];
+  /** Ảnh đại diện đã chọn sẵn ở BE — dùng cho thumbnail trên card. */
+  imageUrl?: string;
 }
 
 export interface FacilityInput {
   name: string;
   description?: string;
   branchId?: number;
+  /**
+   * Trạng thái CUỐI CÙNG của thư viện ảnh, không phải "thêm vào": ảnh đang gắn mà
+   * vắng mặt sẽ bị BE xoá hẳn. Bỏ trống = không đụng tới ảnh.
+   */
+  mediaIds?: number[];
 }
 
 export interface GymServiceResponse {

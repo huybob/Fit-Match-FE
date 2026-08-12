@@ -791,6 +791,7 @@
       "namePlaceholder": "e.g. Advanced gym floor",
       "descLabel": "Detailed description",
       "descPlaceholder": "Describe the space, equipment and highlights…",
+      "imagesLabel": "Photos",
       "noBranch": "— No branch linked —",
       "disableConfirmTitle": "Disable this amenity?",
       "disableConfirmBody": "The amenity will no longer be shown to customers. Are you sure?"
