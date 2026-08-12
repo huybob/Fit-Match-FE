@@ -1096,6 +1096,10 @@
     "serviceLabel": "Service:",
     "branches": "Branches",
     "noBranches": "No branch information yet.",
+    "branchCount": "{count} branches",
+    "moreBranches": "+{count} more branches",
+    "branchOf": "A branch of {name}",
+    "gymHq": "Gym address",
     "amenitiesLabel": "Amenities:",
     "trainers": "Trainers",
     "noTrainers": "No active trainers.",
@@ -1176,11 +1180,12 @@
       "geolocationUnsupported": "This browser does not support geolocation.",
       "geolocationDenied": "Location access was denied. Re-enable it in your browser settings.",
       "geolocationFailed": "Could not get your current location. Please try again.",
+      "wheelZoomHint": "Hold Ctrl (⌘ on Mac) and scroll to zoom the map",
       "mapLoading": "Loading map…",
-      "mapError": "The map failed to load. All results are still listed below."
+      "mapError": "The map failed to load. All results are still listed below.",
+      "markersCapped": "The map is showing {shown} of {total} gyms in this radius. Narrow the radius or add filters to see them all."
     },
     "compareMax": "Compare up to {max} items"
-      "wheelZoomHint": "Hold Ctrl (⌘ on Mac) and scroll to zoom the map",
   },
   "trainer": {
     "nav": {

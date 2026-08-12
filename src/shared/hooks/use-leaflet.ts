@@ -22,12 +22,20 @@ function loadLeaflet(): Promise<Leaflet> {
   // ngay lúc module được đánh giá, mà component "use client" của App Router vẫn
   // được render trước ở phía server. Import tĩnh sẽ làm hỏng SSR chứ không phải
   // chỉ hỏng hydrate.
-  loaderPromise = import("leaflet").then(
-    // Leaflet 1.9 chỉ phát hành bản UMD (package.json không có "module"), nên
-    // interop của webpack đặt namespace L ở `default`. Giữ nhánh `?? mod` phòng
-    // trường hợp bundler khác trải phẳng named export.
-    (mod) => (mod.default ?? mod) as Leaflet,
-  );
+  loaderPromise = import("leaflet")
+    .then(
+      // Leaflet 1.9 chỉ phát hành bản UMD (package.json không có "module"), nên
+      // interop của webpack đặt namespace L ở `default`. Giữ nhánh `?? mod` phòng
+      // trường hợp bundler khác trải phẳng named export.
+      (mod) => (mod.default ?? mod) as Leaflet,
+    )
+    .then(async (L) => {
+      // Plugin gom ghim: nạp SAU Leaflet vì nó vá thẳng vào namespace `L`
+      // (`L.markerClusterGroup`). Nạp ở đây chứ không phải trong component để mọi
+      // bản đồ dùng chung một lần tải, giống chính Leaflet.
+      await import("leaflet.markercluster");
+      return L;
+    });
 
   // Lỗi phải xoá cache promise, nếu không mọi lần thử lại đều nhận lại đúng lỗi cũ.
   loaderPromise.catch(() => {

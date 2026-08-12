@@ -1096,6 +1096,10 @@
     "serviceLabel": "Dịch vụ:",
     "branches": "Chi nhánh",
     "noBranches": "Chưa có thông tin chi nhánh.",
+    "branchCount": "{count} chi nhánh",
+    "moreBranches": "+{count} chi nhánh khác",
+    "branchOf": "Chi nhánh của {name}",
+    "gymHq": "Địa chỉ phòng tập",
     "amenitiesLabel": "Tiện ích:",
     "trainers": "Huấn luyện viên",
     "noTrainers": "Chưa có huấn luyện viên hoạt động.",
@@ -1176,11 +1180,12 @@
       "geolocationUnsupported": "Trình duyệt không hỗ trợ định vị.",
       "geolocationDenied": "Bạn đã từ chối quyền truy cập vị trí. Hãy bật lại trong cài đặt trình duyệt.",
       "geolocationFailed": "Không lấy được vị trí hiện tại. Vui lòng thử lại.",
+      "wheelZoomHint": "Giữ Ctrl (⌘ trên Mac) rồi cuộn để phóng to bản đồ",
       "mapLoading": "Đang tải bản đồ...",
-      "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
+      "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới.",
+      "markersCapped": "Bản đồ đang ghim {shown} trong {total} phòng tập của bán kính này. Thu hẹp bán kính hoặc thêm bộ lọc để xem đủ."
     },
     "compareMax": "So sánh tối đa {max} mục"
-      "wheelZoomHint": "Giữ Ctrl (⌘ trên Mac) rồi cuộn để phóng to bản đồ",
   },
   "trainer": {
     "nav": {

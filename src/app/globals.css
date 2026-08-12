@@ -5,6 +5,10 @@
    làm vỡ cách Leaflet xếp tile. Leaflet tự chống bằng `!important` nhưng vẫn giữ
    đúng thứ tự để khỏi phụ thuộc vào chi tiết đó. */
 @import "leaflet/dist/leaflet.css";
+/* Gom ghim chồng nhau (UC-18). Chỉ lấy MarkerCluster.css — phần định vị và hiệu
+   ứng gom/tách; KHÔNG lấy MarkerCluster.Default.css vì bộ icon xanh-vàng mặc định
+   của nó lạc hẳn với bảng màu ở đây (icon cluster tự vẽ trong leaflet-config). */
+@import "leaflet.markercluster/dist/MarkerCluster.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

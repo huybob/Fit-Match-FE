@@ -3,20 +3,40 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPinOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { Circle, CircleMarker, Map as LeafletMap, Marker } from "leaflet";
+import type { Circle, CircleMarker, Map as LeafletMap, Marker, MarkerClusterGroup } from "leaflet";
 import { useLeaflet } from "@/shared/hooks/use-leaflet";
-import { addBaseTiles, gymPinIcon } from "@/shared/components/map/leaflet-config";
+import {
+  addBaseTiles,
+  clusterIcon,
+  gymPinIcon,
+  type GymPinKind,
+} from "@/shared/components/map/leaflet-config";
+import { useWheelZoom } from "@/shared/components/map/use-wheel-zoom";
 import { cn } from "@/shared/utils/cn.util";
 
-/** Một ghim gym trên bản đồ. */
+/** Một ghim địa điểm trên bản đồ. */
 export interface GymMapMarker {
-  id: number;
+  /**
+   * Khoá duy nhất trong TOÀN bộ tập ghim. Là chuỗi chứ không phải id bản ghi vì
+   * bản đồ trộn hai nguồn — gym và chi nhánh — mà id của chúng đánh số riêng:
+   * dùng số thì gym #7 và chi nhánh #7 ghi đè lẫn nhau. Quy ước: `gym-7`, `branch-7`.
+   */
+  id: string;
+  /** Trụ sở/gym hay chi nhánh — quyết định màu ghim. */
+  kind?: GymPinKind;
   title: string;
   lat: number;
   lng: number;
-  /** Dòng phụ trong popup: địa chỉ hoặc "Chi nhánh X". */
+  /** Dòng phụ trong popup: quan hệ của địa điểm, ví dụ "Chi nhánh của X". */
   subtitle?: string;
+  /** Địa chỉ của CHÍNH địa điểm này — luôn hiện để biết ghim đang chỉ vào đâu. */
+  address?: string;
   distanceLabel?: string;
+  /**
+   * Đường dẫn trang chi tiết. Bản đồ ghim CẢ kết quả không nằm ở trang danh sách
+   * đang xem, nên không có link thì những ghim đó là ngõ cụt: bấm vào chỉ hiện tên.
+   */
+  href?: string;
 }
 
 interface GymMapProps {
@@ -24,9 +44,9 @@ interface GymMapProps {
   center: { lat: number; lng: number } | null;
   radiusKm?: number;
   markers: GymMapMarker[];
-  /** Gym đang được trỏ tới ở danh sách — ghim tương ứng mở popup. */
-  activeId?: number | null;
-  onMarkerClick?: (id: number) => void;
+  /** Địa điểm đang được trỏ tới ở danh sách — ghim tương ứng mở popup. */
+  activeId?: string | null;
+  onMarkerClick?: (id: string) => void;
   /** Cho phép người dùng đổi tâm bằng cách bấm thẳng lên bản đồ. */
   onCenterPick?: (position: { lat: number; lng: number }) => void;
   className?: string;
@@ -43,11 +63,13 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function popupHtml(item: GymMapMarker) {
+function popupHtml(item: GymMapMarker, detailLabel: string) {
   return `<div style="min-width:160px">
             <strong>${escapeHtml(item.title)}</strong>
-            ${item.subtitle ? `<div style="font-size:12px;opacity:.75">${escapeHtml(item.subtitle)}</div>` : ""}
+            ${item.subtitle ? `<div style="font-size:12px;font-weight:600;opacity:.8">${escapeHtml(item.subtitle)}</div>` : ""}
+            ${item.address ? `<div style="font-size:12px;opacity:.75">${escapeHtml(item.address)}</div>` : ""}
             ${item.distanceLabel ? `<div style="font-size:12px;font-weight:600">${escapeHtml(item.distanceLabel)}</div>` : ""}
+            ${item.href ? `<a href="${escapeHtml(item.href)}" style="display:inline-block;margin-top:6px;font-size:12px;font-weight:600">${escapeHtml(detailLabel)}</a>` : ""}
           </div>`;
 }
 
@@ -76,7 +98,16 @@ export function GymMap({
   const mapRef = useRef<LeafletMap | null>(null);
   const circleRef = useRef<Circle | null>(null);
   const centerMarkerRef = useRef<CircleMarker | null>(null);
-  const gymMarkersRef = useRef(new Map<number, Marker>());
+  const gymMarkersRef = useRef(new Map<string, Marker>());
+  /**
+   * Lớp gom ghim. Ghim KHÔNG add thẳng vào map nữa: trụ sở và chi nhánh của cùng
+   * một gym hay nằm sát (thậm chí trùng) nhau, ghim này che mất ghim kia và không
+   * cách nào bấm được cái bên dưới.
+   */
+  const clusterRef = useRef<MarkerClusterGroup | null>(null);
+
+  // Ctrl/⌘ + cuộn để phóng to; cuộn trần vẫn cuộn trang và hiện dòng nhắc.
+  const wheelHint = useWheelZoom(mapRef, mapReady);
 
   // Handler đi vào listener của Leaflet (ngoài vòng đời React) nên đọc qua ref để
   // luôn gọi bản mới nhất thay vì bản bị bắt trong closure lúc khởi tạo.
@@ -105,6 +136,21 @@ export function GymMap({
       centerPickRef.current?.({ lat: event.latlng.lat, lng: event.latlng.lng });
     });
 
+    const cluster = L.markerClusterGroup({
+      // Bán kính gom tính bằng PIXEL màn hình, không phải mét: hai địa điểm cách
+      // nhau 50 m vẫn chồng nhau khi zoom xa, và tách ra khi zoom gần.
+      maxClusterRadius: 44,
+      // Trùng toạ độ tuyệt đối (trụ sở đặt ngay tại một chi nhánh) thì zoom sâu
+      // đến mấy cũng không tách được — ở mức zoom cuối, bung thành hình nan quạt.
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      // Bấm cụm là zoom vừa khít nhóm điểm bên trong.
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (group) => clusterIcon(L, group.getChildCount()),
+    });
+    map.addLayer(cluster);
+    clusterRef.current = cluster;
+
     mapRef.current = map;
     setMapReady(true);
 
@@ -120,6 +166,7 @@ export function GymMap({
       gymMarkers.clear();
       circleRef.current = null;
       centerMarkerRef.current = null;
+      clusterRef.current = null;
       setMapReady(false);
     };
     // `center` ban đầu chỉ dùng làm tâm khởi tạo; effect bên dưới lo đồng bộ tiếp.
@@ -187,16 +234,19 @@ export function GymMap({
   // ── Ghim các gym ─────────────────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
-    if (!L || !map) return;
+    const cluster = clusterRef.current;
+    if (!L || !map || !cluster) return;
 
     const live = gymMarkersRef.current;
     const nextIds = new Set(markers.map((m) => m.id));
+    const detailLabel = t("common.actions.viewDetail");
 
     // Gỡ ghim của gym không còn trong kết quả — quên bước này thì mỗi lần đổi
-    // bộ lọc bản đồ lại chồng thêm một lớp ghim cũ.
+    // bộ lọc bản đồ lại chồng thêm một lớp ghim cũ. Gỡ khỏi CỤM chứ không phải
+    // khỏi map: ghim nằm trong lớp gom, `marker.remove()` không đụng tới nó.
     for (const [id, marker] of live) {
       if (!nextIds.has(id)) {
-        marker.remove();
+        cluster.removeLayer(marker);
         live.delete(id);
       }
     }
@@ -205,19 +255,26 @@ export function GymMap({
       const position: [number, number] = [item.lat, item.lng];
       const existing = live.get(item.id);
       if (existing) {
+        // Đổi toạ độ của một ghim đang nằm trong cụm thì lớp gom phải tính lại
+        // xem nó còn thuộc cụm cũ không — `refreshClusters` lo việc đó.
+        const moved = !existing.getLatLng().equals(position);
         existing.setLatLng(position);
+        if (moved) cluster.refreshClusters(existing);
+        // Cùng một id vẫn có thể đổi loại (gym trở thành ghim chi nhánh sau khi
+        // trộn lại tập ghim) — không cập nhật icon thì màu ghim nói sai loại.
+        existing.setIcon(gymPinIcon(L, item.kind ?? "gym"));
         // Nội dung phải cập nhật theo: cùng một gym có thể đổi khoảng cách khi
         // người dùng dời tâm tìm kiếm mà id thì không đổi.
-        existing.setPopupContent(popupHtml(item));
+        existing.setPopupContent(popupHtml(item, detailLabel));
         continue;
       }
-      const marker = L.marker(position, { icon: gymPinIcon(L), title: item.title })
-        .bindPopup(popupHtml(item))
-        .addTo(map);
+      const marker = L.marker(position, { icon: gymPinIcon(L, item.kind ?? "gym"), title: item.title })
+        .bindPopup(popupHtml(item, detailLabel));
       marker.on("click", () => markerClickRef.current?.(item.id));
+      cluster.addLayer(marker);
       live.set(item.id, marker);
     }
-  }, [L, mapReady, markers]);
+  }, [L, mapReady, markers, t]);
 
   // ── Đồng bộ popup với gym đang chọn ở danh sách ───────────────────────────
   useEffect(() => {
@@ -227,6 +284,14 @@ export function GymMap({
     const marker = activeId == null ? null : gymMarkersRef.current.get(activeId);
     if (!marker) {
       map.closePopup();
+      return;
+    }
+    const cluster = clusterRef.current;
+    // Ghim đang bị gom trong một cụm thì `openPopup()` mở popup của một layer
+    // KHÔNG có trên bản đồ — im lặng không hiện gì. `zoomToShowLayer` bung cụm
+    // (zoom vào hoặc xoè nan quạt) rồi mới mở.
+    if (cluster && !map.hasLayer(marker)) {
+      cluster.zoomToShowLayer(marker, () => marker.openPopup());
       return;
     }
     marker.openPopup();
@@ -255,5 +320,21 @@ export function GymMap({
     );
   }
 
-  return <div ref={containerRef} className={cn("rounded-2xl border border-border", className)} />;
+  return (
+    // `relative` để lớp nhắc "giữ Ctrl" phủ lên bản đồ; kích thước do `className`
+    // của phía gọi quyết định nên nó phải ở lớp ngoài, container Leaflet ăn theo.
+    <div className={cn("relative", className)}>
+      <div ref={containerRef} className="size-full rounded-2xl border border-border" />
+      {/* pointer-events-none: lớp nhắc không được nuốt cú cuộn tiếp theo. */}
+      <div
+        aria-hidden={!wheelHint}
+        className={cn(
+          "pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center rounded-2xl bg-foreground/45 px-6 text-center text-sm font-semibold text-background transition-opacity duration-200",
+          wheelHint ? "opacity-100" : "opacity-0",
+        )}
+      >
+        {t("marketplace.nearby.wheelZoomHint")}
+      </div>
+    </div>
+  );
 }

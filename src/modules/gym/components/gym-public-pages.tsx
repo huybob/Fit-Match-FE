@@ -1,10 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, Package, GitBranch, Users, Heart, CalendarCheck, Navigation } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { marketplaceService, type GymPublicProfile, type GymSearchParams } from "@/services/marketplace.service";
+import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, Package, GitBranch, Users, Heart, CalendarCheck, Navigation, Info } from "lucide-react";
+import { FormEvent, useMemo, useRef, useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  marketplaceService,
+  type GymPublicProfile,
+  type GymSearchParams,
+  type PublicBranch,
+} from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
@@ -16,6 +21,7 @@ import { ImageGallery } from "@/shared/components/media/image-gallery";
 import { toGalleryImages } from "@/shared/utils/media.util";
 import { PublicReviews } from "@/modules/review/components/public-reviews";
 import { Button } from "@/shared/components/ui/button";
+import { Pagination } from "@/shared/components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -32,6 +38,7 @@ import {
   type PriceRangeValue,
 } from "@/shared/constants/vn-locations";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { distanceKm, roundKm } from "@/shared/utils/geo.util";
 import { formatCurrency } from "@/utils/format.util";
 import { useTranslations } from "next-intl";
 import { weekdayShortKey } from "@/shared/utils/enum-label.util";
@@ -82,6 +89,52 @@ function GymFavoriteButton({ gymId }: { gymId: number }) {
 
 const NO_GYMS: GymPublicProfile[] = [];
 
+/**
+ * Lưới kết quả tối đa 3 cột — chọn bội của 6 để hàng cuối không bị lẻ ở cả
+ * breakpoint 2 cột lẫn 3 cột.
+ */
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+
+/**
+ * Trần số ghim tải một lần cho bản đồ. Bản đồ phải ghim TOÀN BỘ gym trong bán
+ * kính chứ không chỉ trang danh sách đang xem, nên đây là một lượt gọi riêng —
+ * vẫn phải có trần để một bán kính rộng không kéo về hàng nghìn bản ghi.
+ */
+const MARKER_LIMIT = 200;
+
+/** Số chi nhánh liệt kê thẳng trong card; phần dư gộp thành "+N chi nhánh khác". */
+const BRANCHES_PER_CARD = 3;
+
+/**
+ * Số request catalog chi nhánh chạy song song. HTTP/1.1 chỉ cho ~6 kết nối mỗi
+ * host — bắn cả trang cùng lúc không nhanh hơn, chỉ đẩy ảnh và các request khác
+ * của trang xuống cuối hàng đợi.
+ */
+const BRANCH_FAN_OUT = 6;
+
+/**
+ * Chi nhánh của các gym ĐANG hiển thị. BE trả một dòng cho mỗi gym (kèm điểm gần
+ * nhất) chứ không trải chi nhánh ra, nên card muốn liệt kê chi nhánh thì phải hỏi
+ * thêm `GET /marketplace/gyms/{id}/branches` — endpoint công khai đã có sẵn.
+ *
+ * Chỉ quét đúng các gym của trang hiện tại (≤ pageSize request): fan-out theo cả
+ * tập kết quả bán kính (tới {@link MARKER_LIMIT} gym) thì một lần đổi bộ lọc là
+ * hàng trăm request.
+ */
+async function fetchBranchesOf(gymIds: number[]): Promise<Record<number, PublicBranch[]>> {
+  const byGym: Record<number, PublicBranch[]> = {};
+  for (let start = 0; start < gymIds.length; start += BRANCH_FAN_OUT) {
+    const chunk = gymIds.slice(start, start + BRANCH_FAN_OUT);
+    // allSettled, KHÔNG phải all: một gym vừa bị ẩn giữa hai request sẽ trả 404 và
+    // `all` sẽ giết cả danh sách. Gym lỗi chỉ mất phần chi nhánh, card vẫn hiện.
+    const results = await Promise.allSettled(chunk.map((id) => marketplaceService.getGymBranches(id)));
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") byGym[chunk[index]] = result.value;
+    });
+  }
+  return byGym;
+}
+
 export function GymsPublicPage() {
   const t = useTranslations();
   const { toast } = useToast();
@@ -101,7 +154,13 @@ export function GymsPublicPage() {
   // kính phải cho kết quả ngay (người dùng vừa bấm "Vị trí của tôi" và đang đợi).
   const [location, setLocation] = useState<SearchLocation | null>(null);
   const [radiusKm, setRadiusKm] = useState(5);
-  const [activeGymId, setActiveGymId] = useState<number | null>(null);
+  /** Ghim đang mở popup, theo khoá của {@link GymMapMarker} (`gym-7` / `branch-7`). */
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  // Phân trang server-side: BE (`GET /marketplace/gyms`) nhận page/size/sort của
+  // Spring Pageable. Trang đánh số từ 0 để khỏi quy đổi ở tầng gọi API.
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const resultsRef = useRef<HTMLElement>(null);
 
   // Bug S2-19: `min: 0` là giá trị hợp lệ nhưng falsy — code cũ (`range.min ? … :
   // undefined`) âm thầm bỏ nó đi. Và `maxPrice` phải trừ 1 vì BE so sánh `<=` còn
@@ -118,18 +177,78 @@ export function GymsPublicPage() {
     };
   }, [appliedKeyword, city, district, priceFilter]);
 
+  /**
+   * Đổi bộ lọc / thứ tự / vị trí thì tập kết quả khác hẳn — đang ở trang 5 mà kết
+   * quả mới chỉ có 2 trang sẽ ra màn hình trắng. Điều chỉnh NGAY trong lúc render
+   * (không qua effect) và trước `useQuery`: làm ở effect thì React đã kịp gửi
+   * request cho cặp "bộ lọc mới + trang cũ" rồi mới gửi tiếp request trang đầu.
+   */
+  const filterKey = JSON.stringify([params, sort, location, radiusKm, pageSize]);
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setPage(0);
+  }
+
   const query = useQuery({
-    queryKey: ["marketplace", "gyms", params, sort, location, radiusKm],
+    queryKey: ["marketplace", "gyms", params, sort, location, radiusKm, page, pageSize],
     queryFn: () =>
       marketplaceService.searchGyms({
         ...params,
+        page,
+        size: pageSize,
         // Có vị trí thì BE luôn sắp theo khoảng cách và bỏ qua sort — không gửi
         // `sort` để khỏi ngụ ý một thứ tự không có thật.
         ...(location
           ? { lat: location.lat, lng: location.lng, radiusKm }
           : { sort }),
       }),
+    // Giữ kết quả trang cũ trong lúc tải trang mới: nếu không, mỗi lần bấm số
+    // trang cả lưới bị thay bằng skeleton và trang nhảy giật.
+    placeholderData: keepPreviousData,
   });
+
+  /**
+   * Ghim bản đồ lấy từ một lượt gọi RIÊNG, không dùng lại trang danh sách: bản đồ
+   * vẽ cả vùng bán kính nên chỉ ghim 12 gym của trang hiện tại sẽ khiến vùng còn
+   * lại trông như không có phòng tập nào. Chỉ chạy khi đã chọn tâm — cũng đúng lúc
+   * bản đồ được hiển thị.
+   */
+  const markerQuery = useQuery({
+    queryKey: ["marketplace", "gyms", "markers", params, location, radiusKm],
+    queryFn: () =>
+      marketplaceService.searchGyms({
+        ...params,
+        lat: location!.lat,
+        lng: location!.lng,
+        radiusKm,
+        page: 0,
+        size: MARKER_LIMIT,
+      }),
+    enabled: !!location,
+  });
+
+  /**
+   * Toạ độ TRỤ SỞ của gym. Truy vấn tìm-quanh-đây ghi đè `latitude/longitude`
+   * bằng ĐIỂM GẦN NHẤT (thường là một chi nhánh), nên nếu chỉ dựa vào nó thì địa
+   * chỉ của chính phòng gym không bao giờ được ghim. Hỏi thêm một lượt KHÔNG kèm
+   * lat/lng: cùng bộ lọc nên tập trả về là tập cha của kết quả bán kính, và chỉ
+   * tốn ĐÚNG một request cho mỗi lần đổi bộ lọc (không nhân theo số gym).
+   */
+  const hqQuery = useQuery({
+    queryKey: ["marketplace", "gyms", "hq", params],
+    queryFn: () => marketplaceService.searchGyms({ ...params, page: 0, size: MARKER_LIMIT }),
+    enabled: !!location,
+  });
+  const hqById = useMemo(() => {
+    const map = new Map<number, { lat: number; lng: number }>();
+    for (const gym of hqQuery.data?.content ?? NO_GYMS) {
+      if (gym.id != null && gym.latitude != null && gym.longitude != null) {
+        map.set(gym.id, { lat: gym.latitude, lng: gym.longitude });
+      }
+    }
+    return map;
+  }, [hqQuery.data]);
 
   const districts = VN_CITIES.find((c) => c.name === city)?.districts ?? [];
 
@@ -140,31 +259,168 @@ export function GymsPublicPage() {
   function clearAll() {
     setKeyword(""); setAppliedKeyword("");
     setCity("all"); setDistrict("all"); setPriceFilter("all");
-    setLocation(null); setActiveGymId(null);
+    setLocation(null); setActiveMarkerId(null);
   }
 
   // Hằng số module, không phải `[]` mới mỗi render — nếu không thì memo bên dưới
   // vô hiệu suốt thời gian query đang tải.
   const items = query.data?.content ?? NO_GYMS;
   const total = query.data?.totalElements ?? items.length;
-  // Chỉ gym đã có toạ độ mới ghim được; gym chưa geocode vẫn nằm trong danh sách.
-  // Memo hoá vì mảng này là dependency của effect vẽ ghim trong GymMap — tạo mảng
-  // mới mỗi lần render (kể cả khi chỉ hover một card) sẽ bắt bản đồ vẽ lại liên tục.
-  const markers: GymMapMarker[] = useMemo(
-    () =>
-      items
-        .filter((gym): gym is typeof gym & { id: number; latitude: number; longitude: number } =>
-          gym.id != null && gym.latitude != null && gym.longitude != null)
-        .map((gym) => ({
-          id: gym.id,
-          title: gym.gymName ?? t("marketplace.gym"),
-          lat: gym.latitude,
-          lng: gym.longitude,
-          subtitle: gym.nearestBranchName ?? [gym.address, gym.district, gym.city].filter(Boolean).join(", "),
-          distanceLabel: gym.distanceKm != null ? t("marketplace.nearby.awayKm", { km: gym.distanceKm }) : undefined,
-        })),
-    [items, t],
+  const totalPages = query.data?.totalPages ?? 1;
+
+  /**
+   * Nút phân trang nằm dưới cùng: đổi trang mà không cuộn lên thì người dùng
+   * tiếp đất giữa lưới mới và tưởng danh sách không đổi.
+   */
+  function goToPage(next: number) {
+    setPage(next);
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  const markerItems = markerQuery.data?.content ?? NO_GYMS;
+
+  /** Id các gym đang hiển thị — khoá của query chi nhánh bên dưới. */
+  const pageGymIds = useMemo(
+    () => items.map((gym) => gym.id).filter((id): id is number => id != null),
+    [items],
   );
+  const branchesQuery = useQuery({
+    queryKey: ["marketplace", "gyms", "branches", pageGymIds],
+    queryFn: () => fetchBranchesOf(pageGymIds),
+    enabled: pageGymIds.length > 0,
+    placeholderData: keepPreviousData,
+  });
+  const branchesByGym = branchesQuery.data;
+
+  /**
+   * Chi nhánh của một gym, kèm khoảng cách tự tính khi đang tìm theo bán kính —
+   * BE chỉ chấm khoảng cách cho ĐIỂM GẦN NHẤT của gym, các chi nhánh còn lại
+   * không có số nào. Sắp gần → xa để chi nhánh đáng đi nhất nằm trên đầu.
+   */
+  const branchesOf = useMemo(() => {
+    return (gymId?: number) => {
+      if (gymId == null) return [];
+      const list = branchesByGym?.[gymId] ?? [];
+      return list
+        .map((branch) => ({
+          branch,
+          distance:
+            location && branch.latitude != null && branch.longitude != null
+              ? roundKm(distanceKm(location, { lat: branch.latitude, lng: branch.longitude }))
+              : undefined,
+        }))
+        .sort((a, b) => (a.distance ?? Number.POSITIVE_INFINITY) - (b.distance ?? Number.POSITIVE_INFINITY));
+    };
+  }, [branchesByGym, location]);
+
+  // Chỉ địa điểm đã có toạ độ mới ghim được; nơi chưa geocode vẫn nằm trong danh
+  // sách. Memo hoá vì mảng này là dependency của effect vẽ ghim trong GymMap — tạo
+  // mảng mới mỗi lần render (kể cả khi chỉ hover một card) sẽ bắt bản đồ vẽ lại liên tục.
+  const { markers, markerIdOfGym, markerOwner } = useMemo(() => {
+    const list: GymMapMarker[] = [];
+    /** Ghim đã đặt tại một toạ độ — tránh hai ghim chồng khít lên nhau. */
+    const takenSpots = new Map<string, string>();
+    const idOfGym = new Map<number, string>();
+    /** Ghim thuộc về ai — để bấm ghim là sáng đúng card, đúng dòng chi nhánh. */
+    const owner = new Map<string, { gymId: number; branchId?: number }>();
+    const spotKey = (lat: number, lng: number) => `${lat.toFixed(5)},${lng.toFixed(5)}`;
+
+    // Chi nhánh trước: ghim của chúng nói rõ "Chi nhánh của X" nên khi trùng chỗ
+    // với điểm-gần-nhất của gym thì nó là nhãn giàu thông tin hơn.
+    for (const gym of markerItems) {
+      if (gym.id == null) continue;
+      for (const { branch, distance } of branchesOf(gym.id)) {
+        if (branch.latitude == null || branch.longitude == null) continue;
+        // Đang lọc theo bán kính thì chi nhánh nằm ngoài vòng tròn không được ghim:
+        // nó không phải kết quả của lần tìm này.
+        if (location && distance != null && distance > radiusKm) continue;
+        const key = spotKey(branch.latitude, branch.longitude);
+        if (takenSpots.has(key)) continue;
+        const id = `branch-${branch.id}`;
+        takenSpots.set(key, id);
+        if (branch.id != null) owner.set(id, { gymId: gym.id, branchId: branch.id });
+        list.push({
+          id,
+          kind: "branch",
+          title: branch.name ?? t("marketplace.branches"),
+          lat: branch.latitude,
+          lng: branch.longitude,
+          subtitle: t("marketplace.branchOf", { name: gym.gymName ?? "" }),
+          address: [branch.address, branch.district, branch.city].filter(Boolean).join(", ") || undefined,
+          distanceLabel: distance != null ? t("marketplace.nearby.awayKm", { km: distance }) : undefined,
+          href: `/gyms/${gym.id}`,
+        });
+      }
+    }
+
+    for (const gym of markerItems) {
+      if (gym.id == null) continue;
+      // Trụ sở trước, điểm-gần-nhất chỉ là đường lui (gym không có trong tập trụ
+      // sở vì vượt trần MARKER_LIMIT). Ghim trụ sở mới là ghim mang địa chỉ gym.
+      const hq = hqById.get(gym.id);
+      const lat = hq?.lat ?? gym.latitude;
+      const lng = hq?.lng ?? gym.longitude;
+      if (lat == null || lng == null) continue;
+      // Trụ sở nằm ngoài vòng tròn thì không ghim: nó không thuộc phạm vi đang tìm
+      // (chi nhánh trong bán kính mới là lý do gym này lọt vào kết quả).
+      const hqDistance = location ? roundKm(distanceKm(location, { lat, lng })) : undefined;
+      if (location && hqDistance != null && hqDistance > radiusKm) continue;
+      const key = spotKey(lat, lng);
+      const taken = takenSpots.get(key);
+      if (taken) {
+        // Điểm gần nhất của gym CHÍNH LÀ một chi nhánh đã ghim. Không chồng thêm
+        // ghim thứ hai, nhưng vẫn nhớ ghim nào đại diện cho gym này để trỏ chuột
+        // vào card còn mở đúng popup.
+        idOfGym.set(gym.id, taken);
+        continue;
+      }
+      const id = `gym-${gym.id}`;
+      takenSpots.set(key, id);
+      idOfGym.set(gym.id, id);
+      owner.set(id, { gymId: gym.id });
+      list.push({
+        id,
+        kind: "gym",
+        title: gym.gymName ?? t("marketplace.gym"),
+        lat,
+        lng,
+        // Ghim trụ sở luôn mang ĐỊA CHỈ CỦA GYM: người xem bản đồ cần biết phòng
+        // tập nằm ở đâu chứ không chỉ mỗi cái tên.
+        subtitle: t("marketplace.gymHq"),
+        address: [gym.address, gym.district, gym.city].filter(Boolean).join(", ") || undefined,
+        // Khoảng cách của CHÍNH trụ sở; `gym.distanceKm` của BE là khoảng cách tới
+        // điểm gần nhất (có thể là chi nhánh) nên chỉ dùng khi không tính được.
+        distanceLabel:
+          hqDistance != null
+            ? t("marketplace.nearby.awayKm", { km: hqDistance })
+            : gym.distanceKm != null
+              ? t("marketplace.nearby.awayKm", { km: gym.distanceKm })
+              : undefined,
+        // Ghim có thể thuộc gym KHÔNG nằm ở trang danh sách đang xem — cho đi
+        // thẳng vào trang chi tiết thay vì bắt người dùng dò lại từng trang.
+        href: `/gyms/${gym.id}`,
+      });
+    }
+
+    return { markers: list, markerIdOfGym: idOfGym, markerOwner: owner };
+  }, [markerItems, branchesOf, hqById, location, radiusKm, t]);
+
+  /**
+   * Ghim đang mở popup thuộc gym nào / chi nhánh nào. Bấm ghim chi nhánh phải
+   * sáng CẢ card của gym mẹ lẫn đúng dòng chi nhánh trong card — nếu chỉ sáng
+   * card thì người dùng vẫn phải tự dò xem ghim vừa bấm là chi nhánh nào.
+   */
+  const active = activeMarkerId ? markerOwner.get(activeMarkerId) : undefined;
+
+  /** Card của gym có thể đang nằm ngoài tầm nhìn khi người dùng bấm ghim. */
+  function focusMarker(id: string) {
+    setActiveMarkerId(id);
+    const gymId = markerOwner.get(id)?.gymId;
+    if (gymId == null) return;
+    document.getElementById(`gym-card-${gymId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  /** Còn gym trong bán kính nhưng vượt trần ghim — nói thẳng thay vì lặng lẽ cắt. */
+  const markersCapped = (markerQuery.data?.totalElements ?? 0) > markerItems.length;
 
   return (
     <SiteLayout>
@@ -182,7 +438,7 @@ export function GymsPublicPage() {
               <div className="mt-4 border-b border-border pb-4">
                 <NearbyLocationPicker
                   location={location}
-                  onLocationChange={(next) => { setLocation(next); setActiveGymId(null); }}
+                  onLocationChange={(next) => { setLocation(next); setActiveMarkerId(null); }}
                   radiusKm={radiusKm}
                   onRadiusChange={setRadiusKm}
                   onError={(message) => toast({ type: "error", title: message })}
@@ -245,7 +501,7 @@ export function GymsPublicPage() {
           </aside>
 
           {/* Results */}
-          <section className="min-w-0 flex-1">
+          <section ref={resultsRef} className="min-w-0 flex-1 scroll-mt-4">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{t("marketplace.gymsNearYou")}</h1>
@@ -277,18 +533,29 @@ export function GymsPublicPage() {
 
             {/* Bản đồ chỉ có ý nghĩa khi đã chọn tâm tìm kiếm. */}
             {location && (
-              <GymMap
-                className="mb-5 h-80 w-full"
-                center={location}
-                radiusKm={radiusKm}
-                markers={markers}
-                activeId={activeGymId}
-                onMarkerClick={setActiveGymId}
-                onCenterPick={(position) => {
-                  setActiveGymId(null);
-                  setLocation({ ...position, label: t("marketplace.nearby.pickedOnMap") });
-                }}
-              />
+              <div className="mb-5">
+                <GymMap
+                  className="h-80 w-full"
+                  center={location}
+                  radiusKm={radiusKm}
+                  markers={markers}
+                  activeId={activeMarkerId}
+                  onMarkerClick={focusMarker}
+                  onCenterPick={(position) => {
+                    setActiveMarkerId(null);
+                    setLocation({ ...position, label: t("marketplace.nearby.pickedOnMap") });
+                  }}
+                />
+                {markersCapped && (
+                  <p className="mt-2 flex items-start gap-1.5 text-xs font-semibold text-warning">
+                    <Info className="mt-px size-3.5 shrink-0" />
+                    {t("marketplace.nearby.markersCapped", {
+                      shown: markers.length,
+                      total: markerQuery.data?.totalElements ?? markers.length,
+                    })}
+                  </p>
+                )}
+              </div>
             )}
 
             {query.isLoading ? (
@@ -296,14 +563,40 @@ export function GymsPublicPage() {
             ) : query.isError ? (
               <EmptyState title={t("marketplace.gymLoadError")} description={toErrorMessage(query.error)} />
             ) : items.length ? (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                {items.map((gym) => (
+              <>
+              {/* Mờ đi trong lúc tải trang kế — vẫn đọc được, nhưng thấy rõ là dữ liệu cũ. */}
+              <div
+                className={`grid gap-5 sm:grid-cols-2 xl:grid-cols-3 ${
+                  query.isFetching ? "opacity-60 transition-opacity" : ""
+                }`}
+              >
+                {items.map((gym) => {
+                  const branches = branchesOf(gym.id);
+                  const activeBranchId = active && active.gymId === gym.id ? active.branchId : undefined;
+                  const shownBranches = branches.slice(0, BRANCHES_PER_CARD);
+                  // Ghim vừa bấm có thể là chi nhánh nằm trong phần bị gộp thành
+                  // "+N chi nhánh khác" — kéo nó lên, nếu không thì dòng được sáng
+                  // lại là dòng người dùng không nhìn thấy.
+                  if (activeBranchId != null && !shownBranches.some((b) => b.branch.id === activeBranchId)) {
+                    const hidden = branches.find((b) => b.branch.id === activeBranchId);
+                    if (hidden) shownBranches.push(hidden);
+                  }
+                  const hiddenBranches = branches.length - shownBranches.length;
+                  // Ghim đại diện cho gym: thường là `gym-<id>`, nhưng khi điểm gần
+                  // nhất chính là một chi nhánh thì bản đồ chỉ có ghim của chi nhánh đó.
+                  const gymMarkerId = gym.id != null ? markerIdOfGym.get(gym.id) : undefined;
+                  return (
                   <article
                     key={gym.id}
+                    id={`gym-card-${gym.id}`}
                     // Trỏ vào card thì ghim tương ứng mở InfoWindow — nối danh sách với bản đồ.
-                    onMouseEnter={() => gym.id != null && location && setActiveGymId(gym.id)}
+                    onMouseEnter={() => location && gymMarkerId && setActiveMarkerId(gymMarkerId)}
+                    // Sáng card khi ghim đang mở thuộc gym này — kể cả khi đó là ghim
+                    // của một chi nhánh, vì chi nhánh nằm trong chính card này.
                     className={`overflow-hidden rounded-2xl border bg-card shadow-sm transition-colors ${
-                      activeGymId === gym.id ? "border-primary" : "border-border"
+                      gym.id != null && active?.gymId === gym.id
+                        ? "border-primary ring-1 ring-primary/30"
+                        : "border-border"
                     }`}
                   >
                     {/* A-19: gỡ badge t("marketplace.openNow") hardcode — giờ mở cửa thật ở trang chi tiết */}
@@ -339,6 +632,50 @@ export function GymsPublicPage() {
                         </p>
                       )}
                       <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{gym.description || t("marketplace.noDescription")}</p>
+
+                      {/* Chi nhánh của chính gym này: khách tìm theo khu vực cần biết
+                          cơ sở nào gần mình, không chỉ địa chỉ trụ sở. Mỗi dòng trỏ
+                          chuột vào là ghim tương ứng trên bản đồ mở popup. */}
+                      {branches.length > 0 && (
+                        <div className="mt-3 border-t border-border pt-2.5">
+                          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                            {t("marketplace.branchCount", { count: branches.length })}
+                          </p>
+                          <ul className="mt-1.5 space-y-1">
+                            {shownBranches.map(({ branch, distance }) => (
+                              <li
+                                key={branch.id}
+                                onMouseEnter={() => location && setActiveMarkerId(`branch-${branch.id}`)}
+                                // Bấm ghim chi nhánh trên bản đồ -> sáng đúng dòng này.
+                                className={`flex items-start gap-1.5 rounded-md px-1.5 py-0.5 text-[11px] leading-4 transition-colors ${
+                                  activeBranchId != null && activeBranchId === branch.id
+                                    ? "bg-primary/10 font-semibold text-foreground"
+                                    : "text-muted-foreground"
+                                }`}
+                              >
+                                <GitBranch className="mt-0.5 size-3 shrink-0 text-primary" />
+                                <span className="min-w-0">
+                                  <span className="font-semibold text-foreground">{branch.name}</span>
+                                  {[branch.address, branch.district].filter(Boolean).length > 0 && (
+                                    <> · {[branch.address, branch.district].filter(Boolean).join(", ")}</>
+                                  )}
+                                  {distance != null && (
+                                    <span className="font-semibold text-primary">
+                                      {" "}· {t("marketplace.nearby.awayKm", { km: distance })}
+                                    </span>
+                                  )}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                          {hiddenBranches > 0 && (
+                            <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                              {t("marketplace.moreBranches", { count: hiddenBranches })}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="mt-4 flex items-center justify-between">
                         {gym.id != null ? <GymFavoriteButton gymId={gym.id} /> : <span />}
                         <Link
@@ -348,8 +685,24 @@ export function GymsPublicPage() {
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
+
+              <Pagination
+                className="mt-6"
+                page={page}
+                zeroBased
+                totalPages={totalPages}
+                totalItems={total}
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                pageSizeLabel={t("common.pagination.itemsPerPage")}
+                onPageChange={goToPage}
+                onPageSizeChange={setPageSize}
+                disabled={query.isFetching}
+              />
+              </>
             ) : (
               <EmptyState title={t("marketplace.noGymFound")} description={t("marketplace.noGymFoundHint")} />
             )}
