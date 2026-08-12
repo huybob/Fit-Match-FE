@@ -14,7 +14,7 @@ import {
   Sparkles,
   Wallet,
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { marketplaceService } from "@/services/marketplace.service";
@@ -43,11 +43,16 @@ import {
   findPriceRange,
   type PriceRangeValue,
 } from "@/shared/constants/vn-locations";
+import { useClientPagination } from "@/shared/hooks/use-client-pagination";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { formatCurrency } from "@/utils/format.util";
 
-/** Gói tập mỗi trang — client tự phân trang vì catalog được gộp ở FE. */
-const PAGE_SIZE = 12;
+/**
+ * Gói tập mỗi trang — client tự phân trang vì catalog được gộp ở FE
+ * (xem usePublicPackages: BE chưa có endpoint list gói xuyên nhiều gym).
+ * Bội của 6 để hàng cuối không lẻ ở cả lưới 2 cột lẫn 3 cột.
+ */
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
 
 /**
  * PRICE_RANGES mang label tiếng Việt cứng (dùng chung với trang Phòng gym).
@@ -99,7 +104,7 @@ export function PackagesPublicPage() {
   const [district, setDistrict] = useState("all");
   const [priceFilter, setPriceFilter] = useState<PriceRangeValue>("all");
   const [sort, setSort] = useState<PackageSortValue>("default");
-  const [page, setPage] = useState(0);
+  const resultsRef = useRef<HTMLElement>(null);
 
   const priceRange = useMemo(() => findPriceRange(priceFilter), [priceFilter]);
   const { items, isLoading, isError, error, totalGyms, scannedGyms, truncated } = usePublicPackages({
@@ -109,16 +114,22 @@ export function PackagesPublicPage() {
     priceRange,
     sort,
   });
+  const { page, pageSize, totalPages, visible, setPage, setPageSize } =
+    useClientPagination(items, PAGE_SIZE_OPTIONS[0]);
 
   // Đổi bộ lọc mà giữ nguyên số trang thì đang ở trang 5 với kết quả chỉ còn 2
   // trang sẽ ra màn hình trắng — luôn về trang đầu khi tập kết quả thay đổi.
   useEffect(() => {
     setPage(0);
-  }, [appliedKeyword, city, district, priceFilter, sort]);
+  }, [appliedKeyword, city, district, priceFilter, sort, setPage]);
+
+  /** Đổi trang thì cuộn về đầu danh sách thay vì đứng nguyên ở cuối lưới. */
+  function goToPage(next: number) {
+    setPage(next);
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   const districts = VN_CITIES.find((c) => c.name === city)?.districts ?? [];
-  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-  const visible = items.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   function apply(event?: FormEvent) {
     event?.preventDefault();
@@ -201,7 +212,7 @@ export function PackagesPublicPage() {
             </form>
           </aside>
 
-          <section className="min-w-0 flex-1">
+          <section ref={resultsRef} className="min-w-0 flex-1 scroll-mt-4">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{t("packages.title")}</h1>
@@ -317,10 +328,13 @@ export function PackagesPublicPage() {
                   className="mt-6"
                   page={page}
                   totalPages={totalPages}
-                  onPageChange={setPage}
+                  onPageChange={goToPage}
                   zeroBased
                   totalItems={items.length}
-                  pageSize={PAGE_SIZE}
+                  pageSize={pageSize}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  pageSizeLabel={t("common.pagination.itemsPerPage")}
+                  onPageSizeChange={setPageSize}
                 />
               </>
             )}

@@ -20,7 +20,7 @@ import { authService } from "@/services/auth.service";
 import { useAuthSchemas } from "@/modules/forms/use-auth-schemas";
 import { useToast } from "@/lib/toast-provider";
 import { AuthGuard } from "@/modules/auth/auth-guard";
-import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
+import { ProfileShell } from "@/modules/layout/profile-shell";
 import { Button } from "@/shared/components/ui/button";
 import { PasswordInput } from "@/shared/components/ui/password-input";
 import { getErrorCode, toErrorMessage } from "@/shared/utils/error.util";
@@ -341,38 +341,32 @@ function SecurityContent() {
   const { user } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="flex flex-col gap-6 px-4 py-6 sm:px-6 lg:flex-row lg:px-10 xl:px-20">
-        <ProfileSidebar />
+    <ProfileShell>
+      {/* Header */}
+      <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-foreground">FitMatch</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("security.subtitle")}</p>
+      </section>
 
-        <main className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Header */}
-          <section className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-            <h1 className="text-2xl font-bold text-foreground">FitMatch</h1>
-            <p className="text-sm text-muted-foreground mt-1">{t("security.subtitle")}</p>
-          </section>
-
-          {/* Top row: Security score + Change password */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-            <div className="lg:col-span-4">
-              <SecurityScoreCard user={user ?? {}} />
-            </div>
-            <div className="lg:col-span-8">
-              <ChangePasswordCard />
-            </div>
-          </div>
-
-          {/* Middle row: Sessions + Login history */}
-          <div className="grid grid-cols-2 gap-5">
-            <ActiveSessionsCard />
-            <LoginHistoryCard />
-          </div>
-
-          {/* Danger zone */}
-          <DangerZoneCard />
-        </main>
+      {/* Top row: Security score + Change password */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="lg:col-span-4">
+          <SecurityScoreCard user={user ?? {}} />
+        </div>
+        <div className="lg:col-span-8">
+          <ChangePasswordCard />
+        </div>
       </div>
-    </div>
+
+      {/* Middle row: Sessions + Login history */}
+      <div className="grid grid-cols-2 gap-5">
+        <ActiveSessionsCard />
+        <LoginHistoryCard />
+      </div>
+
+      {/* Danger zone */}
+      <DangerZoneCard />
+    </ProfileShell>
   );
 }
 

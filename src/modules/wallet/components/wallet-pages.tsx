@@ -12,6 +12,7 @@ import {
   Plus,
   QrCode,
   Sparkles,
+  Wallet,
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
+import { ProfileSectionHeader } from "@/modules/layout/profile-shell";
 import type { WalletOwnerType, Withdrawal, WithdrawalStatus } from "@/services/wallet.service";
 import type { WalletTxnType } from "@/types/Wallet";
 import { EmptyState } from "@/shared/components/common/empty-state";
@@ -84,21 +86,36 @@ export function WalletPage({ scope }: { scope: WalletScope }) {
   const query = useWithdrawals(scope, status || undefined, ownerFilter || undefined);
   const items = query.data?.content ?? [];
 
+  const createButton = owner ? (
+    <Button onClick={() => setCreating(true)}>
+      <Plus className="size-4" />
+      {t("wallet.create")}
+    </Button>
+  ) : null;
+
   return (
     <div>
-      <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t(`wallet.title.${scope}`)}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t(`wallet.description.${scope}`)}</p>
+      {/* Ví khách hàng nằm trong khu vực thành viên nên đội header giống "Hồ sơ"
+          / "Bảo mật"; ví gym và trang duyệt của admin giữ header workspace. */}
+      {scope === "customer" ? (
+        <div className="mb-6">
+          <ProfileSectionHeader
+            icon={<Wallet className="size-5" />}
+            title={t(`wallet.title.${scope}`)}
+            description={t(`wallet.description.${scope}`)}
+            action={createButton}
+          />
         </div>
-        {owner && (
-          <Button onClick={() => setCreating(true)}>
-            <Plus className="size-4" />
-            {t("wallet.create")}
-          </Button>
-        )}
-      </section>
+      ) : (
+        <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
+            <h1 className="text-3xl font-black">{t(`wallet.title.${scope}`)}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t(`wallet.description.${scope}`)}</p>
+          </div>
+          {createButton}
+        </section>
+      )}
 
       {owner && <WalletSummary scope={scope} owner={owner} />}
       {owner && <WalletLedger owner={owner} />}

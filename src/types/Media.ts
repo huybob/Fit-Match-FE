@@ -9,7 +9,8 @@ export type MediaEntityType =
   | "PACKAGE"
   | "CHECK_IN"
   | "TRAINER"
-  | "REVIEW";
+  | "REVIEW"
+  | "FACILITY";
 
 /** Khớp com.fitmatch.common.enums.MediaImageType. */
 export type MediaImageType =

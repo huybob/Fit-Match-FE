@@ -28,6 +28,8 @@ import {
   CatalogStatusBadge,
   CatalogStatusMenu,
 } from "@/modules/gym/components/catalog-controls";
+import { Pagination } from "@/shared/components/ui/pagination";
+import { useClientPagination } from "@/shared/hooks/use-client-pagination";
 import { useTranslations } from "next-intl";
 
 // F-28: dùng formatter chung.
@@ -59,6 +61,14 @@ export default function GymPackagesPage() {
     queryKey: ["gym-services"],
     queryFn: gymService.listOwnServices,
   });
+
+  /**
+   * `GET /gym/packages` trả về NGUYÊN mảng (BE không phân trang endpoint này) nên
+   * phân trang ở client. Nếu sau này BE đổi sang Pageable thì chuyển sang gọi API
+   * theo page/size, phần JSX bên dưới không phải sửa.
+   */
+  const { page, pageSize, totalPages, totalItems, visible, setPage, setPageSize } =
+    useClientPagination(packages, 12);
 
   const saveMut = useMutation({
     mutationFn: (payload: TrainingPackageInput) =>
@@ -147,8 +157,9 @@ export default function GymPackagesPage() {
             <p className="text-sm">{t("gym.packages.empty")}</p>
           </div>
         ) : (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {packages.map((p) => (
+            {visible.map((p) => (
               <div key={p.id} className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col">
                 <div className="flex items-start justify-between mb-3">
                   <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -192,6 +203,20 @@ export default function GymPackagesPage() {
               </div>
             ))}
           </div>
+
+          <Pagination
+            className="mt-6"
+            page={page}
+            zeroBased
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            pageSizeOptions={[12, 24, 48]}
+            pageSizeLabel={t("common.pagination.itemsPerPage")}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+          </>
         )}
       </div>
 

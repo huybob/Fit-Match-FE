@@ -7,11 +7,13 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Ban, MapPin, Phone, Loader2, Clock, CopyPlus } from "lucide-react";
+import { Plus, Pencil, Ban, MapPin, MapPinOff, Phone, Loader2, Clock, CopyPlus } from "lucide-react";
 import { gymService } from "@/services/gym.service";
+import { marketplaceService } from "@/services/marketplace.service";
 import type { BranchInput, BranchResponse, OperatingHour } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Dialog } from "@/shared/components/ui/dialog";
@@ -27,6 +29,15 @@ import {
 } from "@/shared/components/map/place-autocomplete-input";
 import { AddressPinMap } from "@/shared/components/map/address-pin-map";
 
+
+/**
+ * Chuỗi gửi đi geocode. Ghép ĐÚNG thứ tự BE dùng (`AddressGeocoder`:
+ * "địa chỉ, quận, thành phố, Việt Nam") để hai bên ra cùng một toạ độ; thiếu cấp
+ * hành chính thì dễ khớp nhầm phường/đường trùng tên ở tỉnh khác.
+ */
+function geocodeQueryOf(address: string, district: string, city: string) {
+  return [address.trim(), district.trim(), city.trim(), "Việt Nam"].filter(Boolean).join(", ");
+}
 
 /** UC-017: editor giờ mở cửa 7 ngày (dayOfWeek 1-7 khớp BE). */
 function OperatingHoursDialog({ branch, onClose }: { branch: BranchResponse; onClose: () => void }) {
@@ -161,8 +172,11 @@ export default function GymBranchesPage() {
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState("");
   const [capacity, setCapacity] = useState("");
-  // UC-18 (V55): địa điểm chọn từ gợi ý địa chỉ. null = để BE tự geocode từ địa chỉ.
+  // UC-18 (V55): địa điểm chọn từ gợi ý địa chỉ / ghim tay. Không được để null khi
+  // lưu — xem `save()`.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
+  /** Đang tự tra toạ độ cho địa chỉ gõ tay ngay trước khi lưu. */
+  const [resolving, setResolving] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
 
@@ -216,11 +230,59 @@ export default function GymBranchesPage() {
   function closeForm() {
     setFormOpen(false); setEditing(null);
   }
-  function save() {
+  /**
+   * Tra toạ độ cho địa chỉ gõ tay. Người dùng chọn gợi ý hoặc kéo ghim thì đã có
+   * sẵn toạ độ, không gọi lại làm gì.
+   */
+  async function resolveCoords(): Promise<PinnedPlace | null> {
+    if (coords) return coords;
+    setResolving(true);
+    try {
+      const result = await marketplaceService.geocodeAddress(geocodeQueryOf(address, district, city));
+      if (result.latitude == null || result.longitude == null) return null;
+      const resolved: PinnedPlace = {
+        lat: result.latitude,
+        lng: result.longitude,
+        placeId: result.placeId,
+        placeProvider: result.placeProvider,
+        formattedAddress: result.formattedAddress,
+      };
+      // Ghi vào state để ghim hiện lên bản đồ — người dùng thấy máy đặt ở đâu
+      // trước khi bấm Lưu lần nữa, thay vì tin vào một toạ độ vô hình.
+      setCoords(resolved);
+      return resolved;
+    } catch {
+      return null;
+    } finally {
+      setResolving(false);
+    }
+  }
+
+  async function save() {
     if (!name.trim()) { toast({ type: "warning", title: t("gym.branches.nameRequired") }); return; }
+    // UC-18: chi nhánh không có địa chỉ thì không thể geocode, và không geocode
+    // được thì nó vô hình với "tìm gym quanh đây" — chặn ngay từ form.
+    if (!address.trim()) { toast({ type: "warning", title: t("gym.branches.addressRequired") }); return; }
     if (capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) <= 0)) {
       toast({ type: "warning", title: t("gym.branches.capacityInvalid") }); return;
     }
+
+    /**
+     * Toạ độ là điều kiện BẮT BUỘC để lưu. Trước đây thiếu toạ độ vẫn lưu được và
+     * BE geocode "best effort": dịch vụ lỗi/hết quota thì chi nhánh nằm im trong DB
+     * với lat/lng NULL, không bao giờ hiện ra ở tìm theo bán kính mà chẳng ai được
+     * báo. Nay tra ngay tại đây, hỏng thì nói thẳng và giữ người dùng lại ở form.
+     */
+    const pinned = await resolveCoords();
+    if (!pinned) {
+      toast({
+        type: "error",
+        title: t("gym.branches.geoRequired"),
+        description: t("gym.branches.geoRequiredHint"),
+      });
+      return;
+    }
+
     saveMut.mutate({
       name: name.trim(),
       address: address.trim() || undefined,
@@ -229,14 +291,14 @@ export default function GymBranchesPage() {
       phone: phone.trim() || undefined,
       amenities: amenities.trim() || undefined,
       capacity: capacity ? Number(capacity) : undefined,
-      latitude: coords?.lat,
-      longitude: coords?.lng,
-      placeId: coords?.placeId,
+      latitude: pinned.lat,
+      longitude: pinned.lng,
+      placeId: pinned.placeId,
       // V65: nhan nguon cua placeId — thieu no thi BE coi la "khong ro nguon"
       // va job lam moi toa do se bo qua ban ghi.
-      placeProvider: coords?.placeProvider,
-      formattedAddress: coords?.formattedAddress,
-      coordinatesPinned: coords?.pinnedByUser,
+      placeProvider: pinned.placeProvider,
+      formattedAddress: pinned.formattedAddress,
+      coordinatesPinned: pinned.pinnedByUser,
     });
   }
 
@@ -286,6 +348,13 @@ export default function GymBranchesPage() {
                   cell: (b) => (
                     <>
                       <p>{[b.address, b.city].filter(Boolean).join(", ") || "—"}</p>
+                      {/* Bản ghi cũ lưu trước khi form bắt buộc toạ độ: nói rõ hậu quả
+                          (không hiện ở "tìm quanh đây") thay vì để nó im lặng biến mất. */}
+                      {(b.latitude == null || b.longitude == null) && (
+                        <Badge variant="warning" className="mt-1 normal-case" title={t("gym.branches.noCoordsHint")}>
+                          <MapPinOff className="size-3" /> {t("gym.branches.noCoords")}
+                        </Badge>
+                      )}
                       {b.amenities && (
                         <p className="mt-0.5 text-[11px] text-muted-foreground/80">
                           {t("gym.branches.amenitiesLabel")} {b.amenities}
@@ -370,17 +439,24 @@ export default function GymBranchesPage() {
             <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("gym.branches.namePlaceholder")} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.address")}</label>
-            {/* UC-18 (V55): chọn từ gợi ý địa chỉ để chi nhánh có toạ độ chuẩn và
-                xuất hiện đúng chỗ khi khách tìm "gym quanh đây". Gõ tay vẫn được:
-                BE sẽ tự geocode chuỗi địa chỉ khi lưu. */}
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              {t("common.table.address")} <span className="text-destructive">*</span>
+            </label>
+            {/* UC-18 (V55): ba đường đều hợp lệ — chọn gợi ý, gõ tay rồi để form tự
+                tra khi bấm Lưu, hoặc tự bấm/kéo ghim trên bản đồ. Chỉ có một luật:
+                lưu xong phải có toạ độ, nếu không chi nhánh vô hình với "tìm quanh đây". */}
             <PlaceAutocompleteInput
               value={address}
               onValueChange={(value) => {
                 setAddress(value);
-                // Sửa lại chữ sau khi đã chọn gợi ý -> toạ độ cũ không còn khớp
-                // địa chỉ mới; bỏ đi để BE geocode lại từ chuỗi thật sự được lưu.
-                setCoords(null);
+                setCoords((prev) => {
+                  // Ghim do CHÍNH NGƯỜI DÙNG đặt thì giữ lại: họ đã chỉ đúng cửa ra
+                  // vào rồi mới sửa lại chữ cho gọn — xoá đi là bắt làm lại từ đầu.
+                  // Nhưng bỏ metadata của gợi ý cũ: place_id đó tả một địa điểm khác
+                  // với chuỗi địa chỉ vừa gõ.
+                  if (!prev?.pinnedByUser) return null;
+                  return { lat: prev.lat, lng: prev.lng, pinnedByUser: true };
+                });
               }}
               onPlacePicked={(place) => {
                 // Lưu địa chỉ ĐẦY ĐỦ chứ không phải tên địa điểm: chọn gợi ý
@@ -405,21 +481,33 @@ export default function GymBranchesPage() {
               className="mt-2"
               value={coords ? { lat: coords.lat, lng: coords.lng } : null}
               onChange={(position) =>
-                setCoords((prev) => ({
-                  ...prev,
+                // Ghim tay thắng mọi nguồn khác — kể cả khi ô địa chỉ đang trống:
+                // đây là đường lưu duy nhất cho những địa chỉ không dịch vụ nào tra ra
+                // (hẻm nhỏ, khu mới chưa lên bản đồ).
+                setCoords({
                   lat: position.lat,
                   lng: position.lng,
                   // Kéo tay = toạ độ của con người, chính xác hơn máy đoán. Cờ này
                   // giữ job làm mới định kỳ không kéo ghim về lại chỗ dịch vụ geocoding nói.
                   pinnedByUser: true,
-                }))
+                  // KHÔNG mang theo place_id/formatted_address của gợi ý cũ: ghim đã
+                  // dời sang điểm khác nên metadata đó tả nhầm chỗ. Bỏ trống thì BE
+                  // hiểu là "không có thông tin mới" và giữ nguyên giá trị đang lưu.
+                })
               }
             />
-            <p className="mt-1.5 text-[11px] text-muted-foreground">
-              {coords
-                ? t(coords.pinnedByUser ? "gym.branches.coordsAdjusted" : "gym.branches.coordsPinned",
-                    { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
-                : t("gym.branches.coordsAuto")}
+            {/* Trạng thái toạ độ là điều kiện lưu, không phải ghi chú phụ — thiếu
+                thì tô cảnh báo để người dùng biết trước khi bấm Lưu. */}
+            <p className={`mt-1.5 flex items-center gap-1 text-[11px] ${coords ? "text-muted-foreground" : "font-semibold text-warning"}`}>
+              {coords ? (
+                t(coords.pinnedByUser ? "gym.branches.coordsAdjusted" : "gym.branches.coordsPinned",
+                  { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
+              ) : (
+                <>
+                  <MapPinOff className="size-3.5 shrink-0" />
+                  {t("gym.branches.coordsAuto")}
+                </>
+              )}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -447,8 +535,9 @@ export default function GymBranchesPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
-            <Button onClick={save} disabled={saveMut.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
-              {saveMut.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.save")}
+            <Button onClick={() => void save()} disabled={saveMut.isPending || resolving} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+              {(saveMut.isPending || resolving) && <Loader2 className="size-4 animate-spin" />}
+              {resolving ? t("gym.branches.geoResolving") : t("common.actions.save")}
             </Button>
           </div>
         </div>

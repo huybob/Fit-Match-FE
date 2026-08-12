@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Ban, Dumbbell, Loader2, CheckCircle2 } from "lucide-react";
 import { gymService } from "@/services/gym.service";
 import type { FacilityInput, FacilityResponse } from "@/types/Gym";
+import type { Media } from "@/types/Media";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { Button } from "@/shared/components/ui/button";
@@ -12,6 +13,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { ListState } from "@/shared/components/common/list-state";
+import { ImageUploader } from "@/shared/components/media/image-uploader";
+import { SmartImage } from "@/shared/components/media/smart-image";
 import {
   Select,
   SelectContent,
@@ -32,6 +35,9 @@ export default function GymFacilitiesPage() {
   const [description, setDescription] = useState("");
   // B-14 (audit 2026-07-17): gắn tiện ích vào chi nhánh — BE hỗ trợ sẵn, FE thiếu field.
   const [branchId, setBranchId] = useState("");
+  // Ảnh minh hoạ tiện ích: state là trạng thái cuối cùng gửi lên qua `mediaIds`,
+  // nên bỏ một ảnh ở đây rồi Lưu là BE xoá hẳn ảnh đó.
+  const [images, setImages] = useState<Media[]>([]);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const facilitiesQuery = useQuery({
@@ -68,15 +74,17 @@ export default function GymFacilitiesPage() {
   });
 
   function openCreate() {
-    setEditing(null); setName(""); setDescription(""); setBranchId(""); setFormOpen(true);
+    setEditing(null); setName(""); setDescription(""); setBranchId(""); setImages([]); setFormOpen(true);
   }
   function openEdit(f: FacilityResponse) {
     setEditing(f); setName(f.name ?? ""); setDescription(f.description ?? "");
     setBranchId(f.branchId != null ? String(f.branchId) : "");
+    // Ảnh đã kèm trong response danh sách nên mở form là thấy ngay, không cần gọi thêm API.
+    setImages(f.images ?? []);
     setFormOpen(true);
   }
   function closeForm() {
-    setFormOpen(false); setEditing(null); setName(""); setDescription(""); setBranchId("");
+    setFormOpen(false); setEditing(null); setName(""); setDescription(""); setBranchId(""); setImages([]);
   }
   function save() {
     if (!name.trim()) { toast({ type: "warning", title: t("gym.facilities.nameRequired") }); return; }
@@ -84,6 +92,7 @@ export default function GymFacilitiesPage() {
       name: name.trim(),
       description: description.trim() || undefined,
       branchId: branchId ? Number(branchId) : undefined,
+      mediaIds: images.map((m) => m.id),
     });
   }
 
@@ -111,30 +120,41 @@ export default function GymFacilitiesPage() {
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {facilities.map((f) => (
-              <div key={f.id} className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Dumbbell className="size-5 text-primary" />
-                  </div>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                    f.active === false ? "bg-muted text-muted-foreground" : "bg-success-muted text-success"
-                  }`}>
-                    {f.active === false ? t("common.states.stopped") : <><CheckCircle2 className="size-3" /> {t("common.states.active")}</>}
-                  </span>
-                </div>
-                <h3 className="text-[15px] font-bold text-foreground">{f.name}</h3>
-                {f.branchName && (
-                  <p className="text-[11px] font-semibold text-primary mt-0.5">{t("gym.facilities.branchLabel")} {f.branchName}</p>
+              <div key={f.id} className="bg-card rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden">
+                {/* Ảnh minh hoạ: tiện ích là thứ khách nhìn chứ không đọc, nên ảnh
+                    đứng trước tên. Chưa có ảnh thì giữ nguyên bố cục cũ (icon). */}
+                {f.imageUrl && (
+                  <SmartImage
+                    src={f.imageUrl}
+                    alt={f.name ?? t("gym.facilities.title")}
+                    className="h-36 w-full bg-muted/40 object-cover"
+                  />
                 )}
-                <p className="text-sm text-muted-foreground mt-1 flex-1 line-clamp-3">{f.description || t("gym.facilities.noDescription")}</p>
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                  <Button variant="link" size="inline" onClick={() => openEdit(f)} className="flex gap-1.5 text-primary">
-                    <Pencil className="size-3.5" />{t("common.actions.edit")}</Button>
-                  {f.active !== false && (
-                    <button onClick={() => f.id != null && setConfirmId(f.id)} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive ml-auto">
-                      <Ban className="size-3.5" /> {t("gym.facilities.disable")}
-                    </button>
+                <div className="p-5 flex flex-col flex-1">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="size-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Dumbbell className="size-5 text-primary" />
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                      f.active === false ? "bg-muted text-muted-foreground" : "bg-success-muted text-success"
+                    }`}>
+                      {f.active === false ? t("common.states.stopped") : <><CheckCircle2 className="size-3" /> {t("common.states.active")}</>}
+                    </span>
+                  </div>
+                  <h3 className="text-[15px] font-bold text-foreground">{f.name}</h3>
+                  {f.branchName && (
+                    <p className="text-[11px] font-semibold text-primary mt-0.5">{t("gym.facilities.branchLabel")} {f.branchName}</p>
                   )}
+                  <p className="text-sm text-muted-foreground mt-1 flex-1 line-clamp-3">{f.description || t("gym.facilities.noDescription")}</p>
+                  <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
+                    <Button variant="link" size="inline" onClick={() => openEdit(f)} className="flex gap-1.5 text-primary">
+                      <Pencil className="size-3.5" />{t("common.actions.edit")}</Button>
+                    {f.active !== false && (
+                      <button onClick={() => f.id != null && setConfirmId(f.id)} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-destructive ml-auto">
+                        <Ban className="size-3.5" /> {t("gym.facilities.disable")}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -166,6 +186,19 @@ export default function GymFacilitiesPage() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.facilities.imagesLabel")}</label>
+            {/* entityId trống khi tạo mới = ảnh nháp: file lên storage ngay, BE gắn
+                vào tiện ích qua `mediaIds` lúc lưu. */}
+            <ImageUploader
+              entityType="FACILITY"
+              entityId={editing?.id ?? null}
+              imageType="GALLERY"
+              value={images}
+              onChange={setImages}
+              max={6}
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>

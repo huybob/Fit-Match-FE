@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { FieldShell } from "@/modules/forms/form-controls";
+import { ProfileSectionHeader } from "@/modules/layout/profile-shell";
 import type { BankAccount } from "@/services/wallet.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
@@ -54,17 +55,21 @@ export function BankAccountsPage() {
 
   return (
     <div>
-      <section className="mb-6 flex flex-col gap-5 rounded-3xl border border-border bg-card/80 p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-3 h-1 w-10 rounded-full bg-accent" />
-          <h1 className="text-3xl font-black">{t("wallet.bankAccounts.title")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t("wallet.bankAccounts.description")}</p>
-        </div>
-        <Button onClick={() => setCreating(true)}>
-          <Plus className="size-4" />
-          {t("wallet.bankAccounts.add")}
-        </Button>
-      </section>
+      {/* Trang này chỉ sống trong khu vực thành viên (/profile/bank-accounts)
+          nên dùng header giống "Hồ sơ" / "Bảo mật". */}
+      <div className="mb-6">
+        <ProfileSectionHeader
+          icon={<CreditCard className="size-5" />}
+          title={t("wallet.bankAccounts.title")}
+          description={t("wallet.bankAccounts.description")}
+          action={
+            <Button onClick={() => setCreating(true)}>
+              <Plus className="size-4" />
+              {t("wallet.bankAccounts.add")}
+            </Button>
+          }
+        />
+      </div>
 
       {accounts.isLoading ? (
         <LoadingSkeleton />
