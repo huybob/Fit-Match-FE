@@ -69,6 +69,11 @@ export interface PaginationProps {
   pageSize?: number;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
+  /**
+   * Nhãn cho ô chọn số phần tử mỗi trang. Mặc định là "Số dòng mỗi trang" (bảng);
+   * lưới thẻ nên truyền "Số mục mỗi trang" để khỏi nói về "dòng" không tồn tại.
+   */
+  pageSizeLabel?: string;
   /** Hiện nút về trang đầu / tới trang cuối. */
   showEdgeButtons?: boolean;
   disabled?: boolean;
@@ -88,11 +93,13 @@ export function Pagination({
   pageSize,
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50, 100],
+  pageSizeLabel,
   showEdgeButtons = true,
   disabled = false,
   className,
 }: PaginationProps) {
   const t = useTranslations();
+  const sizeLabel = pageSizeLabel ?? t("common.pagination.rowsPerPage");
 
   const total = Math.max(totalPages, 1);
   // Bên trong luôn làm việc với số trang 1-based; chỉ quy đổi ở ranh giới vào/ra.
@@ -128,7 +135,8 @@ export function Pagination({
       )}
     >
       <div className="flex items-center gap-4">
-        {totalItems !== undefined && from !== undefined && to !== undefined ? (
+        {/* Danh sách rỗng thì công thức from–to ra "1–0 trong 0" — không nói gì còn hơn. */}
+        {totalItems !== undefined && totalItems > 0 && from !== undefined && to !== undefined ? (
           <p aria-live="polite" className="text-xs font-semibold text-muted-foreground">
             {t("common.pagination.showing", { from, to, total: totalItems })}
           </p>
@@ -137,7 +145,7 @@ export function Pagination({
         {onPageSizeChange && pageSize ? (
           <div className="flex items-center gap-2">
             <span className="hidden text-xs font-semibold text-muted-foreground sm:inline">
-              {t("common.pagination.rowsPerPage")}
+              {sizeLabel}
             </span>
             <Select
               value={String(pageSize)}
@@ -145,7 +153,7 @@ export function Pagination({
               onValueChange={(next) => onPageSizeChange(Number(next))}
             >
               <SelectTrigger
-                aria-label={t("common.pagination.rowsPerPage")}
+                aria-label={sizeLabel}
                 className="h-9 w-[4.5rem] cursor-pointer text-xs"
               >
                 <SelectValue />

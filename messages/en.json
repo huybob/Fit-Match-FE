@@ -173,6 +173,7 @@
       "goToPage": "Go to page {page}",
       "pageOf": "Page {page} of {total}",
       "rowsPerPage": "Rows per page",
+      "itemsPerPage": "Items per page",
       "showing": "Showing {from}–{to} of {total}"
     },
     "datetime": {

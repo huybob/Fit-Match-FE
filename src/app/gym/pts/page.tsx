@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Pencil, Loader2, Award, FileText, Trash2, X, CalendarClock
 } from "lucide-react";
@@ -26,6 +26,7 @@ import { FileUpload } from "@/shared/components/common/file-upload";
 import { IconButton } from "@/shared/components/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { DataTable } from "@/shared/components/common/data-table";
+import { Pagination } from "@/shared/components/ui/pagination";
 import { UserAvatar } from "@/shared/components/common/user-avatar";
 
 /* Chỉ giữ class; nhãn lấy từ gym.ptStatus.* trong component. */
@@ -254,11 +255,30 @@ export default function GymPtsPage() {
     resetNewCertDraft();
   }
 
+  /**
+   * Phân trang server-side: `GET /gym/pts` nhận Pageable. Trước đây trang tải cứng
+   * `size: 100` và không có điều khiển nào — gym có hơn 100 PT thì phần dư biến mất
+   * không dấu vết.
+   */
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  // Đổi số dòng mỗi trang thì chỉ số trang cũ không còn tương ứng — về trang đầu
+  // ngay trong lúc render để không bắn thừa một request cho cặp size mới/trang cũ.
+  const [lastPageSize, setLastPageSize] = useState(pageSize);
+  if (pageSize !== lastPageSize) {
+    setLastPageSize(pageSize);
+    setPage(0);
+  }
+
   const ptsQuery = useQuery({
-    queryKey: ["gym-pts"],
-    queryFn: () => gymService.listPts({ page: 0, size: 100 })
+    queryKey: ["gym-pts", page, pageSize],
+    queryFn: () => gymService.listPts({ page, size: pageSize }),
+    // Giữ bảng cũ trong lúc tải trang mới thay vì nháy skeleton.
+    placeholderData: keepPreviousData,
   });
   const pts = ptsQuery.data?.content ?? [];
+  const totalPts = ptsQuery.data?.totalElements ?? pts.length;
+  const totalPtPages = ptsQuery.data?.totalPages ?? 1;
 
   // Chỉ chi nhánh đang hoạt động mới gán được PT (BE từ chối chi nhánh đã tắt) —
   // lọc ngay ở nguồn thay vì để người dùng chọn rồi mới báo lỗi.
@@ -493,6 +513,22 @@ export default function GymPtsPage() {
                   ),
                 },
               ]}
+              /* Bảng rỗng hoặc lỗi thì thanh phân trang không điều khiển được gì —
+                 hiện cụm «‹ 1 ›» dưới thông báo lỗi chỉ gây hiểu nhầm là "còn trang khác". */
+              footer={
+                totalPts > 0 ? (
+                  <Pagination
+                    page={page}
+                    zeroBased
+                    totalPages={totalPtPages}
+                    totalItems={totalPts}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
+                    disabled={ptsQuery.isFetching}
+                  />
+                ) : undefined
+              }
             />
         </div>
       </div>

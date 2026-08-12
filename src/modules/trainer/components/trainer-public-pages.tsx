@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
-import { FormEvent, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { FormEvent, useRef, useState } from "react";
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
 import { SiteLayout } from "@/modules/layout/site-layout";
 import { marketplaceService } from "@/services/marketplace.service";
@@ -13,6 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import { Pagination } from "@/shared/components/ui/pagination";
 import { RatingStars } from "@/shared/components/common/rating-stars";
 import { PublicReviews } from "@/modules/review/components/public-reviews";
 import {
@@ -60,6 +61,9 @@ const SPECIALIZATIONS = [
   { value: "Phục hồi", labelKey: "marketplace.spec.rehab" },
 ] as const;
 
+/** Cùng bậc với trang Phòng gym: bội của 6 để hàng cuối không lẻ ở 2 hay 3 cột. */
+const PAGE_SIZE_OPTIONS = [12, 24, 48];
+
 export function TrainersDirectoryPage() {
   const t = useTranslations();
   const [keyword, setKeyword] = useState("");
@@ -73,9 +77,28 @@ export function TrainersDirectoryPage() {
   const [params, setParams] = useState<{ keyword?: string; specialization?: string[]; serviceArea?: string }>({});
   // UC-008: sắp xếp kết quả — sort theo field entity (BE Spring Pageable).
   const [sort, setSort] = useState("createdAt,desc");
+  // Phân trang server-side: `GET /marketplace/pts` nhận page/size/sort (Pageable).
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const resultsRef = useRef<HTMLElement>(null);
+
+  /**
+   * Bộ lọc mới thì tập kết quả mới — trang 5 cũ không còn ý nghĩa. Điều chỉnh ngay
+   * trong lúc render và TRƯỚC `useQuery`; làm ở effect thì React đã kịp bắn request
+   * cho cặp "bộ lọc mới + trang cũ" rồi mới bắn tiếp request trang đầu.
+   */
+  const filterKey = JSON.stringify([params, sort, pageSize]);
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) {
+    setLastFilterKey(filterKey);
+    setPage(0);
+  }
+
   const query = useQuery({
-    queryKey: ["marketplace", "pts", params, sort],
-    queryFn: () => marketplaceService.searchPts({ ...params, sort }),
+    queryKey: ["marketplace", "pts", params, sort, page, pageSize],
+    queryFn: () => marketplaceService.searchPts({ ...params, sort, page, size: pageSize }),
+    // Không thay lưới bằng skeleton mỗi lần sang trang.
+    placeholderData: keepPreviousData,
   });
   const { isCustomer, ids, toggle } = useFavorites();
 
@@ -93,6 +116,13 @@ export function TrainersDirectoryPage() {
 
   const items = query.data?.content ?? [];
   const total = query.data?.totalElements ?? items.length;
+  const totalPages = query.data?.totalPages ?? 1;
+
+  /** Đổi trang thì đưa người dùng về đầu danh sách, không để lơ lửng ở cuối lưới. */
+  function goToPage(next: number) {
+    setPage(next);
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   return (
     <SiteLayout>
@@ -149,7 +179,7 @@ export function TrainersDirectoryPage() {
           </aside>
 
           {/* Results */}
-          <section className="min-w-0 flex-1">
+          <section ref={resultsRef} className="min-w-0 flex-1 scroll-mt-4">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h1 className="text-2xl font-bold text-foreground">{t("marketplace.trainersTitle")}</h1>
@@ -172,7 +202,13 @@ export function TrainersDirectoryPage() {
             ) : query.isError ? (
               <EmptyState title={t("marketplace.listLoadError")} description={toErrorMessage(query.error)} />
             ) : items.length ? (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <>
+              {/* Mờ đi trong lúc tải trang kế — dữ liệu cũ vẫn đọc được. */}
+              <div
+                className={`grid gap-5 sm:grid-cols-2 xl:grid-cols-3 ${
+                  query.isFetching ? "opacity-60 transition-opacity" : ""
+                }`}
+              >
                 {items.map((pt) => (
                   <article key={pt.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
                     <div className="relative grid h-40 place-items-center bg-gradient-to-br from-primary to-primary text-primary-foreground">
@@ -223,6 +259,21 @@ export function TrainersDirectoryPage() {
                   </article>
                 ))}
               </div>
+
+              <Pagination
+                className="mt-6"
+                page={page}
+                zeroBased
+                totalPages={totalPages}
+                totalItems={total}
+                pageSize={pageSize}
+                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                pageSizeLabel={t("common.pagination.itemsPerPage")}
+                onPageChange={goToPage}
+                onPageSizeChange={setPageSize}
+                disabled={query.isFetching}
+              />
+              </>
             ) : (
               <EmptyState title={t("marketplace.noTrainerFound")} description={t("marketplace.noTrainerFoundHint")} />
             )}

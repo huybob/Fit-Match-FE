@@ -173,6 +173,7 @@
       "goToPage": "Đến trang {page}",
       "pageOf": "Trang {page} / {total}",
       "rowsPerPage": "Số dòng mỗi trang",
+      "itemsPerPage": "Số mục mỗi trang",
       "showing": "Hiện {from}–{to} trong {total}"
     },
     "datetime": {
