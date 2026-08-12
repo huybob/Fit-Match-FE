@@ -179,7 +179,6 @@ export function RegisterForm() {
   const { toast } = useToast();
   const router = useRouter();
   const registerAccount = useAuthStore((state) => state.register);
-  const [emailSent, setEmailSent] = useState(false);
   const form = useForm<z.infer<typeof schemas.register>>({
     resolver: zodResolver(schemas.register),
     mode: "onTouched",
@@ -204,7 +203,9 @@ export function RegisterForm() {
         ...payload,
         phone: payload.phone || undefined,
       });
-      setEmailSent(true);
+      // Đăng ký xong chuyển hẳn sang trang thành công (kèm email để mở đúng hộp
+      // thư). Dùng replace để nút Back không quay lại form đã submit.
+      router.replace(`/register/success?email=${encodeURIComponent(payload.email)}`);
     } catch (error) {
       toast({
         type: "error",
@@ -212,35 +213,6 @@ export function RegisterForm() {
         description: toErrorMessage(error),
       });
     }
-  }
-
-  if (emailSent) {
-    return (
-      <div className="space-y-6 text-center py-4">
-        <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle className="size-8 text-primary" />
-          </div>
-        </div>
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">{t("auth.checkEmailTitle")}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {t("auth.sentVerifyTo")}{" "}
-            <span className="font-medium text-foreground">{form.getValues("email")}</span>.
-            {t("auth.checkInboxHint")}
-          </p>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {t("auth.noEmailReceived")}{" "}
-          <Link href="/resend-verification" className="text-primary hover:underline font-medium">
-            {t("auth.resend")}
-          </Link>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <BackToLoginLink />
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -590,7 +562,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
 // ─── Resend Verification ──────────────────────────────────────────────────────
 
-export function ResendVerificationForm() {
+export function ResendVerificationForm({ defaultEmail = "" }: { defaultEmail?: string }) {
   const t = useTranslations();
   const schemas = useAuthSchemas();
   const { toast } = useToast();
@@ -599,7 +571,9 @@ export function ResendVerificationForm() {
   const form = useForm<z.infer<typeof schemas.resendVerification>>({
     resolver: zodResolver(schemas.resendVerification),
     mode: "onTouched",
-    defaultValues: { email: "" },
+    // Đến từ trang đăng ký thành công thì email đã biết — điền sẵn để người dùng
+    // chỉ việc bấm gửi lại.
+    defaultValues: { email: defaultEmail },
   });
 
   async function onSubmit(values: z.infer<typeof schemas.resendVerification>) {
