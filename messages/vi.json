@@ -1180,6 +1180,7 @@
       "mapError": "Không tải được bản đồ. Kết quả vẫn hiển thị đầy đủ ở danh sách bên dưới."
     },
     "compareMax": "So sánh tối đa {max} mục"
+      "wheelZoomHint": "Giữ Ctrl (⌘ trên Mac) rồi cuộn để phóng to bản đồ",
   },
   "trainer": {
     "nav": {

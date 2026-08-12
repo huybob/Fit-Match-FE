@@ -1180,6 +1180,7 @@
       "mapError": "The map failed to load. All results are still listed below."
     },
     "compareMax": "Compare up to {max} items"
+      "wheelZoomHint": "Hold Ctrl (⌘ on Mac) and scroll to zoom the map",
   },
   "trainer": {
     "nav": {

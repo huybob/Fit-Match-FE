@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { Map as LeafletMap, Marker } from "leaflet";
 import { useLeaflet } from "@/shared/hooks/use-leaflet";
 import { addBaseTiles, gymPinIcon } from "@/shared/components/map/leaflet-config";
+import { useWheelZoom } from "@/shared/components/map/use-wheel-zoom";
 import { cn } from "@/shared/utils/cn.util";
 
 interface AddressPinMapProps {
@@ -48,6 +49,8 @@ export function AddressPinMap({ value, onChange, disabled, className }: AddressP
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<LeafletMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  // Ctrl/⌘ + cuộn để phóng to; cuộn trần vẫn cuộn form và hiện dòng nhắc.
+  const wheelHint = useWheelZoom(mapRef, mapReady);
 
   // Listener của Leaflet sống ngoài vòng đời React nên đọc handler qua ref, nếu
   // không nó gọi mãi bản bị bắt trong closure lúc khởi tạo.
@@ -147,7 +150,19 @@ export function AddressPinMap({ value, onChange, disabled, className }: AddressP
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div ref={containerRef} className="h-48 rounded-xl border border-border" />
+      <div className="relative h-48">
+        <div ref={containerRef} className="size-full rounded-xl border border-border" />
+        {/* pointer-events-none: lớp nhắc không được nuốt cú cuộn tiếp theo. */}
+        <div
+          aria-hidden={!wheelHint}
+          className={cn(
+            "pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center rounded-xl bg-foreground/45 px-4 text-center text-xs font-semibold text-background transition-opacity duration-200",
+            wheelHint ? "opacity-100" : "opacity-0",
+          )}
+        >
+          {t("marketplace.nearby.wheelZoomHint")}
+        </div>
+      </div>
       <p className="text-[11px] text-muted-foreground">
         {disabled
           ? t("gym.branches.pinMapReadOnly")
