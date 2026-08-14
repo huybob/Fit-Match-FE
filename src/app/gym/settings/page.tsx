@@ -7,6 +7,7 @@ import { gymService } from "@/services/gym.service";
 import type { GymPolicy, UpdateGymProfileInput } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -18,6 +19,7 @@ import {
   type PinnedPlace,
 } from "@/shared/components/map/place-autocomplete-input";
 import { AddressPinMap } from "@/shared/components/map/address-pin-map";
+import { usePinAddress } from "@/shared/components/map/use-pin-address";
 import { useTranslations } from "next-intl";
 
 /** UC-017 (B-11): chính sách đặt lịch/hủy/no-show/nội quy — BE có sẵn, trước đây FE = 0. */
@@ -93,13 +95,14 @@ export default function GymSettingsPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
+  const [ward, setWard] = useState("");
   const [phone, setPhone] = useState("");
   const [visible, setVisible] = useState(true);
   // UC-18 (V55): toạ độ trụ sở. Trước đây trang này gọi PlaceAutocompleteInput
   // nhưng vứt bỏ lat/lng của gợi ý, nên trụ sở luôn phải nhờ BE đoán lại từ chuỗi
   // chữ — ghim từ gợi ý địa chỉ chính xác hơn hẳn.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
+  const { resolving: pinResolving, resolve: resolvePinAddress } = usePinAddress();
 
   const statusQuery = useQuery({
     queryKey: ["gym-verification-status"],
@@ -114,7 +117,7 @@ export default function GymSettingsPage() {
     setDescription(status.description ?? "");
     setAddress(status.address ?? "");
     setCity(status.city ?? "");
-    setDistrict(status.district ?? "");
+    setWard(status.district ?? "");
     setPhone(status.phone ?? "");
     // Nạp lại toạ độ đang lưu và gửi nguyên vẹn khi lưu: BE hiểu đó là "operator
     // đã ghim" nên không geocode lại địa chỉ không đổi (đỡ một lượt gọi dịch vụ geocoding)
@@ -128,6 +131,26 @@ export default function GymSettingsPage() {
     // khiến operator bật/tắt "mù" (tưởng đang public khi đang ẩn).
     setVisible(status.active ?? false);
   }, [status]);
+
+  /**
+   * Operator bấm/kéo ghim trên bản đồ (UC-18, V66). Toạ độ vào state NGAY rồi mới
+   * tra ngược ra chữ: ghim phải nhảy theo con trỏ tức thì, chữ điền sau cũng được.
+   */
+  async function pinAt(position: { lat: number; lng: number }) {
+    // KHÔNG spread `prev`: place_id của gợi ý cũ tả một địa điểm khác với chỗ ghim
+    // vừa dời tới. Bỏ trống thì BE hiểu là "không có thông tin mới".
+    setCoords({ lat: position.lat, lng: position.lng, pinnedByUser: true });
+    const found = await resolvePinAddress(position.lat, position.lng);
+    if (!found) return;
+    if (found.formattedAddress) {
+      setAddress(found.formattedAddress);
+      // Cột formatted_address phải mô tả CHÍNH chỗ ghim, nếu không nó còn giữ mô
+      // tả của địa điểm trước khi ghim bị kéo đi.
+      setCoords((prev) => (prev ? { ...prev, formattedAddress: found.formattedAddress } : prev));
+    }
+    if (found.city) setCity(found.city);
+    if (found.ward) setWard(found.ward);
+  }
 
   const saveProfile = useMutation({
     mutationFn: (payload: UpdateGymProfileInput) => gymService.updateProfile(payload),
@@ -149,12 +172,20 @@ export default function GymSettingsPage() {
 
   function submit() {
     if (!gymName.trim()) { toast({ type: "warning", title: t("gym.settings.nameRequired") }); return; }
+    // Không bắt buộc, nhưng đã điền thì phải gọi được — chặn tại chỗ thay vì
+    // để BE trả 400 sau một vòng gọi mạng.
+    if (phone.trim() && !isVietnamPhone(phone)) {
+      toast({ type: "warning", title: t("common.validation.phone") }); return;
+    }
     saveProfile.mutate({
       gymName: gymName.trim(),
       description: description.trim() || undefined,
       address: address.trim() || undefined,
       city: city.trim() || undefined,
-      district: district.trim() || undefined,
+      // V66: cột `district` nay mang phường/xã — VN bỏ cấp huyện từ đợt sắp xếp
+      // đơn vị hành chính 2025. Giữ tên field để không phải đổi cùng lúc cả bộ
+      // lọc marketplace, tìm kiếm vé và màn so sánh gym.
+      district: ward.trim() || undefined,
       phone: phone.trim() || undefined,
       latitude: coords?.lat,
       longitude: coords?.lng,
@@ -231,7 +262,7 @@ export default function GymSettingsPage() {
                             placeProvider: place.placeProvider,
                             formattedAddress: place.formattedAddress,
                           });
-                          if (place.district) setDistrict(place.district);
+                          if (place.ward) setWard(place.ward);
                           if (place.city) setCity(place.city);
                         }}
                         onError={(message) => toast({ type: "error", title: message })}
@@ -241,24 +272,24 @@ export default function GymSettingsPage() {
                     <AddressPinMap
                       className="mt-2"
                       value={coords ? { lat: coords.lat, lng: coords.lng } : null}
-                      onChange={(position) =>
-                        setCoords((prev) => ({
-                          ...prev,
-                          lat: position.lat,
-                          lng: position.lng,
-                          pinnedByUser: true,
-                        }))
-                      }
+                      onChange={(position) => void pinAt(position)}
                     />
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {coords
-                        ? t(coords.pinnedByUser
+                    <p className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      {pinResolving ? (
+                        <>
+                          <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                          {t("gym.branches.pinAddressResolving")}
+                        </>
+                      ) : coords ? (
+                        t(coords.pinnedByUser
                             ? "gym.branches.coordsAdjusted"
                             : "gym.branches.coordsPinned", {
                             lat: coords.lat.toFixed(5),
                             lng: coords.lng.toFixed(5),
                           })
-                        : t("gym.branches.coordsAuto")}
+                      ) : (
+                        t("gym.branches.coordsAuto")
+                      )}
                     </p>
                     {/* Bug S2-01: admin yêu cầu xác minh lại địa chỉ — hiện ngay cạnh ô
                         cần sửa, kèm lý do. Cờ tự gỡ sau khi lưu địa chỉ mới. */}
@@ -269,22 +300,34 @@ export default function GymSettingsPage() {
                       </p>
                     )}
                   </div>
+                  {/* UC-18 (V66): CHỈ ĐỌC. Hai ô này là nhãn hành chính của đúng
+                      cái ghim trên bản đồ nên phải do vị trí quyết định — gõ tay
+                      được là mở đường cho hồ sơ ghim ở phường này mà gắn nhãn
+                      phường khác. Muốn sửa thì sửa ghim. */}
                   <div className="space-y-4">
                     <FieldShell label={t("common.table.city")}>
-                      <Input value={city} onChange={e => setCity(e.target.value)} />
+                      <Input value={city} readOnly disabled />
                     </FieldShell>
-                    {/* UC-18: quận/huyện đi vào chuỗi geocode của BE. Tự điền khi
-                        chọn gợi ý địa chỉ, vẫn gõ tay được khi không có gợi ý nào. */}
-                    <FieldShell label={t("common.table.district")}>
-                      <Input value={district} onChange={e => setDistrict(e.target.value)} />
+                    <FieldShell label={t("common.table.ward")}>
+                      <Input value={ward} readOnly disabled />
                     </FieldShell>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("gym.branches.locationAutoFilled")}
+                    </p>
                   </div>
                 </div>
                 <FieldShell label={t("common.table.phone")}>
                   <Input type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+                  {phone.trim() && !isVietnamPhone(phone) && (
+                    <p className="mt-1.5 text-[11px] font-semibold text-destructive">
+                      {t("common.validation.phone")}
+                    </p>
+                  )}
                 </FieldShell>
                 <div className="flex justify-end">
-                  <Button onClick={submit} disabled={saveProfile.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+                  {/* pinResolving cũng chặn Lưu: bấm giữa lúc đang tra ngược sẽ gửi
+                      đi địa chỉ CŨ, rồi kết quả về sau ghi đè lên form. */}
+                  <Button onClick={submit} disabled={saveProfile.isPending || pinResolving} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                     {saveProfile.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.settings.saveProfile")}
                   </Button>
                 </div>

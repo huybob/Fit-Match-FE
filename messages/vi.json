@@ -108,7 +108,7 @@
       "maxLength": "{field} không được vượt quá {max} ký tự",
       "exactLength": "{field} phải có đúng {length} ký tự",
       "email": "Email không đúng định dạng",
-      "phone": "Số điện thoại không đúng định dạng",
+      "phone": "Số điện thoại không hợp lệ. Dùng số Việt Nam, ví dụ 0901 234 567 hoặc 028 3822 1234.",
       "url": "Đường dẫn không đúng định dạng",
       "number": "{field} phải là số",
       "integer": "{field} phải là số nguyên",
@@ -161,6 +161,7 @@
       "address": "Địa chỉ",
       "city": "Thành phố",
       "district": "Quận / Huyện",
+      "ward": "Phường / Xã",
       "phone": "Số điện thoại"
     },
     "pagination": {
@@ -870,6 +871,7 @@
       "addressPlaceholder": "Số nhà, tên đường...",
       "cityPlaceholder": "TP. Hồ Chí Minh",
       "districtPlaceholder": "Quận 1",
+      "wardPlaceholder": "Tự điền theo ghim trên bản đồ",
       "amenitiesInput": "Tiện ích (phân tách bằng dấu phẩy)",
       "capacityInput": "Sức chứa tối đa mỗi khung giờ",
       "capacityPlaceholder": "Để trống = không giới hạn",
@@ -886,7 +888,11 @@
       "coordsAdjusted": "Bạn đã chỉnh ghim thủ công: {lat}, {lng}",
       "pinMapDragHint": "Ghim sai chỗ? Kéo ghim hoặc bấm lên bản đồ để chỉnh lại.",
       "pinMapEmptyHint": "Chọn địa chỉ từ gợi ý, hoặc bấm lên bản đồ để đặt ghim.",
-      "pinMapReadOnly": "Vị trí trên bản đồ."
+      "pinMapReadOnly": "Vị trí trên bản đồ.",
+      "phoneRequired": "Vui lòng nhập số điện thoại của chi nhánh.",
+      "phoneInvalid": "Số điện thoại không hợp lệ. Dùng số Việt Nam, ví dụ 0901 234 567 hoặc 028 3822 1234.",
+      "pinAddressResolving": "Đang lấy địa chỉ tại chỗ ghim...",
+      "locationAutoFilled": "Tỉnh/Thành phố và Phường/Xã được điền tự động theo ghim trên bản đồ. Cần sửa thì dời ghim."
     },
     "ptOps": {
       "dialogTitle": "Vận hành PT — {name}",

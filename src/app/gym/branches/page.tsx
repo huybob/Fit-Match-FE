@@ -13,6 +13,7 @@ import { marketplaceService } from "@/services/marketplace.service";
 import type { BranchInput, BranchResponse, OperatingHour } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -28,15 +29,16 @@ import {
   type PinnedPlace,
 } from "@/shared/components/map/place-autocomplete-input";
 import { AddressPinMap } from "@/shared/components/map/address-pin-map";
+import { usePinAddress } from "@/shared/components/map/use-pin-address";
 
 
 /**
  * Chuỗi gửi đi geocode. Ghép ĐÚNG thứ tự BE dùng (`AddressGeocoder`:
- * "địa chỉ, quận, thành phố, Việt Nam") để hai bên ra cùng một toạ độ; thiếu cấp
- * hành chính thì dễ khớp nhầm phường/đường trùng tên ở tỉnh khác.
+ * "địa chỉ, phường, tỉnh/thành, Việt Nam") để hai bên ra cùng một toạ độ; thiếu
+ * cấp hành chính thì dễ khớp nhầm đường trùng tên ở tỉnh khác.
  */
-function geocodeQueryOf(address: string, district: string, city: string) {
-  return [address.trim(), district.trim(), city.trim(), "Việt Nam"].filter(Boolean).join(", ");
+function geocodeQueryOf(address: string, ward: string, city: string) {
+  return [address.trim(), ward.trim(), city.trim(), "Việt Nam"].filter(Boolean).join(", ");
 }
 
 /** UC-017: editor giờ mở cửa 7 ngày (dayOfWeek 1-7 khớp BE). */
@@ -166,9 +168,14 @@ export default function GymBranchesPage() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
-  // UC-18: BE ghép "address, district, city, Việt Nam" khi geocode — trước đây FE
-  // không hề gửi district nên chuỗi tra cứu luôn thiếu một cấp hành chính.
-  const [district, setDistrict] = useState("");
+  /**
+   * V66: PHƯỜNG/XÃ. Việt Nam bỏ cấp huyện từ đợt sắp xếp đơn vị hành chính 2025 —
+   * dưới tỉnh/thành là thẳng phường/xã.
+   *
+   * Đi lên server ở field `district` của payload: cột DB vẫn tên cũ để không phải
+   * đổi cùng lúc cả bộ lọc marketplace, tìm kiếm vé và màn so sánh gym.
+   */
+  const [ward, setWard] = useState("");
   const [phone, setPhone] = useState("");
   const [amenities, setAmenities] = useState("");
   const [capacity, setCapacity] = useState("");
@@ -177,6 +184,8 @@ export default function GymBranchesPage() {
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
   /** Đang tự tra toạ độ cho địa chỉ gõ tay ngay trước khi lưu. */
   const [resolving, setResolving] = useState(false);
+  // Tra ngược địa chỉ tại chỗ vừa thả ghim.
+  const { resolving: pinResolving, resolve: resolvePinAddress } = usePinAddress();
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [hoursBranch, setHoursBranch] = useState<BranchResponse | null>(null);
 
@@ -210,12 +219,12 @@ export default function GymBranchesPage() {
   });
 
   function openCreate() {
-    setEditing(null); setName(""); setAddress(""); setCity(""); setDistrict(""); setPhone("");
+    setEditing(null); setName(""); setAddress(""); setCity(""); setWard(""); setPhone("");
     setAmenities(""); setCapacity(""); setCoords(null); setFormOpen(true);
   }
   function openEdit(b: BranchResponse) {
     setEditing(b); setName(b.name ?? ""); setAddress(b.address ?? ""); setCity(b.city ?? "");
-    setDistrict(b.district ?? ""); setPhone(b.phone ?? "");
+    setWard(b.district ?? ""); setPhone(b.phone ?? "");
     // B-13: pre-fill amenities/capacity — thiếu chúng trong payload update là mất dữ liệu.
     setAmenities(b.amenities ?? ""); setCapacity(b.capacity != null ? String(b.capacity) : "");
     // Giữ lại toạ độ đã có: gửi lên nguyên vẹn thì BE không geocode lại một địa
@@ -231,6 +240,38 @@ export default function GymBranchesPage() {
     setFormOpen(false); setEditing(null);
   }
   /**
+   * Operator bấm/kéo ghim trên bản đồ (UC-18, V66).
+   *
+   * Ghim tay thắng mọi nguồn khác — kể cả khi ô địa chỉ đang trống: đây là đường
+   * lưu duy nhất cho những địa chỉ không dịch vụ nào tra ra (hẻm nhỏ, khu mới
+   * chưa lên bản đồ). Toạ độ vào state NGAY, không chờ mạng: ghim phải nhảy theo
+   * con trỏ tức thì, còn chữ thì điền sau cũng được.
+   */
+  async function pinAt(position: { lat: number; lng: number }) {
+    setCoords({
+      lat: position.lat,
+      lng: position.lng,
+      // Kéo tay = toạ độ của con người, chính xác hơn máy đoán. Cờ này giữ job làm
+      // mới định kỳ không kéo ghim về lại chỗ dịch vụ geocoding nói.
+      pinnedByUser: true,
+      // KHÔNG mang theo place_id của gợi ý cũ: ghim đã dời sang điểm khác nên id đó
+      // tả nhầm chỗ. Bỏ trống thì BE hiểu là "không có thông tin mới" và giữ nguyên
+      // giá trị đang lưu.
+    });
+
+    const found = await resolvePinAddress(position.lat, position.lng);
+    if (!found) return;
+    if (found.formattedAddress) {
+      setAddress(found.formattedAddress);
+      // Ghi lại luôn vào coords: cột formatted_address phải mô tả chính chỗ ghim,
+      // nếu không nó còn giữ mô tả của địa điểm trước khi ghim bị kéo đi.
+      setCoords((prev) => (prev ? { ...prev, formattedAddress: found.formattedAddress } : prev));
+    }
+    if (found.city) setCity(found.city);
+    if (found.ward) setWard(found.ward);
+  }
+
+  /**
    * Tra toạ độ cho địa chỉ gõ tay. Người dùng chọn gợi ý hoặc kéo ghim thì đã có
    * sẵn toạ độ, không gọi lại làm gì.
    */
@@ -238,7 +279,7 @@ export default function GymBranchesPage() {
     if (coords) return coords;
     setResolving(true);
     try {
-      const result = await marketplaceService.geocodeAddress(geocodeQueryOf(address, district, city));
+      const result = await marketplaceService.geocodeAddress(geocodeQueryOf(address, ward, city));
       if (result.latitude == null || result.longitude == null) return null;
       const resolved: PinnedPlace = {
         lat: result.latitude,
@@ -263,6 +304,10 @@ export default function GymBranchesPage() {
     // UC-18: chi nhánh không có địa chỉ thì không thể geocode, và không geocode
     // được thì nó vô hình với "tìm gym quanh đây" — chặn ngay từ form.
     if (!address.trim()) { toast({ type: "warning", title: t("gym.branches.addressRequired") }); return; }
+    // UC-016: chi nhánh là nơi khách tới tập, và là nơi phát sinh mọi việc cần gọi
+    // trực tiếp. Không có số thì CSKH phải lần ngược lên số tổng của gym.
+    if (!phone.trim()) { toast({ type: "warning", title: t("gym.branches.phoneRequired") }); return; }
+    if (!isVietnamPhone(phone)) { toast({ type: "warning", title: t("gym.branches.phoneInvalid") }); return; }
     if (capacity && (!Number.isInteger(Number(capacity)) || Number(capacity) <= 0)) {
       toast({ type: "warning", title: t("gym.branches.capacityInvalid") }); return;
     }
@@ -287,8 +332,9 @@ export default function GymBranchesPage() {
       name: name.trim(),
       address: address.trim() || undefined,
       city: city.trim() || undefined,
-      district: district.trim() || undefined,
-      phone: phone.trim() || undefined,
+      // Cột `district` nay mang phường/xã — xem chú thích ở state `ward`.
+      district: ward.trim() || undefined,
+      phone: phone.trim(),
       amenities: amenities.trim() || undefined,
       capacity: capacity ? Number(capacity) : undefined,
       latitude: pinned.lat,
@@ -469,7 +515,7 @@ export default function GymBranchesPage() {
                   placeProvider: place.placeProvider,
                   formattedAddress: place.formattedAddress,
                 });
-                if (place.district) setDistrict(place.district);
+                if (place.ward) setWard(place.ward);
                 if (place.city) setCity(place.city);
               }}
               onError={(message) => toast({ type: "warning", title: message })}
@@ -480,26 +526,17 @@ export default function GymBranchesPage() {
             <AddressPinMap
               className="mt-2"
               value={coords ? { lat: coords.lat, lng: coords.lng } : null}
-              onChange={(position) =>
-                // Ghim tay thắng mọi nguồn khác — kể cả khi ô địa chỉ đang trống:
-                // đây là đường lưu duy nhất cho những địa chỉ không dịch vụ nào tra ra
-                // (hẻm nhỏ, khu mới chưa lên bản đồ).
-                setCoords({
-                  lat: position.lat,
-                  lng: position.lng,
-                  // Kéo tay = toạ độ của con người, chính xác hơn máy đoán. Cờ này
-                  // giữ job làm mới định kỳ không kéo ghim về lại chỗ dịch vụ geocoding nói.
-                  pinnedByUser: true,
-                  // KHÔNG mang theo place_id/formatted_address của gợi ý cũ: ghim đã
-                  // dời sang điểm khác nên metadata đó tả nhầm chỗ. Bỏ trống thì BE
-                  // hiểu là "không có thông tin mới" và giữ nguyên giá trị đang lưu.
-                })
-              }
+              onChange={(position) => void pinAt(position)}
             />
             {/* Trạng thái toạ độ là điều kiện lưu, không phải ghi chú phụ — thiếu
                 thì tô cảnh báo để người dùng biết trước khi bấm Lưu. */}
             <p className={`mt-1.5 flex items-center gap-1 text-[11px] ${coords ? "text-muted-foreground" : "font-semibold text-warning"}`}>
-              {coords ? (
+              {pinResolving ? (
+                <>
+                  <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                  {t("gym.branches.pinAddressResolving")}
+                </>
+              ) : coords ? (
                 t(coords.pinnedByUser ? "gym.branches.coordsAdjusted" : "gym.branches.coordsPinned",
                   { lat: coords.lat.toFixed(5), lng: coords.lng.toFixed(5) })
               ) : (
@@ -510,20 +547,41 @@ export default function GymBranchesPage() {
               )}
             </p>
           </div>
+          {/* UC-18 (V66): CHỈ ĐỌC. Hai ô này là nhãn hành chính của đúng cái ghim
+              trên bản đồ, nên chúng phải do vị trí quyết định — gõ tay được là mở
+              đường cho chi nhánh ghim ở phường này nhưng gắn nhãn phường khác, và
+              nó sẽ không bao giờ ra đúng bộ lọc nào. Muốn sửa thì sửa ghim. */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
-              <Input value={city} onChange={e => setCity(e.target.value)} placeholder={t("gym.branches.cityPlaceholder")} />
+              <Input value={city} readOnly disabled placeholder={t("gym.branches.cityPlaceholder")} />
             </div>
             <div>
-              {/* UC-18: tự điền khi chọn gợi ý địa chỉ, gõ tay được khi không có gợi ý nào. */}
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.district")}</label>
-              <Input value={district} onChange={e => setDistrict(e.target.value)} placeholder={t("gym.branches.districtPlaceholder")} />
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.ward")}</label>
+              <Input value={ward} readOnly disabled placeholder={t("gym.branches.wardPlaceholder")} />
             </div>
+            <p className="col-span-2 -mt-2 text-[11px] text-muted-foreground">
+              {t("gym.branches.locationAutoFilled")}
+            </p>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
-            <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              {t("common.table.phone")} <span className="text-destructive">*</span>
+            </label>
+            <Input
+              type="tel"
+              inputMode="tel"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="0901 234 567"
+            />
+            {/* Báo sai ngay tại ô, không đợi bấm Lưu — nhưng chỉ khi đã gõ được một
+                đoạn, nếu không ô vừa chạm vào đã đỏ. */}
+            {phone.trim() && !isVietnamPhone(phone) && (
+              <p className="mt-1.5 text-[11px] font-semibold text-destructive">
+                {t("gym.branches.phoneInvalid")}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("gym.branches.amenitiesInput")}</label>
@@ -535,7 +593,9 @@ export default function GymBranchesPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button onClick={closeForm} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
-            <Button onClick={() => void save()} disabled={saveMut.isPending || resolving} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+            {/* pinResolving cũng chặn Lưu: bấm Lưu giữa lúc đang tra ngược sẽ gửi đi
+                địa chỉ CŨ, rồi kết quả về sau ghi vào một form đã đóng. */}
+            <Button onClick={() => void save()} disabled={saveMut.isPending || resolving || pinResolving} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
               {(saveMut.isPending || resolving) && <Loader2 className="size-4 animate-spin" />}
               {resolving ? t("gym.branches.geoResolving") : t("common.actions.save")}
             </Button>

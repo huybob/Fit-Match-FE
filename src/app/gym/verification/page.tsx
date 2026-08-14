@@ -25,12 +25,14 @@ import type {
 } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 import { FileUpload } from "@/shared/components/common/file-upload";
 import {
   PlaceAutocompleteInput,
   type PinnedPlace,
 } from "@/shared/components/map/place-autocomplete-input";
 import { AddressPinMap } from "@/shared/components/map/address-pin-map";
+import { usePinAddress } from "@/shared/components/map/use-pin-address";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -164,12 +166,13 @@ export default function GymVerificationPage() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
-  const [district, setDistrict] = useState("");
+  const [ward, setWard] = useState("");
   const [phone, setPhone] = useState("");
   // UC-18 (V55) / bug S2-01: gym mới trước đây gõ địa chỉ bằng <Input> thường nên
   // sinh ra hồ sơ phi chuẩn ngay từ lúc đăng ký — đúng nguyên nhân Admin phải bắt
   // xác minh lại địa chỉ. Chọn từ gợi ý địa chỉ là có sẵn toạ độ chuẩn.
   const [coords, setCoords] = useState<PinnedPlace | null>(null);
+  const { resolving: pinResolving, resolve: resolvePinAddress } = usePinAddress();
   const [documents, setDocuments] = useState<GymDocumentDto[]>(
     DOC_TYPES.map((d) => ({ documentType: d.type, fileUrl: "" })),
   );
@@ -185,7 +188,7 @@ export default function GymVerificationPage() {
     if (status.description) setDescription(status.description);
     if (status.address) setAddress(status.address);
     if (status.city) setCity(status.city);
-    if (status.district) setDistrict(status.district);
+    if (status.district) setWard(status.district);
     if (status.phone) setPhone(status.phone);
     if (status.latitude != null && status.longitude != null) {
       setCoords({
@@ -197,6 +200,24 @@ export default function GymVerificationPage() {
     if (status.documents?.length) setDocuments(status.documents);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status?.verificationStatus]);
+
+  /**
+   * Operator bấm/kéo ghim trên bản đồ (UC-18, V66). Toạ độ vào state NGAY rồi mới
+   * tra ngược ra chữ: ghim phải nhảy theo con trỏ tức thì, chữ điền sau cũng được.
+   */
+  async function pinAt(position: { lat: number; lng: number }) {
+    // KHÔNG spread state cũ: place_id của gợi ý trước tả một địa điểm khác với chỗ
+    // ghim vừa dời tới. Bỏ trống thì BE hiểu là "không có thông tin mới".
+    setCoords({ lat: position.lat, lng: position.lng, pinnedByUser: true });
+    const found = await resolvePinAddress(position.lat, position.lng);
+    if (!found) return;
+    if (found.formattedAddress) {
+      setAddress(found.formattedAddress);
+      setCoords((prev) => (prev ? { ...prev, formattedAddress: found.formattedAddress } : prev));
+    }
+    if (found.city) setCity(found.city);
+    if (found.ward) setWard(found.ward);
+  }
 
   // BUG-08: BE trả 404 khi user chưa có hồ sơ gym — đó là trạng thái onboarding
   // hợp lệ, không phải sự cố cần báo lỗi.
@@ -238,6 +259,11 @@ export default function GymVerificationPage() {
       toast({ type: "warning", title: t("gym.verification.nameRequired") });
       return;
     }
+    // Không bắt buộc, nhưng đã điền thì phải gọi được — chặn tại chỗ thay vì
+    // để BE trả 400 sau một vòng gọi mạng.
+    if (phone.trim() && !isVietnamPhone(phone)) {
+      toast({ type: "warning", title: t("common.validation.phone") }); return;
+    }
     const validDocs = documents.filter((d) => d.fileUrl.trim());
     if (validDocs.length === 0) {
       toast({ type: "warning", title: t("gym.verification.docRequired") });
@@ -248,7 +274,10 @@ export default function GymVerificationPage() {
       description: description.trim() || undefined,
       address: address.trim() || undefined,
       city: city.trim() || undefined,
-      district: district.trim() || undefined,
+      // V66: cột `district` nay mang phường/xã — VN bỏ cấp huyện từ đợt sắp
+      // xếp đơn vị hành chính 2025. Giữ tên field để không phải đổi cùng lúc
+      // cả bộ lọc marketplace, tìm kiếm vé và màn so sánh gym.
+      district: ward.trim() || undefined,
       phone: phone.trim() || undefined,
       latitude: coords?.lat,
       longitude: coords?.lng,
@@ -280,7 +309,7 @@ export default function GymVerificationPage() {
               size="sm"
               className="px-5"
               onClick={handleSubmit}
-              disabled={submitMut.isPending || formLocked}
+              disabled={submitMut.isPending || formLocked || pinResolving}
             >
               {submitMut.isPending ? t("common.states.submitting") : isResubmit ? t("gym.verification.resubmit") : t("gym.verification.submit")}
             </Button>
@@ -435,7 +464,7 @@ export default function GymVerificationPage() {
                           placeProvider: place.placeProvider,
                           formattedAddress: place.formattedAddress,
                         });
-                        if (place.district) setDistrict(place.district);
+                        if (place.ward) setWard(place.ward);
                         if (place.city) setCity(place.city);
                       }}
                       onError={(message) => toast({ type: "warning", title: message })}
@@ -447,54 +476,57 @@ export default function GymVerificationPage() {
                       className="mt-2"
                       disabled={formLocked}
                       value={coords ? { lat: coords.lat, lng: coords.lng } : null}
-                      onChange={(position) =>
-                        setCoords((prev) => ({
-                          ...prev,
-                          lat: position.lat,
-                          lng: position.lng,
-                          pinnedByUser: true,
-                        }))
-                      }
+                      onChange={(position) => void pinAt(position)}
                     />
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {coords
-                        ? t(coords.pinnedByUser
+                    <p className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+                      {pinResolving ? (
+                        <>
+                          <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                          {t("gym.branches.pinAddressResolving")}
+                        </>
+                      ) : coords ? (
+                        t(coords.pinnedByUser
                             ? "gym.branches.coordsAdjusted"
                             : "gym.branches.coordsPinned", {
                             lat: coords.lat.toFixed(5),
                             lng: coords.lng.toFixed(5),
                           })
-                        : t("gym.branches.coordsAuto")}
+                      ) : (
+                        t("gym.branches.coordsAuto")
+                      )}
                     </p>
                   </div>
+                  {/* UC-18 (V66): tự điền theo vị trí đã chọn (gợi ý hoặc ghim) rồi
+                      khoá, để nhãn hành chính không trôi khỏi toạ độ thật. Không tra
+                      được thì hai ô vẫn gõ tay bình thường. */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.city")}</label>
-                      <Input
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder={t("gym.branches.cityPlaceholder")}
-                        disabled={formLocked}
-                      />
+                      <Input value={city} readOnly disabled placeholder={t("gym.branches.cityPlaceholder")} />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.district")}</label>
-                      <Input
-                        value={district}
-                        onChange={(e) => setDistrict(e.target.value)}
-                        placeholder={t("gym.branches.districtPlaceholder")}
-                        disabled={formLocked}
-                      />
+                      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.ward")}</label>
+                      <Input value={ward} readOnly disabled placeholder={t("gym.branches.wardPlaceholder")} />
                     </div>
+                    <p className="col-span-2 -mt-2 text-[11px] text-muted-foreground">
+                      {t("gym.branches.locationAutoFilled")}
+                    </p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
                     <Input
+                      type="tel"
+                      inputMode="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="0901 234 567"
                       disabled={formLocked}
                     />
+                    {phone.trim() && !isVietnamPhone(phone) && (
+                      <p className="mt-1.5 text-[11px] font-semibold text-destructive">
+                        {t("common.validation.phone")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -108,7 +108,7 @@
       "maxLength": "{field} must not exceed {max} characters",
       "exactLength": "{field} must be exactly {length} characters",
       "email": "Invalid email address",
-      "phone": "Invalid phone number",
+      "phone": "Invalid phone number. Use a Vietnamese number, e.g. 0901 234 567 or 028 3822 1234.",
       "url": "Invalid URL",
       "number": "{field} must be a number",
       "integer": "{field} must be a whole number",
@@ -161,6 +161,7 @@
       "address": "Address",
       "city": "City",
       "district": "District",
+      "ward": "Ward",
       "phone": "Phone"
     },
     "pagination": {
@@ -870,6 +871,7 @@
       "addressPlaceholder": "Street address…",
       "cityPlaceholder": "Ho Chi Minh City",
       "districtPlaceholder": "District 1",
+      "wardPlaceholder": "Filled from the pin on the map",
       "amenitiesInput": "Amenities (comma separated)",
       "capacityInput": "Max capacity per slot",
       "capacityPlaceholder": "Leave blank = unlimited",
@@ -886,7 +888,11 @@
       "coordsAdjusted": "You adjusted the pin manually: {lat}, {lng}",
       "pinMapDragHint": "Pin in the wrong spot? Drag it or click the map to correct it.",
       "pinMapEmptyHint": "Pick an address from the suggestions, or click the map to drop a pin.",
-      "pinMapReadOnly": "Location on the map."
+      "pinMapReadOnly": "Location on the map.",
+      "phoneRequired": "Enter a phone number for this branch.",
+      "phoneInvalid": "Invalid phone number. Use a Vietnamese number, e.g. 0901 234 567 or 028 3822 1234.",
+      "pinAddressResolving": "Looking up the address at the pin…",
+      "locationAutoFilled": "Province/City and Ward are filled automatically from the pin on the map. To change them, move the pin."
     },
     "ptOps": {
       "dialogTitle": "Trainer operations — {name}",

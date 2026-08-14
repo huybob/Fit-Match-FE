@@ -13,6 +13,7 @@ import type {
 } from "@/types/Gym";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -379,6 +380,11 @@ export default function GymPtsPage() {
       }
     }
     if (!displayName.trim()) { toast({ type: "warning", title: t("gym.trainers.displayNameRequired") }); return; }
+    // Số điện thoại không bắt buộc ở đây, nhưng đã điền thì phải gọi được —
+    // chặn tại chỗ thay vì để BE trả 400 sau một vòng gọi mạng.
+    if (phone.trim() && !isVietnamPhone(phone)) {
+      toast({ type: "warning", title: t("common.validation.phone") }); return;
+    }
     saveMut.mutate();
   }
 
@@ -582,7 +588,12 @@ export default function GymPtsPage() {
             {/* Sửa được cả khi tạo lẫn khi cập nhật — PT đổi số thì gym sửa ở đây. */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("common.table.phone")}</label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
+              <Input type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
+              {phone.trim() && !isVietnamPhone(phone) && (
+                <p className="mt-1.5 text-[11px] font-semibold text-destructive">
+                  {t("common.validation.phone")}
+                </p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

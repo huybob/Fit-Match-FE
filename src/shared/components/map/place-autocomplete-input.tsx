@@ -8,7 +8,7 @@ import {
   type PlaceProvider,
   type PlaceSuggestion,
 } from "@/services/marketplace.service";
-import { canonicalCityName, canonicalDistrictName } from "@/shared/constants/vn-locations";
+import { canonicalCityName } from "@/shared/constants/vn-locations";
 import { Input } from "@/shared/components/ui/input";
 import { IconButton } from "@/shared/components/ui/icon-button";
 import { cn } from "@/shared/utils/cn.util";
@@ -35,8 +35,13 @@ export interface PickedPlace {
    * này, BE coi bản ghi là "không rõ nguồn" và job làm mới toạ độ bỏ qua nó.
    */
   placeProvider?: PlaceProvider;
-  /** Tách sẵn để form khỏi bắt operator gõ lại. */
-  district?: string;
+  /**
+   * Tách sẵn để form khỏi bắt operator gõ lại.
+   *
+   * V66: `ward` là PHƯỜNG/XÃ. Việt Nam bỏ cấp huyện từ đợt sắp xếp đơn vị hành
+   * chính 2025 nên dưới tỉnh/thành là thẳng phường/xã.
+   */
+  ward?: string;
   city?: string;
 }
 
@@ -105,16 +110,25 @@ export function PlaceAutocompleteInput({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [resolving, setResolving] = useState(false);
 
-  // Người dùng vừa chọn một gợi ý -> `value` đổi theo, nhưng lần đổi đó KHÔNG
-  // được kích hoạt một vòng gợi ý mới (nếu không danh sách bật lại ngay sau khi
-  // vừa chọn xong).
-  const skipNextQueryRef = useRef(false);
+  /**
+   * Chuỗi NGƯỜI DÙNG thật sự gõ vào ô này, gần nhất.
+   *
+   * Chỉ gõ tay mới được kích hoạt một vòng gợi ý. Mọi đường đổi `value` khác đều
+   * là hệ thống tự điền — chọn gợi ý, tra cả chuỗi, nạp bản ghi cũ lúc mở form,
+   * và (V66) thả ghim trên bản đồ rồi tra ngược ra địa chỉ. Không phân biệt thì
+   * danh sách gợi ý bật lên ngay sau mỗi lần tự điền, che mất bản đồ ngay dưới ô.
+   */
+  const typedValueRef = useRef<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ── Gợi ý theo nhịp gõ ────────────────────────────────────────────────────
   useEffect(() => {
-    if (skipNextQueryRef.current) {
-      skipNextQueryRef.current = false;
+    if (value !== typedValueRef.current) {
+      // Hệ thống vừa tự điền -> gợi ý đang mở là của chuỗi cũ, đóng lại thay vì
+      // để nó lơ lửng trên một ô có nội dung khác hẳn.
+      setSuggestions((prev) => (prev.length ? [] : prev));
+      setOpen(false);
+      setActiveIndex(-1);
       return;
     }
     const query = value.trim();
@@ -168,7 +182,6 @@ export function PlaceAutocompleteInput({
     const formattedAddress = suggestion.formattedAddress ?? suggestion.label ?? "";
     const label = suggestion.label ?? formattedAddress;
 
-    skipNextQueryRef.current = true;
     onValueChange(label);
     setOpen(false);
     setSuggestions([]);
@@ -181,10 +194,12 @@ export function PlaceAutocompleteInput({
       formattedAddress,
       placeId: suggestion.placeId,
       placeProvider: suggestion.placeProvider,
+      // Phường giữ nguyên chuỗi nhà cung cấp trả về: cả nước có hàng nghìn phường
+      // nên không có danh mục rút gọn nào để đối chiếu như với tỉnh/thành.
+      ward: suggestion.ward,
       // Chuẩn hoá về đúng chuỗi trong danh mục VN_CITIES khi khớp: bộ lọc
       // marketplace gửi lên chuỗi của danh mục, lưu tên dạng khác là gym rớt
       // khỏi bộ lọc.
-      district: canonicalDistrictName(suggestion.district) ?? suggestion.district,
       city: canonicalCityName(suggestion.city) ?? suggestion.city,
     });
   }
@@ -201,7 +216,6 @@ export function PlaceAutocompleteInput({
         return;
       }
       const label = result.formattedAddress ?? query;
-      skipNextQueryRef.current = true;
       onValueChange(label);
       setOpen(false);
       // Nhánh này không trả district/city — form giữ nguyên giá trị operator đã
@@ -257,7 +271,10 @@ export function PlaceAutocompleteInput({
         value={value}
         disabled={disabled}
         placeholder={placeholder ?? t("marketplace.nearby.placePlaceholder")}
-        onChange={(event) => onValueChange(event.target.value)}
+        onChange={(event) => {
+          typedValueRef.current = event.target.value;
+          onValueChange(event.target.value);
+        }}
         onKeyDown={onKeyDown}
         onFocus={() => setOpen(suggestions.length > 0)}
         role="combobox"

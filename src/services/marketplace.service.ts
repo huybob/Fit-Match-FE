@@ -132,6 +132,16 @@ export interface GeocodeResult {
   formattedAddress?: string;
   placeId?: string;
   placeProvider?: PlaceProvider;
+  /**
+   * Chỉ có ở chiều `reverseGeocode` (toạ độ -> địa chỉ). Chiều xuôi để trống có
+   * chủ đích: ở đó form đã cầm sẵn hai giá trị này, ghi đè lại là xoá mất thứ
+   * operator vừa gõ.
+   *
+   * V66: là PHƯỜNG/XÃ, không phải quận/huyện — VN bỏ cấp huyện từ đợt sắp xếp
+   * đơn vị hành chính 2025.
+   */
+  ward?: string;
+  city?: string;
 }
 
 /**
@@ -149,7 +159,8 @@ export interface PlaceSuggestion {
   longitude?: number;
   placeId?: string;
   placeProvider?: PlaceProvider;
-  district?: string;
+  /** V66: phường/xã (cấp huyện đã bỏ). */
+  ward?: string;
   city?: string;
 }
 

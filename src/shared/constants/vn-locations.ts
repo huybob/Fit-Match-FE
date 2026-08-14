@@ -68,16 +68,10 @@ export function canonicalCityName(raw: string | undefined): string | null {
   return VN_CITIES.find((c) => stripAdminPrefix(c.name) === key)?.name ?? null;
 }
 
-/** Như {@link canonicalCityName} nhưng cho quận/huyện; dò trên toàn bộ danh mục. */
-export function canonicalDistrictName(raw: string | undefined): string | null {
-  if (!raw) return null;
-  const key = stripAdminPrefix(raw);
-  for (const city of VN_CITIES) {
-    const match = city.districts.find((d) => stripAdminPrefix(d) === key);
-    if (match) return match;
-  }
-  return null;
-}
+// V66: không còn hàm chuẩn hoá cho cấp dưới tỉnh/thành. Việt Nam bỏ cấp huyện từ
+// đợt sắp xếp đơn vị hành chính 2025, và cả nước có hàng nghìn phường/xã — không
+// có danh mục rút gọn nào để đối chiếu như với 5 thành phố ở trên. Form địa chỉ
+// giữ nguyên chuỗi phường mà dịch vụ geocoding trả về.
 
 /**
  * Khoảng giá gói tập dùng chung cho bộ lọc (trang Phòng gym và trang Gói tập).

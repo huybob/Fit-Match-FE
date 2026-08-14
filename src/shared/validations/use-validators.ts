@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { z } from "zod";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 
 /**
  * Bộ validator dùng chung, thông báo lỗi đã đi qua i18n.
@@ -23,7 +24,6 @@ const RE = {
   code: /^[a-zA-Z0-9._-]+$/,
   /** Chỉ chữ cái (mọi ngôn ngữ) và khoảng trắng đơn. */
   personName: /^\p{L}+(?:[ ]\p{L}+)*$/u,
-  phoneVn: /^[0-9+\-() ]{7,20}$/,
   /** Bắt hầu hết emoji — dùng để chặn emoji trong tên/mã. */
   emoji: /[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}]/u,
   /** Ký tự đặc biệt (ngoài chữ, số, khoảng trắng, gạch). */
@@ -131,9 +131,15 @@ export function useValidators() {
           .regex(/[A-Za-z]/, msg.password)
           .regex(/\d/, msg.password),
 
-      /** Số điện thoại VN, cho phép để trống. */
+      /**
+       * Số điện thoại VN, cho phép để trống.
+       *
+       * Dùng chung `isVietnamPhone` với các form nhập tay khác thay vì giữ regex
+       * riêng ở đây: trước đây chỗ này chỉ kiểm tra "gồm chữ số và vài ký tự
+       * ngăn cách, dài 7-20" — "0123456789" hay "+1 202 555 0100" đều lọt.
+       */
       phoneOptional: () =>
-        z.union([z.literal(""), z.string().regex(RE.phoneVn, msg.phone)]),
+        z.union([z.literal(""), z.string().refine(isVietnamPhone, msg.phone)]),
 
       /** Tên người: chỉ chữ + khoảng trắng, chặn số/ký tự đặc biệt/emoji. */
       personName: (field: string, min = 2, max = 100) =>

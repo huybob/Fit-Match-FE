@@ -22,6 +22,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { isVietnamPhone } from "@/shared/utils/phone.util";
 import type { AuthUser } from "@/services/auth.service";
 
 import { ProfileShell } from "@/modules/layout/profile-shell";
@@ -409,8 +410,15 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
   const [relationship, setRelationship] = useState(ec?.relationship ?? "");
   const [phone, setPhone] = useState(ec?.phone ?? "");
   const [saving, setSaving] = useState(false);
+  const phoneInvalid = phone.trim().length > 0 && !isVietnamPhone(phone);
 
   async function handleSave() {
+    // Số người nhà sai là vô dụng đúng lúc cần nhất. Để trống vẫn được — không
+    // phải ai cũng muốn khai liên hệ khẩn cấp.
+    if (phoneInvalid) {
+      toast({ type: "warning", title: t("common.validation.phone") });
+      return;
+    }
     setSaving(true);
     try {
       const updated = await authService.updateProfile({
@@ -453,11 +461,16 @@ function EmergencyContactCard({ user }: { user: AuthUser }) {
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-muted-foreground">{t("common.table.phone")}</label>
           <Input
+            type="tel"
+            inputMode="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="0901 234 567"
             className="h-11 border-border rounded-lg text-base"
           />
+          {phoneInvalid && (
+            <p className="text-xs font-semibold text-destructive">{t("common.validation.phone")}</p>
+          )}
         </div>
         <Button
           onClick={handleSave}

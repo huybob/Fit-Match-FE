@@ -220,7 +220,12 @@ export interface BranchInput {
    * chuỗi tra cứu yếu hẳn ở những tên đường trùng nhau giữa các quận.
    */
   district?: string;
-  phone?: string;
+  /**
+   * UC-016: BẮT BUỘC và phải là số Việt Nam hợp lệ (BE `@VietnamPhone`) — chi
+   * nhánh không có số gọi được là chi nhánh CSKH không liên hệ nổi khi khách tới
+   * nơi mà không vào được.
+   */
+  phone: string;
   // B-13 (DATA LOSS): BE set vô điều kiện 2 field này khi update —
   // thiếu chúng trong payload là xóa trắng dữ liệu đã có.
   amenities?: string;
