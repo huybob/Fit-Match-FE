@@ -24,7 +24,9 @@ const gymLinks = [
   { href: "/gym/pts", navKey: "trainers", icon: Users },
   { href: "/gym/services", navKey: "services", icon: Sparkles },
   { href: "/gym/packages", navKey: "packages", icon: Package },
-  { href: "/gym/bookings", navKey: "bookings", icon: CalendarCheck2 },
+  // Mô hình vé không còn "booking": lịch đặt của gym nằm ở /gym/calendar.
+  // Href cũ /gym/bookings không có trang nào và cho 404.
+  { href: "/gym/calendar", navKey: "bookings", icon: CalendarCheck2 },
   { href: "/gym/revenue", navKey: "revenue", icon: DollarSign },
   { href: "/gym/wallet", navKey: "wallet", icon: Banknote },
   { href: "/gym/settings", navKey: "settings", icon: Settings },

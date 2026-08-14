@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Tag,
   FileText, ClipboardList, LogOut,
   Database,
-  ShieldAlert, Star, Banknote, CalendarCheck, Undo2, Percent, Flag, BellRing,
+  ShieldAlert, Star, Banknote, Undo2, Percent, Flag, BellRing,
   Landmark, MapPin,
 } from "lucide-react";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
@@ -31,7 +31,9 @@ const adminLinks = [
   { href: "/admin", navKey: "dashboard", icon: LayoutDashboard, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   { href: "/admin/users", navKey: "users", icon: Users, roles: ["ROLE_ADMIN"] },
   { href: "/admin/verification", navKey: "verification", icon: ShieldCheck, roles: ["ROLE_ADMIN"] },
-  { href: "/admin/bookings", navKey: "bookings", icon: CalendarCheck, roles: ["ROLE_ADMIN"] },
+  // Mục "Lịch đặt" gỡ đi: /admin/bookings không có trang (mô hình booking đã bị
+  // thay bằng vé) nên link chỉ dẫn tới 404. Vé toàn sàn có API /admin/tickets
+  // nhưng chưa có màn hình — thêm lại mục này khi trang đó tồn tại.
   { href: "/admin/disputes", navKey: "disputes", icon: ShieldAlert, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
   { href: "/admin/reviews", navKey: "reviews", icon: Star, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
   // UC-070/071: báo cáo vấn đề dịch vụ/hành vi (ngoài review)
