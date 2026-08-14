@@ -3,13 +3,17 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Building2, CalendarDays, CheckCircle2, Clock, Ticket as TicketIcon, UserRound } from "lucide-react";
+import { Building2, CalendarDays, CalendarClock, CheckCircle2, Clock, Ticket as TicketIcon, UserRound } from "lucide-react";
 import { useFormatters } from "@/i18n/use-formatters";
+import { useToast } from "@/lib/toast-provider";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import { DatePicker } from "@/shared/components/ui/date-picker";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/components/ui/popover";
-import { fromIsoDate } from "../calendar-date.util";
+import { toErrorMessage } from "@/shared/utils/error.util";
+import { fromIsoDate, todayIso } from "../calendar-date.util";
+import { useUpdateSessionDate } from "../hooks/use-ticket";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
 
 /**
@@ -250,10 +254,108 @@ export function SessionDetailDialog({
                 </Button>
               ) : null}
             </div>
+
+            <RescheduleSection session={session} ticket={ticket} onDone={onClose} />
           </div>
         ))}
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * Dời ngày tập — chỉ hiện khi BE thật sự nhận (luật ở SessionSchedulingValidator):
+ * vé DAY còn dùng được, buổi chưa diễn ra, và chưa qua mốc 00:00 của ngày tập.
+ * Vé gói không đổi lịch từng ngày được, nên hiện nút ở đó chỉ để nhận 409.
+ *
+ * Không tự đoán hộ phần PT: buổi có PT thì ngày mới phải còn đúng khung giờ đó,
+ * điều kiện này chỉ server biết. FE nói trước bằng một dòng gợi ý rồi để lỗi
+ * thật của server hiện nguyên văn nếu PT bận.
+ */
+function RescheduleSection({
+  session,
+  ticket,
+  onDone,
+}: {
+  session: TrainingSession;
+  ticket?: Ticket;
+  onDone: () => void;
+}) {
+  const t = useTranslations("ticket.schedule");
+  const { toast } = useToast();
+  const update = useUpdateSessionDate();
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState("");
+
+  const today = todayIso();
+  const canReschedule =
+    ticket?.kind === "DAY" &&
+    ticket.status === "ACTIVE" &&
+    session.status === "SCHEDULED" &&
+    session.sessionDate > today;
+
+  if (!canReschedule) return null;
+
+  const expiry = ticket.expiresAt ? ticket.expiresAt.slice(0, 10) : undefined;
+
+  async function submit() {
+    if (!date) return;
+    try {
+      await update.mutateAsync({ sessionId: session.id, date });
+      toast({ type: "success", title: t("rescheduled") });
+      onDone();
+    } catch (error) {
+      toast({ type: "error", title: t("rescheduleFailed"), description: toErrorMessage(error) });
+    }
+  }
+
+  if (!open) {
+    return (
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <CalendarClock className="mr-1.5 size-3.5" />
+        {t("reschedule")}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-3">
+      <p className="text-xs font-semibold">{t("rescheduleTitle")}</p>
+      <DatePicker
+        value={date || null}
+        onChange={(value) => setDate(value ?? "")}
+        // Hạn dùng của vé là trần cứng: dời quá hạn thì server từ chối, chặn ở
+        // đây để khách không chọn xong mới biết.
+        minDate={today}
+        maxDate={expiry}
+        placeholder={t("reschedulePlaceholder")}
+        className="h-9 w-full"
+      />
+      {session.ptName ? (
+        <p className="text-xs text-muted-foreground">
+          {t("reschedulePtHint", {
+            pt: session.ptName,
+            time: session.ptSlotStart?.slice(0, 5) ?? "",
+          })}
+        </p>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setOpen(false);
+            setDate("");
+          }}
+          disabled={update.isPending}
+        >
+          {t("rescheduleCancel")}
+        </Button>
+        <Button size="sm" onClick={submit} disabled={!date || update.isPending}>
+          {t("rescheduleConfirm")}
+        </Button>
+      </div>
+    </div>
   );
 }
 

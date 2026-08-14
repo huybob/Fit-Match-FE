@@ -2168,7 +2168,15 @@
       "noPtAtTime": "Không có PT nào trống khung này.",
       "choosePt": "Chọn",
       "ticketFilter": "Lọc theo vé",
-      "ticketFilterAll": "Tất cả vé"
+      "ticketFilterAll": "Tất cả vé",
+      "reschedule": "Dời lịch",
+      "rescheduleTitle": "Chọn ngày mới",
+      "reschedulePlaceholder": "Ngày tập mới",
+      "reschedulePtHint": "Ngày mới phải còn khung {time} của {pt} — hết khung thì hệ thống sẽ báo và bạn chọn ngày khác.",
+      "rescheduleConfirm": "Xác nhận dời",
+      "rescheduleCancel": "Bỏ qua",
+      "rescheduled": "Đã dời lịch tập",
+      "rescheduleFailed": "Không dời được lịch"
     },
     "adminRefunds": {
       "title": "Duyệt hoàn tiền vé",

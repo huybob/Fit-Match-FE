@@ -2168,7 +2168,15 @@
       "noPtAtTime": "No trainer is free at this time.",
       "choosePt": "Choose",
       "ticketFilter": "Filter by ticket",
-      "ticketFilterAll": "All tickets"
+      "ticketFilterAll": "All tickets",
+      "reschedule": "Reschedule",
+      "rescheduleTitle": "Pick a new date",
+      "reschedulePlaceholder": "New training date",
+      "reschedulePtHint": "The new date must still have {pt}'s {time} slot — if it is taken you will be told and can pick another date.",
+      "rescheduleConfirm": "Confirm",
+      "rescheduleCancel": "Dismiss",
+      "rescheduled": "Session rescheduled",
+      "rescheduleFailed": "Could not reschedule"
     },
     "adminRefunds": {
       "title": "Ticket refund queue",
