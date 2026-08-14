@@ -2166,7 +2166,9 @@
       "loadingSlots": "Đang tải khung giờ…",
       "pickTimeFirst": "Chọn một khung giờ để xem PT còn trống.",
       "noPtAtTime": "Không có PT nào trống khung này.",
-      "choosePt": "Chọn"
+      "choosePt": "Chọn",
+      "ticketFilter": "Lọc theo vé",
+      "ticketFilterAll": "Tất cả vé"
     },
     "adminRefunds": {
       "title": "Duyệt hoàn tiền vé",

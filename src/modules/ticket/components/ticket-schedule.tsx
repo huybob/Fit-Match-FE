@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarPlus,
+  Ticket as TicketIcon,
   UserRound,
   X,
 } from "lucide-react";
@@ -39,6 +40,9 @@ import type { ScheduleDayPt, Ticket } from "@/types/Ticket";
 
 /** Không có PT nào được lọc — hằng số riêng vì Select không nhận value rỗng. */
 const NO_PT = "0";
+
+/** Không lọc vé nào — cùng lý do với {@link NO_PT}. */
+const ALL_TICKETS = "0";
 
 /**
  * Hai chế độ trên cùng một bảng lịch:
@@ -82,6 +86,14 @@ export function TicketSchedulePage() {
   const [view, setView] = useState<CalendarView>("month");
   const [anchor, setAnchor] = useState(todayIso());
   const [ptFilter, setPtFilter] = useState<string>(NO_PT);
+  /*
+   * `?ticketId=` cũng là mặc định của bộ lọc chứ không chỉ của chế độ đặt: nút
+   * "Xem lịch" ở màn Vé của tôi trỏ tới đúng một vé, mở ra lịch của MỌI vé là
+   * trả lời một câu hỏi khác với câu khách vừa hỏi.
+   */
+  const [ticketFilter, setTicketFilter] = useState<string>(
+    preselected ? String(preselected) : ALL_TICKETS,
+  );
   const [startDate, setStartDate] = useState("");
   const [dayPts, setDayPts] = useState<Record<number, PtGridSelection>>({});
   const [openDay, setOpenDay] = useState<string | null>(null);
@@ -150,10 +162,32 @@ export function TicketSchedulePage() {
     return map;
   }, [cells, ptFilter]);
 
+  /** Vé đã có buổi để xem — nguồn của bộ lọc vé ở chế độ xem. */
+  const filterableTickets = useMemo(
+    () => tickets.filter((item) => (item.scheduledDays ?? 0) > 0),
+    [tickets],
+  );
+  /*
+   * Vé đang lọc phải nằm trong danh sách chọn được, nếu không Select rơi vào
+   * trạng thái "có value nhưng không có option": ô hiện rỗng còn lịch thì trống
+   * trơn, không dấu hiệu nào cho biết vì sao. Xảy ra với `?ticketId=` trỏ tới vé
+   * chưa xếp buổi nào, và với vé vừa bị huỷ hết buổi.
+   */
+  const activeTicketFilter = filterableTickets.some((item) => String(item.id) === ticketFilter)
+    ? ticketFilter
+    : ALL_TICKETS;
+
   /** Buổi đã đặt trong kỳ, ghép sẵn vé để thẻ hover có tên gói / phòng gym. */
   const entriesByDate = useMemo(() => {
     const map = new Map<string, BookedSession[]>();
     for (const session of sessions ?? []) {
+      // Lọc CHỈ ở chế độ xem. Ở chế độ đặt, lịch phải hiện buổi của mọi vé —
+      // đó là cách khách thấy trùng ngày TRƯỚC khi bấm; ẩn bớt đi thì bộ lọc
+      // lại trở thành nguyên nhân gây ra chính cái va chạm nó che mất.
+      if (!booking && activeTicketFilter !== ALL_TICKETS
+          && String(session.ticketId) !== activeTicketFilter) {
+        continue;
+      }
       const list = map.get(session.sessionDate) ?? [];
       list.push({ session, ticket: ticketById.get(session.ticketId) });
       map.set(session.sessionDate, list);
@@ -165,7 +199,7 @@ export function TicketSchedulePage() {
       );
     }
     return map;
-  }, [sessions, ticketById]);
+  }, [sessions, ticketById, booking, activeTicketFilter]);
 
   const days = useMemo(
     () => (ticket ? plannedDays(startDate, ticket.kind === "DAY" ? 1 : ticket.dayCount) : []),
@@ -255,7 +289,9 @@ export function TicketSchedulePage() {
   }
 
   const assignedCount = Object.keys(dayPts).length;
-  const bookedCount = sessions?.length ?? 0;
+  // Đếm theo những gì đang HIỆN trên lịch: lọc còn 3 buổi mà huy hiệu vẫn báo
+  // 12 thì con số đó chỉ làm người xem nghi ngờ bộ lọc.
+  const bookedCount = [...entriesByDate.values()].reduce((total, list) => total + list.length, 0);
 
   function renderDay({ date }: CalendarDayContext) {
     const index = booking ? dayIndexOf.get(date) : undefined;
@@ -420,6 +456,29 @@ export function TicketSchedulePage() {
               <CalendarDays className="size-3" />
               {t("bookedInPeriod", { count: bookedCount })}
             </Badge>
+
+            {/* Một vé thì không có gì để lọc — ô chọn chỉ đứng đó gây nhiễu. */}
+            {filterableTickets.length > 1 ? (
+              <>
+                <label className="flex items-center gap-1.5 text-sm font-medium">
+                  <TicketIcon className="size-4" /> {t("ticketFilter")}
+                </label>
+                <Select value={activeTicketFilter} onValueChange={setTicketFilter}>
+                  <SelectTrigger className="h-9 w-64">
+                    <SelectValue placeholder={t("ticketFilterAll")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_TICKETS}>{t("ticketFilterAll")}</SelectItem>
+                    {filterableTickets.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.ticketTypeName} · {item.gymBranchName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            ) : null}
+
             <span className="text-sm text-muted-foreground">
               {schedulable.length
                 ? t("schedulableTickets", { count: schedulable.length })
