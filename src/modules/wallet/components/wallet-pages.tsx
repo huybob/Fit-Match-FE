@@ -409,11 +409,11 @@ function WalletLedger({ owner }: { owner: WalletOwnerType }) {
                 cell: (txn) => money(txn.amount),
               },
               {
-                key: "bookingId",
-                header: t("wallet.colBooking"),
+                key: "ticketId",
+                header: t("wallet.colTicket"),
                 hideBelow: "md",
                 cellClassName: "text-xs text-muted-foreground",
-                cell: (txn) => (txn.bookingId ? `#${txn.bookingId}` : "—"),
+                cell: (txn) => (txn.ticketId ? `#${txn.ticketId}` : "—"),
               },
               {
                 key: "heldAfter",
@@ -643,7 +643,7 @@ function DecisionDialog({ withdrawal, decision, onClose }: {
       <Textarea
         className="mt-4"
         maxLength={500}
-        placeholder={meta.requireNote ? t("booking.reasonRequiredLabel") : t("wallet.noteOptional")}
+        placeholder={meta.requireNote ? t("wallet.noteRequired") : t("wallet.noteOptional")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />

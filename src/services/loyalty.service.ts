@@ -8,7 +8,7 @@ export interface LoyaltyTransaction {
   type: LoyaltyTxnType;
   points: number;
   balanceAfter: number;
-  bookingId?: number;
+  ticketId?: number;
   description?: string;
   createdAt?: string;
 }
@@ -22,7 +22,7 @@ export interface LoyaltyBalance {
 
 export const loyaltyService = {
   balance: () => api.get<LoyaltyBalance>("/loyalty"),
-  apply: (bookingId: number, points: number) =>
-    api.post(`/bookings/${bookingId}/loyalty`, { points }),
-  remove: (bookingId: number) => api.deleteRaw(`/bookings/${bookingId}/loyalty`),
+  apply: (ticketId: number, points: number) =>
+    api.post(`/tickets/${ticketId}/loyalty`, { points }),
+  remove: (ticketId: number) => api.deleteRaw(`/tickets/${ticketId}/loyalty`),
 };

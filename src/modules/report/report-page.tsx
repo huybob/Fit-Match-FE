@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableRow } from "@/shared/components/ui/ta
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
 
-/* Nhãn trạng thái booking dùng chung ở common.bookingStatus.* */
+/* Nhãn trạng thái vé dùng chung ở common.ticketStatus.* */
 
 function firstOfMonth() {
   const d = new Date();
@@ -75,7 +75,7 @@ export function ReportPage({ scope }: { scope: "admin" | "gym" }) {
                   [t("reportPage.toDate"), applied.to],
                   [t("reportPage.totalBookings"), r.totalBookings],
                   ...Object.entries(r.bookingsByStatus ?? {}).map(
-                    ([k, v]) => [t("reportPage.bookingPrefix", { status: t(`common.bookingStatus.${k}` as never) }), v] as [string, number],
+                    ([k, v]) => [t("reportPage.bookingPrefix", { status: t(`common.ticketStatus.${k}` as never) }), v] as [string, number],
                   ),
                   [t("reportPage.collected"), r.grossHeld],
                   [t("reportPage.released"), r.releasedNet],
@@ -133,7 +133,7 @@ function ReportBody({ report: r, showWallet }: { report: OperationalReport; show
         </div>
       )}
 
-      <BreakdownTable title={t("reportPage.bookingsByStatus")} data={r.bookingsByStatus} labelPrefix="common.bookingStatus." />
+      <BreakdownTable title={t("reportPage.bookingsByStatus")} data={r.bookingsByStatus} labelPrefix="common.ticketStatus." />
       <BreakdownTable title={t("reportPage.disputesByStatus")} data={r.disputesByStatus} />
     </div>
   );
@@ -148,7 +148,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BreakdownTable({ title, data, labelPrefix }: { title: string; data: Record<string, number>; labelPrefix?: "common.bookingStatus." | "dispute.status." }) {
+function BreakdownTable({ title, data, labelPrefix }: { title: string; data: Record<string, number>; labelPrefix?: "common.ticketStatus." | "dispute.status." }) {
   const t = useTranslations();
   const entries = Object.entries(data ?? {});
   if (!entries.length) return null;

@@ -1,12 +1,4 @@
 import { api } from "@/services/api";
-import type {
-  Booking,
-  BookingHistoryEntry,
-  BookingStatus,
-  CorrectAttendanceRequest,
-  RefundRequest,
-  RefundStatus,
-} from "@/types/Booking";
 import type { PageResponse } from "@/shared/types/api-response.type";
 import type {
   AdminUserPage,
@@ -116,25 +108,11 @@ export const adminService = {
     api.postRaw(`/admin/pts/${id}/reactivate`),
 
   // ── Admin bookings (UC-036/040/045/050) ──
-  listBookings: (params: PaginationParams & { status?: BookingStatus }) =>
-    api.get<PageResponse<Booking>>("/admin/bookings", { params }),
-  getBooking: (id: number) =>
-    api.get<Booking>(`/admin/bookings/${id}`),
-  getBookingHistory: (id: number) =>
-    api.get<BookingHistoryEntry[]>(`/admin/bookings/${id}/history`),
-  confirmBookingPayment: (id: number) =>
-    api.post<Booking>(`/admin/bookings/${id}/confirm-payment`),
-  correctBookingAttendance: (id: number, payload: CorrectAttendanceRequest) =>
-    api.post<Booking, CorrectAttendanceRequest>(`/admin/bookings/${id}/correct-attendance`, payload),
+  // Nhóm /admin/bookings đã bỏ cùng mô hình booking — tra cứu vé nay ở
+  // /admin/tickets và duyệt hoàn ở /admin/ticket-refunds (ticket.service.ts).
 
-  // ── Admin refunds (UC-055/056, D-2) ──
-  listRefunds: (params: PaginationParams & { status?: RefundStatus }) =>
-    api.get<PageResponse<RefundRequest>>("/admin/refunds", { params }),
-  approveRefund: (id: number, payload: { approvedAmount?: number; note?: string }) =>
-    api.post<RefundRequest, { approvedAmount?: number; note?: string }>(
-      `/admin/refunds/${id}/approve`, payload),
-  rejectRefund: (id: number, payload: { note?: string }) =>
-    api.post<RefundRequest, { note?: string }>(`/admin/refunds/${id}/reject`, payload),
+  // Duyệt hoàn tiền đã chuyển sang /admin/ticket-refunds: admin chọn FULL
+  // hoặc PARTIAL_ELAPSED thay vì gõ số tiền (câu 11) — xem ticket.service.ts.
 
   // ── Đối soát thanh toán (UC-053/056) ──
   // Tiền vào tài khoản nền tảng nhưng không khớp booking (sai nội dung CK,

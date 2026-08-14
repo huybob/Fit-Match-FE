@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { PackagesPublicPage } from "@/modules/package/components/package-public-pages";
+import { PackagesPublicPage } from "@/modules/ticket/components/packages-public";
 
 // Phase 5 (SEO): metadata tĩnh cho trang public — root layout chỉ có title chung.
 /**

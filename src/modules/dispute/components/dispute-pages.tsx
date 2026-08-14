@@ -72,7 +72,7 @@ export function MyDisputesPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-sm font-black">
-                  <ShieldAlert className="size-4 text-destructive" /> #{d.id} · Booking #{d.bookingId}
+                  <ShieldAlert className="size-4 text-destructive" /> #{d.id} · {d.ticketName ?? ""} #{d.ticketId}
                 </span>
                 <Badge variant={disputeStatusVariant(d.status)}>{t(`dispute.status.${d.status}`)}</Badge>
               </div>
@@ -120,7 +120,7 @@ function DisputeDetailDialog({ dispute, onClose }: { dispute: Dispute; onClose: 
           {dispute.resolution && <span className="text-xs font-black">{dispute.resolution}</span>}
         </div>
         <p className="mt-2"><b>{t("dispute.reasonLabel")}</b> {dispute.reason}</p>
-        <p className="mt-1 text-muted-foreground">Booking #{dispute.bookingId} · {dispute.gymName}</p>
+        <p className="mt-1 text-muted-foreground">{dispute.ticketName ?? ""} #{dispute.ticketId} · {dispute.gymName}</p>
         {dispute.frozenAmount != null && dispute.frozenAmount > 0 && (
           <p className="mt-1 text-muted-foreground">{t("dispute.heldAmount")} {money(dispute.frozenAmount)}</p>
         )}

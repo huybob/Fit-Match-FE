@@ -62,14 +62,14 @@ function ApplyDialog({ txn, onClose }: { txn: PaymentTransaction; onClose: () =>
   const t = useTranslations();
   const { toast } = useToast();
   const client = useQueryClient();
-  const [bookingId, setBookingId] = useState(txn.bookingId ? String(txn.bookingId) : "");
+  const [ticketId, setTicketId] = useState(txn.ticketId ? String(txn.ticketId) : "");
   const [note, setNote] = useState("");
   const [allowAmountMismatch, setAllowAmountMismatch] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () =>
       adminService.applyPaymentTransaction(txn.id, {
-        bookingId: Number(bookingId),
+        ticketId: Number(ticketId),
         allowAmountMismatch,
         note: note.trim() || undefined,
       }),
@@ -85,7 +85,7 @@ function ApplyDialog({ txn, onClose }: { txn: PaymentTransaction; onClose: () =>
     onError: (e) => toast({ type: "error", title: t("admin.payments.linkFailed"), description: toErrorMessage(e) }),
   });
 
-  const idInvalid = !bookingId || Number(bookingId) <= 0;
+  const idInvalid = !ticketId || Number(ticketId) <= 0;
   // BE bắt buộc ghi chú khi bỏ qua kiểm tra số tiền — chặn sớm ở FE cho rõ.
   const noteRequired = allowAmountMismatch && !note.trim();
 
@@ -112,9 +112,9 @@ function ApplyDialog({ txn, onClose }: { txn: PaymentTransaction; onClose: () =>
           <Input
             type="number"
             min={1}
-            value={bookingId}
-            onChange={(e) => setBookingId(e.target.value)}
-            placeholder={t("admin.payments.bookingIdPlaceholder")}
+            value={ticketId}
+            onChange={(e) => setTicketId(e.target.value)}
+            placeholder={t("admin.payments.ticketIdPlaceholder")}
           />
         </div>
 
@@ -186,7 +186,7 @@ function ResolveDialog({ txn, onClose }: { txn: PaymentTransaction; onClose: () 
         <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm">
           <p>
             {t("admin.payments.amountReceived")} <span className="font-semibold text-foreground">{formatCurrency(txn.amount)}</span>
-            {txn.bookingId ? <> · Booking #{txn.bookingId}</> : null}
+            {txn.ticketId ? <> · Vé #{txn.ticketId}</> : null}
           </p>
           <p className="mt-1 break-words text-xs text-muted-foreground">
             {t("admin.payments.transferNote")} {txn.rawDescription || "—"}
@@ -375,14 +375,14 @@ export default function AdminPaymentReconciliationPage() {
               ),
             },
             {
-              key: "booking",
-              header: t("admin.payments.colBooking"),
+              key: "ticket",
+              header: t("admin.payments.colTicket"),
               hideBelow: "md",
               cellClassName: "text-muted-foreground",
               cell: (txn) =>
-                txn.bookingId ? (
+                txn.ticketId ? (
                   <>
-                    <p className="text-foreground">#{txn.bookingId}</p>
+                    <p className="text-foreground">#{txn.ticketId}</p>
                     <p className="text-[11px]">{txn.customerUsername ?? "—"}</p>
                   </>
                 ) : (

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Package, Pencil, Plus, Ruler, Scale, Trash2 } from "lucide-react";
+import { Activity, Pencil, Plus, Ruler, Scale, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { DatePicker } from "@/shared/components/ui/date-picker";
@@ -10,7 +10,6 @@ import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { SiteLayout } from "@/modules/layout/site-layout";
-import { bookingService } from "@/services/booking.service";
 import {
   measurementService,
   type BodyMeasurement,
@@ -22,7 +21,6 @@ import { PageHeader } from "@/shared/components/common/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
-import { Progress } from "@/shared/components/ui/progress";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { useTranslations } from "next-intl";
@@ -150,10 +148,6 @@ function MeasurementsContent() {
     queryKey: ["measurements"],
     queryFn: () => measurementService.list(),
   });
-  const packagesQuery = useQuery({
-    queryKey: ["my-packages"],
-    queryFn: bookingService.myPackages,
-  });
 
   const form = useForm<MeasurementValues>({
     resolver: zodResolver(schema),
@@ -217,7 +211,6 @@ function MeasurementsContent() {
     latest?.weightKg != null && previous?.weightKg != null
       ? Number((latest.weightKg - previous.weightKg).toFixed(1))
       : null;
-  const activePackages = (packagesQuery.data ?? []).filter((p) => p.status === "ACTIVE");
 
   return (
     <div>
@@ -264,35 +257,6 @@ function MeasurementsContent() {
         </div>
       )}
 
-      {/* Gói tập đang dùng */}
-      {activePackages.length > 0 && (
-        <section className="mb-6">
-          <h2 className="mb-3 text-lg font-black">{t("member.measurements.activePackages")}</h2>
-          <div className="space-y-3">
-            {activePackages.map((p) => {
-              const pct = p.sessionsTotal > 0 ? Math.round((p.sessionsUsed / p.sessionsTotal) * 100) : 0;
-              return (
-                <div key={p.id} className="rounded-2xl border border-border bg-card p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="flex items-center gap-2 font-bold">
-                      <Package className="size-4 text-primary" />
-                      {p.packageName ?? t("member.measurements.packageFallback", { id: p.packageId ?? p.id })}
-                      {p.gymName && <span className="text-xs font-normal text-muted-foreground">· {p.gymName}</span>}
-                    </p>
-                    <p className="text-sm font-bold">
-                      {t("member.measurements.sessionsUsed", { used: p.sessionsUsed ?? 0, total: p.sessionsTotal ?? 0 })}
-                    </p>
-                  </div>
-                  <Progress value={pct} className="mt-2 h-2" />
-                  {p.expiresAt && (
-                    <p className="mt-1.5 text-xs text-muted-foreground">{t("member.measurements.expiresAt")} {fmt.date(p.expiresAt)}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {/* {t("member.measurements.history")} */}
       <h2 className="mb-3 text-lg font-black">{t("member.measurements.history")}</h2>

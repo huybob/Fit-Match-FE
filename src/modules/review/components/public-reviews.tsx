@@ -131,7 +131,6 @@ export function PublicReviews({
                   {/* Ở trang gym: cho biết đánh giá thuộc buổi tập với PT nào. */}
                   {scope === "gym" && r.ptName && <span>· {r.ptName}</span>}
                   {scope === "pt" && r.gymName && <span>· {r.gymName}</span>}
-                  {r.serviceName && <span>· {r.serviceName}</span>}
                 </div>
               </li>
             ))}

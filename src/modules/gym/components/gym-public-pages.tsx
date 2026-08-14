@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, Package, GitBranch, Users, Heart, CalendarCheck, Navigation, Info } from "lucide-react";
+import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, GitBranch, Users, Heart, CalendarCheck, Navigation, Info } from "lucide-react";
 import { FormEvent, useMemo, useRef, useState } from "react";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   marketplaceService,
   type GymPublicProfile,
   type GymSearchParams,
   type PublicBranch,
 } from "@/services/marketplace.service";
+import { ticketService } from "@/services/ticket.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
@@ -727,21 +728,25 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
   });
   // B-25 (audit 2026-07-17): trước đây trang chỉ hiển thị 5 field hồ sơ — catalog
   // PUBLISHED không có bề mặt hiển thị nào dù endpoint public đã đủ.
-  const services = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "services"],
-    queryFn: () => marketplaceService.getGymServices(gymId),
-    enabled: !!gym.data,
-  });
-  const packages = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "packages"],
-    queryFn: () => marketplaceService.getGymPackages(gymId),
-    enabled: !!gym.data,
-  });
   const branches = useQuery({
     queryKey: ["marketplace", "gym", gymId, "branches"],
     queryFn: () => marketplaceService.getGymBranches(gymId),
     enabled: !!gym.data,
   });
+
+  // Vé bán theo CHI NHÁNH (câu 20) nên phải hỏi từng chi nhánh rồi gom lại —
+  // dùng cho khoảng giá ở đầu trang và danh sách vé trong thẻ chi nhánh.
+  const branchIds = (branches.data ?? []).map((b) => b.id).filter((id): id is number => id != null);
+  const ticketTypeQueries = useQueries({
+    queries: branchIds.map((branchId) => ({
+      queryKey: ["marketplace", "branch", branchId, "ticket-types"],
+      queryFn: () => ticketService.listBranchTicketTypes(branchId),
+    })),
+  });
+  const ticketTypesByBranch = new Map(
+    branchIds.map((branchId, index) => [branchId, ticketTypeQueries[index]?.data ?? []]),
+  );
+  const branchTicketTypes = ticketTypeQueries.flatMap((query) => query.data ?? []);
   const pts = useQuery({
     queryKey: ["marketplace", "gym", gymId, "pts"],
     queryFn: () => marketplaceService.getGymPts(gymId),
@@ -771,11 +776,8 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
 
   const g = gym.data;
   const fullAddress = [g.address, g.district, g.city].filter(Boolean).join(", ");
-  // Bug 10: khoảng giá từ catalog đang bán (dịch vụ buổi lẻ + gói tập).
-  const prices = [
-    ...(services.data ?? []).map((s) => s.price),
-    ...(packages.data ?? []).map((p) => p.price),
-  ].filter((p): p is number => p != null && p > 0);
+  // Bug 10: khoảng giá lấy từ vé đang bán ở các chi nhánh của gym.
+  const prices = branchTicketTypes.map((type) => type.price).filter((p): p is number => p != null && p > 0);
   const priceLabel = prices.length
     ? Math.min(...prices) === Math.max(...prices)
       ? formatCurrency(Math.min(...prices))
@@ -791,7 +793,7 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
   const gymPhotos = toGalleryImages((media.data ?? []).filter((m) => m.branchId == null));
   const photosOfBranch = (branchId?: number) =>
     toGalleryImages((media.data ?? []).filter((m) => m.branchId != null && m.branchId === branchId));
-  const bookingHref = `/profile/bookings?create=1&gymId=${gymId}`;
+  const bookingHref = `/gyms/${gymId}`;
   return (
     <SiteLayout>
       <main className="mx-auto max-w-5xl px-4 py-8">
@@ -907,65 +909,8 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
           </section>
         )}
 
-        {/* B-25: Dịch vụ đang bán */}
-        <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground"><Sparkles className="size-5 text-primary" /> {t("marketplace.services")}</h2>
-          {services.isLoading ? (
-            <div className="mt-3"><LoadingSkeleton /></div>
-          ) : !(services.data ?? []).length ? (
-            <p className="mt-3 text-sm text-muted-foreground">{t("marketplace.noServices")}</p>
-          ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {(services.data ?? []).map((s) => (
-                <div key={s.id} className="rounded-2xl border border-border p-4">
-                  <p className="font-bold text-foreground">{s.name}</p>
-                  {s.categoryName && <p className="text-[11px] font-semibold text-primary">{s.categoryName}</p>}
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{s.description}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="font-extrabold text-primary">{s.price != null ? formatCurrency(s.price) : "—"}</span>
-                    {s.durationMinutes != null && (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3.5" /> {s.durationMinutes}′</span>
-                    )}
-                  </div>
-                  {s.bookingRules?.depositPercent != null && (
-                    <p className="mt-1 text-[11px] text-muted-foreground">{t("marketplace.depositPercent", { percent: s.bookingRules.depositPercent })}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* B-25: {t("marketplace.packages")} */}
-        <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-foreground"><Package className="size-5 text-primary" /> {t("marketplace.packages")}</h2>
-          {packages.isLoading ? (
-            <div className="mt-3"><LoadingSkeleton /></div>
-          ) : !(packages.data ?? []).length ? (
-            <p className="mt-3 text-sm text-muted-foreground">{t("marketplace.noPackages")}</p>
-          ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {(packages.data ?? []).map((p) => (
-                <div key={p.id} className="rounded-2xl border border-border p-4">
-                  <p className="font-bold text-foreground">{p.name}</p>
-                  {p.gymServiceName && <p className="text-[11px] font-semibold text-primary">{t("marketplace.services")}: {p.gymServiceName}</p>}
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {p.validityDays != null
-                      ? t("gym.packages.sessionsSummary", { count: p.sessionCount ?? 0, days: p.validityDays })
-                      : t("gym.packages.sessionsSummaryNoExpiry", { count: p.sessionCount ?? 0 })}
-                  </p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="font-extrabold text-primary">{p.price != null ? formatCurrency(p.price) : "—"}</span>
-                    {p.sessionCount ? (
-                      <span className="text-xs text-muted-foreground">≈ {formatCurrency(Math.round((p.price ?? 0) / p.sessionCount))}{t("gym.packages.perSession")}</span>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
+        {/* Dịch vụ + gói tập đã bị gỡ cùng mô hình booking: vé bán theo CHI
+            NHÁNH (câu 20), nên danh sách vé nằm ngay trong thẻ chi nhánh bên dưới. */}
         {/* B-25: {t("marketplace.branches")} + giờ mở cửa thật */}
         <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-bold text-foreground"><GitBranch className="size-5 text-primary" /> {t("marketplace.branches")}</h2>
@@ -992,6 +937,33 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
                         ))}
                     </div>
                   )}
+                  {/* Câu 20: vé bán theo chi nhánh — bấm vào là sang thẳng
+                      màn mua vé của đúng chi nhánh đó. */}
+                  {(ticketTypesByBranch.get(b.id!) ?? []).length > 0 && (
+                    <ul className="mt-3 space-y-1.5">
+                      {(ticketTypesByBranch.get(b.id!) ?? []).map((type) => (
+                        <li key={type.id}>
+                          <Link
+                            href={`/checkout?branchId=${b.id}&ticketTypeId=${type.id}`}
+                            className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2 text-sm hover:border-primary"
+                          >
+                            <span className="min-w-0 truncate">
+                              {type.name}
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                {type.kind === "DAY"
+                                  ? t("ticket.checkout.dayTicket")
+                                  : t("ticket.checkout.packageTicket", { days: type.dayCount })}
+                              </span>
+                            </span>
+                            <span className="shrink-0 font-extrabold text-primary">
+                              {formatCurrency(type.price)}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   {/* Bug 10/11: ảnh riêng của từng chi nhánh. */}
                   <ImageGallery images={photosOfBranch(b.id)} columns={3} className="mt-3" />
                 </div>

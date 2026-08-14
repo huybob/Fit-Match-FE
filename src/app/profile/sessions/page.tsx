@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
-// Màn này gọi API chưa có ở BE (mô hình PT độc lập cũ) — chuyển về lịch đặt thật.
-export default function ProfileLegacyRedirect() {
-  redirect("/profile/bookings");
+// Đường dẫn cũ của mô hình booking. Trước đây redirect sang /profile/bookings —
+// route đó đã bị xoá nên chuyển hướng rơi thẳng vào 404. Buổi tập giờ nằm trên
+// lịch đặt.
+export default function ProfileLegacySessionsRedirect() {
+  redirect("/schedule");
 }

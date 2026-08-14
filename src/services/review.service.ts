@@ -27,9 +27,9 @@ function list(path: string, params?: Record<string, unknown>) {
 
 export const reviewService = {
   // ---- Customer (UC-069/070) ----
-  // Chỉ booking COMPLETED của chính khách mới đánh giá được — BE lấy gym/PT từ booking.
+  // Tạo đánh giá nằm ở ticketService.reviewGym / reviewPt vì đối tượng đánh giá
+  // là vé hoặc buổi tập, đi trong đường dẫn. Ở đây chỉ còn sửa/xoá/tố cáo.
   getMine: () => list("/reviews/me"),
-  create: (payload: ReviewRequest) => api.post<Review, ReviewRequest>("/reviews", payload),
   update: (id: number, payload: ReviewRequest) =>
     api.put<Review, ReviewRequest>(`/reviews/${id}`, payload),
   async remove(id: number) {

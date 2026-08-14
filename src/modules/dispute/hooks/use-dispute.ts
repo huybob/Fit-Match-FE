@@ -5,7 +5,6 @@ import {
   disputeService,
   DisputeEvidenceRequest,
   DisputeStatus,
-  OpenDisputeRequest,
   ResolveDisputeRequest,
 } from "@/services/dispute.service";
 
@@ -24,13 +23,8 @@ export function useMyDisputes() {
   return useQuery({ queryKey: keys.mine, queryFn: () => disputeService.getMine() });
 }
 
-export function useOpenDispute() {
-  const c = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: OpenDisputeRequest) => disputeService.open(payload),
-    onSuccess: refresh(c),
-  });
-}
+// Mở tranh chấp: dùng useOpenTicketDispute ở modules/ticket — vé/buổi tập đi
+// trong đường dẫn nên không còn payload mang id.
 
 export function useDisputeEvidence(id: number, admin = false) {
   return useQuery({

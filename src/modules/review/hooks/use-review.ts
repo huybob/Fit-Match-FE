@@ -29,8 +29,8 @@ export function useReviews(scope: "customer" | "pt" | "gym", id = 0) {
 export function useSaveReview() {
   const c = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id?: number; payload: ReviewRequest }) =>
-      id ? reviewService.update(id, payload) : reviewService.create(payload),
+    mutationFn: ({ id, payload }: { id: number; payload: ReviewRequest }) =>
+      reviewService.update(id, payload),
     onSuccess: refresh(c),
   });
 }

@@ -177,23 +177,20 @@ export interface BlockedTimeInput {
   reason?: string;
 }
 
-/** UC-022: phân công PT vào đúng-một-trong branch/service/package. */
+/**
+ * UC-022: phân công PT vào CHI NHÁNH. Câu 24 (BE V78) bỏ hẳn phân công theo
+ * dịch vụ/gói tập — chi nhánh là đích duy nhất, và cột gym_branch_id đã NOT NULL.
+ */
 export interface PtAssignment {
   id?: number;
   ptId?: number;
   branchId?: number;
   branchName?: string;
-  serviceId?: number;
-  serviceName?: string;
-  packageId?: number;
-  packageName?: string;
   active?: boolean;
 }
 
 export interface PtAssignmentInput {
-  branchId?: number;
-  serviceId?: number;
-  packageId?: number;
+  branchId: number;
 }
 
 /** UC-023: hiệu suất PT cho gym/admin. */

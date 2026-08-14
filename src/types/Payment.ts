@@ -3,7 +3,14 @@
 // không nơi nào import và không khớp BE thực tế (VietQR + đối soát Casso).
 // Đã thay bằng type đối soát thanh toán thật (UC-053/056).
 
-import type { BookingStatus, PaymentOrderStatus } from "@/types/Booking";
+import type { TicketStatus } from "@/types/Ticket";
+
+export type PaymentOrderStatus =
+  | "PENDING"
+  | "PAID"
+  | "FAILED"
+  | "EXPIRED"
+  | "CANCELLED";
 
 /** Trạng thái đối soát của một giao dịch ngân hàng (UC-053/056). */
 export type ReconStatus =
@@ -34,8 +41,8 @@ export interface PaymentTransaction {
   paymentOrderId?: number;
   orderAmount?: number;
   orderStatus?: PaymentOrderStatus;
-  bookingId?: number;
-  bookingStatus?: BookingStatus;
+  ticketId?: number;
+  ticketStatus?: TicketStatus;
   customerUsername?: string;
   /** Dương = khách chuyển thừa, âm = chuyển thiếu. */
   amountDifference?: number;
@@ -59,7 +66,7 @@ export interface ReconciliationSummary {
 }
 
 export interface ReconciliationApplyRequest {
-  bookingId: number;
+  ticketId: number;
   /** Bỏ qua kiểm tra "giao dịch phải đủ số phải trả" (khách chuyển nhiều lần). */
   allowAmountMismatch?: boolean;
   note?: string;

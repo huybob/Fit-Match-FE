@@ -13,7 +13,11 @@ export type DisputeResolution =
 /** DisputeResponse của BE (UC-063..068). */
 export interface Dispute {
   id: number;
-  bookingId?: number;
+  ticketId?: number;
+  /** Có khi tranh chấp nhắm vào MỘT buổi tập thay vì cả vé. */
+  sessionId?: number;
+  sessionDate?: string;
+  ticketName?: string;
   customerName?: string;
   gymId?: number;
   gymName?: string;
@@ -39,11 +43,6 @@ export interface DisputeEvidence {
   fileUrl?: string;
   submittedBy?: string;
   createdAt?: string;
-}
-
-export interface OpenDisputeRequest {
-  bookingId: number;
-  reason: string;
 }
 
 export interface DisputeEvidenceRequest {

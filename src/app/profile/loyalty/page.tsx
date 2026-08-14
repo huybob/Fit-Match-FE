@@ -79,7 +79,7 @@ function LoyaltyContent() {
           </li>
         </ol>
         <Link
-          href="/profile/bookings?create=1"
+          href="/gyms"
           className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Sparkles className="size-4" /> {t("member.loyalty.usePointsCta")}
@@ -96,7 +96,7 @@ function LoyaltyContent() {
               <div>
                 <p className="flex items-center gap-2 font-bold">
                   <Gift className="size-4 text-primary" />{t(`member.loyalty.type.${txn.type}`)}
-                  {txn.bookingId ? <span className="text-xs text-muted-foreground">· Booking #{txn.bookingId}</span> : null}
+                  {txn.ticketId ? <span className="text-xs text-muted-foreground">· Vé #{txn.ticketId}</span> : null}
                 </p>
                 <p className="text-xs text-muted-foreground">{fmt.dateTimeShort(txn.createdAt)}</p>
               </div>

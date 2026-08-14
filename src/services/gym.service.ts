@@ -1,9 +1,7 @@
 import { api } from "@/services/api";
 import type {
-  BookingRules,
   BranchInput,
   BranchResponse,
-  CatalogStatus,
   CreateGymPtInput,
   FacilityInput,
   FacilityResponse,
@@ -11,8 +9,6 @@ import type {
   GymPolicy,
   GymPtPage,
   GymPtResponse,
-  GymServiceInput,
-  GymServiceResponse,
   GymVerificationStatusResponse,
   OperatingHour,
   PtCertInput,
@@ -21,15 +17,10 @@ import type {
   PtDocResponse,
   PtStatusInput,
   SubmitGymRegistrationRequest,
-  TrainingPackageInput,
-  TrainingPackageResponse,
   UpdateGymProfileInput,
   UpdateGymPtInput,
 } from "@/types/Gym";
 import type {
-  AvailabilitySlot,
-  BlockedTime,
-  BlockedTimeInput,
   PtAssignment,
   PtAssignmentInput,
   PtPerformance,
@@ -135,36 +126,12 @@ export const gymService = {
   updatePolicies: (payload: GymPolicy) =>
     api.put<GymPolicy, GymPolicy>("/gym/policies", payload),
 
-  // ── Operator workspace: services (UC-53..55) ──
-  listOwnServices: () => api.get<GymServiceResponse[]>("/gym/services"),
-  addService: (payload: GymServiceInput) =>
-    api.post<GymServiceResponse, GymServiceInput>("/gym/services", payload),
-  editService: (id: number, payload: GymServiceInput) =>
-    api.put<GymServiceResponse, GymServiceInput>(`/gym/services/${id}`, payload),
-  deactivateService: (id: number) => api.deleteRaw(`/gym/services/${id}`),
+  // Catalog dịch vụ/gói tập đã bị thay toàn phần bằng ticket-types (quyết định
+  // #1, BE V68) — CRUD tương ứng nằm ở ticketService. Chỉ còn danh mục dịch vụ
+  // dùng chung, vẫn do BE phục vụ ở /gym/service-categories.
   /** UC-024 (BE-7): danh mục dịch vụ khả dụng cho gym (chỉ đọc, active-only). */
   listServiceCategories: () =>
     api.get<{ id?: number; name?: string; description?: string }[]>("/gym/service-categories"),
-  /** UC-026 (B-23): quy tắc đặt lịch của dịch vụ. */
-  updateServiceBookingRules: (id: number, payload: BookingRules) =>
-    api.put<GymServiceResponse, BookingRules>(`/gym/services/${id}/booking-rules`, payload),
-  /** UC-027 (B-24): publish/hide/pause/archive dịch vụ. */
-  updateServiceCatalogStatus: (id: number, status: CatalogStatus) =>
-    api.patch<GymServiceResponse, { status: CatalogStatus }>(
-      `/gym/services/${id}/catalog-status`, { status }),
-
-  // ── Training packages (UC-025, B-15) ──
-  listOwnPackages: () => api.get<TrainingPackageResponse[]>("/gym/packages"),
-  addPackage: (payload: TrainingPackageInput) =>
-    api.post<TrainingPackageResponse, TrainingPackageInput>("/gym/packages", payload),
-  editPackage: (id: number, payload: TrainingPackageInput) =>
-    api.put<TrainingPackageResponse, TrainingPackageInput>(`/gym/packages/${id}`, payload),
-  deactivatePackage: (id: number) => api.deleteRaw(`/gym/packages/${id}`),
-  updatePackageBookingRules: (id: number, payload: BookingRules) =>
-    api.put<TrainingPackageResponse, BookingRules>(`/gym/packages/${id}/booking-rules`, payload),
-  updatePackageCatalogStatus: (id: number, status: CatalogStatus) =>
-    api.patch<TrainingPackageResponse, { status: CatalogStatus }>(
-      `/gym/packages/${id}/catalog-status`, { status }),
 
   // ── Operator workspace: PT management (UC-019..021) ──
   listPts: (params: PaginationParams = page) =>
@@ -193,15 +160,11 @@ export const gymService = {
   deletePtDoc: (ptId: number, docId: number) =>
     api.deleteRaw(`/gym/pts/${ptId}/documents/${docId}`),
 
-  // ── Gói 2.D (audit 2026-07-17): các endpoint BE sẵn có nhưng FE = 0 caller ──
-  /** UC-028 (B-27): gym quản lý lịch rảnh của PT (dayOfWeek 1-7, replace-all). */
-  getPtAvailability: (ptId: number) =>
-    api.get<AvailabilitySlot[]>(`/gym/pts/${ptId}/availability`),
-  updatePtAvailability: (ptId: number, slots: AvailabilitySlot[]) =>
-    api.put<AvailabilitySlot[], { slots: AvailabilitySlot[] }>(
-      `/gym/pts/${ptId}/availability`, { slots }),
+  // Lịch rảnh của PT KHÔNG còn ở đây: câu 26 chuyển sang khai theo ngày cụ thể
+  // và do chính PT quản lý (/api/pt/availability/daily → trang /trainer/availability).
+  // Chặn giờ cũng biến mất — bảng blocked_times bị drop ở V81, "bận" = không khai giờ.
 
-  /** UC-022 (B-16): phân công PT vào đúng-một-trong branch/service/package. */
+  /** UC-022 (B-16): phân công PT vào chi nhánh (câu 24 — đích duy nhất). */
   listPtAssignments: (ptId: number) =>
     api.get<PtAssignment[]>(`/gym/pts/${ptId}/assignments`),
   addPtAssignment: (ptId: number, payload: PtAssignmentInput) =>
@@ -209,15 +172,7 @@ export const gymService = {
   removePtAssignment: (ptId: number, assignmentId: number) =>
     api.deleteRaw(`/gym/pts/${ptId}/assignments/${assignmentId}`),
 
-  /** UC-023 (B-17): hiệu suất PT — rating, completed/cancelled/no-show, disputes. */
+  /** UC-023 (B-17): hiệu suất PT — rating, buổi hoàn thành/huỷ, tranh chấp. */
   getPtPerformance: (ptId: number) =>
     api.get<PtPerformance>(`/gym/pts/${ptId}/performance`),
-
-  /** UC-029 (B-29): thời gian chặn của gym (theo PT hoặc chi nhánh). */
-  listBlockedTimes: (params: { ptId?: number; branchId?: number }) =>
-    api.get<BlockedTime[]>("/gym/blocked-times", { params }),
-  createBlockedTime: (payload: BlockedTimeInput) =>
-    api.post<BlockedTime, BlockedTimeInput>("/gym/blocked-times", payload),
-  deleteBlockedTime: (id: number) =>
-    api.deleteRaw(`/gym/blocked-times/${id}`),
 };

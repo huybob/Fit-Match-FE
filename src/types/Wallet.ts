@@ -70,7 +70,8 @@ export interface WalletTransaction {
   id: number;
   type: WalletTxnType | string;
   amount: number;
-  bookingId?: number;
+  /** Neo vé của bút toán escrow (BE V73) — thay cho bookingId cũ. */
+  ticketId?: number;
   description?: string;
   heldAfter: number;
   pendingAfter: number;

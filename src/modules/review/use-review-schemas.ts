@@ -18,10 +18,6 @@ export function useReviewSchemas() {
 
   return useMemo(() => {
     const review = z.object({
-      bookingId: z
-        .number()
-        .int()
-        .positive({ message: t("review.validation.pickBooking") }),
       rating: z
         .number()
         .int()

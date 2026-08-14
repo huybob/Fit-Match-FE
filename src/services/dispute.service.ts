@@ -5,7 +5,6 @@ import type {
   DisputeEvidenceRequest,
   DisputePage,
   DisputeStatus,
-  OpenDisputeRequest,
   ResolveDisputeRequest,
 } from "@/types/Dispute";
 
@@ -16,7 +15,6 @@ export type {
   DisputePage,
   DisputeResolution,
   DisputeStatus,
-  OpenDisputeRequest,
   ResolveDisputeRequest,
 } from "@/types/Dispute";
 
@@ -24,8 +22,7 @@ export const disputeService = {
   // ---- Parties: customer/gym/pt (UC-063/064) ----
   getMine: (params?: { page?: number; size?: number }) =>
     api.get<DisputePage>("/disputes", { params: { page: 0, size: 20, ...params } }),
-  open: (payload: OpenDisputeRequest) =>
-    api.post<Dispute, OpenDisputeRequest>("/disputes", payload),
+  // Mở tranh chấp nằm ở ticketService.openDispute — vé/buổi tập đi trong đường dẫn.
   detail: (id: number) => api.get<Dispute>(`/disputes/${id}`),
   evidence: (id: number) => api.get<DisputeEvidence[]>(`/disputes/${id}/evidence`),
   addEvidence: (id: number, payload: DisputeEvidenceRequest) =>

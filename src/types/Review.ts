@@ -7,12 +7,13 @@ export type ReportStatus = "OPEN" | "RESOLVED" | "DISMISSED";
 /** ReviewResponse của BE (UC-069). Review một chiều — không có phản hồi của gym. */
 export interface Review {
   id: number;
-  bookingId?: number;
+  ticketId?: number;
+  /** Đánh giá PT gắn với đúng một buổi tập (câu 36). */
+  sessionId?: number;
+  targetType?: "GYM" | "PT";
   customerName?: string;
   gymId?: number;
   gymName?: string;
-  serviceId?: number;
-  serviceName?: string;
   ptProfileId?: number;
   ptName?: string;
   rating: number;
@@ -23,8 +24,11 @@ export interface Review {
   createdAt?: string;
 }
 
+/**
+ * Đối tượng được đánh giá nằm trong ĐƯỜNG DẪN (`/tickets/{id}/review` cho gym,
+ * `/sessions/{id}/review` cho PT) nên payload không mang id nào.
+ */
 export interface ReviewRequest {
-  bookingId: number;
   rating: number;
   comment?: string;
   /**

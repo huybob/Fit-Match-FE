@@ -1,8 +1,5 @@
 import { api } from "@/services/api";
 import type {
-  AvailabilitySlot,
-  BlockedTime,
-  BlockedTimeInput,
   CertificationResponse,
   PtPublicPreview,
   PtVerificationStatusResponse,
@@ -10,9 +7,6 @@ import type {
 } from "@/types/Trainer";
 
 export type {
-  AvailabilitySlot,
-  BlockedTime,
-  BlockedTimeInput,
   CertificationResponse,
   PtPublicPreview,
   PtVerificationStatusResponse,
@@ -41,17 +35,8 @@ export const trainerService = {
   listCertifications: () =>
     api.get<CertificationResponse[]>("/pt/certifications"),
 
-  // ── UC-028 (B-26): lịch rảnh hằng tuần — PUT thay toàn bộ (replace-all) ──
-  getMyAvailability: () =>
-    api.get<AvailabilitySlot[]>("/pt/availability"),
-  updateMyAvailability: (slots: AvailabilitySlot[]) =>
-    api.put<AvailabilitySlot[], { slots: AvailabilitySlot[] }>("/pt/availability", { slots }),
-
-  // ── UC-029 (B-29): thời gian chặn cá nhân ──
-  listMyBlockedTimes: () =>
-    api.get<BlockedTime[]>("/pt/blocked-times"),
-  createMyBlockedTime: (payload: Omit<BlockedTimeInput, "ptId" | "branchId">) =>
-    api.post<BlockedTime, Omit<BlockedTimeInput, "ptId" | "branchId">>("/pt/blocked-times", payload),
-  deleteMyBlockedTime: (id: number) =>
-    api.deleteRaw(`/pt/blocked-times/${id}`),
+  // Lịch rảnh hằng tuần (/pt/availability) và thời gian chặn (/pt/blocked-times)
+  // đã bị gỡ khỏi BE: câu 26 chuyển sang khai theo NGÀY cụ thể qua
+  // /pt/availability/daily, và "bận" = không khai khung giờ cho ngày đó.
+  // Màn hình tương ứng là /trainer/availability (modules/ticket).
 };

@@ -42,7 +42,7 @@ export const voucherService = {
     api.patch<Voucher>(`/admin/vouchers/${id}/active`, undefined, { params: { active } }),
 
   // ---- Customer apply on a draft booking ----
-  apply: (bookingId: number, code: string) =>
-    api.post(`/bookings/${bookingId}/voucher`, { code }),
-  remove: (bookingId: number) => api.deleteRaw(`/bookings/${bookingId}/voucher`),
+  apply: (ticketId: number, code: string) =>
+    api.post(`/tickets/${ticketId}/voucher`, { code }),
+  remove: (ticketId: number) => api.deleteRaw(`/tickets/${ticketId}/voucher`),
 };

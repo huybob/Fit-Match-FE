@@ -78,7 +78,7 @@ export function AdminDisputesPage() {
               <article key={d.id} className="rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-2 text-sm font-black">
-                    <ShieldAlert className="size-4 text-destructive" /> #{d.id} · Booking #{d.bookingId}
+                    <ShieldAlert className="size-4 text-destructive" /> #{d.id} · {d.ticketName ?? ""} #{d.ticketId}
                     <span className="font-normal text-muted-foreground">· {d.openedByRole}</span>
                   </span>
                   <Badge variant={disputeStatusVariant(d.status)}>{t(`dispute.status.${d.status}`)}</Badge>
@@ -154,7 +154,7 @@ function ModerationDialog({ dispute, onClose }: { dispute: Dispute; onClose: () 
       <div className="rounded-2xl bg-muted/40 p-4 text-sm">
         <p><b>{t("dispute.reasonLabel")}</b> {dispute.reason}</p>
         <p className="mt-1 text-muted-foreground">
-          Booking #{dispute.bookingId} · {dispute.customerName} → {dispute.gymName}
+          {dispute.ticketName ?? ""} #{dispute.ticketId} · {dispute.customerName} → {dispute.gymName}
           {dispute.frozenAmount ? ` · ${t("dispute.heldAmount", { amount: money(dispute.frozenAmount) })}` : ""}
         </p>
         {dispute.assignedModerator && (

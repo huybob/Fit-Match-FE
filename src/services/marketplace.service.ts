@@ -153,41 +153,8 @@ export interface PlaceSuggestion {
   city?: string;
 }
 
-/** Bug S2-14: một khung giờ rảnh lặp hàng tuần của PT (dayOfWeek 1-7, 1 = Thứ 2). */
-export interface PublicAvailabilitySlot {
-  dayOfWeek?: number;
-  startTime?: string;
-  endTime?: string;
-}
-
-export interface PublicGymService {
-  id?: number;
-  name?: string;
-  description?: string;
-  price?: number;
-  /** Bug S2-05: phụ phí khi chọn PT — giá cuối = price + ptSurcharge. */
-  ptSurcharge?: number;
-  durationMinutes?: number;
-  categoryName?: string;
-  eligibilityNotes?: string;
-  bookingRules?: PublicBookingRules;
-}
-
-export interface PublicTrainingPackage {
-  id?: number;
-  name?: string;
-  description?: string;
-  price?: number;
-  /** Bug S2-05: phụ phí khi chọn PT — giá cuối = price + ptSurcharge. */
-  ptSurcharge?: number;
-  sessionCount?: number;
-  validityDays?: number;
-  usageConditions?: string;
-  gymServiceId?: number;
-  gymServiceName?: string;
-  bookingRules?: PublicBookingRules;
-}
-
+// Catalog công khai (dịch vụ/gói tập) và lịch rảnh tuần của PT đã bỏ cùng mô
+// hình booking — thay bằng ticket-types và lưới lịch theo ngày.
 export interface PublicGymMedia {
   id?: number;
   url?: string;
@@ -216,13 +183,11 @@ export const marketplaceService = {
   getPt: (id: number) =>
     api.get<PtPublicProfile>(`/marketplace/pts/${id}`),
 
-  // UC-009: catalog công khai của một gym — phục vụ trang chi tiết & tạo booking.
+  // UC-009: catalog công khai của một gym — phục vụ trang chi tiết & mua vé.
+  // Dịch vụ/gói tập không còn: catalog giờ là ticket-types, lấy qua
+  // ticketService.publicTicketTypes.
   getGymBranches: (id: number) =>
     api.get<PublicBranch[]>(`/marketplace/gyms/${id}/branches`),
-  getGymServices: (id: number) =>
-    api.get<PublicGymService[]>(`/marketplace/gyms/${id}/services`),
-  getGymPackages: (id: number) =>
-    api.get<PublicTrainingPackage[]>(`/marketplace/gyms/${id}/packages`),
   getGymMedia: (id: number) =>
     api.get<PublicGymMedia[]>(`/marketplace/gyms/${id}/media`),
   /**
@@ -234,9 +199,8 @@ export const marketplaceService = {
       params: { page: 0, size: 50, ...params },
     }),
 
-  /** Bug S2-14: thời gian biểu tuần của PT (lịch rảnh khai báo). */
-  getPtAvailability: (id: number) =>
-    api.get<PublicAvailabilitySlot[]>(`/marketplace/pts/${id}/availability`),
+  // Lịch rảnh tuần của PT đã bỏ (câu 26 — khai theo NGÀY cụ thể).
+  // Lưới lịch công khai nằm ở ticketService.availabilityGrid.
 
   // UC-18 (V55): proxy geocode phía BE — chỉ dùng khi FE KHÔNG có key Maps
   // JavaScript (khi có key thì geocode ngay ở trình duyệt, không tốn round-trip).

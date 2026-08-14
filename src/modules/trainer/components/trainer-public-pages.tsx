@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, Building2, CalendarCheck, CalendarClock, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
+import { Award, Search, UserRound, MapPin, Heart, ShieldCheck, ArrowLeft, Briefcase, Building2, CalendarCheck, CalendarDays, ExternalLink, BadgeCheck } from "lucide-react";
 import { FormEvent, useRef, useState } from "react";
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
@@ -28,7 +28,6 @@ import { CheckboxField } from "@/shared/components/ui/checkbox-field";
 import { useTranslations } from "next-intl";
 import { initialsOf, UserAvatar } from "@/shared/components/common/user-avatar";
 import { SearchInput } from "@/shared/components/ui/search-input";
-import { WEEKDAY_ORDER, weekdayKey } from "@/shared/utils/enum-label.util";
 
 function useFavorites() {
   const { user, status } = useAuthStore();
@@ -284,63 +283,10 @@ export function TrainersDirectoryPage() {
   );
 }
 
-/**
- * Bug S2-14: thời gian biểu tuần của PT. Đây là lịch RẢNH khai báo, không trừ các
- * buổi đã có người đặt — nói rõ để khách không hiểu nhầm là "chắc chắn còn chỗ".
- */
-function TrainerWeeklySchedule({ ptId }: { ptId: number }) {
-  const t = useTranslations();
-  const query = useQuery({
-    queryKey: ["marketplace", "pt", ptId, "availability"],
-    queryFn: () => marketplaceService.getPtAvailability(ptId),
-  });
-
-  const byDay = new Map<number, string[]>();
-  for (const slot of query.data ?? []) {
-    if (slot.dayOfWeek == null || !slot.startTime || !slot.endTime) continue;
-    const list = byDay.get(slot.dayOfWeek) ?? [];
-    list.push(`${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)}`);
-    byDay.set(slot.dayOfWeek, list);
-  }
-
-  return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-        <CalendarClock className="size-5 text-primary" /> {t("marketplace.weeklySchedule")}
-      </h2>
-      {query.isLoading ? (
-        <div className="mt-3"><LoadingSkeleton /></div>
-      ) : !byDay.size ? (
-        <p className="mt-3 text-sm text-muted-foreground">{t("marketplace.noSchedule")}</p>
-      ) : (
-        <>
-          <ul className="mt-4 divide-y divide-border">
-            {WEEKDAY_ORDER.map((day) => {
-              const ranges = byDay.get(day);
-              return (
-                <li key={day} className="flex items-center justify-between gap-3 py-2">
-                  <span className="text-sm font-semibold text-foreground">{t(weekdayKey(day))}</span>
-                  {ranges?.length ? (
-                    <span className="flex flex-wrap justify-end gap-1.5">
-                      {ranges.map((range) => (
-                        <span key={range} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold tabular-nums text-primary">
-                          {range}
-                        </span>
-                      ))}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{t("marketplace.dayOff")}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-3 text-[11px] leading-5 text-muted-foreground">{t("marketplace.scheduleHint")}</p>
-        </>
-      )}
-    </section>
-  );
-}
+// Mục "thời gian biểu tuần" của PT đã gỡ: câu 26 bỏ lịch lặp theo thứ, PT khai
+// theo NGÀY cụ thể. Lưới ngày x giờ cần branchId và phải đăng nhập, mà trang
+// công khai này không có ngữ cảnh chi nhánh — nên lịch rảnh hiển thị ở bước xếp
+// lịch (/schedule), nơi khách đã chọn chi nhánh.
 
 export function TrainerPublicDetailPage({ userId }: { userId: number }) {
   const t = useTranslations();
@@ -472,12 +418,6 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
             )}
           </section>
 
-          {/* Bug S2-14: bảng thời gian biểu để khách biết PT nhận buổi giờ nào. */}
-          {pt.id != null && (
-            <div className="lg:col-span-2">
-              <TrainerWeeklySchedule ptId={pt.id} />
-            </div>
-          )}
 
           {/* Summary / contact card */}
           <aside className="space-y-4">
@@ -499,12 +439,12 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   </div>
                 )}
               </dl>
-              {/* Bug S2-13: đặt lịch thẳng với chính PT đang xem — wizard mở sẵn gym
-                  và PT này, khách chỉ còn chọn dịch vụ rồi tới bước địa điểm/giờ.
-                  Chỉ khách hàng mới đặt được nên ẩn với gym/PT/khách vãng lai. */}
+              {/* Không còn "đặt lịch thẳng với PT": trong mô hình vé, khách mua vé
+                  của phòng gym trước rồi mới chọn PT ở bước xếp lịch. Nút này đưa
+                  sang trang gym để mua vé có PT. Chỉ khách hàng mới mua được. */}
               {isCustomer && pt.id != null && pt.gymId != null && (
                 <Link
-                  href={`/profile/bookings?create=1&gymId=${pt.gymId}&ptId=${pt.id}`}
+                  href={`/gyms/${pt.gymId}`}
                   className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   <CalendarCheck className="size-4" /> {t("marketplace.bookWithTrainer")}

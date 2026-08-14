@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Plus, Star } from "lucide-react";
+import { AlertTriangle, Star } from "lucide-react";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -17,17 +17,8 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
-import { Input } from "@/shared/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
-import { useBookings } from "@/modules/booking/hooks/use-booking";
 import {
   useDeleteReview,
   useReportReview,
@@ -84,7 +75,9 @@ function ReviewPage({
   targetId?: number;
 }) {
   const t = useTranslations();
-  const [editing, setEditing] = useState<Review | null | undefined>();
+  // Chỉ còn SỬA đánh giá đã có. Tạo mới nằm ở trang vé (đánh giá phòng gym) và
+  // trang buổi tập (đánh giá PT) vì đối tượng đánh giá đi trong đường dẫn.
+  const [editing, setEditing] = useState<Review | null>(null);
   const [reporting, setReporting] = useState<Review | null>(null);
   const query = useReviews(scope, targetId);
   const del = useDeleteReview();
@@ -101,12 +94,6 @@ function ReviewPage({
             {t(`review.${scope}Description`)}
           </p>
         </div>
-        {scope === "customer" && (
-          <Button onClick={() => setEditing(null)}>
-            <Plus className="size-4" />
-            {t("review.write")}
-          </Button>
-        )}
       </section>
 
       {query.isLoading ? (
@@ -173,9 +160,7 @@ function ReviewPage({
         </div>
       )}
 
-      {editing !== undefined && (
-        <ReviewDialog review={editing} onClose={() => setEditing(undefined)} />
-      )}
+      {editing && <ReviewDialog review={editing} onClose={() => setEditing(null)} />}
       {reporting && (
         <ReportReviewDialog review={reporting} onClose={() => setReporting(null)} />
       )}
@@ -267,41 +252,30 @@ function ReviewDialog({
   review,
   onClose,
 }: {
-  review: Review | null;
+  review: Review;
   onClose: () => void;
 }) {
   const t = useTranslations();
   const { toast } = useToast();
   const save = useSaveReview();
-  const bookingsQuery = useBookings("customer", {
-    status: "COMPLETED",
-    page: 0,
-    size: 50,
-  });
-  const completed = bookingsQuery.data?.content ?? [];
   const schemas = useReviewSchemas();
-  const [images, setImages] = useState<Media[]>(review?.images ?? []);
+  const [images, setImages] = useState<Media[]>(review.images ?? []);
   const form = useForm<z.infer<typeof schemas.review>>({
     resolver: zodResolver(schemas.review),
     defaultValues: {
-      bookingId: review?.bookingId ?? 0,
-      rating: review?.rating ?? 5,
-      comment: review?.comment ?? "",
-      mediaIds: (review?.images ?? []).map((m) => m.id),
+      rating: review.rating,
+      comment: review.comment ?? "",
+      mediaIds: (review.images ?? []).map((m) => m.id),
     },
   });
 
   return (
-    <Dialog
-      open
-      title={review ? t("review.editTitle") : t("review.write")}
-      onClose={onClose}
-    >
+    <Dialog open title={t("review.editTitle")} onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit(async (v) => {
           try {
-            await save.mutateAsync({ id: review?.id, payload: v });
+            await save.mutateAsync({ id: review.id, payload: v });
             toast({ type: "success", title: t("review.saved") });
             onClose();
           } catch (e) {
@@ -313,39 +287,9 @@ function ReviewDialog({
           }
         })}
       >
-        <FieldShell label={t("review.bookingLabel")} error={form.formState.errors.bookingId}>
-          {review ? (
-            <Input
-              disabled
-              value={`#${review.bookingId} · ${review.ptName ?? ""}`}
-            />
-          ) : bookingsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">{t("common.states.processing")}</p>
-          ) : !completed.length ? (
-            <p className="text-sm text-muted-foreground">
-              {t("review.noCompleted")}
-            </p>
-          ) : (
-            <Controller
-              control={form.control}
-              name="bookingId"
-              render={({ field }) => (
-                <Select value={String(field.value)} onValueChange={(v) => field.onChange(Number(v))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("review.selectBooking")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {completed.map((b) => (
-                      <SelectItem key={b.id} value={String(b.id)}>
-                        #{b.id} · {b.serviceName ?? b.packageName ?? ""} · {b.ptDisplayName ?? ""} · {b.startAt ?? ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          )}
-        </FieldShell>
+        {/* Chọn đối tượng đánh giá đã chuyển sang chính trang vé (đánh giá phòng
+            gym) và trang buổi tập (đánh giá PT) — câu 17 + 36. Dialog này giờ
+            chỉ dùng để SỬA một đánh giá đã có. */}
         <FieldShell label={t("review.ratingLabel")} error={form.formState.errors.rating}>
           <Controller
             control={form.control}
