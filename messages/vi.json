@@ -820,7 +820,8 @@
       "visibilityTitle": "Hiển thị trên marketplace",
       "visibilityHint": "Cho phép khách hàng tìm thấy phòng gym",
       "visibilityLocked": "Chỉ khả dụng sau khi hồ sơ được duyệt (và có ít nhất 1 chi nhánh hoạt động).",
-      "visibilityOn": "Bật để hồ sơ hiển thị công khai trên trang tìm kiếm."
+      "visibilityOn": "Bật để hồ sơ hiển thị công khai trên trang tìm kiếm.",
+      "nameLockedHint": "Tên phòng gym đã được xác minh nên không đổi được. Liên hệ quản trị viên nếu cần đổi tên."
     },
     "facilities": {
       "title": "Tiện ích & Cơ sở vật chất",

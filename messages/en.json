@@ -820,7 +820,8 @@
       "visibilityTitle": "Marketplace visibility",
       "visibilityHint": "Let customers find your gym",
       "visibilityLocked": "Available only after your profile is approved (and at least one branch is active).",
-      "visibilityOn": "Turn on to appear publicly in search."
+      "visibilityOn": "Turn on to appear publicly in search.",
+      "nameLockedHint": "The gym name is verified and can no longer be changed. Contact a platform admin if you need it updated."
     },
     "facilities": {
       "title": "Amenities & facilities",

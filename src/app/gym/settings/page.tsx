@@ -169,6 +169,12 @@ export default function GymSettingsPage() {
   });
 
   const notApproved = !!status && status.verificationStatus !== "APPROVED";
+  /*
+   * Tên gym đã duyệt là danh tính pháp nhân Admin đã đối chiếu giấy tờ, và là
+   * cái tên đang nằm trên vé khách đã mua. BE từ chối đổi (GymProfileServiceImpl)
+   * — khoá ô ở đây để lỗi đó không bao giờ phải xuất hiện.
+   */
+  const nameLocked = status?.verificationStatus === "APPROVED";
 
   function submit() {
     if (!gymName.trim()) { toast({ type: "warning", title: t("gym.settings.nameRequired") }); return; }
@@ -178,7 +184,10 @@ export default function GymSettingsPage() {
       toast({ type: "warning", title: t("common.validation.phone") }); return;
     }
     saveProfile.mutate({
-      gymName: gymName.trim(),
+      // Đã khoá thì KHÔNG gửi tên lên: BE coi null là "không đổi". Gửi bản trim
+      // của tên cũ sẽ thành một thay đổi thật nếu tên đang lưu có khoảng trắng
+      // thừa, và mọi lần lưu số điện thoại đều chết vì luật khoá tên.
+      gymName: nameLocked ? undefined : gymName.trim(),
       description: description.trim() || undefined,
       address: address.trim() || undefined,
       city: city.trim() || undefined,
@@ -231,7 +240,16 @@ export default function GymSettingsPage() {
                   "edit text" không tên và bấm vào nhãn không focus vào ô. */}
               <div className="space-y-4">
                 <FieldShell label={`${t("gym.settings.nameLabel")} *`}>
-                  <Input value={gymName} onChange={e => setGymName(e.target.value)} />
+                  <Input
+                    value={gymName}
+                    onChange={e => setGymName(e.target.value)}
+                    disabled={nameLocked}
+                  />
+                  {nameLocked ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("gym.settings.nameLockedHint")}
+                    </p>
+                  ) : null}
                 </FieldShell>
                 <FieldShell label={t("common.table.description")}>
                   <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} />
