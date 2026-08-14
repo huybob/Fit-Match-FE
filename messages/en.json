@@ -2030,6 +2030,16 @@
     "featuredBadge": "Featured"
   },
   "ticket": {
+    "wizard": {
+      "step": {
+        "type": "Ticket",
+        "pt": "Trainer",
+        "services": "Services",
+        "promo": "Offers",
+        "confirm": "Confirm"
+      },
+      "servicesHint": "Add optional services. Each one is charged once for the whole ticket."
+    },
     "checkout": {
       "title": "Buy a ticket",
       "noBranch": "No branch selected",

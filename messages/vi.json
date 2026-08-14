@@ -2030,6 +2030,16 @@
     "featuredBadge": "Nổi bật"
   },
   "ticket": {
+    "wizard": {
+      "step": {
+        "type": "Loại vé",
+        "pt": "Huấn luyện viên",
+        "services": "Dịch vụ",
+        "promo": "Ưu đãi",
+        "confirm": "Xác nhận"
+      },
+      "servicesHint": "Chọn thêm dịch vụ đi kèm nếu muốn. Mỗi dịch vụ tính tiền một lần cho cả vé."
+    },
     "checkout": {
       "title": "Mua vé",
       "noBranch": "Chưa chọn chi nhánh",
