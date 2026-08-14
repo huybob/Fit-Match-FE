@@ -4,12 +4,11 @@ export const appRoutes = {
   register: "/register",
   gyms: "/gyms",
   trainers: "/trainers",
+  /** Duyệt vé GÓI (kind=PACKAGE) — "gói tập" trong mô hình vé. */
   packages: "/packages",
-  booking: "/booking",
   // Bug 13: trang CMS công khai — trước đây tồn tại nhưng không có link điều hướng nào.
   blog: "/blog",
   faq: "/faq",
-  cart: "/cart",
   checkout: "/checkout",
   profile: "/profile",
   admin: "/admin",
