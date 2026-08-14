@@ -15,10 +15,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { gymService } from "@/services/gym.service";
 import { reportService } from "@/services/report.service";
-import { bookingService } from "@/services/booking.service";
+import { ticketService } from "@/services/ticket.service";
 import { formatCurrency } from "@/utils/format.util";
 import { useTranslations } from "next-intl";
-import type { BookingStatus } from "@/types/Booking";
+import type { TicketStatus } from "@/types/Ticket";
 import { useFormatters } from "@/i18n/use-formatters";
 
 function isoDate(d: Date) {
@@ -48,16 +48,16 @@ export default function GymDashboardPage() {
     queryFn: () => reportService.gym(range.from, range.to),
   });
   const recentBookings = useQuery({
-    queryKey: ["gym-bookings", "recent"],
-    queryFn: () => bookingService.getGym({ page: 0, size: 5 }),
+    queryKey: ["gym-tickets", "recent"],
+    queryFn: () => ticketService.gymTickets({ page: 0, size: 5 }),
   });
 
   const r = report.data;
   const byStatus = r?.bookingsByStatus ?? {};
   const stats = [
     { label: t("gym.dashboard.bookings30d"), value: r ? String(r.totalBookings) : "…", icon: CalendarCheck2, iconBg: "bg-primary" },
-    { label: t("common.bookingStatus.COMPLETED"), value: r ? String(byStatus.COMPLETED ?? 0) : "…", icon: ShieldCheck, iconBg: "bg-success" },
-    { label: t("gym.dashboard.cancelledNoShow"), value: r ? String((byStatus.CANCELLED ?? 0) + (byStatus.NO_SHOW ?? 0)) : "…", icon: XCircle, iconBg: "bg-destructive" },
+    { label: t("common.ticketStatus.USED_UP"), value: r ? String(byStatus.USED_UP ?? 0) : "…", icon: ShieldCheck, iconBg: "bg-success" },
+    { label: t("gym.dashboard.cancelledNoShow"), value: r ? String(byStatus.CANCELLED ?? 0) : "…", icon: XCircle, iconBg: "bg-destructive" },
     { label: t("gym.dashboard.paidOutNet"), value: r ? formatCurrency(r.releasedNet) : "…", icon: DollarSign, iconBg: "bg-info" },
     { label: t("gym.dashboard.walletAvailable"), value: r?.walletAvailable != null ? formatCurrency(r.walletAvailable) : "…", icon: WalletCards, iconBg: "bg-warning" },
   ];
@@ -88,7 +88,7 @@ export default function GymDashboardPage() {
                 )}
               </div>
             </div>
-            <Link href="/gym/bookings"
+            <Link href="/gym/tickets"
               className="flex items-center gap-2 h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl transition-colors shadow-md shadow-primary/20">
               <Plus className="size-4" /> {t("gym.dashboard.manageBookings")}
             </Link>
@@ -140,7 +140,7 @@ export default function GymDashboardPage() {
                 <ul className="space-y-2">
                   {Object.entries(byStatus).map(([status, count]) => (
                     <li key={status} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">{t(`common.bookingStatus.${status as BookingStatus}`)}</span>
+                      <span className="text-muted-foreground">{t(`common.ticketStatus.${status as TicketStatus}`)}</span>
                       <span className="font-bold text-foreground">{count}</span>
                     </li>
                   ))}
@@ -164,14 +164,14 @@ export default function GymDashboardPage() {
                     <li key={b.id} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2 text-sm">
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">
-                          #{b.id} · {b.customerUsername ?? "—"} · {b.serviceName ?? b.packageName ?? t("gym.dashboard.fromPackage")}
+                          #{b.id} · {b.customerName} · {b.ticketTypeName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {fmt.dateTime(b.startAt)}
+                          {b.gymBranchName}{b.purchasedAt ? ` · ${fmt.dateTime(b.purchasedAt)}` : ""}
                         </p>
                       </div>
                       <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        {t(`common.bookingStatus.${b.status}`)}
+                        {t(`common.ticketStatus.${b.status}`)}
                       </span>
                     </li>
                   ))}
