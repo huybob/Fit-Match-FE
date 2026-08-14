@@ -8,7 +8,12 @@ import {
   ResolveDisputeRequest,
 } from "@/services/dispute.service";
 
-const keys = {
+/**
+ * Export vì tranh chấp được MỞ từ module ticket (đường dẫn mang ticketId) —
+ * mutation ở đó phải làm mới danh sách này, nếu không vé vừa tranh chấp vẫn
+ * hiện nút "Mở tranh chấp" cho tới lần tải trang sau.
+ */
+export const disputeKeys = {
   all: ["disputes"] as const,
   mine: ["disputes", "mine"] as const,
   queue: (status?: DisputeStatus) => ["disputes", "queue", status] as const,
@@ -16,11 +21,11 @@ const keys = {
 };
 
 const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
-  c.invalidateQueries({ queryKey: keys.all });
+  c.invalidateQueries({ queryKey: disputeKeys.all });
 
 // ---- Parties ----
 export function useMyDisputes() {
-  return useQuery({ queryKey: keys.mine, queryFn: () => disputeService.getMine() });
+  return useQuery({ queryKey: disputeKeys.mine, queryFn: () => disputeService.getMine() });
 }
 
 // Mở tranh chấp: dùng useOpenTicketDispute ở modules/ticket — vé/buổi tập đi
@@ -28,7 +33,7 @@ export function useMyDisputes() {
 
 export function useDisputeEvidence(id: number, admin = false) {
   return useQuery({
-    queryKey: [...keys.evidence(id), admin],
+    queryKey: [...disputeKeys.evidence(id), admin],
     queryFn: () => (admin ? disputeService.adminEvidence(id) : disputeService.evidence(id)),
     enabled: id > 0,
   });
@@ -46,7 +51,7 @@ export function useAddEvidence() {
 // ---- Moderator/Admin ----
 export function useDisputeQueue(status?: DisputeStatus) {
   return useQuery({
-    queryKey: keys.queue(status),
+    queryKey: disputeKeys.queue(status),
     queryFn: () => disputeService.getQueue(status),
   });
 }

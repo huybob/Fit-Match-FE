@@ -208,6 +208,12 @@ export interface Ticket {
   expiresAt?: string | null;
   startDate?: string | null;
   settlementStatus: SettlementStatus;
+  /**
+   * D-18: ngày cuối còn mở được tranh chấp (YYYY-MM-DD). null = chưa tới hạn (vé
+   * chưa kết toán) hoặc hệ thống không áp hạn. Server tính theo cấu hình runtime
+   * — đừng suy ra ở FE bằng hằng số, hai bên sẽ lệch ngay khi admin đổi cấu hình.
+   */
+  disputeDeadline?: string | null;
   scheduledDays?: number | null;
   sessions?: TrainingSession[] | null;
 }

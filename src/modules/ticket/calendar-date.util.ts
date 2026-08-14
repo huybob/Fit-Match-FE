@@ -41,6 +41,19 @@ export function todayIso(): string {
   return toIsoDate(new Date());
 }
 
+/**
+ * Số ngày từ hôm nay tới `iso`: 0 = hết hạn hôm nay, âm = đã quá hạn.
+ *
+ * So sánh trên hai mốc nửa đêm địa phương chứ không lấy hiệu hai `Date.now()` —
+ * kiểu sau cho ra 0.9 ngày rồi làm tròn thành 0 với một hạn còn nguyên cả ngày
+ * mai, tuỳ theo lúc trong ngày người dùng mở trang.
+ */
+export function daysUntil(iso: string): number {
+  const target = fromIsoDate(iso).getTime();
+  const today = fromIsoDate(todayIso()).getTime();
+  return Math.round((target - today) / 86_400_000);
+}
+
 /** Thứ Hai của tuần chứa `iso` — lịch VN bắt đầu từ thứ Hai. */
 export function startOfWeek(iso: string): string {
   const date = fromIsoDate(iso);

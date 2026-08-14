@@ -1646,7 +1646,7 @@
     "mySubtitle": "Track complaints about your sessions and submit evidence.",
     "myLoadError": "Couldn’t load disputes",
     "myEmpty": "No disputes",
-    "myEmptyHint": "You can open a dispute from a booking’s details.",
+    "myEmptyHint": "You can open a dispute from the “My tickets” screen.",
     "evidenceDescRequired": "Enter an evidence description",
     "evidenceSent": "Evidence submitted",
     "detailTitle": "Dispute #{id}",
@@ -2206,7 +2206,20 @@
       "pay": "Pay",
       "schedule": "Schedule",
       "viewSchedule": "View schedule",
-      "review": "Review"
+      "review": "Review",
+      "dispute": {
+        "open": "Open dispute",
+        "view": "View dispute",
+        "dialogTitle": "Open a dispute for this ticket",
+        "hint": "The ticket's funds are frozen until a moderator decides. Describe what happened — you can attach photos or documents later on the Disputes screen.",
+        "reasonPlaceholder": "Reason for the dispute (e.g. the gym was closed, the PT never showed up...)",
+        "reasonRequired": "Enter a reason for the dispute",
+        "submit": "Submit dispute",
+        "opened": "Dispute opened",
+        "openedHint": "Track it and submit evidence under Disputes / Complaints.",
+        "daysLeft": "{days, plural, =0 {last day to open a dispute} =1 {1 day left to open a dispute} other {# days left to open a dispute}}",
+        "windowClosed": "dispute window closed on {date}"
+      }
     }
   },
   "gymCalendar": {

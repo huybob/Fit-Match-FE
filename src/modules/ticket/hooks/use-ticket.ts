@@ -8,6 +8,7 @@ import {
   type TicketQuoteRequest,
 } from "@/services/ticket.service";
 import { loyaltyKeys } from "@/modules/loyalty/hooks/use-loyalty";
+import { disputeKeys } from "@/modules/dispute/hooks/use-dispute";
 import {
   gymCalendarKeys,
   ptAvailabilityKeys,
@@ -95,6 +96,33 @@ export function useCancelUnpaidTicket() {
   return useMutation({
     mutationFn: (id: number) => ticketService.cancelUnpaid(id),
     onSuccess: invalidateTickets(client),
+  });
+}
+
+/**
+ * Mở tranh chấp cho vé (bỏ sessionId) hoặc cho một buổi tập (truyền sessionId).
+ *
+ * Nằm ở module ticket chứ không ở module dispute vì BE nhận vé/buổi trong đường
+ * dẫn: `POST /tickets/{id}/disputes?sessionId=`. Mở xong phải làm mới CẢ hai
+ * phía — vé đổi settlementStatus sang DISPUTED, và danh sách tranh chấp có thêm
+ * một dòng (màn "Vé của tôi" dựa vào đó để không mời mở tranh chấp lần hai).
+ */
+export function useOpenTicketDispute() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      ticketId,
+      reason,
+      sessionId,
+    }: {
+      ticketId: number;
+      reason: string;
+      sessionId?: number;
+    }) => ticketService.openDispute(ticketId, reason, sessionId),
+    onSuccess: () => {
+      invalidateTickets(client)();
+      client.invalidateQueries({ queryKey: disputeKeys.all });
+    },
   });
 }
 

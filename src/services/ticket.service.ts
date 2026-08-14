@@ -25,6 +25,7 @@ import type {
   TicketTypeRequest,
   TrainingSession,
 } from "@/types/Ticket";
+import type { Dispute } from "@/types/Dispute";
 import type { PaginationParams } from "@/shared/types/pagination.type";
 
 export type * from "@/types/Ticket";
@@ -159,8 +160,12 @@ export const ticketService = {
   myRefunds: (params: Partial<PaginationParams> = {}) =>
     api.get<TicketRefundPage>("/tickets/refunds", { params: { ...defaultPage, ...params } }),
 
+  /**
+   * Bỏ sessionId = tranh chấp CẤP VÉ (đóng băng toàn bộ phần đang giữ); truyền
+   * sessionId = tranh chấp CẤP BUỔI (chỉ đóng băng giá trị một ngày tập).
+   */
   openDispute: (ticketId: number, reason: string, sessionId?: number) =>
-    api.post<unknown, { reason: string }>(
+    api.post<Dispute, { reason: string }>(
       `/tickets/${ticketId}/disputes`,
       { reason },
       { params: sessionId ? { sessionId } : undefined },

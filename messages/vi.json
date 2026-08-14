@@ -1646,7 +1646,7 @@
     "mySubtitle": "Theo dõi các khiếu nại liên quan đến buổi tập của bạn và gửi bằng chứng.",
     "myLoadError": "Không tải được tranh chấp",
     "myEmpty": "Chưa có tranh chấp",
-    "myEmptyHint": "Bạn có thể mở tranh chấp từ chi tiết một booking.",
+    "myEmptyHint": "Bạn có thể mở tranh chấp từ màn “Vé của tôi”.",
     "evidenceDescRequired": "Nhập mô tả bằng chứng",
     "evidenceSent": "Đã gửi bằng chứng",
     "detailTitle": "Tranh chấp #{id}",
@@ -2206,7 +2206,20 @@
       "pay": "Thanh toán",
       "schedule": "Xếp lịch",
       "viewSchedule": "Xem lịch",
-      "review": "Đánh giá"
+      "review": "Đánh giá",
+      "dispute": {
+        "open": "Mở tranh chấp",
+        "view": "Xem tranh chấp",
+        "dialogTitle": "Mở tranh chấp cho vé",
+        "hint": "Tiền của vé sẽ được đóng băng cho tới khi điều phối viên ra quyết định. Hãy mô tả rõ sự việc — bạn có thể bổ sung ảnh/tài liệu ở màn Tranh chấp.",
+        "reasonPlaceholder": "Lý do tranh chấp (ví dụ: phòng gym đóng cửa, PT không có mặt...)",
+        "reasonRequired": "Nhập lý do tranh chấp",
+        "submit": "Gửi tranh chấp",
+        "opened": "Đã mở tranh chấp",
+        "openedHint": "Theo dõi và gửi bằng chứng ở mục Tranh chấp / Khiếu nại.",
+        "daysLeft": "{days, plural, =0 {hôm nay là ngày cuối để mở tranh chấp} other {còn # ngày để mở tranh chấp}}",
+        "windowClosed": "đã hết hạn mở tranh chấp ({date})"
+      }
     }
   },
   "gymCalendar": {
