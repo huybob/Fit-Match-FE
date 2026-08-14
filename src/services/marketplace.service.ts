@@ -41,6 +41,8 @@ export interface PublicCertification {
 export interface PtPublicProfile {
   id?: number;
   displayName?: string;
+  /** Ảnh hồ sơ PT (media TRAINER/AVATAR). null = chưa đặt, hiện chữ cái đầu. */
+  avatarUrl?: string;
   bio?: string;
   serviceArea?: string;
   specialization?: string;

@@ -15,6 +15,7 @@ import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Pagination } from "@/shared/components/ui/pagination";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import { SmartImage } from "@/shared/components/media/smart-image";
 import {
   ResultCard,
   ResultCardExcerpt,
@@ -274,8 +275,16 @@ function TrainerCard({
   return (
     <ResultCard
       media={
-        <div className="relative grid h-40 place-items-center bg-gradient-to-br from-primary to-primary text-primary-foreground">
-          <UserRound className="size-14 opacity-90" />
+        <div className="relative h-40 bg-gradient-to-br from-primary to-primary text-primary-foreground">
+          {/* Chưa có ảnh thì giữ nguyên khối gradient + icon như trước — nền do
+              thẻ cha vẽ nên fallback phải trong suốt, không bg-muted mặc định. */}
+          <SmartImage
+            src={pt.avatarUrl}
+            alt={pt.displayName ?? ""}
+            className="h-40 w-full object-cover"
+            fallbackClassName="h-40 w-full bg-transparent text-primary-foreground"
+            fallback={<UserRound className="size-14 opacity-90" />}
+          />
           {/* Bug 14: badge data-driven — chỉ hiện khi PT thật sự được xác thực. */}
           {pt.verified && (
             <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-success-foreground">
@@ -382,6 +391,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
             <UserAvatar
               className="size-24 rounded-2xl ring-1 ring-white/20"
+              src={pt.avatarUrl}
               name={pt.displayName ?? "PT"}
               fallback={
                 initialsOf(pt.displayName) === "?" ? <UserRound className="size-10" /> : undefined

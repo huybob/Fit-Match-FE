@@ -12,6 +12,9 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { EmptyState } from "@/shared/components/common/empty-state";
+import { ImageUploader } from "@/shared/components/media/image-uploader";
+import { SmartImage } from "@/shared/components/media/smart-image";
+import { useDeleteMedia, useEntityMedia, mediaKeys } from "@/modules/media/hooks/use-media";
 import { useTranslations } from "next-intl";
 
 /* Chỉ giữ class + icon; nhãn lấy từ trainer.verifyStatus.* trong component. */
@@ -51,6 +54,21 @@ export default function TrainerSelfServicePage() {
     queryKey: ["pt-my-certs"],
     queryFn: trainerService.listCertifications
   });
+
+  /*
+   * Ảnh đại diện hồ sơ PT — media TRAINER/AVATAR (V64), KHÔNG phải ảnh tài khoản
+   * ở /profile. Quyền đã có sẵn ở MediaAccessGuard: PT tự sửa ảnh mình, gym chủ
+   * quản cũng sửa được. AVATAR là loại ảnh đơn nên upload tấm mới là BE tự thay
+   * tấm cũ, không cần xoá trước.
+   */
+  const avatarQuery = useEntityMedia("TRAINER", profile?.id, "AVATAR");
+  const removeAvatar = useDeleteMedia();
+  function refreshAvatar() {
+    qc.invalidateQueries({ queryKey: mediaKeys.all });
+    // Ảnh ở header đọc từ profile.avatarUrl do BE trả — không làm mới cái này
+    // thì upload xong ô chọn đổi ảnh còn header vẫn là chữ cái đầu.
+    qc.invalidateQueries({ queryKey: ["pt-my-profile"] });
+  }
 
   useEffect(() => {
     if (!profile) return;
@@ -113,9 +131,13 @@ export default function TrainerSelfServicePage() {
               <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="size-16 rounded-2xl bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-2xl font-bold text-primary-foreground shrink-0">
-                      {(profile?.displayName ?? "T")[0]?.toUpperCase()}
-                    </div>
+                    <SmartImage
+                      src={profile?.avatarUrl}
+                      alt={profile?.displayName ?? ""}
+                      className="size-16 rounded-2xl object-cover shrink-0"
+                      fallbackClassName="bg-gradient-to-br from-primary/80 to-primary text-2xl font-bold text-primary-foreground"
+                      fallback={(profile?.displayName ?? "T")[0]?.toUpperCase()}
+                    />
                     <div>
                       <h2 className="text-xl font-bold text-foreground">{profile?.displayName ?? "—"}</h2>
                       {profile?.specialization && <p className="text-sm text-muted-foreground mt-0.5">{profile.specialization}</p>}
@@ -128,6 +150,29 @@ export default function TrainerSelfServicePage() {
                     <Pencil className="size-4" /> {t("trainer.profile.edit")}
                   </Button>
                 </div>
+                {/* Chỉ dựng ô upload khi đã biết id hồ sơ: ImageUploader coi
+                    entityId rỗng là chế độ NHÁP và sẽ đẩy ảnh lên storage mà
+                    không gắn vào hồ sơ nào — ảnh mồ côi, PT không hiểu vì sao
+                    upload xong mà không thấy gì. */}
+                {profile?.id != null && (
+                <div className="mt-5 border-t border-border pt-4">
+                  <ImageUploader
+                    entityType="TRAINER"
+                    entityId={profile.id}
+                    imageType="AVATAR"
+                    value={avatarQuery.data ?? []}
+                    // Danh sách refetch từ BE nên onChange chỉ cần kích hoạt invalidate.
+                    onChange={refreshAvatar}
+                    onRemove={(m) => removeAvatar.mutateAsync(m.id).then(refreshAvatar)}
+                    multiple={false}
+                    max={1}
+                    label={t("trainer.profile.avatarLabel")}
+                  />
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {t("trainer.profile.avatarHint")}
+                  </p>
+                </div>
+                )}
                 {verification?.rejectionReason && (
                   <div className="mt-4 p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-sm text-destructive">{verification.rejectionReason}</div>
                 )}

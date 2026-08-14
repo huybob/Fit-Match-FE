@@ -386,6 +386,8 @@ export interface GymPtResponse {
   specialization?: string;
   serviceArea?: string;
   experienceYears?: number;
+  /** Ảnh hồ sơ PT (media TRAINER/AVATAR) — gym chủ quản cũng sửa được. */
+  avatarUrl?: string;
   status?: GymPtStatus;
   suspensionReason?: string;
   gymProfileId?: number;

@@ -1216,7 +1216,9 @@
       "certs": "Chứng chỉ",
       "noCerts": "Chưa có chứng chỉ. Liên hệ phòng gym để bổ sung.",
       "displayNameLabel": "Tên hiển thị",
-      "managedByGym": "Chuyên môn, khu vực phục vụ và số năm kinh nghiệm do phòng tập quản lý — liên hệ phòng tập của bạn để cập nhật."
+      "managedByGym": "Chuyên môn, khu vực phục vụ và số năm kinh nghiệm do phòng tập quản lý — liên hệ phòng tập của bạn để cập nhật.",
+      "avatarLabel": "Ảnh đại diện hồ sơ",
+      "avatarHint": "Ảnh này hiện trên hồ sơ công khai và trang tìm PT. Khác với ảnh tài khoản ở mục Hồ sơ cá nhân."
     },
     "availability": {
       "title": "Lịch làm việc",

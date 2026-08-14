@@ -140,6 +140,8 @@ export interface PtVerificationStatusResponse {
 export interface PtPublicPreview {
   id?: number;
   displayName?: string;
+  /** Ảnh hồ sơ PT (media TRAINER/AVATAR), khác ảnh tài khoản ở /profile. */
+  avatarUrl?: string;
   bio?: string;
   serviceArea?: string;
   specialization?: string;

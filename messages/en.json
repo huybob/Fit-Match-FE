@@ -1216,7 +1216,9 @@
       "certs": "Certificates",
       "noCerts": "No certificates yet. Contact your gym to add them.",
       "displayNameLabel": "Display name",
-      "managedByGym": "Specialisation, service area and years of experience are managed by your gym — contact them to update."
+      "managedByGym": "Specialisation, service area and years of experience are managed by your gym — contact them to update.",
+      "avatarLabel": "Profile photo",
+      "avatarHint": "Shown on your public profile and in PT search. Separate from the account photo under Personal profile."
     },
     "availability": {
       "title": "Schedule",

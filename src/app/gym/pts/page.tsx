@@ -421,6 +421,7 @@ export default function GymPtsPage() {
                     <div className="flex items-center gap-3">
                       <UserAvatar
                         className="size-8"
+                        src={pt.avatarUrl}
                         name={pt.displayName ?? pt.username}
                         tintSeed={pt.id}
                         fallbackClassName="text-xs font-bold"
