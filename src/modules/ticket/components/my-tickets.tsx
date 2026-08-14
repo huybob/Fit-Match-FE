@@ -120,7 +120,9 @@ function TicketRow({ ticket }: { ticket: Ticket }) {
 
         {needsScheduling ? (
           <Button asChild size="sm">
-            <Link href={`/schedule?ticketId=${ticket.id}`}>
+            {/* mode=book: bấm "Xếp lịch" là muốn chọn ngày ngay, không phải xem
+                lại lịch cũ — /schedule mặc định mở ở chế độ xem. */}
+            <Link href={`/schedule?ticketId=${ticket.id}&mode=book`}>
               <CalendarDays className="mr-1.5 size-3.5" />
               {t("schedule")}
             </Link>

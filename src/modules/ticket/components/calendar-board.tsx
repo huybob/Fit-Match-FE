@@ -22,6 +22,11 @@ export interface CalendarDayContext {
   date: string;
   /** false = ô tràn từ tháng trước/sau (chỉ có ở chế độ tháng). */
   inPeriod: boolean;
+  /**
+   * Ngày có thuộc THÁNG đang xem hay không. Khác `inPeriod` ở chế độ tuần: một
+   * tuần vắt qua hai tháng thì mọi ô đều `inPeriod` nhưng chỉ một phần `inMonth`.
+   */
+  inMonth: boolean;
   isToday: boolean;
 }
 
@@ -68,13 +73,15 @@ export function CalendarBoard({
     );
   }
 
+  const monthLabel = fromIsoDate(monthAnchor).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
   const periodLabel =
-    view === "week"
-      ? `${formatShort(days[0])} – ${formatShort(days[6])}`
-      : fromIsoDate(monthAnchor).toLocaleDateString(undefined, {
-          month: "long",
-          year: "numeric",
-        });
+    view === "week" ? `${formatShort(days[0])} – ${formatShort(days[6])}` : monthLabel;
+
+  /** Lưới đang chứa ngày của tháng khác -> mới cần chú giải hai loại ô. */
+  const hasOtherMonth = days.some((day) => !isSameMonth(day, monthAnchor));
 
   return (
     <div className="rounded-2xl border border-border bg-card">
@@ -88,7 +95,7 @@ export function CalendarBoard({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="min-w-44 text-center text-sm font-semibold capitalize">
+          <span className="min-w-44 text-center text-base font-bold capitalize">
             {periodLabel}
           </span>
           <Button
@@ -103,6 +110,22 @@ export function CalendarBoard({
             {t("ticket.schedule.today")}
           </Button>
         </div>
+
+        {/* Chú giải hai loại ô: lưới tháng luôn vẽ đủ 6 hàng nên đầu và cuối
+            lưới là ngày của tháng khác — không nói rõ thì rất dễ bấm vào 31/7
+            khi đang xem tháng 8. */}
+        {hasOtherMonth ? (
+          <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span aria-hidden className="size-3 rounded-sm border border-border bg-card" />
+              {t("ticket.schedule.legendThisMonth")}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span aria-hidden className="size-3 rounded-sm border border-border bg-muted" />
+              {t("ticket.schedule.legendOtherMonth")}
+            </span>
+          </div>
+        ) : null}
 
         <div className="flex rounded-md border border-border p-0.5">
           {(["week", "month"] as const).map((option) => (
@@ -136,12 +159,15 @@ export function CalendarBoard({
 
       <div className="grid grid-cols-7">
         {days.map((date) => {
+          const inMonth = isSameMonth(date, monthAnchor);
           const ctx: CalendarDayContext = {
             date,
-            inPeriod: view === "week" || isSameMonth(date, monthAnchor),
+            inPeriod: view === "week" || inMonth,
+            inMonth,
             isToday: date === today,
           };
           const disabled = isDayDisabled?.(date) ?? false;
+          const parsed = fromIsoDate(date);
 
           return (
             <button
@@ -152,20 +178,28 @@ export function CalendarBoard({
               className={cn(
                 "flex flex-col gap-1 border-b border-r border-border p-1.5 text-left align-top",
                 view === "week" ? "min-h-40" : "min-h-24",
-                !ctx.inPeriod && "bg-muted/30",
                 disabled && "cursor-not-allowed opacity-40",
                 !disabled && onDayClick && "hover:bg-muted/50",
                 dayClassName?.(ctx),
+                // Nền "tháng khác" đặt SAU dayClassName: nơi gọi tô nền cho ngày
+                // có buổi tập, nền đó thắng thì ngày của tháng trước/sau trông y
+                // như ngày trong tháng — đúng chỗ dễ bấm nhầm nhất.
+                !inMonth && "bg-muted/50",
               )}
             >
               <span
                 className={cn(
-                  "inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                  "inline-flex h-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                  // Ngày trong tháng: hình tròn như cũ. Ngày tháng khác: rộng ra
+                  // để ghi kèm tháng ("31/7") — không ai phải đếm ngược từ đầu lưới.
+                  inMonth ? "w-6" : "gap-px px-1.5 text-muted-foreground",
                   ctx.isToday && "bg-primary text-primary-foreground",
-                  !ctx.inPeriod && "text-muted-foreground",
                 )}
               >
-                {fromIsoDate(date).getDate()}
+                {parsed.getDate()}
+                {inMonth ? null : (
+                  <span className="text-[10px] font-bold">/{parsed.getMonth() + 1}</span>
+                )}
               </span>
               {renderDay(ctx)}
             </button>

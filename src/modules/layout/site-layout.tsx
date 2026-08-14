@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useState } from "react";
 import {
+  CalendarDays,
   ChevronDown,
   LogOut,
   Menu,
@@ -73,6 +74,10 @@ function SiteHeader() {
   const { user, status, logout } = useAuthStore();
   const workspaceEntry = workspaceEntryFor(user?.role);
   const canUseNotifications = status === "authenticated" && ["ROLE_CUSTOMER", "ROLE_PT", "ROLE_GYM_OPERATOR"].includes(user?.role ?? "");
+  // Đặt lịch là việc khách làm thường xuyên nhất sau khi mua vé, nên nút nằm
+  // thẳng trên header thay vì nằm trong dropdown tài khoản. Chỉ khách mới thấy:
+  // /schedule được AuthGuard chặn theo ROLE_CUSTOMER.
+  const canSchedule = status === "authenticated" && user?.role === "ROLE_CUSTOMER";
   const visibleNavItems = useVisibleNavItems();
   const pathname = usePathname();
   const isActive = (href: string) =>
@@ -109,6 +114,21 @@ function SiteHeader() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 sm:flex">
+          {canSchedule && (
+            <Button
+              asChild
+              variant="outline"
+              className={cn(
+                "h-9 gap-1.5 px-3 font-semibold",
+                isActive("/schedule") && "border-primary text-primary",
+              )}
+            >
+              <Link href="/schedule">
+                <CalendarDays className="size-4" />
+                {t("site.menu.schedule")}
+              </Link>
+            </Button>
+          )}
           <LocaleSwitch />
           <ThemeSwitch />
           {/* E-6: badge số chưa đọc thật (poll 60s) thay Link tĩnh */}
@@ -150,11 +170,8 @@ function SiteHeader() {
                     <DropdownMenuItem asChild>
                       <Link href="/profile/favorites">{t("site.menu.favoriteTrainers")}</Link>
                     </DropdownMenuItem>
-                    {/* /profile/bookings đã bị xoá cùng mô hình booking. Hai mục
-                        thay thế: đặt lịch cho vé đã mua, và danh sách vé. */}
-                    <DropdownMenuItem asChild>
-                      <Link href="/schedule">{t("site.menu.schedule")}</Link>
-                    </DropdownMenuItem>
+                    {/* /profile/bookings đã bị xoá cùng mô hình booking. "Đặt lịch"
+                        giờ là nút riêng trên header nên không lặp lại ở đây. */}
                     <DropdownMenuItem asChild>
                       <Link href="/profile/tickets">{t("site.menu.myTickets")}</Link>
                     </DropdownMenuItem>
