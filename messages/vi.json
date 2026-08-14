@@ -2176,7 +2176,9 @@
       "rescheduleConfirm": "Xác nhận dời",
       "rescheduleCancel": "Bỏ qua",
       "rescheduled": "Đã dời lịch tập",
-      "rescheduleFailed": "Không dời được lịch"
+      "rescheduleFailed": "Không dời được lịch",
+      "closedTodayAt": "Chi nhánh đóng cửa lúc {time} nên hôm nay không đặt được nữa — chọn từ ngày mai.",
+      "closedToday": "Chi nhánh nghỉ hôm nay — chọn từ ngày mai."
     },
     "adminRefunds": {
       "title": "Duyệt hoàn tiền vé",

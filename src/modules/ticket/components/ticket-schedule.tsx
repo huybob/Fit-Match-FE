@@ -26,7 +26,13 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn.util";
-import { useMySessions, useMyTickets, usePtSlotGrid, useScheduleTicket } from "../hooks/use-ticket";
+import {
+  useBranchBookingWindow,
+  useMySessions,
+  useMyTickets,
+  usePtSlotGrid,
+  useScheduleTicket,
+} from "../hooks/use-ticket";
 import { periodRange, plannedDays, todayIso } from "../calendar-date.util";
 import { CalendarBoard, type CalendarDayContext, type CalendarView } from "./calendar-board";
 import { DayComposer } from "./day-composer";
@@ -137,6 +143,17 @@ export function TicketSchedulePage() {
     undefined,
     booking && Boolean(ticket?.withPt),
   );
+
+  /*
+   * Chi nhánh đã đóng cửa thì hôm nay không còn đặt được nữa (luật ở
+   * SessionSchedulingValidator). Mờ ô ngay trên lịch thay vì để khách chọn xong
+   * mới nhận lỗi từ server.
+   */
+  const { bookableToday, closeTime } = useBranchBookingWindow(
+    ticket?.gymProfileId,
+    ticket?.gymBranchId,
+  );
+  const today = todayIso();
 
   const ptOptions = useMemo(() => {
     const map = new Map<number, string>();
@@ -449,6 +466,14 @@ export function TicketSchedulePage() {
             >
               {t("cancelBooking")}
             </Button>
+
+            {/* Ô "hôm nay" bị mờ cần một lời giải thích: không có nó, khách chỉ
+                thấy một ngày không bấm được mà không hiểu vì sao. */}
+            {!bookableToday ? (
+              <p className="w-full text-xs text-muted-foreground">
+                {closeTime ? t("closedTodayAt", { time: closeTime }) : t("closedToday")}
+              </p>
+            ) : null}
           </>
         ) : (
           <>
@@ -517,14 +542,17 @@ export function TicketSchedulePage() {
         // Chế độ xem vẫn phải bấm được: ô bị disable thì trình duyệt bỏ luôn cả
         // sự kiện hover, và thẻ thông tin nhanh sẽ không bao giờ hiện ra.
         onDayClick={booking ? handleDayClick : handleViewDayClick}
-        isDayDisabled={(date) =>
+        isDayDisabled={(date) => {
+          if (!booking) return false;
+          // Ngày đã qua thì không đặt được, và hôm nay cũng vậy một khi chi
+          // nhánh đã đóng cửa — hai luật này BE đều chặn, mờ sẵn ở đây để khách
+          // không phải chọn rồi mới biết.
+          if (date < today) return true;
+          if (date === today && !bookableToday) return true;
           // Sau khi chốt ngày bắt đầu của gói, chỉ các ngày TRONG gói mới thao
           // tác được — bấm ra ngoài không có nghĩa gì và chỉ gây hiểu nhầm.
-          booking &&
-          ticket?.kind === "PACKAGE" &&
-          Boolean(startDate) &&
-          !dayIndexOf.has(date)
-        }
+          return ticket?.kind === "PACKAGE" && Boolean(startDate) && !dayIndexOf.has(date);
+        }}
         dayClassName={({ date }) =>
           cn(
             !booking && entriesByDate.has(date) && "bg-primary/5",

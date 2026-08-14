@@ -7,6 +7,7 @@ import {
   type TicketListParams,
   type TicketQuoteRequest,
 } from "@/services/ticket.service";
+import { marketplaceService } from "@/services/marketplace.service";
 import { loyaltyKeys } from "@/modules/loyalty/hooks/use-loyalty";
 import { disputeKeys } from "@/modules/dispute/hooks/use-dispute";
 import {
@@ -140,6 +141,51 @@ export function useScheduleTicket() {
       client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
     },
   });
+}
+
+/**
+ * Chi nhánh còn nhận đặt lịch cho CHÍNH HÔM NAY không — bản sao phía FE của
+ * `SessionSchedulingValidator#closedTodayIssue`, dùng để mờ ô "hôm nay" trên
+ * lịch thay vì để khách chọn rồi mới nhận lỗi.
+ *
+ * Ba quy tắc phải khớp BE từng chữ, sai một cái là hai bên nói khác nhau:
+ * chi nhánh CHƯA khai giờ thì không suy ra là đóng cửa; đã khai mà thiếu đúng
+ * thứ trong tuần đó thì là nghỉ; và đúng giờ đóng cửa cũng đã là muộn.
+ *
+ * Trong lúc chưa tải xong thì coi như còn đặt được: chặn nhầm một lựa chọn hợp
+ * lệ khó chịu hơn nhiều so với để BE từ chối một lựa chọn sai.
+ */
+export function useBranchBookingWindow(gymProfileId?: number, gymBranchId?: number) {
+  const { data } = useQuery({
+    queryKey: ["gym-branches", gymProfileId],
+    queryFn: () => marketplaceService.getGymBranches(gymProfileId!),
+    enabled: Boolean(gymProfileId),
+    // Giờ mở cửa gần như không đổi trong một phiên đặt lịch.
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const hours = data?.find((branch) => branch.id === gymBranchId)?.operatingHours;
+  if (!hours?.length) {
+    return { bookableToday: true, closeTime: undefined as string | undefined };
+  }
+
+  const now = new Date();
+  // JS: 0 = Chủ nhật; BE dùng ISO-8601: 1 = Thứ hai ... 7 = Chủ nhật.
+  const isoDay = now.getDay() === 0 ? 7 : now.getDay();
+  const today = hours.find((hour) => hour.dayOfWeek === isoDay);
+  if (!today || today.closed) {
+    return { bookableToday: false, closeTime: undefined };
+  }
+  if (!today.closeTime) {
+    return { bookableToday: true, closeTime: undefined };
+  }
+  const nowTime = [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map((part) => String(part).padStart(2, "0"))
+    .join(":");
+  return {
+    bookableToday: nowTime < today.closeTime,
+    closeTime: today.closeTime.slice(0, 5),
+  };
 }
 
 /** Lịch của khách trong khoảng ngày — dùng cho cảnh báo trùng ngày (câu 29). */

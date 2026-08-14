@@ -12,8 +12,8 @@ import { DatePicker } from "@/shared/components/ui/date-picker";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/components/ui/popover";
 import { toErrorMessage } from "@/shared/utils/error.util";
-import { fromIsoDate, todayIso } from "../calendar-date.util";
-import { useUpdateSessionDate } from "../hooks/use-ticket";
+import { addDays, fromIsoDate, todayIso } from "../calendar-date.util";
+import { useBranchBookingWindow, useUpdateSessionDate } from "../hooks/use-ticket";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
 
 /**
@@ -284,6 +284,12 @@ function RescheduleSection({
   const t = useTranslations("ticket.schedule");
   const { toast } = useToast();
   const update = useUpdateSessionDate();
+  // Cùng luật với lịch đặt: chi nhánh đóng cửa rồi thì hôm nay không còn là
+  // đích dời hợp lệ nữa, nên sớm nhất là ngày mai.
+  const { bookableToday, closeTime } = useBranchBookingWindow(
+    ticket?.gymProfileId,
+    ticket?.gymBranchId,
+  );
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState("");
 
@@ -326,11 +332,14 @@ function RescheduleSection({
         onChange={(value) => setDate(value ?? "")}
         // Hạn dùng của vé là trần cứng: dời quá hạn thì server từ chối, chặn ở
         // đây để khách không chọn xong mới biết.
-        minDate={today}
+        minDate={bookableToday ? today : addDays(today, 1)}
         maxDate={expiry}
         placeholder={t("reschedulePlaceholder")}
         className="h-9 w-full"
       />
+      {!bookableToday && closeTime ? (
+        <p className="text-xs text-muted-foreground">{t("closedTodayAt", { time: closeTime })}</p>
+      ) : null}
       {session.ptName ? (
         <p className="text-xs text-muted-foreground">
           {t("reschedulePtHint", {
