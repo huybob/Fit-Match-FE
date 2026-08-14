@@ -32,19 +32,20 @@ const navItems = [
   { labelKey: "site.nav.home", label: null, href: appRoutes.home },
   { labelKey: "site.nav.gyms", label: null, href: appRoutes.gyms },
   { labelKey: "site.nav.trainers", label: null, href: appRoutes.trainers },
+  // "Gói tập" = vé kind=PACKAGE. Mục "Đặt lịch" (/booking) thì bỏ hẳn: khách
+  // không đặt lịch trước nữa mà mua vé rồi mới xếp ngày ở /schedule.
   { labelKey: "site.nav.packages", label: null, href: appRoutes.packages },
-  { labelKey: "site.nav.bookings", label: null, href: appRoutes.booking },
   // Bug 13: FAQ/Blog do CMS quản lý đã có trang nhưng không được link ở đâu cả.
   { labelKey: null, label: "Blog", href: appRoutes.blog },
   { labelKey: null, label: "FAQ", href: appRoutes.faq },
 ] as const;
 
+/*
+ * Trước đây lọc bỏ mục "Đặt lịch" với vai trò không phải khách. Mục đó đã biến
+ * mất nên mọi mục còn lại đều công khai với mọi vai trò.
+ */
 function useVisibleNavItems() {
-  const { user, status } = useAuthStore();
-  const canBook = status !== "authenticated" || user?.role === "ROLE_CUSTOMER";
-  return canBook
-    ? navItems
-    : navItems.filter((item) => item.href !== appRoutes.booking);
+  return navItems;
 }
 
 // Role-specific workspace entry shown in the account dropdown.
@@ -149,8 +150,13 @@ function SiteHeader() {
                     <DropdownMenuItem asChild>
                       <Link href="/profile/favorites">{t("site.menu.favoriteTrainers")}</Link>
                     </DropdownMenuItem>
+                    {/* /profile/bookings đã bị xoá cùng mô hình booking. Hai mục
+                        thay thế: đặt lịch cho vé đã mua, và danh sách vé. */}
                     <DropdownMenuItem asChild>
-                      <Link href="/profile/bookings">{t("member.nav.bookings")}</Link>
+                      <Link href="/schedule">{t("site.menu.schedule")}</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile/tickets">{t("site.menu.myTickets")}</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/profile/reviews">{t("site.menu.reviews")}</Link>
@@ -237,7 +243,8 @@ function SiteHeader() {
                 {user.role === "ROLE_CUSTOMER" && (
                   <>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/favorites">{t("site.menu.favoriteTrainers")}</Link>
-                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/bookings">{t("member.nav.bookings")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/schedule">{t("site.menu.schedule")}</Link>
+                    <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/tickets">{t("site.menu.myTickets")}</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/reviews">{t("site.menu.reviews")}</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/disputes">{t("site.menu.disputes")}</Link>
                     <Link className="block rounded-md px-3 py-2 text-sm font-semibold" href="/profile/loyalty">{t("site.menu.loyalty")}</Link>

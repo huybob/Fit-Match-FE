@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl";
 
 const links = [
   { href: "/", navKey: "dashboard", icon: LayoutDashboard },
-  { href: "/profile/bookings", navKey: "bookings", icon: Calendar },
+  { href: "/profile/tickets", navKey: "tickets", icon: Calendar },
   { href: "/profile/measurements", navKey: "progress", icon: TrendingUp },
   { href: "/profile/favorites", navKey: "favorites", icon: Heart },
   // V61: tiền hoàn từ refund/tranh chấp về ví thay vì chờ chuyển khoản tay.
@@ -65,7 +65,8 @@ export function ProfileSidebar() {
       </nav>
 
       <div className="mt-4 pb-4">
-        <Link href="/booking">
+        {/* /booking đã bị gỡ — mua vé bắt đầu từ trang phòng gym. */}
+        <Link href="/gyms">
           <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg h-9">
             {t("member.sidebar.newBooking")}
           </Button>
