@@ -1,6 +1,8 @@
 import { api } from "@/services/api";
 import type {
   GymCalendarDay,
+  GymServiceItem,
+  GymServiceRequest,
   MarketplaceTicketTypeParams,
   MarketplaceTicketTypePage,
   PaymentOrder,
@@ -61,9 +63,30 @@ export const ticketService = {
       { status },
     ),
 
+  // ---------------- Dịch vụ kèm vé (V82) ----------------
+  listServices: () => api.get<GymServiceItem[]>("/gym/services"),
+
+  createService: (body: GymServiceRequest) =>
+    api.post<GymServiceItem, GymServiceRequest>("/gym/services", body),
+
+  updateService: (id: number, body: GymServiceRequest) =>
+    api.put<GymServiceItem, GymServiceRequest>(`/gym/services/${id}`, body),
+
+  deactivateService: (id: number) => api.delete<void>(`/gym/services/${id}`),
+
+  setServiceStatus: (id: number, status: GymServiceItem["status"]) =>
+    api.patch<GymServiceItem, { status: GymServiceItem["status"] }>(
+      `/gym/services/${id}/catalog-status`,
+      { status },
+    ),
+
   // ---------------- Catalog (công khai) ----------------
   listBranchTicketTypes: (branchId: number) =>
     api.get<TicketType[]>(`/marketplace/branches/${branchId}/ticket-types`),
+
+  /** Dịch vụ kèm vé bán tại chi nhánh — dùng ở bước chọn dịch vụ khi mua. */
+  listBranchServices: (branchId: number) =>
+    api.get<GymServiceItem[]>(`/marketplace/branches/${branchId}/services`),
 
   /**
    * Duyệt vé toàn sàn — trang "Gói tập" (kind=PACKAGE) dùng cái này.

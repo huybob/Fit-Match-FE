@@ -4,6 +4,8 @@ export const ticketKeys = {
   all: ["tickets"] as const,
   types: () => [...ticketKeys.all, "types"] as const,
   branchTypes: (branchId: number) => [...ticketKeys.all, "branch-types", branchId] as const,
+  branchServices: (branchId: number) =>
+    [...ticketKeys.all, "branch-services", branchId] as const,
   quote: (payload: unknown) => [...ticketKeys.all, "quote", payload] as const,
   myList: (params: TicketListParams) => [...ticketKeys.all, "my", params] as const,
   detail: (id: number) => [...ticketKeys.all, "detail", id] as const,

@@ -103,12 +103,40 @@ export interface TicketTypeRequest {
 // Mua vé
 // ---------------------------------------------------------------------------
 
+/** V82: dịch vụ kèm vé — add-on cộng tiền MỘT LẦN, không nhân theo số ngày. */
+export interface GymServiceItem {
+  id: number;
+  name: string;
+  description?: string | null;
+  price: number;
+  status: CatalogStatus;
+  active: boolean;
+}
+
+export interface GymServiceRequest {
+  name: string;
+  description?: string;
+  price: number;
+}
+
 export interface TicketQuoteRequest {
   branchId: number;
   ticketTypeId: number;
   withPt: boolean;
   voucherCode?: string;
   useLoyaltyPoints: boolean;
+  /**
+   * V82: dịch vụ khách tick thêm. Phải gửi ở CẢ quote lẫn purchase — FE không
+   * được tự cộng tiền dịch vụ vì payableAmount do BE chốt chính là số in lên
+   * VietQR; lệch một đồng là webhook thấy "trả thiếu" và vé không kích hoạt.
+   */
+  serviceIds?: number[];
+}
+
+export interface TicketQuoteServiceLine {
+  id: number;
+  name: string;
+  price: number;
 }
 
 export interface TicketQuote {
@@ -116,6 +144,9 @@ export interface TicketQuote {
   dayCount: number;
   withPt: boolean;
   totalAmount: number;
+  /** V82: tổng tiền dịch vụ, đã nằm trong totalAmount. */
+  servicesAmount?: number | null;
+  services?: TicketQuoteServiceLine[] | null;
   voucherDiscount: number;
   voucherCode?: string | null;
   /** Lý do mã không áp được — hiện dưới ô nhập, KHÔNG chặn xem giá. */

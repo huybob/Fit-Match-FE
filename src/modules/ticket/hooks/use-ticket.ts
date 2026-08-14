@@ -209,6 +209,15 @@ export function useBranchTicketTypes(branchId: number) {
   });
 }
 
+/** V82: dịch vụ kèm vé bán tại chi nhánh — bước "chọn dịch vụ" của popup mua vé. */
+export function useBranchServices(branchId: number) {
+  return useQuery({
+    queryKey: ticketKeys.branchServices(branchId),
+    queryFn: () => ticketService.listBranchServices(branchId),
+    enabled: branchId > 0,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Gym
 // ---------------------------------------------------------------------------
