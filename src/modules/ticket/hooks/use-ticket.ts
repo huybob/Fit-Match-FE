@@ -7,6 +7,7 @@ import {
   type TicketListParams,
   type TicketQuoteRequest,
 } from "@/services/ticket.service";
+import { loyaltyKeys } from "@/modules/loyalty/hooks/use-loyalty";
 import {
   gymCalendarKeys,
   ptAvailabilityKeys,
@@ -43,7 +44,12 @@ export function usePurchaseTicket() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (payload: TicketQuoteRequest) => ticketService.purchase(payload),
-    onSuccess: invalidateTickets(client),
+    onSuccess: () => {
+      invalidateTickets(client)();
+      // Mua vé bằng điểm là TIÊU điểm ngay lúc tạo vé — số dư cũ còn trong cache
+      // sẽ khiến lần mua tiếp theo hiện số điểm không còn nữa.
+      client.invalidateQueries({ queryKey: loyaltyKeys.balance });
+    },
   });
 }
 

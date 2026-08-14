@@ -23,6 +23,13 @@ interface PendingUpload {
 let pendingCounter = 0;
 
 /**
+ * Loại ảnh chỉ giữ ĐÚNG MỘT tấm cho mỗi entity (khớp `MediaImageType.singleton`
+ * của BE). Upload tấm mới = THAY tấm cũ, BE tự xoá ảnh cũ cả ở DB lẫn storage —
+ * nên ô chọn không được coi "đã có 1 ảnh" là "đã hết chỗ" và chặn nút.
+ */
+const SINGLETON_IMAGE_TYPES: MediaImageType[] = ["AVATAR", "COVER", "THUMBNAIL"];
+
+/**
  * Ô chọn & upload ảnh dùng chung cho MỌI màn hình (avatar, thư viện gym/chi
  * nhánh, ảnh dịch vụ/gói, ảnh check-in, ảnh đánh giá). Không màn hình nào tự
  * viết lại logic upload — đó là lý do component này nhận `entityType`/`imageType`
@@ -77,7 +84,12 @@ export function ImageUploader({
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<PendingUpload[]>([]);
 
-  const slotsLeft = Math.max(0, max - value.length - pending.length);
+  const singleton = SINGLETON_IMAGE_TYPES.includes(imageType);
+  // Ảnh đơn: chỗ trống KHÔNG trừ ảnh hiện có — nếu trừ thì ảnh bìa/avatar đã có
+  // sẽ làm nút "Thêm ảnh" tắt vĩnh viễn và không ai đổi được ảnh nữa.
+  const slotsLeft = singleton
+    ? (pending.length ? 0 : 1)
+    : Math.max(0, max - value.length - pending.length);
   const busy = pending.some((p) => !p.error);
 
   function reject(title: string, description?: string) {
@@ -98,8 +110,11 @@ export function ImageUploader({
     }
     // Chọn nhầm cùng một tấm hai lần là chuyện thường khi bấm "Thêm ảnh" nhiều
     // lần; báo ngay thay vì để hai ảnh giống hệt nằm cạnh nhau trong thư viện.
+    // Ảnh đơn thì "trùng với ảnh đang có" là chuyện hợp lệ (chọn lại đúng tấm đó
+    // để thay), chỉ chặn trùng trong hàng đợi.
     const duplicate =
-      value.some((m) => m.originalName === file.name && m.fileSize === file.size) ||
+      (!singleton &&
+        value.some((m) => m.originalName === file.name && m.fileSize === file.size)) ||
       pending.some((p) => p.file.name === file.name && p.file.size === file.size);
     if (duplicate) return t("media.duplicate", { name: file.name });
     return null;
@@ -166,7 +181,8 @@ export function ImageUploader({
     if (!queued.length) return;
 
     setPending((list) => [...list, ...queued]);
-    void runUploads(queued, value);
+    // Ảnh đơn: BE thay ảnh cũ nên danh sách mới chỉ còn tấm vừa upload.
+    void runUploads(queued, singleton ? [] : value);
   }
 
   async function remove(media: Media) {
@@ -187,7 +203,7 @@ export function ImageUploader({
     setPending((list) =>
       list.map((p) => (p.key === item.key ? { ...p, error: undefined, progress: 0 } : p)),
     );
-    void runUploads([{ ...item, error: undefined, progress: 0 }], value);
+    void runUploads([{ ...item, error: undefined, progress: 0 }], singleton ? [] : value);
   }
 
   return (
@@ -195,7 +211,7 @@ export function ImageUploader({
       <input
         ref={inputRef}
         type="file"
-        multiple={multiple}
+        multiple={multiple && !singleton}
         accept={MEDIA_LIMITS.accept}
         aria-label={label ?? t("media.addImages")}
         className="hidden"
@@ -304,10 +320,13 @@ export function ImageUploader({
           onClick={() => inputRef.current?.click()}
         >
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
-          {label ?? t("media.addImages")}
+          {label ??
+            (singleton && value.length > 0 ? t("media.replaceImage") : t("media.addImages"))}
         </Button>
         <span className="text-[11px] text-muted-foreground">
-          {t("media.hint", { max, size: maxSizeMb })}
+          {singleton
+            ? t("media.hintSingle", { size: maxSizeMb })
+            : t("media.hint", { max, size: maxSizeMb })}
         </span>
       </div>
     </div>

@@ -1,12 +1,11 @@
 "use client";
 
 import { formatCurrency } from "@/utils/format.util";
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Gift, HelpCircle, Sparkles } from "lucide-react";
 import { AuthGuard } from "@/modules/auth/auth-guard";
 import { SiteLayout } from "@/modules/layout/site-layout";
-import { loyaltyService } from "@/services/loyalty.service";
+import { useLoyaltyBalance } from "@/modules/loyalty/hooks/use-loyalty";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { toErrorMessage } from "@/shared/utils/error.util";
@@ -34,7 +33,7 @@ export default function LoyaltyRoute() {
 function LoyaltyContent() {
   const t = useTranslations();
   const fmt = useFormatters();
-  const query = useQuery({ queryKey: ["loyalty"], queryFn: () => loyaltyService.balance() });
+  const query = useLoyaltyBalance();
   const data = query.data;
   const txns = data?.history?.content ?? [];
 

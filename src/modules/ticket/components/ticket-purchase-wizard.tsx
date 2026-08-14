@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { Check, ChevronLeft, ChevronRight, Loader2, Sparkles, Ticket as TicketIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import type { LoyaltyBalance } from "@/services/loyalty.service";
 import type { GymServiceItem, TicketQuote, TicketType } from "@/types/Ticket";
 import { formatCurrency } from "@/utils/format.util";
 import { Button } from "@/shared/components/ui/button";
@@ -215,6 +216,17 @@ export function ServicesStep({
   );
 }
 
+/**
+ * Số điểm vé này sẽ tích sau khi thanh toán — CÙNG công thức của BE
+ * (`LoyaltyServiceImpl.earnFromTicket`: payableAmount / vndPerPoint, làm tròn
+ * xuống). Đây là con số tham khảo để khách thấy lợi ích, không phải tiền phải
+ * trả, nên tính ở FE được; mọi con số TIỀN vẫn lấy nguyên từ quote.
+ */
+function pointsEarnedFrom(quote: TicketQuote | undefined, vndPerPoint: number) {
+  if (!quote || !vndPerPoint) return 0;
+  return Math.floor(quote.payableAmount / vndPerPoint);
+}
+
 export function PromoStep({
   voucherInput,
   onVoucherInput,
@@ -222,6 +234,7 @@ export function PromoStep({
   quote,
   useLoyaltyPoints,
   onUseLoyaltyPoints,
+  loyalty,
 }: {
   voucherInput: string;
   onVoucherInput: (v: string) => void;
@@ -229,8 +242,17 @@ export function PromoStep({
   quote?: TicketQuote;
   useLoyaltyPoints: boolean;
   onUseLoyaltyPoints: (next: boolean) => void;
+  /** Chỉ dùng để biết tỷ lệ quy đổi; SỐ DƯ lấy từ quote (BE trả kèm báo giá). */
+  loyalty?: LoyaltyBalance;
 }) {
   const t = useTranslations();
+
+  const balance = quote?.loyaltyPointsAvailable ?? loyalty?.pointsBalance ?? 0;
+  const pointValue = loyalty?.pointValue ?? 0;
+  const vndPerPoint = loyalty?.vndPerPoint ?? 0;
+  const pointsUsed = quote?.loyaltyPointsUsed ?? 0;
+  const earning = pointsEarnedFrom(quote, vndPerPoint);
+
   return (
     <div className="space-y-4 rounded-xl border p-4">
       <div className="space-y-2">
@@ -251,23 +273,68 @@ export function PromoStep({
         ) : null}
       </div>
 
-      {quote && quote.loyaltyPointsAvailable > 0 ? (
+      {/* Khối điểm thưởng hiện KỂ CẢ khi số dư bằng 0: trước đây nó ẩn hẳn nên
+          khách không biết mua vé có tích điểm, và không hiểu vì sao chỗ khác nói
+          "dùng điểm khi mua vé" mà popup lại chẳng có gì. */}
+      <div className="space-y-2.5 border-t pt-4">
         <label className="flex items-center justify-between gap-4">
-          <span>
-            <span className="block font-semibold">{t("ticket.checkout.useLoyalty")}</span>
-            <span className="block text-sm text-muted-foreground">
-              {t("ticket.checkout.useLoyaltyHint", { points: quote.loyaltyPointsAvailable })}
+          <span className="min-w-0">
+            <span className="flex items-center gap-1.5 font-semibold">
+              <Sparkles className="size-3.5 text-primary" />
+              {t("ticket.checkout.loyaltyTitle")}
+            </span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              {balance > 0
+                ? t("ticket.checkout.loyaltyBalance", {
+                    points: balance,
+                    amount: formatCurrency(balance * pointValue),
+                  })
+                : t("ticket.checkout.loyaltyNone")}
             </span>
           </span>
-          <Switch checked={useLoyaltyPoints} onCheckedChange={onUseLoyaltyPoints} />
+          <Switch
+            checked={useLoyaltyPoints}
+            onCheckedChange={onUseLoyaltyPoints}
+            disabled={balance === 0}
+            aria-label={t("ticket.checkout.useLoyalty")}
+          />
         </label>
-      ) : null}
+
+        {useLoyaltyPoints && quote && pointsUsed > 0 ? (
+          <p className="rounded-lg bg-primary/5 px-3 py-2 text-sm font-semibold text-primary">
+            {t("ticket.checkout.loyaltyApplied", {
+              points: pointsUsed,
+              amount: formatCurrency(quote.loyaltyDiscount),
+              remaining: balance - pointsUsed,
+            })}
+          </p>
+        ) : null}
+
+        {vndPerPoint > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("ticket.checkout.loyaltyEarnRate", {
+              vndPerPoint: formatCurrency(vndPerPoint),
+              pointValue: formatCurrency(pointValue),
+            })}
+            {earning > 0
+              ? ` ${t("ticket.checkout.loyaltyEarnPreview", { points: earning })}`
+              : ""}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
 
-export function ConfirmStep({ quote }: { quote?: TicketQuote }) {
+export function ConfirmStep({
+  quote,
+  loyalty,
+}: {
+  quote?: TicketQuote;
+  loyalty?: LoyaltyBalance;
+}) {
   const t = useTranslations();
+  const earning = pointsEarnedFrom(quote, loyalty?.vndPerPoint ?? 0);
   if (!quote) {
     return <p className="text-sm text-muted-foreground">{t("ticket.checkout.pickTicket")}</p>;
   }
@@ -302,6 +369,15 @@ export function ConfirmStep({ quote }: { quote?: TicketQuote }) {
           emphasis
         />
       </div>
+      {/* Điểm TÍCH ĐƯỢC nằm dưới dòng "Phải trả" vì nó tính trên số thực trả,
+          không phải giá vé — và là con số ước lượng, ghi nhận khi thanh toán xong. */}
+      {earning > 0 ? (
+        <SummaryRow
+          label={t("ticket.checkout.loyaltyEarn")}
+          value={`+${earning} ${t("member.loyalty.points")}`}
+          muted
+        />
+      ) : null}
       {quote.payableAmount === 0 ? (
         <p className="text-sm text-success">{t("ticket.checkout.fullyCovered")}</p>
       ) : null}

@@ -9,6 +9,11 @@ import { SiteLayout } from "@/modules/layout/site-layout";
 import { ticketService } from "@/services/ticket.service";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
+import {
+  ResultCard,
+  ResultCardExcerpt,
+  ResultCardMeta,
+} from "@/shared/components/common/result-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Pagination } from "@/shared/components/ui/pagination";
@@ -273,7 +278,7 @@ export function PackagesPublicPage() {
               <EmptyState title={t("packages.none")} description={t("packages.noneHint")} />
             ) : (
               <>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {items.map((item) => (
                     <PackageCard key={item.id} item={item} />
                   ))}
@@ -305,11 +310,49 @@ function PackageCard({ item }: { item: MarketplaceTicketType }) {
   // — hiện rõ thay vì dẫn tới checkout rồi mới báo lỗi.
   const branch = item.branches[0];
   const perDay = Math.round(item.price / Math.max(item.dayCount, 1));
+  const area = [item.gymDistrict, item.gymCity].filter(Boolean).join(", ");
 
   return (
-    <article className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <ResultCard
+      footer={
+        // Giá + nút nằm CÙNG trong footer để cả hai dán đáy card: giá là con số
+        // khách so sánh giữa các card nên cũng phải thẳng hàng, không chỉ cái nút.
+        <div className="space-y-3">
+          <div className="border-t border-border pt-3">
+            <p className="text-xl font-black text-foreground">{formatCurrency(item.price)}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("packages.perDay", { price: formatCurrency(perDay) })}
+            </p>
+            {/* Chỗ cho dòng phụ phí PT được giữ sẵn (min-h) — vé có PT và vé không
+                có PT nằm cạnh nhau thì khối giá vẫn cao bằng nhau. */}
+            <p className="mt-1 flex min-h-4 items-center gap-1 text-xs text-primary">
+              {item.ptSurchargePerDay ? (
+                <>
+                  <Sparkles className="size-3.5 shrink-0" />
+                  {t("packages.withPt", { price: formatCurrency(item.priceWithPt) })}
+                </>
+              ) : null}
+            </p>
+          </div>
+
+          {branch ? (
+            <Button asChild className="h-10 w-full">
+              <Link href={`/checkout?branchId=${branch.id}&ticketTypeId=${item.id}`}>
+                {t("packages.book")}
+              </Link>
+            </Button>
+          ) : (
+            <p className="grid h-10 place-items-center text-center text-xs text-muted-foreground">
+              {t("packages.noBranch")}
+            </p>
+          )}
+        </div>
+      }
+    >
       <div className="flex items-start justify-between gap-2">
-        <h2 className="text-base font-bold leading-6 text-foreground">{item.name}</h2>
+        <h2 className="line-clamp-2 min-h-12 text-base font-bold leading-6 text-foreground">
+          {item.name}
+        </h2>
         <Badge variant="outline" className="shrink-0 gap-1">
           <CalendarDays className="size-3" />
           {t("packages.dayCount", { count: item.dayCount })}
@@ -318,47 +361,15 @@ function PackageCard({ item }: { item: MarketplaceTicketType }) {
 
       <Link
         href={`/gyms/${item.gymId}`}
-        className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
       >
         <Building2 className="size-3.5 shrink-0" />
         <span className="truncate">{item.gymName}</span>
       </Link>
 
-      {(item.gymDistrict || item.gymCity) && (
-        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MapPin className="size-3.5 shrink-0" />
-          <span className="truncate">
-            {[item.gymDistrict, item.gymCity].filter(Boolean).join(", ")}
-          </span>
-        </p>
-      )}
+      <ResultCardMeta icon={<MapPin />}>{area || "—"}</ResultCardMeta>
 
-      {item.description && (
-        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
-      )}
-
-      <div className="mt-4 border-t border-border pt-3">
-        <p className="text-xl font-black text-foreground">{formatCurrency(item.price)}</p>
-        <p className="text-xs text-muted-foreground">
-          {t("packages.perDay", { price: formatCurrency(perDay) })}
-        </p>
-        {!!item.ptSurchargePerDay && (
-          <p className="mt-1 flex items-center gap-1 text-xs text-primary">
-            <Sparkles className="size-3.5 shrink-0" />
-            {t("packages.withPt", { price: formatCurrency(item.priceWithPt) })}
-          </p>
-        )}
-      </div>
-
-      {branch ? (
-        <Button asChild className="mt-4 h-10 w-full">
-          <Link href={`/checkout?branchId=${branch.id}&ticketTypeId=${item.id}`}>
-            {t("packages.book")}
-          </Link>
-        </Button>
-      ) : (
-        <p className="mt-4 text-xs text-muted-foreground">{t("packages.noBranch")}</p>
-      )}
-    </article>
+      <ResultCardExcerpt>{item.description || t("marketplace.noDescription")}</ResultCardExcerpt>
+    </ResultCard>
   );
 }

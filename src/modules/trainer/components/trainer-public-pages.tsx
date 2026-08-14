@@ -6,7 +6,7 @@ import { FormEvent, useRef, useState } from "react";
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
 import { SiteLayout } from "@/modules/layout/site-layout";
-import { marketplaceService } from "@/services/marketplace.service";
+import { marketplaceService, type PtPublicProfile } from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
@@ -15,6 +15,11 @@ import { Input } from "@/shared/components/ui/input";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Pagination } from "@/shared/components/ui/pagination";
 import { RatingStars } from "@/shared/components/common/rating-stars";
+import {
+  ResultCard,
+  ResultCardExcerpt,
+  ResultCardMeta,
+} from "@/shared/components/common/result-card";
 import { PublicReviews } from "@/modules/review/components/public-reviews";
 import {
   Select,
@@ -209,53 +214,16 @@ export function TrainersDirectoryPage() {
                 }`}
               >
                 {items.map((pt) => (
-                  <article key={pt.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                    <div className="relative grid h-40 place-items-center bg-gradient-to-br from-primary to-primary text-primary-foreground">
-                      <UserRound className="size-14 opacity-90" />
-                      {/* Bug 14: badge data-driven — chỉ hiện khi PT thật sự được xác thực. */}
-                      {pt.verified && (
-                        <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-success-foreground">
-                          <ShieldCheck className="size-3" /> {t("marketplace.verifiedShort")}
-                        </span>
-                      )}
-                      {isCustomer && pt.id != null && (
-                        <button
-                          onClick={() => toggle.mutate({ id: pt.id!, fav: ids.has(pt.id) })}
-                          disabled={toggle.isPending}
-                          aria-label={t("marketplace.favorite")}
-                          className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-card/90 text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <Heart className={`size-4 ${ids.has(pt.id) ? "fill-destructive text-destructive" : ""}`} />
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h2 className="text-base font-bold text-foreground">{pt.displayName}</h2>
-                      {pt.specialization && <p className="text-xs font-semibold text-primary mt-0.5">{pt.specialization}</p>}
-                      {/* UC-071: sao đánh giá ngay trên card (bug 5). */}
-                      <div className="mt-1.5"><RatingStars rating={pt.averageRating} count={pt.reviewCount} /></div>
-                      <p className="mt-1 text-[11px] text-muted-foreground">{t("marketplace.yearsExperience", { years: pt.experienceYears ?? 0 })}</p>
-                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{pt.bio || t("marketplace.noDescription")}</p>
-                      {pt.serviceArea && (
-                        <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="size-3.5" />{pt.serviceArea}
-                        </p>
-                      )}
-                      {/* Bug 3: điều hướng nhanh sang phòng gym quản lý PT. */}
-                      {pt.gymId != null && (
-                        <Link
-                          href={`/gyms/${pt.gymId}`}
-                          className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                        >
-                          <Building2 className="size-3.5" />{pt.gymName || t("marketplace.viewGymOf")}
-                        </Link>
-                      )}
-                      <Link
-                        href={`/trainers/${pt.id}`}
-                        className="mt-4 flex items-center justify-center gap-2 h-9 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors"
-                      >{t("common.actions.viewDetail")}</Link>
-                    </div>
-                  </article>
+                  <TrainerCard
+                    key={pt.id}
+                    pt={pt}
+                    favorite={pt.id != null && ids.has(pt.id)}
+                    canFavorite={isCustomer}
+                    favoriteBusy={toggle.isPending}
+                    onToggleFavorite={() =>
+                      pt.id != null && toggle.mutate({ id: pt.id, fav: ids.has(pt.id) })
+                    }
+                  />
                 ))}
               </div>
 
@@ -280,6 +248,93 @@ export function TrainersDirectoryPage() {
         </div>
       </main>
     </SiteLayout>
+  );
+}
+
+/**
+ * Card HLV trong lưới kết quả. Dùng CHUNG vỏ `ResultCard` với card gói tập nên
+ * hai trang có cùng bố cục, cùng cỡ chữ và — quan trọng nhất — nút hành động của
+ * mọi card nằm sát đáy, không nhảy lên nhảy xuống theo độ dài mô tả.
+ */
+function TrainerCard({
+  pt,
+  favorite,
+  canFavorite,
+  favoriteBusy,
+  onToggleFavorite,
+}: {
+  pt: PtPublicProfile;
+  favorite: boolean;
+  canFavorite: boolean;
+  favoriteBusy: boolean;
+  onToggleFavorite: () => void;
+}) {
+  const t = useTranslations();
+
+  return (
+    <ResultCard
+      media={
+        <div className="relative grid h-40 place-items-center bg-gradient-to-br from-primary to-primary text-primary-foreground">
+          <UserRound className="size-14 opacity-90" />
+          {/* Bug 14: badge data-driven — chỉ hiện khi PT thật sự được xác thực. */}
+          {pt.verified && (
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-success-foreground">
+              <ShieldCheck className="size-3" /> {t("marketplace.verifiedShort")}
+            </span>
+          )}
+          {canFavorite && pt.id != null && (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              disabled={favoriteBusy}
+              aria-label={t("marketplace.favorite")}
+              className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-card/90 text-muted-foreground transition-colors hover:text-destructive"
+            >
+              <Heart className={`size-4 ${favorite ? "fill-destructive text-destructive" : ""}`} />
+            </button>
+          )}
+        </div>
+      }
+      footer={
+        <Button asChild className="h-10 w-full">
+          <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
+        </Button>
+      }
+    >
+      <div>
+        <h2 className="truncate text-base font-bold text-foreground">{pt.displayName}</h2>
+        {/* Chuyên môn có thể trống — giữ sẵn một dòng để các card thẳng nhau. */}
+        <p className="min-h-4 truncate text-xs font-semibold text-primary">
+          {pt.specialization ?? ""}
+        </p>
+      </div>
+
+      {/* UC-071: sao đánh giá ngay trên card (bug 5). */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <RatingStars rating={pt.averageRating} count={pt.reviewCount} />
+        <span className="text-[11px] text-muted-foreground">
+          {t("marketplace.yearsExperience", { years: pt.experienceYears ?? 0 })}
+        </span>
+      </div>
+
+      <ResultCardExcerpt>{pt.bio || t("marketplace.noDescription")}</ResultCardExcerpt>
+
+      <ResultCardMeta icon={<MapPin />}>{pt.serviceArea || "—"}</ResultCardMeta>
+
+      {/* Bug 3: điều hướng nhanh sang phòng gym quản lý PT. Không có gym thì vẫn
+          giữ chiều cao dòng, nếu không nút bên dưới của card này sẽ lệch. */}
+      {pt.gymId != null ? (
+        <Link
+          href={`/gyms/${pt.gymId}`}
+          className="flex min-h-4 items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+        >
+          <Building2 className="size-3.5 shrink-0" />
+          <span className="min-w-0 truncate">{pt.gymName || t("marketplace.viewGymOf")}</span>
+        </Link>
+      ) : (
+        <p className="min-h-4" />
+      )}
+    </ResultCard>
   );
 }
 
