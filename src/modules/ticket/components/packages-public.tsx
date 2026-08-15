@@ -57,11 +57,12 @@ const SORT_OPTIONS = [
 ] as const;
 
 /**
- * Trang "Gói tập" — duyệt VÉ GÓI đang bán trên toàn sàn.
+ * Trang duyệt VÉ đang bán trên toàn sàn.
  *
- * Trong mô hình vé, "gói tập" chính là vé `kind=PACKAGE`: mua một lần, dùng
- * `dayCount` ngày liên tiếp. Trang giữ nguyên vai trò cũ (khách duyệt và so
- * sánh gói trước khi chọn phòng gym), chỉ đổi nguồn dữ liệu.
+ * Mặc định hiện CẢ vé ngày lẫn vé gói. Trước đây trang khoá cứng
+ * `kind=PACKAGE`, nên vé ngày do phòng gym tạo không xuất hiện ở bất kỳ đâu
+ * ngoài trang chi tiết của chính gym đó — khách duyệt toàn sàn không có cách
+ * nào thấy chúng, và gym thì tưởng vé mình tạo bị mất.
  *
  * Lọc/sắp xếp/phân trang chạy ở BE trên TOÀN tập. Bản cũ gộp ở client bằng cách
  * quét 100 gym đầu tiên rồi gọi catalog từng gym, nên kết quả luôn là một phần
@@ -76,6 +77,8 @@ export function PackagesPublicPage() {
   const [city, setCity] = useState("all");
   const [district, setDistrict] = useState("all");
   const [priceFilter, setPriceFilter] = useState<PriceRangeValue>("all");
+  /** "all" = cả vé ngày lẫn vé gói; Select không nhận value rỗng nên dùng chuỗi. */
+  const [kind, setKind] = useState<"all" | "DAY" | "PACKAGE">("all");
   const [sort, setSort] = useState<string>(SORT_OPTIONS[0].value);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
@@ -88,7 +91,7 @@ export function PackagesPublicPage() {
    * trong render và TRƯỚC useQuery; làm ở effect thì React đã kịp bắn request
    * cho cặp "bộ lọc mới + trang cũ" rồi mới bắn tiếp request trang đầu.
    */
-  const filterKey = JSON.stringify([appliedKeyword, city, district, priceFilter, sort, pageSize]);
+  const filterKey = JSON.stringify([appliedKeyword, city, district, priceFilter, kind, sort, pageSize]);
   const [lastFilterKey, setLastFilterKey] = useState(filterKey);
   if (filterKey !== lastFilterKey) {
     setLastFilterKey(filterKey);
@@ -99,7 +102,7 @@ export function PackagesPublicPage() {
     queryKey: ["marketplace", "package-tickets", filterKey, page],
     queryFn: () =>
       ticketService.searchTicketTypes({
-        kind: "PACKAGE",
+        kind: kind === "all" ? undefined : kind,
         keyword: appliedKeyword || undefined,
         city: city === "all" ? undefined : city,
         district: district === "all" ? undefined : district,
@@ -128,6 +131,7 @@ export function PackagesPublicPage() {
     setAppliedKeyword("");
     setCity("all");
     setDistrict("all");
+    setKind("all");
     setPriceFilter("all");
     setSort(SORT_OPTIONS[0].value);
   }
@@ -253,6 +257,16 @@ export function PackagesPublicPage() {
                   {t("packages.found", { count: total })}
                 </p>
               </div>
+              <Select value={kind} onValueChange={(value) => setKind(value as typeof kind)}>
+                <SelectTrigger className="h-10 w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("packages.kindAll")}</SelectItem>
+                  <SelectItem value="DAY">{t("packages.kindDay")}</SelectItem>
+                  <SelectItem value="PACKAGE">{t("packages.kindPackage")}</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={sort} onValueChange={setSort}>
                 <SelectTrigger className="h-10 w-52">
                   <SelectValue />

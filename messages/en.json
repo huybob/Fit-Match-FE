@@ -1897,7 +1897,10 @@
     "priceFilterHint": "Filters by list price, excluding the PT surcharge.",
     "sortMostDays": "Most days",
     "ptSurcharge": "PT surcharge",
-    "ptSurchargeShort": "+{amount} with a PT"
+    "ptSurchargeShort": "+{amount} with a PT",
+    "kindAll": "All ticket kinds",
+    "kindDay": "Day pass",
+    "kindPackage": "Package"
   },
   "compare": {
     "gyms": "Compare {count} gyms",

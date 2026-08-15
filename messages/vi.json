@@ -1897,7 +1897,10 @@
     "priceFilterHint": "Lọc theo giá niêm yết, chưa gồm phụ phí chọn PT.",
     "sortMostDays": "Nhiều ngày nhất",
     "ptSurcharge": "Phụ phí chọn PT",
-    "ptSurchargeShort": "+{amount} nếu chọn PT"
+    "ptSurchargeShort": "+{amount} nếu chọn PT",
+    "kindAll": "Tất cả loại vé",
+    "kindDay": "Vé ngày",
+    "kindPackage": "Vé gói"
   },
   "compare": {
     "gyms": "So sánh {count} phòng gym",
