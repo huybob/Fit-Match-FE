@@ -1236,7 +1236,21 @@
       "addBlock": "Thêm khoảng chặn",
       "slotsInvalid": "Mỗi khung giờ cần giờ bắt đầu < giờ kết thúc."
     },
-    "workspace": "Không gian Huấn luyện viên"
+    "workspace": "Không gian Huấn luyện viên",
+    "sessions": {
+      "title": "Buổi tập",
+      "subtitle": "Lịch dạy của bạn theo tuần — ai, mấy giờ, ở buổi nào.",
+      "thisWeek": "Tuần này",
+      "today": "hôm nay",
+      "freeDay": "Không có buổi nào.",
+      "countInWeek": "{count} buổi trong tuần",
+      "countInDay": "{count} buổi",
+      "noSlot": "Chưa có khung giờ",
+      "unknownCustomer": "Khách chưa rõ tên",
+      "checkedIn": "Khách đã check-in",
+      "empty": "Tuần này chưa có buổi nào",
+      "emptyHint": "Khách đặt buổi có bạn thì lịch sẽ hiện ở đây. Khai lịch rảnh ở mục Lịch làm việc để được chọn."
+    }
   },
   "member": {
     "nav": {

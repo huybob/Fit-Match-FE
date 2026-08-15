@@ -1236,7 +1236,21 @@
       "addBlock": "Add blocked range",
       "slotsInvalid": "Each slot needs start time < end time."
     },
-    "workspace": "Trainer Workspace"
+    "workspace": "Trainer Workspace",
+    "sessions": {
+      "title": "Sessions",
+      "subtitle": "Your weekly teaching schedule — who, when, which session.",
+      "thisWeek": "This week",
+      "today": "today",
+      "freeDay": "No sessions.",
+      "countInWeek": "{count} sessions this week",
+      "countInDay": "{count} sessions",
+      "noSlot": "No time slot",
+      "unknownCustomer": "Unnamed customer",
+      "checkedIn": "Customer checked in",
+      "empty": "No sessions this week",
+      "emptyHint": "Sessions booked with you appear here. Publish your availability under Working hours to get picked."
+    }
   },
   "member": {
     "nav": {

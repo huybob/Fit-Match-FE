@@ -181,6 +181,11 @@ export interface TrainingSession {
   checkedInAt?: string | null;
   ptConfirmedAt?: string | null;
   evidenceUrl?: string | null;
+  /**
+   * Chỉ có ở lịch dạy của PT (`/pt/sessions`). Buổi tập vốn chỉ mang ticketId,
+   * mà PT nhìn "vé #123" thì không biết mình dạy ai.
+   */
+  customerName?: string | null;
 }
 
 export interface Ticket {
