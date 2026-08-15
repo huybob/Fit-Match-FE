@@ -1186,7 +1186,8 @@
       "markersCapped": "Bản đồ đang ghim {shown} trong {total} phòng tập của bán kính này. Thu hẹp bán kính hoặc thêm bộ lọc để xem đủ."
     },
     "compareMax": "So sánh tối đa {max} mục",
-    "applyFilters": "Áp dụng bộ lọc"
+    "applyFilters": "Áp dụng bộ lọc",
+    "facilities": "Cơ sở vật chất"
   },
   "trainer": {
     "nav": {

@@ -1186,7 +1186,8 @@
       "markersCapped": "The map is showing {shown} of {total} gyms in this radius. Narrow the radius or add filters to see them all."
     },
     "compareMax": "Compare up to {max} items",
-    "applyFilters": "Apply filters"
+    "applyFilters": "Apply filters",
+    "facilities": "Facilities"
   },
   "trainer": {
     "nav": {

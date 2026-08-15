@@ -1,4 +1,5 @@
 import { api } from "@/services/api";
+import type { FacilityResponse } from "@/types/Gym";
 import type { PageResponse } from "@/shared/types/api-response.type";
 import type { MediaImageType } from "@/types/Media";
 
@@ -203,6 +204,9 @@ export const marketplaceService = {
     api.get<PublicBranch[]>(`/marketplace/gyms/${id}/branches`),
   getGymMedia: (id: number) =>
     api.get<PublicGymMedia[]>(`/marketplace/gyms/${id}/media`),
+  /** UC-047: cơ sở vật chất đang hoạt động của gym, kèm ảnh. */
+  getGymFacilities: (id: number) =>
+    api.get<FacilityResponse[]>(`/marketplace/gyms/${id}/facilities`),
   /**
    * Bug S2-04: có `branchId` thì BE chỉ trả PT được phân công cho chi nhánh đó —
    * PT chỉ phụ trách một chi nhánh sẽ không còn hiện ra để rồi bị từ chối ở checkout.

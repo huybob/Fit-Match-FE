@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Clock, Dumbbell, Sparkles, GitBranch, Users, Heart, CalendarCheck, Navigation, Info } from "lucide-react";
+import { Building2, MapPin, Phone, Search, ArrowLeft, BadgeCheck, Boxes, Clock, Dumbbell, Sparkles, GitBranch, Users, Heart, CalendarCheck, Navigation, Info } from "lucide-react";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -752,6 +752,13 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
     queryFn: () => marketplaceService.getGymPts(gymId),
     enabled: !!gym.data,
   });
+  // UC-047: cơ sở vật chất gym tự khai — trước đây gym nhập và tải ảnh lên nhưng
+  // không màn nào của khách đọc ra, ảnh nằm im trên bucket.
+  const facilities = useQuery({
+    queryKey: ["marketplace", "gym", gymId, "facilities"],
+    queryFn: () => marketplaceService.getGymFacilities(gymId),
+    enabled: !!gym.data,
+  });
   // Bug 10: ảnh gym/chi nhánh từ media công khai (trước đây endpoint có nhưng không dùng).
   const media = useQuery({
     queryKey: ["marketplace", "gym", gymId, "media"],
@@ -900,6 +907,38 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
             </Link>
           </aside>
         </div>
+
+        {/* Cơ sở vật chất — mục riêng ngay dưới Giới thiệu. Chỉ dựng khi gym
+            thật sự có khai: một mục trống chỉ nói với khách rằng trang chưa xong. */}
+        {facilities.data?.length ? (
+          <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <Boxes className="size-5 text-primary" /> {t("marketplace.facilities")}
+            </h2>
+            <div className="mt-4 space-y-5">
+              {facilities.data.map((facility) => (
+                <div key={facility.id} className="border-t border-border pt-4 first:border-t-0 first:pt-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-bold text-foreground">{facility.name}</h3>
+                    {facility.branchName ? (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                        {facility.branchName}
+                      </span>
+                    ) : null}
+                  </div>
+                  {facility.description ? (
+                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                      {facility.description}
+                    </p>
+                  ) : null}
+                  {facility.images?.length ? (
+                    <ImageGallery images={toGalleryImages(facility.images)} columns={4} className="mt-3" />
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* Bug 10/11: ảnh của phòng gym (media công khai). */}
         {!!gymPhotos.length && (
