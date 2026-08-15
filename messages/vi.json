@@ -2098,7 +2098,8 @@
         "EXPIRED": "Đơn đã hết hạn",
         "CANCELLED": "Đơn đã huỷ",
         "FAILED": "Thanh toán thất bại"
-      }
+      },
+      "pickBranchHint": "Chọn chi nhánh bạn muốn tập — vé luôn gắn với một chi nhánh cụ thể."
     },
     "schedule": {
       "title": "Chọn ngày tập",

@@ -2098,7 +2098,8 @@
         "EXPIRED": "Order expired",
         "CANCELLED": "Order cancelled",
         "FAILED": "Payment failed"
-      }
+      },
+      "pickBranchHint": "Pick the branch you want to train at — a ticket is always tied to one branch."
     },
     "schedule": {
       "title": "Pick training days",

@@ -14,6 +14,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { useLoyaltyBalance } from "@/modules/loyalty/hooks/use-loyalty";
+import { useQuery } from "@tanstack/react-query";
+import { marketplaceService } from "@/services/marketplace.service";
 import {
   useBranchServices,
   useBranchTicketTypes,
@@ -40,6 +42,11 @@ import type { TicketQuoteRequest, TicketType } from "@/types/Ticket";
  * Mọi thay đổi (toggle PT, chọn dịch vụ, mã voucher, toggle điểm) đều gọi lại
  * /tickets/quote để con số hiển thị luôn là con số server sẽ thu. FE KHÔNG tự
  * tính giá — kể cả tiền dịch vụ.
+ *
+ * <p>Hai đường vào: {@code ?branchId=} khi khách đã chọn đúng chi nhánh (thẻ vé
+ * ở trang gym, trang Gói tập), hoặc {@code ?gymId=} từ nút "Đặt lịch" của trang
+ * gym — lúc đó popup tự hỏi chi nhánh trước. Vé BẮT BUỘC gắn chi nhánh nên
+ * không có đường nào bỏ qua bước này; gym chỉ có một chi nhánh thì chọn hộ luôn.
  */
 export function TicketCheckoutPage() {
   const t = useTranslations("ticket.checkout");
@@ -47,13 +54,15 @@ export function TicketCheckoutPage() {
   const params = useSearchParams();
   const { toast } = useToast();
 
-  const branchId = Number(params.get("branchId") ?? 0);
+  const preselectedBranchId = Number(params.get("branchId") ?? 0);
+  const gymId = Number(params.get("gymId") ?? 0);
   const preselectedTypeId = Number(params.get("ticketTypeId") ?? 0);
   // `?ticketId=` = mở lại đơn của một vé CHỜ THANH TOÁN ("Thanh toán" ở Vé của
   // tôi). Trước đây tham số này bị bỏ qua nên link đó rơi vào trạng thái rỗng
   // "Chưa chọn chi nhánh" và không có cách nào trả tiếp cho vé đã mua.
   const pendingTicketId = Number(params.get("ticketId") ?? 0);
 
+  const [pickedBranchId, setPickedBranchId] = useState(preselectedBranchId);
   const [ticketTypeId, setTicketTypeId] = useState(preselectedTypeId);
   const [withPt, setWithPt] = useState(false);
   const [serviceIds, setServiceIds] = useState<number[]>([]);
@@ -62,6 +71,20 @@ export function TicketCheckoutPage() {
   const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
   const [purchasedTicketId, setPurchasedTicketId] = useState<number | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
+
+  /*
+   * Chi nhánh của gym — chỉ tải khi vào bằng ?gymId=. Dùng endpoint công khai
+   * sẵn có thay vì thêm API mới; danh sách này cũng chính là thứ trang gym đang
+   * hiển thị nên khách nhìn thấy đúng những cái tên vừa đọc.
+   */
+  const { data: gymBranches, isLoading: branchesLoading } = useQuery({
+    queryKey: ["gym-branches", gymId],
+    queryFn: () => marketplaceService.getGymBranches(gymId),
+    enabled: gymId > 0 && !preselectedBranchId,
+  });
+  // Gym một chi nhánh thì không bắt khách chọn một danh sách chỉ có một dòng.
+  const onlyBranchId = gymBranches?.length === 1 ? gymBranches[0].id ?? 0 : 0;
+  const branchId = pickedBranchId || onlyBranchId;
 
   const { data: types, isLoading: typesLoading } = useBranchTicketTypes(branchId);
   const { data: branchServices = [] } = useBranchServices(branchId);
@@ -109,6 +132,41 @@ export function TicketCheckoutPage() {
   }
 
   if (!branchId) {
+    // Vào bằng ?gymId= thì thiếu chi nhánh là chuyện BÌNH THƯỜNG của bước đầu,
+    // không phải lỗi — hỏi luôn ở đây thay vì đá khách về trang gym tự tìm.
+    if (gymId > 0) {
+      return (
+        <Dialog open title={t("title")} onClose={() => router.back()}>
+          {branchesLoading ? (
+            <LoadingSkeleton />
+          ) : !gymBranches?.length ? (
+            <EmptyState title={t("noBranch")} description={t("noBranchHint")} />
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{t("pickBranchHint")}</p>
+              <ul className="space-y-2">
+                {gymBranches.map((branch) => (
+                  <li key={branch.id}>
+                    <button
+                      type="button"
+                      onClick={() => setPickedBranchId(branch.id ?? 0)}
+                      className="w-full rounded-xl border border-border p-3 text-left transition hover:border-primary/60 hover:bg-muted/40"
+                    >
+                      <span className="block text-sm font-semibold">{branch.name}</span>
+                      {branch.address ? (
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          {branch.address}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Dialog>
+      );
+    }
     return (
       <Dialog open title={t("title")} onClose={() => router.back()}>
         <EmptyState title={t("noBranch")} description={t("noBranchHint")} />

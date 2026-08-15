@@ -793,7 +793,9 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
   const gymPhotos = toGalleryImages((media.data ?? []).filter((m) => m.branchId == null));
   const photosOfBranch = (branchId?: number) =>
     toGalleryImages((media.data ?? []).filter((m) => m.branchId != null && m.branchId === branchId));
-  const bookingHref = `/gyms/${gymId}`;
+  // Nút "Đặt lịch" mở popup mua vé của CHÍNH gym này. Trước đây nó trỏ về
+  // `/gyms/{id}` — tức đúng trang đang đứng, một nút không làm gì cả.
+  const bookingHref = `/checkout?gymId=${gymId}`;
   return (
     <SiteLayout>
       <main className="mx-auto max-w-5xl px-4 py-8">
