@@ -34,9 +34,3 @@ export const gymCalendarKeys = {
   range: (branchId: number, from: string, to: string) =>
     [...gymCalendarKeys.all, branchId, from, to] as const,
 };
-
-export const adminRefundKeys = {
-  all: ["admin-ticket-refunds"] as const,
-  list: (status?: string) => [...adminRefundKeys.all, status ?? "all"] as const,
-  preview: (id: number) => [...adminRefundKeys.all, "preview", id] as const,
-};

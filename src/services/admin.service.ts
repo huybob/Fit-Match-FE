@@ -5,8 +5,6 @@ import type {
   AdminUserResponse,
   AssignRoleRequest,
   AuditLogPage,
-  GeocodingBackfillResult,
-  GeocodingCoverage,
   GymVerificationPage,
   GymVerificationResponse,
   PtDocumentDto,
@@ -150,10 +148,4 @@ export const adminService = {
   updateServiceCategory: (id: number, payload: ServiceCategoryRequest) =>
     api.put<ServiceCategoryResponse, ServiceCategoryRequest>(`/admin/master-data/service-categories/${id}`, payload),
   // E-8 (quyết định 2026-07-17): system-configs đã gỡ ở BE (V40).
-
-  // ── Geocoding (UC-18, V59/V60) ──
-  getGeocodingCoverage: () =>
-    api.get<GeocodingCoverage>("/admin/geocoding/coverage"),
-  runGeocodingBackfill: (limit: number) =>
-    api.post<GeocodingBackfillResult>("/admin/geocoding/backfill", undefined, { params: { limit } }),
 };

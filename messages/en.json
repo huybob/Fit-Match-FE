@@ -286,15 +286,13 @@
       "reviews": "Reviews",
       "issueReports": "Issue reports",
       "withdrawals": "Withdrawals",
-      "refunds": "Refunds",
       "reconciliation": "Reconciliation",
       "commission": "Commission",
       "vouchers": "Vouchers",
       "cms": "CMS",
       "notifications": "Notification templates",
       "masterData": "Master data",
-      "auditLogs": "Audit logs",
-      "geocoding": "Map coordinates"
+      "auditLogs": "Audit logs"
     },
     "auditLogs": {
       "title": "Audit logs",
@@ -634,24 +632,6 @@
       "title": "You do not have access to this page",
       "body": "The {role} account is not authorised for this area. Contact a system administrator if you need access.",
       "backToWorkspace": "Back to your workspace"
-    },
-    "geocoding": {
-      "title": "Map coordinates",
-      "subtitle": "Gyms without coordinates never show up in \"near me\" search. Geocoding runs silently, so nothing surfaces as an error — track it here.",
-      "runBackfill": "Backfill coordinates ({limit} records)",
-      "backfillDone": "Backfilled {updated} record(s), {remaining} remaining.",
-      "disabledNotice": "app.google-maps.api-key is not configured — geocoding is off and these numbers will not change.",
-      "gymsGeocoded": "Gyms with coordinates",
-      "branchesGeocoded": "Branches with coordinates",
-      "percentCovered": "{percent}% covered",
-      "imprecise": "Imprecise addresses",
-      "impreciseHint": "Matched only to ward/district; the gym has been asked to re-verify.",
-      "pinned": "Manually pinned",
-      "pinnedHint": "Pinned by the gym owner — the refresh job leaves these alone.",
-      "missing": "Missing coordinates",
-      "missingHint": "Records that cannot appear in radius search yet.",
-      "cached": "Cached answers",
-      "cachedHint": "Each one is a Google call already saved."
     }
   },
   "gym": {
@@ -2196,29 +2176,6 @@
       "rescheduleFailed": "Could not reschedule",
       "closedTodayAt": "The branch closes at {time}, so today is no longer bookable — pick tomorrow or later.",
       "closedToday": "The branch is closed today — pick tomorrow or later."
-    },
-    "adminRefunds": {
-      "title": "Ticket refund queue",
-      "subtitle": "Choose a refund mode; the system computes the amount so it never drifts.",
-      "empty": "No pending requests",
-      "review": "Review",
-      "dialogTitle": "Refund decision",
-      "customer": "Customer",
-      "ticket": "Ticket",
-      "paid": "Paid",
-      "usage": "Used",
-      "usageValue": "{elapsed}/{total} days (started {start})",
-      "chooseMode": "Choose a refund mode",
-      "modeFull": "Refund everything",
-      "modeFullValue": "Customer receives {amount}",
-      "modePartial": "Deduct {elapsed} elapsed day(s)",
-      "modePartialValue": "Customer receives {refund}, gym keeps {retained}",
-      "cancelWarning": "Approving cancels {count} upcoming session(s) on this ticket.",
-      "notePlaceholder": "Decision note (required when rejecting)",
-      "approve": "Approve refund",
-      "reject": "Reject",
-      "approved": "Refund approved",
-      "rejected": "Request rejected"
     },
     "myTickets": {
       "title": "My tickets",

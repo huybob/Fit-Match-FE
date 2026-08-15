@@ -286,15 +286,13 @@
       "reviews": "Đánh giá",
       "issueReports": "Báo cáo vấn đề",
       "withdrawals": "Yêu cầu rút tiền",
-      "refunds": "Hoàn tiền",
       "reconciliation": "Đối soát",
       "commission": "Hoa hồng",
       "vouchers": "Mã giảm giá",
       "cms": "Nội dung",
       "notifications": "Mẫu thông báo",
       "masterData": "Dữ liệu nền",
-      "auditLogs": "Nhật ký hệ thống",
-      "geocoding": "Toạ độ bản đồ"
+      "auditLogs": "Nhật ký hệ thống"
     },
     "auditLogs": {
       "title": "Nhật ký kiểm toán",
@@ -634,24 +632,6 @@
       "title": "Bạn không có quyền vào trang này",
       "body": "Tài khoản {role} không được cấp quyền cho khu vực này. Nếu bạn cần truy cập, hãy liên hệ quản trị viên hệ thống.",
       "backToWorkspace": "Về khu vực làm việc của bạn"
-    },
-    "geocoding": {
-      "title": "Toạ độ bản đồ",
-      "subtitle": "Phòng gym thiếu toạ độ sẽ không xuất hiện trong tìm kiếm \"quanh đây\". Geocode chạy âm thầm nên không có lỗi nào báo ra ngoài — theo dõi ở đây.",
-      "runBackfill": "Bổ sung toạ độ ({limit} bản ghi)",
-      "backfillDone": "Đã bổ sung {updated} bản ghi, còn lại {remaining}.",
-      "disabledNotice": "Chưa cấu hình app.google-maps.api-key — toàn bộ geocode đang tắt, các số liệu dưới đây sẽ không thay đổi.",
-      "gymsGeocoded": "Gym có toạ độ",
-      "branchesGeocoded": "Chi nhánh có toạ độ",
-      "percentCovered": "Đã phủ {percent}%",
-      "imprecise": "Địa chỉ mơ hồ",
-      "impreciseHint": "Chỉ khớp tới phường/quận; đã yêu cầu gym xác minh lại.",
-      "pinned": "Ghim thủ công",
-      "pinnedHint": "Chủ gym tự kéo ghim — job làm mới không đụng vào.",
-      "missing": "Còn thiếu toạ độ",
-      "missingHint": "Số bản ghi chưa xuất hiện được trong tìm kiếm theo bán kính.",
-      "cached": "Câu trả lời đang đệm",
-      "cachedHint": "Mỗi bản ghi là một lượt gọi Google đã tiết kiệm được."
     }
   },
   "gym": {
@@ -2196,29 +2176,6 @@
       "rescheduleFailed": "Không dời được lịch",
       "closedTodayAt": "Chi nhánh đóng cửa lúc {time} nên hôm nay không đặt được nữa — chọn từ ngày mai.",
       "closedToday": "Chi nhánh nghỉ hôm nay — chọn từ ngày mai."
-    },
-    "adminRefunds": {
-      "title": "Duyệt hoàn tiền vé",
-      "subtitle": "Chọn mức hoàn; số tiền do hệ thống tính để không lệch đồng nào.",
-      "empty": "Không có yêu cầu nào đang chờ",
-      "review": "Xem xét",
-      "dialogTitle": "Quyết định mức hoàn",
-      "customer": "Khách hàng",
-      "ticket": "Vé",
-      "paid": "Đã trả",
-      "usage": "Đã sử dụng",
-      "usageValue": "{elapsed}/{total} ngày (bắt đầu {start})",
-      "chooseMode": "Chọn cách hoàn",
-      "modeFull": "Hoàn toàn bộ",
-      "modeFullValue": "Khách nhận {amount}",
-      "modePartial": "Trừ {elapsed} ngày đã qua",
-      "modePartialValue": "Khách nhận {refund}, phòng gym giữ {retained}",
-      "cancelWarning": "Duyệt sẽ huỷ {count} buổi tập tương lai của vé này.",
-      "notePlaceholder": "Ghi chú quyết định (bắt buộc khi từ chối)",
-      "approve": "Duyệt hoàn",
-      "reject": "Từ chối",
-      "approved": "Đã duyệt hoàn tiền",
-      "rejected": "Đã từ chối yêu cầu"
     },
     "myTickets": {
       "title": "Vé của tôi",

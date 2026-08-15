@@ -8,8 +8,8 @@ import {
   LayoutDashboard, Users, ShieldCheck, Tag,
   FileText, ClipboardList, LogOut,
   Database,
-  ShieldAlert, Star, Banknote, Undo2, Percent, Flag, BellRing,
-  Landmark, MapPin,
+  ShieldAlert, Star, Banknote, Percent, Flag, BellRing,
+  Landmark,
 } from "lucide-react";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
@@ -39,7 +39,6 @@ const adminLinks = [
   // UC-070/071: báo cáo vấn đề dịch vụ/hành vi (ngoài review)
   { href: "/admin/issue-reports", navKey: "issueReports", icon: Flag, roles: ["ROLE_ADMIN", "ROLE_MODERATOR"] },
   { href: "/admin/withdrawals", navKey: "withdrawals", icon: Banknote, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
-  { href: "/admin/refunds", navKey: "refunds", icon: Undo2, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   // UC-053/056: tiền vào tài khoản nền tảng chưa gắn được vào booking
   { href: "/admin/payments", navKey: "reconciliation", icon: Landmark, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
   { href: "/admin/commission", navKey: "commission", icon: Percent, roles: ["ROLE_ADMIN", "ROLE_FINANCE_ADMIN"] },
@@ -50,8 +49,6 @@ const adminLinks = [
   // UC-075: template thông báo theo sự kiện
   { href: "/admin/notification-templates", navKey: "notifications", icon: BellRing, roles: ["ROLE_ADMIN"] },
   { href: "/admin/master-data", navKey: "masterData", icon: Database, roles: ["ROLE_ADMIN"] },
-  // UC-18 (V59/V60): gym thiếu toạ độ thì vô hình trong "tìm quanh đây" — cần chỗ nhìn thấy điều đó.
-  { href: "/admin/geocoding", navKey: "geocoding", icon: MapPin, roles: ["ROLE_ADMIN"] },
   { href: "/admin/audit-logs", navKey: "auditLogs", icon: ClipboardList, roles: ["ROLE_ADMIN"] },
 ] as const;
 
