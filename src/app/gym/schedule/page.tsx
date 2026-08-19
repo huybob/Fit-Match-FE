@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
  */
 export default function GymSchedulePage() {
   const t = useTranslations("gymSchedule");
+  const tTabs = useTranslations("gymSchedule.tabs");
   const [branchId, setBranchId] = useState<string>("");
 
   const { data: branches } = useQuery({
@@ -71,9 +72,9 @@ export default function GymSchedulePage() {
         ) : (
           <Tabs defaultValue="roster">
             <TabsList>
-              <TabsTrigger value="roster">{t("tabs.roster")}</TabsTrigger>
-              <TabsTrigger value="shifts">{t("tabs.shifts")}</TabsTrigger>
-              <TabsTrigger value="leave">{t("tabs.leave")}</TabsTrigger>
+              <TabsTrigger value="roster">{tTabs("roster")}</TabsTrigger>
+              <TabsTrigger value="shifts">{tTabs("shifts")}</TabsTrigger>
+              <TabsTrigger value="leave">{tTabs("leave")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="roster" className="pt-4">

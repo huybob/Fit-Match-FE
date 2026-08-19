@@ -48,6 +48,8 @@ interface LeaveRequestDialogProps {
  */
 export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogProps) {
   const t = useTranslations("ptLeave");
+  const tTypes = useTranslations("ptLeave.types");
+  const tScopes = useTranslations("ptLeave.scopes");
   const { toast } = useToast();
   const client = useQueryClient();
 
@@ -153,10 +155,10 @@ export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogPro
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LEAVE">{t("types.LEAVE")}</SelectItem>
-                  <SelectItem value="SICK">{t("types.SICK")}</SelectItem>
-                  <SelectItem value="BUSY">{t("types.BUSY")}</SelectItem>
-                  <SelectItem value="OTHER">{t("types.OTHER")}</SelectItem>
+                  <SelectItem value="LEAVE">{tTypes("LEAVE")}</SelectItem>
+                  <SelectItem value="SICK">{tTypes("SICK")}</SelectItem>
+                  <SelectItem value="BUSY">{tTypes("BUSY")}</SelectItem>
+                  <SelectItem value="OTHER">{tTypes("OTHER")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -168,9 +170,9 @@ export function LeaveRequestDialog({ open, onOpenChange }: LeaveRequestDialogPro
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="FULL_DAY">{t("scopes.FULL_DAY")}</SelectItem>
-                  <SelectItem value="SHIFT">{t("scopes.SHIFT")}</SelectItem>
-                  <SelectItem value="TIME_RANGE">{t("scopes.TIME_RANGE")}</SelectItem>
+                  <SelectItem value="FULL_DAY">{tScopes("FULL_DAY")}</SelectItem>
+                  <SelectItem value="SHIFT">{tScopes("SHIFT")}</SelectItem>
+                  <SelectItem value="TIME_RANGE">{tScopes("TIME_RANGE")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

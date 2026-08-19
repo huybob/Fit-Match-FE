@@ -5,6 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { formatCurrency } from "@/utils/format.util";
 import { ticketService } from "@/services/ticket.service";
 import { Button } from "@/shared/components/ui/button";
 import { ptAvailabilityKeys, ptCancellationKeys, sessionKeys } from "../query-keys";
@@ -75,7 +76,7 @@ export function PtCancellationBanner({
               </p>
               <p className="text-muted-foreground">
                 {canRefund
-                  ? t("choices", { amount: formatVnd(item.estimatedRefund ?? 0) })
+                  ? t("choices", { amount: formatCurrency(item.estimatedRefund ?? 0) })
                   : t("choicesNoRefund")}
               </p>
             </div>
@@ -104,8 +105,4 @@ export function PtCancellationBanner({
       })}
     </div>
   );
-}
-
-function formatVnd(amount: number) {
-  return new Intl.NumberFormat("vi-VN").format(amount);
 }

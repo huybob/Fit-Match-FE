@@ -2418,7 +2418,7 @@
   },
   "ptCancellation": {
     "headline": "Trainer {ptName} is on leave for the {date} session at {time}.",
-    "choices": "You can pick another trainer for this session, or take a {amount} VND refund of the trainer surcharge. The ticket still covers the whole day.",
+    "choices": "You can pick another trainer for this session, or take a {amount} refund of the trainer surcharge. The ticket still covers the whole day.",
     "choicesNoRefund": "You can pick another trainer for this session. Promotions covered the full ticket, so there is no refundable amount.",
     "pickReplacement": "Pick another trainer",
     "takeRefund": "Take the refund",

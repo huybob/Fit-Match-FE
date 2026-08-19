@@ -2418,7 +2418,7 @@
   },
   "ptCancellation": {
     "headline": "HLV {ptName} xin nghỉ buổi ngày {date} lúc {time}.",
-    "choices": "Bạn có thể chọn HLV khác cho buổi này, hoặc nhận hoàn {amount} đ phụ phí HLV. Vé vẫn dùng được cả ngày như bình thường.",
+    "choices": "Bạn có thể chọn HLV khác cho buổi này, hoặc nhận hoàn {amount} phụ phí HLV. Vé vẫn dùng được cả ngày như bình thường.",
     "choicesNoRefund": "Bạn có thể chọn HLV khác cho buổi này. Vé đã được ưu đãi phủ hết nên không phát sinh khoản hoàn.",
     "pickReplacement": "Chọn HLV khác",
     "takeRefund": "Nhận hoàn tiền",
