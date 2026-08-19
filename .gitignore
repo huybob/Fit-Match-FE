@@ -45,3 +45,6 @@ next-env.d.ts
 .codex
 .claude
 .agents
+
+# e2e runtime state (a0-setup ghi ra, không phải nguồn)
+e2e/.state.json
