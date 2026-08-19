@@ -160,9 +160,8 @@ export const gymService = {
   deletePtDoc: (ptId: number, docId: number) =>
     api.deleteRaw(`/gym/pts/${ptId}/documents/${docId}`),
 
-  // Lịch rảnh của PT KHÔNG còn ở đây: câu 26 chuyển sang khai theo ngày cụ thể
-  // và do chính PT quản lý (/api/pt/availability/daily → trang /trainer/availability).
-  // Chặn giờ cũng biến mất — bảng blocked_times bị drop ở V81, "bận" = không khai giờ.
+  // Lịch của PT không nằm ở service này: BE V85 chuyển quyền xếp lịch sang GYM,
+  // và toàn bộ ca / phân ca / đơn nghỉ nằm ở shiftService (services/shift.service.ts).
 
   /** UC-022 (B-16): phân công PT vào chi nhánh (câu 24 — đích duy nhất). */
   listPtAssignments: (ptId: number) =>

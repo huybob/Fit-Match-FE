@@ -6,9 +6,8 @@ import type {
   MarketplaceTicketTypeParams,
   MarketplaceTicketTypePage,
   PaymentOrder,
-  PtAvailabilitySaveResult,
-  PtAvailabilitySlot,
   PtSlotCell,
+  SessionPtCancellation,
   ScheduleTicketRequest,
   Ticket,
   TicketExpiryConfig,
@@ -43,7 +42,7 @@ export type TicketListParams = Partial<PaginationParams> & {
  * - Buổi tập:  /sessions/my, /sessions/{id}(/date|/pt|/check-in|/review)
  * - Tìm PT:    /pt-availability/search|grid
  * - Gym:       /gym/calendar, /gym/tickets, /gym/sessions/{id}/confirm-pt
- * - PT:        /pt/availability/daily, /pt/sessions
+ * - PT:        /pt/shifts, /pt/sessions, /pt/leave-requests
  * - Admin:     /admin/tickets, /admin/ticket-refunds, /admin/config/ticket-expiry
  */
 export const ticketService = {
@@ -192,17 +191,20 @@ export const ticketService = {
     ),
 
   // ---------------- PT ----------------
-  ptMySlots: (from: string, to: string) =>
-    api.get<PtAvailabilitySlot[]>("/pt/availability/daily", { params: { from, to } }),
-
-  ptSaveSlots: (from: string, to: string, slots: PtAvailabilitySlot[]) =>
-    api.put<PtAvailabilitySaveResult, { from: string; to: string; slots: PtAvailabilitySlot[] }>(
-      "/pt/availability/daily",
-      { from, to, slots },
-    ),
-
+  // BE V85: /pt/availability/daily (GET lẫn PUT) đã bị XOÁ HẲN — lịch do Gym xếp.
+  // PT đọc ca ở shiftService.myShifts và xin nghỉ ở shiftService.submitLeave.
   ptSessions: (from: string, to: string) =>
     api.get<TrainingSession[]>("/pt/sessions", { params: { from, to } }),
+
+  // ---------------- Buổi tập mất PT (BE §4.1) ----------------
+  myPtCancellations: () =>
+    api.get<SessionPtCancellation[]>("/sessions/pt-cancellations"),
+
+  refundPtCancellation: (sessionId: number) =>
+    api.post<SessionPtCancellation, Record<string, never>>(
+      `/sessions/${sessionId}/pt-cancellation/refund`,
+      {} as Record<string, never>,
+    ),
 
   // ---------------- Admin ----------------
   adminTickets: (

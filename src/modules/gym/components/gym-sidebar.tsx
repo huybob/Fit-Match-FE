@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
-  CalendarCheck2, DollarSign, Banknote, Settings, LogOut, Users, Package, Images,
+  CalendarCheck2, CalendarClock, DollarSign, Banknote, Settings, LogOut, Users, Package, Images,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,8 @@ const gymLinks = [
   { href: "/gym/branches", navKey: "branches", icon: GitBranch },
   { href: "/gym/media", navKey: "media", icon: Images },
   { href: "/gym/pts", navKey: "trainers", icon: Users },
+  // BE V85: Gym là chủ lịch của PT — khai ca, xếp ca, duyệt đơn nghỉ.
+  { href: "/gym/schedule", navKey: "shifts", icon: CalendarClock },
   { href: "/gym/services", navKey: "services", icon: Sparkles },
   { href: "/gym/packages", navKey: "packages", icon: Package },
   // Mô hình vé không còn "booking": lịch đặt của gym nằm ở /gym/calendar.

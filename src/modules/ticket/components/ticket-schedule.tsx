@@ -36,6 +36,7 @@ import {
 import { periodRange, plannedDays, todayIso } from "../calendar-date.util";
 import { CalendarBoard, type CalendarDayContext, type CalendarView } from "./calendar-board";
 import { DayComposer } from "./day-composer";
+import { PtCancellationBanner } from "./pt-cancellation-banner";
 import {
   SessionDetailDialog,
   SessionHoverCard,
@@ -403,6 +404,18 @@ export function TicketSchedulePage() {
           </p>
         </div>
       </div>
+
+      {/*
+        BE §4.1: buổi bị PT xin nghỉ vẫn nằm trên lịch (vé dùng được cả ngày),
+        nên phải nói rõ ở đầu trang thay vì để khách tự phát hiện ô mất tên HLV.
+      */}
+      <PtCancellationBanner
+        sessionIds={(sessions ?? []).map((session) => session.id)}
+        onPickReplacement={(sessionId) => {
+          const target = (sessions ?? []).find((session) => session.id === sessionId);
+          if (target) setDetailDate(target.sessionDate);
+        }}
+      />
 
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-3">
         {bookingTicket ? (

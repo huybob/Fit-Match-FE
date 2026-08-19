@@ -20,13 +20,23 @@ export const sessionKeys = {
   pt: (from: string, to: string) => [...sessionKeys.all, "pt", from, to] as const,
 };
 
+/**
+ * Lưới chọn PT của khách. Contract BE không đổi ở V85 (vẫn /pt-availability/*),
+ * chỉ nguồn dữ liệu đổi sang ca đã xếp — nên key giữ nguyên tên. `mine` bị bỏ
+ * vì PT không còn khai lịch (xem trainerKeys.shifts).
+ */
 export const ptAvailabilityKeys = {
   all: ["pt-availability"] as const,
-  mine: (from: string, to: string) => [...ptAvailabilityKeys.all, "mine", from, to] as const,
   grid: (branchId: number, from: string, to: string, ptId?: number) =>
     [...ptAvailabilityKeys.all, "grid", branchId, from, to, ptId ?? null] as const,
   search: (branchId: number, date: string, startTime: string) =>
     [...ptAvailabilityKeys.all, "search", branchId, date, startTime] as const,
+};
+
+/** Buổi tập mất PT, đang chờ khách quyết (BE §4.1). */
+export const ptCancellationKeys = {
+  all: ["pt-cancellations"] as const,
+  mine: () => [...ptCancellationKeys.all, "mine"] as const,
 };
 
 export const gymCalendarKeys = {

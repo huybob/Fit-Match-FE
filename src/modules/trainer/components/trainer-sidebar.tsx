@@ -11,7 +11,8 @@ import { roleLabelKey } from "@/shared/utils/enum-label.util";
 import { useTranslations } from "next-intl";
 
 // PTs are managed by their Gym; the PT workspace is a lean self-service
-// (profile + availability/blocked time + assigned bookings + reviews).
+// (profile + assigned shifts & leave requests + assigned bookings + reviews).
+// BE V85: PT no longer declares availability — the Gym rosters them into shifts.
 const ptLinks = [
   { href: "/trainer", navKey: "profile", icon: UserRound },
   { href: "/trainer/availability", navKey: "availability", icon: CalendarClock },

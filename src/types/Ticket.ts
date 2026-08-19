@@ -270,18 +270,26 @@ export interface PtSlotCell {
   taken: boolean;
 }
 
-export interface PtAvailabilitySlot {
-  date: string;
-  startTime: string;
-  endTime: string;
-}
+/**
+ * BE §4.1: buổi tập mất PT vì đơn nghỉ được duyệt. Buổi VẪN là SCHEDULED (vé có
+ * giá trị cả ngày), chỉ còn treo một quyết định của khách: chọn PT thay thế hay
+ * nhận hoàn phụ phí HLV của ngày đó.
+ */
+export type PtCancellationStatus = "PENDING_CUSTOMER" | "REPLACED" | "REFUNDED";
 
-export interface PtAvailabilitySaveResult {
-  saved: number;
-  daysWithSlots: number;
-  threshold: number;
-  /** null = đạt ngưỡng. Khác null thì hiện banner vàng, nút Lưu vẫn bật. */
-  warning?: string | null;
+export interface SessionPtCancellation {
+  id: number;
+  sessionId: number;
+  sessionDate: string;
+  formerPtProfileId?: number | null;
+  formerPtName?: string | null;
+  formerSlotStart?: string | null;
+  formerSlotEnd?: string | null;
+  status: PtCancellationStatus;
+  /** Số tiền sẽ hoàn nếu chọn hoàn; 0 = voucher/điểm đã phủ hết vé, chỉ còn đường đổi PT. */
+  estimatedRefund?: number | null;
+  refundAmount?: number | null;
+  resolvedAt?: string | null;
 }
 
 // ---------------------------------------------------------------------------

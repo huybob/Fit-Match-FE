@@ -656,7 +656,8 @@
       "bookings": "Đặt lịch",
       "revenue": "Doanh thu",
       "wallet": "Ví",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "shifts": "Lịch HLV"
     },
     "services": {
       "title": "Dịch vụ kèm vé",
@@ -1172,7 +1173,7 @@
   "trainer": {
     "nav": {
       "profile": "Hồ sơ của tôi",
-      "availability": "Lịch làm việc",
+      "availability": "Lịch ca",
       "bookings": "Buổi tập",
       "reviews": "Đánh giá"
     },
@@ -2244,15 +2245,183 @@
     "confirmHint": "Chỉ ghi nhận bằng chứng — không ảnh hưởng tiền hay trạng thái buổi tập.",
     "confirmSuccess": "Đã xác nhận buổi tập"
   },
-  "ptAvailability": {
-    "title": "Lịch rảnh của tôi",
-    "range": "Khai cho khoảng {from} → {to}",
-    "counter": "Đã khai {days}/{threshold} ngày",
-    "save": "Lưu lịch",
-    "saved": "Đã lưu {count} khung giờ",
-    "warningStillSaved": "Lịch vẫn được lưu và khách vẫn đặt được bạn.",
-    "addSlot": "Thêm khung",
-    "repeatWeekly": "Lặp cho các tuần sau",
-    "dayOff": "Nghỉ"
+  "ptShifts": {
+    "title": "Lịch ca của tôi",
+    "requestLeave": "Xin nghỉ / báo bận",
+    "readOnlyNotice": "Lịch ca do phòng gym xếp. Bạn không tự sửa được ở đây — nếu bận, hãy gửi đơn xin nghỉ để phòng gym duyệt.",
+    "noShift": "Không có ca",
+    "onLeave": "Đã duyệt nghỉ",
+    "booked": "{count} buổi đã đặt",
+    "summary": "{shifts} ca trong 4 tuần tới · {booked} buổi đã có khách",
+    "weekOff": "Không có ca",
+    "weekCount": "{count} ca"
+  },
+  "ptLeave": {
+    "title": "Gửi đơn xin nghỉ",
+    "needsApproval": "Đơn chỉ có hiệu lực sau khi phòng gym duyệt. Khung giờ của bạn vẫn nhận khách cho tới lúc đó.",
+    "type": "Loại",
+    "scope": "Phạm vi",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
+    "shifts": "Chọn ca",
+    "noShiftToPick": "Bạn chưa được xếp ca nào trong 4 tuần tới.",
+    "startTime": "Từ giờ",
+    "endTime": "Đến giờ",
+    "reason": "Lý do",
+    "reasonPlaceholder": "Mô tả rõ lý do để phòng gym duyệt nhanh hơn",
+    "reasonMin": "Lý do cần ít nhất {min} ký tự.",
+    "attachment": "Đính kèm (tuỳ chọn)",
+    "attachmentReady": "Đã tải tệp lên.",
+    "submit": "Gửi đơn",
+    "cancel": "Huỷ",
+    "submitted": "Đã gửi đơn xin nghỉ.",
+    "cancelled": "Đã huỷ đơn.",
+    "myRequests": "Đơn đã gửi",
+    "noRequests": "Bạn chưa gửi đơn nào.",
+    "period": "Thời gian",
+    "status": "Trạng thái",
+    "cancelRequest": "Huỷ đơn",
+    "types": {
+      "LEAVE": "Nghỉ phép",
+      "SICK": "Ốm",
+      "BUSY": "Bận việc riêng",
+      "OTHER": "Khác"
+    },
+    "scopes": {
+      "FULL_DAY": "Cả ngày",
+      "SHIFT": "Theo ca",
+      "TIME_RANGE": "Theo khoảng giờ"
+    },
+    "statuses": {
+      "PENDING": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Bị từ chối",
+      "CANCELLED": "Đã huỷ"
+    }
+  },
+  "gymSchedule": {
+    "title": "Lịch làm việc của HLV",
+    "subtitle": "Khai ca cho chi nhánh, xếp HLV vào ca và duyệt đơn xin nghỉ.",
+    "pickBranch": "Chọn chi nhánh",
+    "noBranch": "Chưa có chi nhánh nào. Tạo chi nhánh trước khi khai ca.",
+    "tabs": {
+      "roster": "Phân ca",
+      "shifts": "Ca làm việc",
+      "leave": "Đơn xin nghỉ"
+    }
+  },
+  "gymShifts": {
+    "title": "Ca làm việc của chi nhánh",
+    "subtitle": "Khách chỉ đặt được HLV trong các ca đang bật.",
+    "create": "Thêm ca",
+    "createTitle": "Thêm ca làm việc",
+    "editTitle": "Sửa ca làm việc",
+    "rulesHint": "Ca phải nằm trong giờ mở cửa của chi nhánh, không chồng giờ với ca khác, không vắt qua nửa đêm, và độ dài phải chia hết cho số phút mỗi slot.",
+    "empty": "Chi nhánh chưa có ca nào.",
+    "name": "Tên ca",
+    "namePlaceholder": "Ví dụ: Ca tối",
+    "hours": "Giờ",
+    "startTime": "Bắt đầu",
+    "endTime": "Kết thúc",
+    "slotMinutes": "Phút / slot",
+    "slotSummary": "{minutes} phút · {count} slot",
+    "days": "Áp dụng các thứ",
+    "status": "Trạng thái",
+    "active": "Đang bật",
+    "inactive": "Đã tắt",
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Huỷ",
+    "created": "Đã tạo ca.",
+    "updated": "Đã cập nhật ca.",
+    "deleted": "Đã xoá ca."
+  },
+  "gymRoster": {
+    "title": "Lưới phân ca",
+    "range": "Từ {from} đến {to}",
+    "empty": "Tuần này chưa xếp HLV nào vào ca.",
+    "trainer": "HLV",
+    "shift": "Ca",
+    "assign": "Xếp ca",
+    "assignTitle": "Xếp HLV vào ca",
+    "assignHint": "Chọn khoảng ngày khác nhau và các thứ để xếp lặp; để cùng một ngày là xếp lẻ. Thao tác lặp lại không tạo trùng.",
+    "pickTrainer": "Chọn HLV",
+    "pickShift": "Chọn ca",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày",
+    "repeatDays": "Lặp vào các thứ",
+    "repeatDaysHint": "Bỏ trống = mọi thứ mà ca đó áp dụng.",
+    "assigned": "Đã xếp {count} ngày.",
+    "assignResult": "Đã tạo {count} ngày làm việc.",
+    "skippedExisting": "{count} ngày đã có sẵn, không tạo thêm.",
+    "skippedClosed": "Bỏ qua vì chi nhánh đóng cửa: {dates}",
+    "skippedOverlap": "Bỏ qua vì HLV đã có ca chồng giờ: {detail}",
+    "remove": "Gỡ ca",
+    "removed": "Đã gỡ ca.",
+    "onLeave": "Nghỉ",
+    "booked": "{count} buổi",
+    "close": "Đóng",
+    "thisWeek": "Tuần này",
+    "legendShift": "Ca làm việc",
+    "legendLeave": "Đã duyệt nghỉ",
+    "emptyHint": "Xếp HLV vào ca để khách có thể đặt lịch với họ trong tuần này.",
+    "noShift": "Không có ca",
+    "summary": "{trainers} HLV · {shifts} ca · {booked} buổi đã đặt",
+    "summaryLeave": "{count} ca đang nghỉ"
+  },
+  "gymLeave": {
+    "title": "Đơn xin nghỉ của HLV",
+    "subtitle": "Đơn chỉ có hiệu lực sau khi bạn duyệt.",
+    "empty": "Không có đơn nào.",
+    "trainer": "HLV",
+    "period": "Thời gian",
+    "type": "Loại",
+    "scope": "Phạm vi",
+    "reason": "Lý do",
+    "status": "Trạng thái",
+    "attachment": "Tệp đính kèm",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "cancel": "Huỷ",
+    "approved": "Đã duyệt đơn.",
+    "rejected": "Đã từ chối đơn.",
+    "approveTitle": "Duyệt đơn xin nghỉ?",
+    "approveConsequence": "Khung giờ trong phạm vi đơn sẽ ngừng nhận khách. Buổi tập đã đặt KHÔNG bị huỷ: HLV được gỡ khỏi buổi và khách được chọn HLV thay thế hoặc nhận hoàn phụ phí HLV của ngày đó.",
+    "rejectTitle": "Từ chối đơn xin nghỉ",
+    "rejectHint": "HLV sẽ nhận được lý do này. Lịch ca giữ nguyên.",
+    "rejectPlaceholder": "Lý do từ chối (ít nhất 5 ký tự)",
+    "filterAll": "Tất cả",
+    "policyTitle": "Hạn mức đơn nghỉ mỗi tháng",
+    "policyHint": "Áp cho từng HLV, tính theo tháng của ngày bắt đầu nghỉ. Đơn bị từ chối hoặc HLV tự huỷ thì trả lại lượt.",
+    "policyEnabled": "Bật hạn mức",
+    "policyQuota": "Số đơn / tháng",
+    "policySave": "Lưu",
+    "policySaved": "Đã lưu hạn mức.",
+    "policyDisabled": "Đang tắt — HLV gửi bao nhiêu đơn cũng được.",
+    "types": {
+      "LEAVE": "Nghỉ phép",
+      "SICK": "Ốm",
+      "BUSY": "Bận việc riêng",
+      "OTHER": "Khác"
+    },
+    "scopes": {
+      "FULL_DAY": "Cả ngày",
+      "SHIFT": "Theo ca",
+      "TIME_RANGE": "Theo khoảng giờ"
+    },
+    "statuses": {
+      "PENDING": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Bị từ chối",
+      "CANCELLED": "Đã huỷ"
+    }
+  },
+  "ptCancellation": {
+    "headline": "HLV {ptName} xin nghỉ buổi ngày {date} lúc {time}.",
+    "choices": "Bạn có thể chọn HLV khác cho buổi này, hoặc nhận hoàn {amount} đ phụ phí HLV. Vé vẫn dùng được cả ngày như bình thường.",
+    "choicesNoRefund": "Bạn có thể chọn HLV khác cho buổi này. Vé đã được ưu đãi phủ hết nên không phát sinh khoản hoàn.",
+    "pickReplacement": "Chọn HLV khác",
+    "takeRefund": "Nhận hoàn tiền",
+    "refunded": "Đã hoàn phụ phí HLV vào ví của bạn."
   }
 }

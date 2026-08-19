@@ -22,6 +22,6 @@ export function useMyVerificationStatus() {
   });
 }
 
-// Lịch rảnh + thời gian chặn KHÔNG còn ở đây: câu 26 chuyển sang khai theo NGÀY
-// cụ thể. Màn hình là /trainer/availability, hook nằm ở modules/ticket
-// (useMyPtAvailability / useSaveMyPtAvailability).
+// BE V85: lịch PT do GYM xếp. Màn hình /trainer/availability giờ là "Lịch ca của
+// tôi" (read-only) + đơn xin nghỉ; dữ liệu lấy qua shiftService, không còn hook
+// khai lịch nào ở đây.

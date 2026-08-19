@@ -656,7 +656,8 @@
       "bookings": "Bookings",
       "revenue": "Revenue",
       "wallet": "Wallet",
-      "settings": "Settings"
+      "settings": "Settings",
+      "shifts": "Trainer schedule"
     },
     "services": {
       "title": "Ticket add-on services",
@@ -1172,7 +1173,7 @@
   "trainer": {
     "nav": {
       "profile": "My profile",
-      "availability": "Schedule",
+      "availability": "My shifts",
       "bookings": "Sessions",
       "reviews": "Reviews"
     },
@@ -2244,15 +2245,183 @@
     "confirmHint": "Records evidence only — does not affect money or session status.",
     "confirmSuccess": "Session confirmed"
   },
-  "ptAvailability": {
-    "title": "My availability",
-    "range": "Declaring {from} → {to}",
-    "counter": "{days}/{threshold} days declared",
-    "save": "Save schedule",
-    "saved": "Saved {count} slot(s)",
-    "warningStillSaved": "Your schedule is saved and clients can still book you.",
-    "addSlot": "Add slot",
-    "repeatWeekly": "Repeat for later weeks",
-    "dayOff": "Day off"
+  "ptShifts": {
+    "title": "My shifts",
+    "requestLeave": "Request leave",
+    "readOnlyNotice": "Your gym sets these shifts. You cannot edit them here — submit a leave request if you are unavailable.",
+    "noShift": "No shift",
+    "onLeave": "Leave approved",
+    "booked": "{count} booked",
+    "summary": "{shifts} shifts over the next 4 weeks · {booked} booked",
+    "weekOff": "No shift",
+    "weekCount": "{count} shifts"
+  },
+  "ptLeave": {
+    "title": "Submit a leave request",
+    "needsApproval": "The request only takes effect once your gym approves it. Your slots stay bookable until then.",
+    "type": "Type",
+    "scope": "Scope",
+    "fromDate": "From",
+    "toDate": "To",
+    "shifts": "Pick shifts",
+    "noShiftToPick": "You have no shift assigned in the next 4 weeks.",
+    "startTime": "From",
+    "endTime": "To",
+    "reason": "Reason",
+    "reasonPlaceholder": "Explain the reason so your gym can review it quickly",
+    "reasonMin": "The reason needs at least {min} characters.",
+    "attachment": "Attachment (optional)",
+    "attachmentReady": "File uploaded.",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "submitted": "Leave request submitted.",
+    "cancelled": "Request cancelled.",
+    "myRequests": "My requests",
+    "noRequests": "You have not submitted any request.",
+    "period": "Period",
+    "status": "Status",
+    "cancelRequest": "Cancel",
+    "types": {
+      "LEAVE": "Annual leave",
+      "SICK": "Sick",
+      "BUSY": "Personal",
+      "OTHER": "Other"
+    },
+    "scopes": {
+      "FULL_DAY": "Full day",
+      "SHIFT": "By shift",
+      "TIME_RANGE": "By time range"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "gymSchedule": {
+    "title": "Trainer schedule",
+    "subtitle": "Define shifts per branch, roster trainers into them, and review leave requests.",
+    "pickBranch": "Pick a branch",
+    "noBranch": "No branch yet. Create a branch before defining shifts.",
+    "tabs": {
+      "roster": "Roster",
+      "shifts": "Shifts",
+      "leave": "Leave requests"
+    }
+  },
+  "gymShifts": {
+    "title": "Branch shifts",
+    "subtitle": "Customers can only book trainers inside an active shift.",
+    "create": "Add shift",
+    "createTitle": "Add a shift",
+    "editTitle": "Edit shift",
+    "rulesHint": "A shift must fit inside the branch opening hours, must not overlap another shift, must not cross midnight, and its length must be divisible by the slot size.",
+    "empty": "This branch has no shift yet.",
+    "name": "Shift name",
+    "namePlaceholder": "e.g. Evening",
+    "hours": "Hours",
+    "startTime": "Start",
+    "endTime": "End",
+    "slotMinutes": "Minutes / slot",
+    "slotSummary": "{minutes} min · {count} slots",
+    "days": "Applies on",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Disabled",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "created": "Shift created.",
+    "updated": "Shift updated.",
+    "deleted": "Shift deleted."
+  },
+  "gymRoster": {
+    "title": "Shift roster",
+    "range": "From {from} to {to}",
+    "empty": "No trainer rostered this week.",
+    "trainer": "Trainer",
+    "shift": "Shift",
+    "assign": "Assign",
+    "assignTitle": "Roster a trainer into a shift",
+    "assignHint": "Pick a date range plus weekdays to repeat; keep the same date for a one-off. Repeating the action never creates duplicates.",
+    "pickTrainer": "Pick a trainer",
+    "pickShift": "Pick a shift",
+    "fromDate": "From",
+    "toDate": "To",
+    "repeatDays": "Repeat on",
+    "repeatDaysHint": "Leave empty to use every weekday the shift applies to.",
+    "assigned": "Rostered {count} day(s).",
+    "assignResult": "Created {count} working day(s).",
+    "skippedExisting": "{count} day(s) already existed and were left untouched.",
+    "skippedClosed": "Skipped because the branch is closed: {dates}",
+    "skippedOverlap": "Skipped because the trainer already has an overlapping shift: {detail}",
+    "remove": "Remove",
+    "removed": "Shift removed.",
+    "onLeave": "Leave",
+    "booked": "{count} booked",
+    "close": "Close",
+    "thisWeek": "This week",
+    "legendShift": "Shift",
+    "legendLeave": "On leave",
+    "emptyHint": "Roster trainers into shifts so customers can book them this week.",
+    "noShift": "No shift",
+    "summary": "{trainers} trainers · {shifts} shifts · {booked} booked",
+    "summaryLeave": "{count} on leave"
+  },
+  "gymLeave": {
+    "title": "Trainer leave requests",
+    "subtitle": "A request only takes effect once you approve it.",
+    "empty": "No request.",
+    "trainer": "Trainer",
+    "period": "Period",
+    "type": "Type",
+    "scope": "Scope",
+    "reason": "Reason",
+    "status": "Status",
+    "attachment": "Attachment",
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "approved": "Request approved.",
+    "rejected": "Request rejected.",
+    "approveTitle": "Approve this leave request?",
+    "approveConsequence": "Slots inside the request stop accepting bookings. Existing sessions are NOT cancelled: the trainer is detached and the customer chooses a replacement trainer or a refund of the trainer surcharge for that day.",
+    "rejectTitle": "Reject leave request",
+    "rejectHint": "The trainer will see this reason. Their roster stays unchanged.",
+    "rejectPlaceholder": "Reason for rejection (at least 5 characters)",
+    "filterAll": "All",
+    "policyTitle": "Monthly leave quota",
+    "policyHint": "Applies per trainer, counted by the month the leave starts. Rejected or self-cancelled requests give the slot back.",
+    "policyEnabled": "Enable quota",
+    "policyQuota": "Requests / month",
+    "policySave": "Save",
+    "policySaved": "Quota saved.",
+    "policyDisabled": "Disabled — trainers may submit any number of requests.",
+    "types": {
+      "LEAVE": "Annual leave",
+      "SICK": "Sick",
+      "BUSY": "Personal",
+      "OTHER": "Other"
+    },
+    "scopes": {
+      "FULL_DAY": "Full day",
+      "SHIFT": "By shift",
+      "TIME_RANGE": "By time range"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CANCELLED": "Cancelled"
+    }
+  },
+  "ptCancellation": {
+    "headline": "Trainer {ptName} is on leave for the {date} session at {time}.",
+    "choices": "You can pick another trainer for this session, or take a {amount} VND refund of the trainer surcharge. The ticket still covers the whole day.",
+    "choicesNoRefund": "You can pick another trainer for this session. Promotions covered the full ticket, so there is no refundable amount.",
+    "pickReplacement": "Pick another trainer",
+    "takeRefund": "Take the refund",
+    "refunded": "The trainer surcharge was refunded to your wallet."
   }
 }

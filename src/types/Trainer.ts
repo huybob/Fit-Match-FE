@@ -42,25 +42,6 @@ export interface TrainerServiceRequest {
   durationMinutes: number;
 }
 
-export interface Availability {
-  id?: number;
-  dayOfWeek?: number;
-  startTime?: string;
-  endTime?: string;
-  isRecurring?: boolean;
-  effectiveDate?: string;
-  [key: string]: unknown;
-}
-
-export interface AvailabilityRequest {
-  dayOfWeek?: number;
-  startTime: string;
-  endTime: string;
-  isRecurring?: boolean;
-  effectiveDate?: string;
-  [key: string]: unknown;
-}
-
 export interface Certificate {
   id?: number;
   name?: string;
@@ -103,7 +84,6 @@ export interface PartnershipActionRequest {
 }
 
 export type ServicePage = PageResponse<TrainerService>;
-export type AvailabilityPage = PageResponse<Availability>;
 export type CertificatePage = PageResponse<Certificate>;
 export type PartnershipPage = PageResponse<Partnership>;
 
@@ -151,33 +131,9 @@ export interface PtPublicPreview {
   reviewCount?: number;
 }
 
-/**
- * UC-028 (B-28): slot rảnh hằng tuần — dayOfWeek 1-7 (1 = Thứ 2) khớp BE,
- * KHÔNG phải 0-6 như schema cũ; PUT /pt/availability thay toàn bộ (replace-all).
- */
-export interface AvailabilitySlot {
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-}
-
-/** UC-029: khoảng thời gian chặn (PT hoặc chi nhánh). */
-export interface BlockedTime {
-  id?: number;
-  ptId?: number;
-  branchId?: number;
-  startAt: string;
-  endAt: string;
-  reason?: string;
-}
-
-export interface BlockedTimeInput {
-  ptId?: number;
-  branchId?: number;
-  startAt: string;
-  endAt: string;
-  reason?: string;
-}
+// BE V85: lịch PT do GYM xếp. AvailabilitySlot (lịch tuần) và BlockedTime của
+// các mô hình trước đã bị gỡ khỏi BE từ lâu — kiểu dữ liệu tương ứng nằm ở
+// types/Shift.ts (ca, phân ca, đơn nghỉ).
 
 /**
  * UC-022: phân công PT vào CHI NHÁNH. Câu 24 (BE V78) bỏ hẳn phân công theo

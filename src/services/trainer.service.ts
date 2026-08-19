@@ -17,7 +17,8 @@ export type {
  * Gói 2.D (audit 2026-07-17, A-13/B-26): file này từng khai ~20 endpoint KHÔNG tồn tại
  * ở BE (/pt/profile/me, /pt/services/*, /pt/availability/me*, /pt/certificates/*,
  * /pt/partnerships/* — mô hình PT độc lập cũ). Chỉ giữ contract thật:
- * PT do Gym tạo/quản lý (UC-019); PT tự sửa displayName+bio, tự quản lịch rảnh + blocked time.
+ * PT do Gym tạo/quản lý (UC-019); PT tự sửa displayName+bio. Lịch làm việc do GYM
+ * xếp từ BE V85 — xem services/shift.service.ts.
  */
 export const trainerService = {
   /** Preview hồ sơ public của chính PT — có id dùng cho trang reviews (A-3). */
@@ -35,8 +36,7 @@ export const trainerService = {
   listCertifications: () =>
     api.get<CertificationResponse[]>("/pt/certifications"),
 
-  // Lịch rảnh hằng tuần (/pt/availability) và thời gian chặn (/pt/blocked-times)
-  // đã bị gỡ khỏi BE: câu 26 chuyển sang khai theo NGÀY cụ thể qua
-  // /pt/availability/daily, và "bận" = không khai khung giờ cho ngày đó.
-  // Màn hình tương ứng là /trainer/availability (modules/ticket).
+  // BE V85: PT KHÔNG còn khai lịch dưới bất kỳ hình thức nào — Gym xếp ca.
+  // PT đọc ca của mình và gửi đơn xin nghỉ qua shiftService; màn hình tương ứng
+  // vẫn ở /trainer/availability (modules/trainer).
 };

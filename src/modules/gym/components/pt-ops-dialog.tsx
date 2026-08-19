@@ -26,8 +26,8 @@ type Tab = "assignments" | "performance";
 
 /*
  * Hai tab đã bị gỡ cùng mô hình booking:
- *  - "Lịch rảnh": lịch tuần dayOfWeek 1-7 không còn (câu 26 — PT khai theo NGÀY
- *    cụ thể), và gym không cấu hình hộ nữa; PT tự khai ở /trainer/availability.
+ *  - "Lịch rảnh": không còn khái niệm này. BE V85 đảo lại — GYM khai ca cho chi
+ *    nhánh và xếp PT vào ca ở /gym/schedule; PT chỉ xem và xin nghỉ.
  *  - "Chặn giờ": bảng blocked_times bị drop ở V81 — "bận" giờ đơn giản là không
  *    khai khung giờ cho ngày đó.
  * Cả hai vẫn gọi endpoint đã xoá và trả 404 cho tới khi bị gỡ ở đây.
