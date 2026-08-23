@@ -338,9 +338,32 @@ export function ConfirmStep({
   if (!quote) {
     return <p className="text-sm text-muted-foreground">{t("ticket.checkout.pickTicket")}</p>;
   }
+  /*
+   * `totalAmount` của BE là TỔNG: giá vé + phụ phí PT × số ngày + tiền dịch vụ.
+   * Trước đây dòng đầu in thẳng totalAmount dưới nhãn tên vé rồi liệt kê dịch vụ
+   * ngay bên dưới, nên bảng đọc ra thành "vé 11.000 + xông hơi 5.000" mà "Phải
+   * trả" vẫn 11.000 — trông đúng như cộng thiếu, dù số tiền thu vào là đúng.
+   *
+   * Ba khoản giờ do BE tách sẵn (TicketPriceCalculator.TicketPricing), FE chỉ in
+   * ra: không client nào chia lại tiền thì không có đường nào lệch với số server
+   * thu. Nhánh `??` chỉ để FE mới đứng trước BE cũ chưa có hai trường này —
+   * lúc đó gộp phụ phí PT vào dòng vé như trước, bảng vẫn cộng khớp.
+   */
+  const servicesAmount = quote.servicesAmount ?? 0;
+  const ptSurcharge = quote.ptSurchargeAmount ?? 0;
+  const ticketAmount = quote.baseAmount ?? (quote.totalAmount - servicesAmount - ptSurcharge);
+  const discounted = quote.voucherDiscount > 0 || quote.loyaltyDiscount > 0;
   return (
     <dl className="space-y-2 rounded-xl border p-4 text-sm">
-      <SummaryRow label={quote.ticketTypeName} value={formatCurrency(quote.totalAmount)} />
+      <SummaryRow label={quote.ticketTypeName} value={formatCurrency(ticketAmount)} />
+      {/* Phụ phí PT tính theo NGÀY (câu 6) nên vé gói đội lên nhiều so với giá
+          niêm yết — ghi rõ nhân bao nhiêu ngày thay vì để khách tự đoán. */}
+      {ptSurcharge > 0 ? (
+        <SummaryRow
+          label={t("ticket.checkout.ptSurcharge", { days: quote.dayCount })}
+          value={`+ ${formatCurrency(ptSurcharge)}`}
+        />
+      ) : null}
       {/* Dòng dịch vụ lấy nguyên từ quote — không tra lại giá ở FE. */}
       {quote.services?.map((line) => (
         <SummaryRow
@@ -350,6 +373,14 @@ export function ConfirmStep({
           muted
         />
       ))}
+      {/* Có giảm giá thì mốc "tạm tính" cho thấy voucher/điểm trừ trên số nào;
+          không có giảm giá thì nó trùng hệt "Phải trả" nên bỏ đi cho gọn. */}
+      {discounted && (servicesAmount > 0 || ptSurcharge > 0) ? (
+        <SummaryRow
+          label={t("ticket.checkout.subtotal")}
+          value={formatCurrency(quote.totalAmount)}
+        />
+      ) : null}
       {quote.voucherDiscount > 0 ? (
         <SummaryRow
           label={t("ticket.checkout.voucherDiscount")}

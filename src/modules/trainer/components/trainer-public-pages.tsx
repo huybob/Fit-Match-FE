@@ -220,6 +220,7 @@ export function TrainersDirectoryPage() {
                     pt={pt}
                     favorite={pt.id != null && ids.has(pt.id)}
                     canFavorite={isCustomer}
+                    canBook={isCustomer}
                     favoriteBusy={toggle.isPending}
                     onToggleFavorite={() =>
                       pt.id != null && toggle.mutate({ id: pt.id, fav: ids.has(pt.id) })
@@ -261,12 +262,15 @@ function TrainerCard({
   pt,
   favorite,
   canFavorite,
+  canBook,
   favoriteBusy,
   onToggleFavorite,
 }: {
   pt: PtPublicProfile;
   favorite: boolean;
   canFavorite: boolean;
+  /** Chỉ khách hàng mua được vé; gym/PT/khách vãng lai chỉ xem. */
+  canBook: boolean;
   favoriteBusy: boolean;
   onToggleFavorite: () => void;
 }) {
@@ -305,9 +309,27 @@ function TrainerCard({
         </div>
       }
       footer={
-        <Button asChild className="h-10 w-full">
-          <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
-        </Button>
+        /* "Đặt lịch" ngay trên card: muốn đặt thì không phải mở trang chi tiết
+           rồi bấm thêm một nút nữa. Không có gym thì không có vé để mua, lúc đó
+           "Xem chi tiết" chiếm cả hàng như trước.
+           Card không có `branches` (API danh sách không trả) nên đi bằng gymId —
+           `ptId` để chính popup mua vé tự hỏi hồ sơ PT rồi thu hẹp chi nhánh. */
+        canBook && pt.gymId != null ? (
+          <div className="flex w-full gap-2">
+            <Button asChild variant="outline" className="h-10 flex-1">
+              <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
+            </Button>
+            <Button asChild className="h-10 flex-1">
+              <Link href={`/checkout?gymId=${pt.gymId}&withPt=1&ptId=${pt.id}`}>
+                <CalendarCheck className="size-4" /> {t("marketplace.book")}
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <Button asChild className="h-10 w-full">
+            <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
+          </Button>
+        )
       }
     >
       <div>
@@ -378,6 +400,25 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
   const pt = query.data;
   const certCount = pt.certifications?.length ?? 0;
   const fav = pt.id != null && ids.has(pt.id);
+
+  /*
+   * Vé gắn CHI NHÁNH, PT chỉ dạy ở chi nhánh mình được phân công. Mua vé sai chi
+   * nhánh là không bao giờ gặp được PT này ở bước xếp lịch — mà lúc đó tiền đã
+   * trả. Nên nút đặt lịch phải nhắm sẵn chi nhánh: PT chỉ ở một chi nhánh thì đi
+   * thẳng vào đó (`branchId=`), nhiều chi nhánh thì để popup mua vé hỏi và nó sẽ
+   * chỉ liệt kê chi nhánh của PT này (nhờ `ptId=`).
+   *
+   * `branches` chỉ có ở BE mới: undefined = không biết, vẫn cho đặt như trước
+   * (popup hỏi chi nhánh của cả gym); mảng rỗng = biết chắc PT không còn chi
+   * nhánh nào đang hoạt động, lúc đó nút đặt lịch chỉ dẫn khách vào chỗ chết.
+   */
+  const branchesKnown = Array.isArray(pt.branches);
+  const ptBranches = (pt.branches ?? []).filter((branch) => branch.id != null);
+  const onlyBranchId = ptBranches.length === 1 ? ptBranches[0].id : undefined;
+  const bookable = !branchesKnown || ptBranches.length > 0;
+  const bookHref = onlyBranchId
+    ? `/checkout?branchId=${onlyBranchId}&withPt=1&ptId=${pt.id}`
+    : `/checkout?gymId=${pt.gymId}&withPt=1&ptId=${pt.id}`;
 
   return (
     <SiteLayout>
@@ -503,17 +544,43 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                     </dd>
                   </div>
                 )}
+                {/* Chi nhánh PT dạy: khách biết TRƯỚC khi mua là phải tới đâu. */}
+                {ptBranches.length > 0 && (
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="shrink-0 text-muted-foreground">{t("marketplace.trainsAt")}</dt>
+                    <dd className="text-right font-semibold text-foreground">
+                      {ptBranches.map((branch) => branch.name).filter(Boolean).join(", ")}
+                    </dd>
+                  </div>
+                )}
               </dl>
-              {/* Không còn "đặt lịch thẳng với PT": trong mô hình vé, khách mua vé
-                  của phòng gym trước rồi mới chọn PT ở bước xếp lịch. Nút này đưa
-                  sang trang gym để mua vé có PT. Chỉ khách hàng mới mua được. */}
+              {/* Bấm "Đặt lịch" là vào NGAY luồng mua vé — trước đây nút này đổ về
+                  trang gym, khách phải tìm rồi bấm "Đặt lịch" lần thứ hai mới thật
+                  sự bắt đầu.
+                  `withPt=1` bật sẵn phụ phí PT (vé không có phụ phí thì bước đó tự
+                  tắt), `ptId=` để popup mua vé thu hẹp chi nhánh về đúng chi nhánh
+                  PT này dạy và cảnh báo trước nếu PT chưa có khung giờ nào.
+                  Chỉ khách hàng mới mua được vé. */}
               {isCustomer && pt.id != null && pt.gymId != null && (
-                <Link
-                  href={`/gyms/${pt.gymId}`}
-                  className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <CalendarCheck className="size-4" /> {t("marketplace.bookWithTrainer")}
-                </Link>
+                bookable ? (
+                  <>
+                    <Link
+                      href={bookHref}
+                      className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      <CalendarCheck className="size-4" /> {t("marketplace.bookWithTrainer")}
+                    </Link>
+                    <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">
+                      {t("marketplace.bookWithTrainerHint")}
+                    </p>
+                  </>
+                ) : (
+                  /* Không còn chi nhánh nào đang hoạt động: nút đặt lịch lúc này
+                     chỉ dẫn khách tới một popup không có gì để chọn. */
+                  <p className="mt-4 rounded-lg border border-warning/30 bg-warning-muted px-3 py-2 text-xs font-semibold text-warning">
+                    {t("marketplace.trainerNotBookable")}
+                  </p>
+                )
               )}
               {/* Bug 3: nút điều hướng sang phòng gym để đăng ký PT thuận tiện. */}
               {pt.gymId != null && (

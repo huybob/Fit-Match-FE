@@ -92,7 +92,16 @@ export function TicketSchedulePage() {
   const [ticketId, setTicketId] = useState(preselected);
   const [view, setView] = useState<CalendarView>("month");
   const [anchor, setAnchor] = useState(todayIso());
-  const [ptFilter, setPtFilter] = useState<string>(NO_PT);
+  /*
+   * `?ptId=` — khách đi từ nút "Đặt lịch với PT này" ở trang PT, qua popup mua vé
+   * rồi tới đây. Lọc sẵn đúng PT đó: đi cả một luồng vì một người mà tới bước
+   * cuối lại phải tự tìm lại tên người đó trong danh sách là hỏng mất chủ ý.
+   * Vẫn là state bình thường — khách đổi sang PT khác hoặc bỏ lọc được ngay.
+   */
+  const intendedPtId = Number(params.get("ptId") ?? 0);
+  const [ptFilter, setPtFilter] = useState<string>(
+    intendedPtId > 0 ? String(intendedPtId) : NO_PT,
+  );
   /*
    * `?ticketId=` cũng là mặc định của bộ lọc chứ không chỉ của chế độ đặt: nút
    * "Xem lịch" ở màn Vé của tôi trỏ tới đúng một vé, mở ra lịch của MỌI vé là
@@ -164,6 +173,23 @@ export function TicketSchedulePage() {
     return [...map].map(([id, name]) => ({ id, name }));
   }, [cells]);
 
+  /*
+   * PT đang lọc mà không có mặt trong kỳ đang xem thì coi như không lọc: để
+   * nguyên sẽ ra đúng cái bẫy của bộ lọc vé bên dưới — Select "có value nhưng
+   * không có option", ô hiện rỗng còn lịch thì trắng trơn, không dấu hiệu nào
+   * cho biết vì sao. Xảy ra ngay khi vào bằng `?ptId=` của một PT chưa được xếp
+   * ca, hoặc khi khách lật sang tháng mà PT đó không có ca nào.
+   */
+  const ptFilterListed = ptOptions.some((option) => String(option.id) === ptFilter);
+  const activePtFilter = ptFilterListed ? ptFilter : NO_PT;
+  /** Đến vì PT này mà cả kỳ không có khung nào — phải nói ra, không im lặng bỏ lọc. */
+  const intendedPtMissing =
+    booking
+    && intendedPtId > 0
+    && ptFilter === String(intendedPtId)
+    && !ptFilterListed
+    && !cellsLoading;
+
   /** Khung rảnh theo ngày của PT đang lọc — nguồn cho chip trong ô lịch. */
   const slotsByDate = useMemo(() => {
     const map = new Map<string, { count: number; times: string[] }>();
@@ -171,14 +197,14 @@ export function TicketSchedulePage() {
       if (cell.taken) continue;
       const entry = map.get(cell.date) ?? { count: 0, times: [] };
       entry.count += 1;
-      if (ptFilter !== NO_PT && cell.ptProfileId === Number(ptFilter)) {
+      if (activePtFilter !== NO_PT && cell.ptProfileId === Number(activePtFilter)) {
         entry.times.push(cell.startTime.slice(0, 5));
       }
       map.set(cell.date, entry);
     }
     for (const entry of map.values()) entry.times.sort();
     return map;
-  }, [cells, ptFilter]);
+  }, [cells, activePtFilter]);
 
   /** Vé đã có buổi để xem — nguồn của bộ lọc vé ở chế độ xem. */
   const filterableTickets = useMemo(
@@ -347,7 +373,7 @@ export function TicketSchedulePage() {
           </span>
         ) : null}
 
-        {ptFilter !== NO_PT && slots?.times.length ? (
+        {activePtFilter !== NO_PT && slots?.times.length ? (
           <>
             {slots.times.slice(0, 3).map((time) => (
               <span
@@ -367,7 +393,7 @@ export function TicketSchedulePage() {
 
         {/* Chưa lọc PT thì chỉ đếm — đổ hết chip của mọi PT vào ô tháng sẽ
             thành một bãi không đọc được. */}
-        {ptFilter === NO_PT && slots?.count ? (
+        {activePtFilter === NO_PT && slots?.count ? (
           <span className="text-[10px] text-muted-foreground">
             {t("slotCount", { count: slots.count })}
           </span>
@@ -447,7 +473,7 @@ export function TicketSchedulePage() {
                 <label className="ml-2 flex items-center gap-1.5 text-sm font-medium">
                   <UserRound className="size-4" /> {t("ptFilter")}
                 </label>
-                <Select value={ptFilter} onValueChange={setPtFilter}>
+                <Select value={activePtFilter} onValueChange={setPtFilter}>
                   <SelectTrigger className="h-9 w-56">
                     <SelectValue placeholder={t("ptFilterNone")} />
                   </SelectTrigger>
@@ -485,6 +511,15 @@ export function TicketSchedulePage() {
             {!bookableToday ? (
               <p className="w-full text-xs text-muted-foreground">
                 {closeTime ? t("closedTodayAt", { time: closeTime }) : t("closedToday")}
+              </p>
+            ) : null}
+
+            {/* Đi từ trang một PT nhưng PT đó không có khung nào trong kỳ đang
+                xem: nói thẳng, vì bộ lọc vừa tự nhả về "không lọc" và nếu im
+                lặng thì khách tưởng hệ thống bỏ qua lựa chọn của mình. */}
+            {intendedPtMissing ? (
+              <p className="w-full rounded-lg border border-warning/30 bg-warning-muted px-3 py-2 text-xs font-semibold text-warning">
+                {t("intendedPtNoSlot")}
               </p>
             ) : null}
           </>
@@ -614,6 +649,9 @@ export function TicketSchedulePage() {
           branchId={bookingTicket.gymBranchId}
           date={openDay}
           dayIndex={dayIndexOf.get(openDay) ?? 1}
+          /* PT đang lọc (thường là PT khách đi từ trang cá nhân) lên đầu hộp
+             thoại — đỡ phải tìm lại tên đó cho từng ngày của vé gói. */
+          preferredPtId={Number(activePtFilter) || intendedPtId}
           selected={dayPts[dayIndexOf.get(openDay) ?? 1] ?? null}
           onSelect={(sel) =>
             setDayPts((prev) => ({ ...prev, [dayIndexOf.get(openDay) ?? 1]: sel }))

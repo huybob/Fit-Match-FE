@@ -143,7 +143,15 @@ export interface TicketQuote {
   ticketTypeName: string;
   dayCount: number;
   withPt: boolean;
+  /** = baseAmount + ptSurchargeAmount + servicesAmount, chưa trừ giảm giá. */
   totalAmount: number;
+  /**
+   * Tiền của riêng tấm vé (chưa phụ phí PT, chưa dịch vụ). Optional vì BE cũ hơn
+   * chưa trả — ConfirmStep có nhánh suy ra để bảng kê vẫn cộng khớp.
+   */
+  baseAmount?: number | null;
+  /** Phụ phí PT của cả vé, BE đã nhân số ngày. 0 = không chọn PT. */
+  ptSurchargeAmount?: number | null;
   /** V82: tổng tiền dịch vụ, đã nằm trong totalAmount. */
   servicesAmount?: number | null;
   services?: TicketQuoteServiceLine[] | null;

@@ -21,6 +21,12 @@ interface DayComposerProps {
   onClear: () => void;
   onClose: () => void;
   loadingCells?: boolean;
+  /**
+   * PT khách đang nhắm tới (đi từ nút "Đặt lịch với PT này"). Chỉ ĐƯA LÊN ĐẦU,
+   * không lọc bỏ những người khác: PT đó kín ngày này thì khách vẫn cần thấy
+   * người thay thế ngay tại đây, chứ không phải một hộp thoại trống.
+   */
+  preferredPtId?: number;
 }
 
 /**
@@ -41,6 +47,7 @@ export function DayComposer({
   onSelect,
   onClear,
   onClose,
+  preferredPtId = 0,
 }: DayComposerProps) {
   const t = useTranslations("ticket.schedule");
   const [direction, setDirection] = useState<Direction>("byPt");
@@ -65,8 +72,11 @@ export function DayComposer({
       entry.cells.push(cell);
       map.set(cell.ptProfileId, entry);
     }
-    return [...map].map(([id, value]) => ({ id, ...value }));
-  }, [free]);
+    return [...map]
+      .map(([id, value]) => ({ id, ...value }))
+      // PT khách đang nhắm lên đầu; phần còn lại giữ nguyên thứ tự của server.
+      .sort((a, b) => Number(b.id === preferredPtId) - Number(a.id === preferredPtId));
+  }, [free, preferredPtId]);
 
   const { data: atTime, isLoading: timeLoading } = usePtSlotSearch(
     branchId,
@@ -128,8 +138,19 @@ export function DayComposer({
         ) : direction === "byPt" ? (
           <ul className="space-y-2">
             {byPt.map((pt) => (
-              <li key={pt.id} className="rounded-md border border-border p-3">
-                <p className="text-sm font-semibold">{pt.name}</p>
+              <li
+                key={pt.id}
+                className={cn(
+                  "rounded-md border p-3",
+                  pt.id === preferredPtId ? "border-primary/60 bg-primary/5" : "border-border",
+                )}
+              >
+                <p className="flex items-center gap-2 text-sm font-semibold">
+                  {pt.name}
+                  {pt.id === preferredPtId ? (
+                    <Badge variant="outline">{t("preferredPt")}</Badge>
+                  ) : null}
+                </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {pt.cells.map((cell) => {
                     const active =

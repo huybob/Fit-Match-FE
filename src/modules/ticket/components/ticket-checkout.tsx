@@ -19,10 +19,12 @@ import { marketplaceService } from "@/services/marketplace.service";
 import {
   useBranchServices,
   useBranchTicketTypes,
+  usePtSlotGrid,
   usePurchaseTicket,
   useTicketPayment,
   useTicketQuote,
 } from "../hooks/use-ticket";
+import { addDays, todayIso } from "../calendar-date.util";
 import {
   ConfirmStep,
   PromoStep,
@@ -36,6 +38,23 @@ import {
 import type { TicketQuoteRequest, TicketType } from "@/types/Ticket";
 
 /**
+ * Cửa sổ kiểm tra khung giờ của PT trước khi bán vé có PT. 30 ngày: dài hơn thì
+ * "có khung" không còn nghĩa gì với vé ngày, ngắn hơn thì vé gói dài bị báo động
+ * oan vì gym mới xếp ca cho vài tuần tới.
+ */
+const PT_SLOT_LOOKAHEAD_DAYS = 30;
+
+/**
+ * Đường sang trang xếp lịch sau khi vé đã dùng được. `ptId` chỉ đi kèm khi khách
+ * đến vì đúng PT đó VÀ vé thật sự có PT — trang xếp lịch dùng nó để lọc sẵn PT,
+ * gắn bừa vào vé không PT thì trang kia lọc theo một người không liên quan.
+ */
+function scheduleHref(ticketId: number, ptId: number) {
+  const pt = ptId > 0 ? `&ptId=${ptId}` : "";
+  return `/schedule?ticketId=${ticketId}&mode=book${pt}`;
+}
+
+/**
  * Mua vé — popup từng bước (V82): loại vé -> huấn luyện viên -> dịch vụ kèm ->
  * ưu đãi -> xác nhận. Bước PT và bước dịch vụ tự ẩn khi chi nhánh không có.
  *
@@ -45,8 +64,12 @@ import type { TicketQuoteRequest, TicketType } from "@/types/Ticket";
  *
  * <p>Hai đường vào: {@code ?branchId=} khi khách đã chọn đúng chi nhánh (thẻ vé
  * ở trang gym, trang Gói tập), hoặc {@code ?gymId=} từ nút "Đặt lịch" của trang
- * gym — lúc đó popup tự hỏi chi nhánh trước. Vé BẮT BUỘC gắn chi nhánh nên
- * không có đường nào bỏ qua bước này; gym chỉ có một chi nhánh thì chọn hộ luôn.
+ * gym và trang PT — lúc đó popup tự hỏi chi nhánh trước. Vé BẮT BUỘC gắn chi
+ * nhánh nên không có đường nào bỏ qua bước này; gym chỉ có một chi nhánh thì
+ * chọn hộ luôn.
+ *
+ * <p>{@code ?withPt=1} bật sẵn lựa chọn tập cùng PT — đường vào từ trang PT đã
+ * nói lên ý định đó rồi. Khách vẫn tắt lại được ở bước "Huấn luyện viên".
  */
 export function TicketCheckoutPage() {
   const t = useTranslations("ticket.checkout");
@@ -61,10 +84,22 @@ export function TicketCheckoutPage() {
   // tôi). Trước đây tham số này bị bỏ qua nên link đó rơi vào trạng thái rỗng
   // "Chưa chọn chi nhánh" và không có cách nào trả tiếp cho vé đã mua.
   const pendingTicketId = Number(params.get("ticketId") ?? 0);
+  // Vào từ nút "Đặt lịch với PT này" ở trang PT: ý định tập cùng PT đã rõ, bật
+  // sẵn để khách không phải tự tìm công tắc. Vé chọn ra không có phụ phí PT thì
+  // selectType() tắt lại — cờ này chỉ là giá trị khởi tạo.
+  const wantsPt = params.get("withPt") === "1";
+  /*
+   * `?ptId=` — khách đến từ trang của MỘT PT cụ thể. Vé vẫn là vé của chi nhánh
+   * (mô hình vé không ghim PT vào vé), nhưng biết PT nào thì làm được hai việc
+   * mà trước đây khách phải tự mò: chỉ hỏi những chi nhánh PT đó dạy, và cảnh
+   * báo TRƯỚC KHI TRẢ TIỀN nếu PT đó chưa có khung giờ nào. Sau khi mua thì
+   * chuyển tiếp sang trang xếp lịch để lọc sẵn đúng PT.
+   */
+  const intendedPtId = Number(params.get("ptId") ?? 0);
 
   const [pickedBranchId, setPickedBranchId] = useState(preselectedBranchId);
   const [ticketTypeId, setTicketTypeId] = useState(preselectedTypeId);
-  const [withPt, setWithPt] = useState(false);
+  const [withPt, setWithPt] = useState(wantsPt);
   const [serviceIds, setServiceIds] = useState<number[]>([]);
   const [voucherInput, setVoucherInput] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState("");
@@ -82,8 +117,26 @@ export function TicketCheckoutPage() {
     queryFn: () => marketplaceService.getGymBranches(gymId),
     enabled: gymId > 0 && !preselectedBranchId,
   });
+  /*
+   * Đến từ trang một PT: hồ sơ PT nói PT đó phụ trách chi nhánh nào. Cùng một
+   * query key với trang PT nên thường có sẵn trong cache, không tốn thêm vòng.
+   */
+  const { data: intendedPt, isLoading: intendedPtLoading } = useQuery({
+    queryKey: ["marketplace", "pt", intendedPtId],
+    queryFn: () => marketplaceService.getPt(intendedPtId),
+    enabled: intendedPtId > 0,
+  });
+  /*
+   * Chỉ hỏi những chi nhánh PT đó thật sự dạy — chi nhánh khác của gym là lựa
+   * chọn sai 100%: mua xong sẽ không thấy PT này trong lưới xếp lịch. `branches`
+   * chưa có (BE cũ) thì giữ nguyên danh sách đầy đủ như trước.
+   */
+  const ptBranchIds = intendedPt?.branches?.map((branch) => branch.id) ?? null;
+  const branchChoices = ptBranchIds?.length
+    ? (gymBranches ?? []).filter((branch) => ptBranchIds.includes(branch.id))
+    : (gymBranches ?? []);
   // Gym một chi nhánh thì không bắt khách chọn một danh sách chỉ có một dòng.
-  const onlyBranchId = gymBranches?.length === 1 ? gymBranches[0].id ?? 0 : 0;
+  const onlyBranchId = branchChoices.length === 1 ? branchChoices[0].id ?? 0 : 0;
   const branchId = pickedBranchId || onlyBranchId;
 
   const { data: types, isLoading: typesLoading } = useBranchTicketTypes(branchId);
@@ -93,25 +146,57 @@ export function TicketCheckoutPage() {
   // ROLE_CUSTOMER nên gọi /loyalty luôn hợp lệ.
   const { data: loyalty } = useLoyaltyBalance();
 
+  const selectedType = types?.find((type) => type.id === ticketTypeId);
+  /*
+   * Vé không có phụ phí PT thì "tập cùng PT" không tồn tại: bước đó bị ẩn khỏi
+   * wizard nên khách không thể tắt, mà BE lại lưu withPt=true với phụ phí null —
+   * vé ghi "có PT" nhưng gym không thu đồng nào. selectType() đã tắt hộ khi khách
+   * tự chọn vé; chốt thêm ở đây vì ?withPt=1 có thể đi kèm ?ticketTypeId= sẵn.
+   */
+  const withPtEffective = withPt && Boolean(selectedType?.ptSurchargePerDay);
+
+  /*
+   * Đến vì MỘT PT cụ thể và đang định trả phụ phí PT: hỏi lưới khung giờ của
+   * đúng PT đó trước khi khách bấm mua. Phụ phí PT nhân theo từng ngày của vé,
+   * nên "mua rồi mới biết PT chưa có ca nào" là mất tiền thật — chính kịch bản
+   * BUG-02 trong báo cáo test 20/08 (lưới rỗng ở mọi chi nhánh vì gym chưa khai
+   * ca). Chỉ hỏi khi đã chọn loại vé có phụ phí PT, nên không tốn vòng gọi nào
+   * ở bước đầu.
+   */
+  const slotFrom = todayIso();
+  const ptSlots = usePtSlotGrid(
+    branchId,
+    slotFrom,
+    addDays(slotFrom, PT_SLOT_LOOKAHEAD_DAYS),
+    intendedPtId,
+    intendedPtId > 0 && branchId > 0 && withPtEffective,
+  );
+  /*
+   * CHỈ kết luận khi truy vấn thành công: lỗi mạng hay 409 (PT không thuộc chi
+   * nhánh, do URL gõ tay) mà cũng báo "chưa có khung giờ" thì lời cảnh báo sai
+   * còn tệ hơn không có.
+   */
+  const intendedPtHasNoSlot =
+    ptSlots.isSuccess && !(ptSlots.data ?? []).some((cell) => !cell.taken);
+
   const quotePayload = useMemo<TicketQuoteRequest | null>(
     () =>
       branchId && ticketTypeId
         ? {
             branchId,
             ticketTypeId,
-            withPt,
+            withPt: withPtEffective,
             voucherCode: appliedVoucher || undefined,
             useLoyaltyPoints,
             serviceIds: serviceIds.length ? serviceIds : undefined,
           }
         : null,
-    [branchId, ticketTypeId, withPt, appliedVoucher, useLoyaltyPoints, serviceIds],
+    [branchId, ticketTypeId, withPtEffective, appliedVoucher, useLoyaltyPoints, serviceIds],
   );
 
   const { data: quote, isFetching: quoting } = useTicketQuote(quotePayload);
   const purchase = usePurchaseTicket();
 
-  const selectedType = types?.find((type) => type.id === ticketTypeId);
   const steps = useWizardSteps(selectedType, branchServices);
   // Bỏ bước giữa chừng (vd đổi sang vé không có PT) làm chỉ số hiện tại vượt
   // mảng — kẹp lại thay vì để render ra bước undefined.
@@ -126,7 +211,10 @@ export function TicketCheckoutPage() {
   if (payingTicketId) {
     return (
       <Dialog open title={t("scanToPay")} onClose={() => router.push("/profile/tickets")}>
-        <TicketPaymentPanel ticketId={payingTicketId} />
+        <TicketPaymentPanel
+          ticketId={payingTicketId}
+          ptId={withPtEffective ? intendedPtId : 0}
+        />
       </Dialog>
     );
   }
@@ -137,15 +225,21 @@ export function TicketCheckoutPage() {
     if (gymId > 0) {
       return (
         <Dialog open title={t("title")} onClose={() => router.back()}>
-          {branchesLoading ? (
+          {/* Chờ cả hồ sơ PT: hiện tạm danh sách đầy đủ rồi mới co lại là đủ để
+              khách bấm nhầm một chi nhánh PT đó không dạy. */}
+          {branchesLoading || intendedPtLoading ? (
             <LoadingSkeleton />
-          ) : !gymBranches?.length ? (
+          ) : !branchChoices.length ? (
             <EmptyState title={t("noBranch")} description={t("noBranchHint")} />
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t("pickBranchHint")}</p>
+              <p className="text-sm text-muted-foreground">
+                {ptBranchIds?.length
+                  ? t("pickBranchOfPtHint", { name: intendedPt?.displayName ?? "" })
+                  : t("pickBranchHint")}
+              </p>
               <ul className="space-y-2">
-                {gymBranches.map((branch) => (
+                {branchChoices.map((branch) => (
                   <li key={branch.id}>
                     <button
                       type="button"
@@ -197,7 +291,7 @@ export function TicketCheckoutPage() {
         toast({ type: "success", title: t("activatedImmediately") });
         // mode=book: vé vừa kích hoạt thì việc tiếp theo là chọn ngày, mở thẳng
         // chế độ đặt lịch thay vì để khách bấm thêm một nút nữa.
-        router.push(`/schedule?ticketId=${result.ticket.id}&mode=book`);
+        router.push(scheduleHref(result.ticket.id, withPtEffective ? intendedPtId : 0));
         return;
       }
       setPurchasedTicketId(result.ticket.id);
@@ -221,6 +315,21 @@ export function TicketCheckoutPage() {
   return (
     <Dialog open title={t("title")} onClose={() => router.back()}>
       <StepIndicator steps={steps} current={currentStep} />
+
+      {/*
+        Hiện ở MỌI bước, không chỉ bước chọn PT: đây là lý do để khách dừng lại
+        trước khi trả phụ phí PT, mà bước xác nhận mới là chỗ họ bấm trả tiền.
+        Chỉ nổi lên đúng tình huống xấu (đến vì một PT mà PT đó chưa có khung giờ
+        nào), nên không phải là một dòng nhiễu thường trực.
+      */}
+      {intendedPtHasNoSlot ? (
+        <p className="mb-4 rounded-xl border border-warning/30 bg-warning-muted px-3 py-2 text-xs font-semibold text-warning">
+          {t("ptNoSlotWarning", {
+            name: intendedPt?.displayName ?? "",
+            days: PT_SLOT_LOOKAHEAD_DAYS,
+          })}
+        </p>
+      ) : null}
 
       {currentStep === "type" && (
         <TypeStep types={types} value={ticketTypeId} onChange={selectType} />
@@ -282,7 +391,7 @@ const DEAD_ORDER_LABEL = {
  * Bước QR bên trong popup mua vé — poll 5s tới khi webhook Casso xác nhận
  * (`useTicketPayment` tự dừng poll khi khác PENDING), rồi mở luôn lối sang đặt lịch.
  */
-function TicketPaymentPanel({ ticketId }: { ticketId: number }) {
+function TicketPaymentPanel({ ticketId, ptId = 0 }: { ticketId: number; ptId?: number }) {
   const t = useTranslations("ticket.checkout");
   const router = useRouter();
   const fmt = useFormatters();
@@ -301,7 +410,7 @@ function TicketPaymentPanel({ ticketId }: { ticketId: number }) {
         <p>{t("paidHint")}</p>
         <Button
           className="w-full"
-          onClick={() => router.push(`/schedule?ticketId=${ticketId}&mode=book`)}
+          onClick={() => router.push(scheduleHref(ticketId, ptId))}
         >
           {t("goSchedule")}
         </Button>

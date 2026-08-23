@@ -1134,6 +1134,7 @@
     "rating": "Rating",
     "viewTrainerGym": "View the trainer’s gym",
     "bookWithTrainer": "Book with this trainer",
+    "bookWithTrainerHint": "The ticket belongs to this trainer’s gym. You pick this trainer at the session scheduling step.",
     "weeklySchedule": "Weekly schedule",
     "noSchedule": "This trainer has not published a schedule. You can still book — the gym will confirm the slot.",
     "dayOff": "Off",
@@ -1168,7 +1169,9 @@
     },
     "compareMax": "Compare up to {max} items",
     "applyFilters": "Apply filters",
-    "facilities": "Facilities"
+    "facilities": "Facilities",
+    "trainsAt": "Trains at",
+    "trainerNotBookable": "This trainer is not taking bookings at any active branch right now."
   },
   "trainer": {
     "nav": {
@@ -2078,6 +2081,8 @@
       "voucherDiscount": "Voucher discount",
       "loyaltyDiscount": "Discount from {points} points",
       "payable": "Amount due",
+      "ptSurcharge": "PT surcharge × {days} days",
+      "subtotal": "Subtotal",
       "fullyCovered": "Points and voucher cover everything — the ticket activates immediately, no transfer needed.",
       "pickTicket": "Pick a ticket to see the price",
       "buy": "Buy ticket",
@@ -2098,7 +2103,9 @@
         "CANCELLED": "Order cancelled",
         "FAILED": "Payment failed"
       },
-      "pickBranchHint": "Pick the branch you want to train at — a ticket is always tied to one branch."
+      "pickBranchHint": "Pick the branch you want to train at — a ticket is always tied to one branch.",
+      "pickBranchOfPtHint": "Pick a branch — only the branches {name} works at are listed, because a ticket is tied to one branch.",
+      "ptNoSlotWarning": "{name} has no time slots in the next {days} days at this branch. Buying a with-PT ticket now means picking a different trainer at the scheduling step."
     },
     "schedule": {
       "title": "Pick training days",
@@ -2179,7 +2186,9 @@
       "rescheduled": "Session rescheduled",
       "rescheduleFailed": "Could not reschedule",
       "closedTodayAt": "The branch closes at {time}, so today is no longer bookable — pick tomorrow or later.",
-      "closedToday": "The branch is closed today — pick tomorrow or later."
+      "closedToday": "The branch is closed today — pick tomorrow or later.",
+      "intendedPtNoSlot": "Your chosen trainer has no slots in this period — the calendar is showing every trainer instead. Try another month or pick a different trainer.",
+      "preferredPt": "Your pick"
     },
     "myTickets": {
       "title": "My tickets",
