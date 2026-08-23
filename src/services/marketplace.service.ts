@@ -55,6 +55,12 @@ export interface PtPublicProfile {
   /** Phòng gym quản lý PT — điều hướng sang trang gym. */
   gymId?: number;
   gymName?: string;
+  /**
+   * Chi nhánh PT phụ trách. CHỈ có ở API chi tiết (`getPt`), danh sách tìm kiếm
+   * không trả. Vé gắn chi nhánh nên đây là thứ quyết định mua vé ở đâu mới gặp
+   * được PT này.
+   */
+  branches?: Array<{ id?: number; name?: string }>;
   /** Bug 14: badge "Xác thực" data-driven (PT ACTIVE thuộc gym đã duyệt). */
   verified?: boolean;
 }

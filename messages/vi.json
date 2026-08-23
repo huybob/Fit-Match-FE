@@ -1169,7 +1169,9 @@
     },
     "compareMax": "So sánh tối đa {max} mục",
     "applyFilters": "Áp dụng bộ lọc",
-    "facilities": "Cơ sở vật chất"
+    "facilities": "Cơ sở vật chất",
+    "trainsAt": "Dạy tại",
+    "trainerNotBookable": "HLV này hiện chưa nhận lịch ở chi nhánh nào đang hoạt động."
   },
   "trainer": {
     "nav": {
@@ -2079,8 +2081,8 @@
       "voucherDiscount": "Giảm theo voucher",
       "loyaltyDiscount": "Giảm bằng {points} điểm",
       "payable": "Phải trả",
-    "ptSurcharge": "Phụ phí PT × {days} ngày",
-    "subtotal": "Tạm tính",
+      "ptSurcharge": "Phụ phí PT × {days} ngày",
+      "subtotal": "Tạm tính",
       "fullyCovered": "Điểm và voucher đã phủ hết — vé kích hoạt ngay, không cần chuyển khoản.",
       "pickTicket": "Chọn một loại vé để xem giá",
       "buy": "Mua vé",
@@ -2101,7 +2103,9 @@
         "CANCELLED": "Đơn đã huỷ",
         "FAILED": "Thanh toán thất bại"
       },
-      "pickBranchHint": "Chọn chi nhánh bạn muốn tập — vé luôn gắn với một chi nhánh cụ thể."
+      "pickBranchHint": "Chọn chi nhánh bạn muốn tập — vé luôn gắn với một chi nhánh cụ thể.",
+      "pickBranchOfPtHint": "Chọn chi nhánh — chỉ hiện những chi nhánh {name} phụ trách, vì vé gắn với một chi nhánh cụ thể.",
+      "ptNoSlotWarning": "{name} chưa có khung giờ nào trong {days} ngày tới ở chi nhánh này. Mua vé có PT bây giờ thì bạn sẽ phải chọn HLV khác ở bước xếp lịch."
     },
     "schedule": {
       "title": "Chọn ngày tập",
@@ -2182,7 +2186,9 @@
       "rescheduled": "Đã dời lịch tập",
       "rescheduleFailed": "Không dời được lịch",
       "closedTodayAt": "Chi nhánh đóng cửa lúc {time} nên hôm nay không đặt được nữa — chọn từ ngày mai.",
-      "closedToday": "Chi nhánh nghỉ hôm nay — chọn từ ngày mai."
+      "closedToday": "Chi nhánh nghỉ hôm nay — chọn từ ngày mai.",
+      "intendedPtNoSlot": "HLV bạn chọn không có khung giờ nào trong kỳ này — lịch đang hiện khung của tất cả HLV. Thử lật sang tháng khác hoặc chọn HLV khác.",
+      "preferredPt": "HLV bạn chọn"
     },
     "myTickets": {
       "title": "Vé của tôi",
