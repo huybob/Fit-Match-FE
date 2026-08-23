@@ -220,6 +220,7 @@ export function TrainersDirectoryPage() {
                     pt={pt}
                     favorite={pt.id != null && ids.has(pt.id)}
                     canFavorite={isCustomer}
+                    canBook={isCustomer}
                     favoriteBusy={toggle.isPending}
                     onToggleFavorite={() =>
                       pt.id != null && toggle.mutate({ id: pt.id, fav: ids.has(pt.id) })
@@ -261,12 +262,15 @@ function TrainerCard({
   pt,
   favorite,
   canFavorite,
+  canBook,
   favoriteBusy,
   onToggleFavorite,
 }: {
   pt: PtPublicProfile;
   favorite: boolean;
   canFavorite: boolean;
+  /** Chỉ khách hàng mua được vé; gym/PT/khách vãng lai chỉ xem. */
+  canBook: boolean;
   favoriteBusy: boolean;
   onToggleFavorite: () => void;
 }) {
@@ -305,9 +309,25 @@ function TrainerCard({
         </div>
       }
       footer={
-        <Button asChild className="h-10 w-full">
-          <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
-        </Button>
+        /* "Đặt lịch" ngay trên card: muốn đặt thì không phải mở trang chi tiết
+           rồi bấm thêm một nút nữa. Không có gym thì không có vé để mua, lúc đó
+           "Xem chi tiết" chiếm cả hàng như trước. */
+        canBook && pt.gymId != null ? (
+          <div className="flex w-full gap-2">
+            <Button asChild variant="outline" className="h-10 flex-1">
+              <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
+            </Button>
+            <Button asChild className="h-10 flex-1">
+              <Link href={`/checkout?gymId=${pt.gymId}&withPt=1`}>
+                <CalendarCheck className="size-4" /> {t("marketplace.book")}
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <Button asChild className="h-10 w-full">
+            <Link href={`/trainers/${pt.id}`}>{t("common.actions.viewDetail")}</Link>
+          </Button>
+        )
       }
     >
       <div>
@@ -504,16 +524,25 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
                   </div>
                 )}
               </dl>
-              {/* Không còn "đặt lịch thẳng với PT": trong mô hình vé, khách mua vé
-                  của phòng gym trước rồi mới chọn PT ở bước xếp lịch. Nút này đưa
-                  sang trang gym để mua vé có PT. Chỉ khách hàng mới mua được. */}
+              {/* Bấm "Đặt lịch" là vào NGAY luồng mua vé (popup /checkout tự hỏi
+                  chi nhánh trước) — trước đây nút này đổ về trang gym, khách phải
+                  tìm rồi bấm "Đặt lịch" lần thứ hai mới thật sự bắt đầu.
+                  `withPt=1`: vào từ trang PT thì mặc định là muốn tập có PT, bật
+                  sẵn phụ phí; vé không có phụ phí PT thì bước đó tự tắt.
+                  Vé của mô hình này gắn với PHÒNG GYM, PT cụ thể chọn ở bước xếp
+                  lịch — nói rõ bằng dòng chú thích dưới nút. Chỉ khách mua được. */}
               {isCustomer && pt.id != null && pt.gymId != null && (
-                <Link
-                  href={`/gyms/${pt.gymId}`}
-                  className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <CalendarCheck className="size-4" /> {t("marketplace.bookWithTrainer")}
-                </Link>
+                <>
+                  <Link
+                    href={`/checkout?gymId=${pt.gymId}&withPt=1`}
+                    className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <CalendarCheck className="size-4" /> {t("marketplace.bookWithTrainer")}
+                  </Link>
+                  <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">
+                    {t("marketplace.bookWithTrainerHint")}
+                  </p>
+                </>
               )}
               {/* Bug 3: nút điều hướng sang phòng gym để đăng ký PT thuận tiện. */}
               {pt.gymId != null && (

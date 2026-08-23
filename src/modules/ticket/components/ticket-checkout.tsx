@@ -45,8 +45,12 @@ import type { TicketQuoteRequest, TicketType } from "@/types/Ticket";
  *
  * <p>Hai đường vào: {@code ?branchId=} khi khách đã chọn đúng chi nhánh (thẻ vé
  * ở trang gym, trang Gói tập), hoặc {@code ?gymId=} từ nút "Đặt lịch" của trang
- * gym — lúc đó popup tự hỏi chi nhánh trước. Vé BẮT BUỘC gắn chi nhánh nên
- * không có đường nào bỏ qua bước này; gym chỉ có một chi nhánh thì chọn hộ luôn.
+ * gym và trang PT — lúc đó popup tự hỏi chi nhánh trước. Vé BẮT BUỘC gắn chi
+ * nhánh nên không có đường nào bỏ qua bước này; gym chỉ có một chi nhánh thì
+ * chọn hộ luôn.
+ *
+ * <p>{@code ?withPt=1} bật sẵn lựa chọn tập cùng PT — đường vào từ trang PT đã
+ * nói lên ý định đó rồi. Khách vẫn tắt lại được ở bước "Huấn luyện viên".
  */
 export function TicketCheckoutPage() {
   const t = useTranslations("ticket.checkout");
@@ -61,10 +65,14 @@ export function TicketCheckoutPage() {
   // tôi). Trước đây tham số này bị bỏ qua nên link đó rơi vào trạng thái rỗng
   // "Chưa chọn chi nhánh" và không có cách nào trả tiếp cho vé đã mua.
   const pendingTicketId = Number(params.get("ticketId") ?? 0);
+  // Vào từ nút "Đặt lịch với PT này" ở trang PT: ý định tập cùng PT đã rõ, bật
+  // sẵn để khách không phải tự tìm công tắc. Vé chọn ra không có phụ phí PT thì
+  // selectType() tắt lại — cờ này chỉ là giá trị khởi tạo.
+  const wantsPt = params.get("withPt") === "1";
 
   const [pickedBranchId, setPickedBranchId] = useState(preselectedBranchId);
   const [ticketTypeId, setTicketTypeId] = useState(preselectedTypeId);
-  const [withPt, setWithPt] = useState(false);
+  const [withPt, setWithPt] = useState(wantsPt);
   const [serviceIds, setServiceIds] = useState<number[]>([]);
   const [voucherInput, setVoucherInput] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState("");
@@ -93,25 +101,33 @@ export function TicketCheckoutPage() {
   // ROLE_CUSTOMER nên gọi /loyalty luôn hợp lệ.
   const { data: loyalty } = useLoyaltyBalance();
 
+  const selectedType = types?.find((type) => type.id === ticketTypeId);
+  /*
+   * Vé không có phụ phí PT thì "tập cùng PT" không tồn tại: bước đó bị ẩn khỏi
+   * wizard nên khách không thể tắt, mà BE lại lưu withPt=true với phụ phí null —
+   * vé ghi "có PT" nhưng gym không thu đồng nào. selectType() đã tắt hộ khi khách
+   * tự chọn vé; chốt thêm ở đây vì ?withPt=1 có thể đi kèm ?ticketTypeId= sẵn.
+   */
+  const withPtEffective = withPt && Boolean(selectedType?.ptSurchargePerDay);
+
   const quotePayload = useMemo<TicketQuoteRequest | null>(
     () =>
       branchId && ticketTypeId
         ? {
             branchId,
             ticketTypeId,
-            withPt,
+            withPt: withPtEffective,
             voucherCode: appliedVoucher || undefined,
             useLoyaltyPoints,
             serviceIds: serviceIds.length ? serviceIds : undefined,
           }
         : null,
-    [branchId, ticketTypeId, withPt, appliedVoucher, useLoyaltyPoints, serviceIds],
+    [branchId, ticketTypeId, withPtEffective, appliedVoucher, useLoyaltyPoints, serviceIds],
   );
 
   const { data: quote, isFetching: quoting } = useTicketQuote(quotePayload);
   const purchase = usePurchaseTicket();
 
-  const selectedType = types?.find((type) => type.id === ticketTypeId);
   const steps = useWizardSteps(selectedType, branchServices);
   // Bỏ bước giữa chừng (vd đổi sang vé không có PT) làm chỉ số hiện tại vượt
   // mảng — kẹp lại thay vì để render ra bước undefined.
