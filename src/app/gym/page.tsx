@@ -88,7 +88,9 @@ export default function GymDashboardPage() {
                 )}
               </div>
             </div>
-            <Link href="/gym/tickets"
+            {/* Nhãn hứa "quản lý đặt lịch" thì phải về lịch đặt. Href cũ
+                /gym/tickets không có trang nào — nút chính của dashboard cho 404. */}
+            <Link href="/gym/calendar"
               className="flex items-center gap-2 h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold rounded-xl transition-colors shadow-md shadow-primary/20">
               <Plus className="size-4" /> {t("gym.dashboard.manageBookings")}
             </Link>
@@ -177,9 +179,12 @@ export default function GymDashboardPage() {
                   ))}
                 </ul>
               )}
-              <Link href="/gym/bookings" className="mt-4 inline-block text-xs font-semibold text-primary hover:underline">
-                {t("gym.dashboard.viewAll")}
-              </Link>
+              {/* Không có "Xem tất cả": thẻ này liệt kê VÉ ĐÃ BÁN mà chưa có
+                  trang danh sách vé của gym. Href cũ /gym/bookings là route của
+                  mô hình booking đã xoá (404), còn /gym/calendar thì mở lịch buổi
+                  tập — bấm "xem tất cả vé" ra lịch là sai nội dung. Khi nào dựng
+                  /gym/tickets (API GET /api/gym/tickets đã có, phân trang sẵn)
+                  thì trả link về đây. */}
             </section>
           </div>
         </div>
