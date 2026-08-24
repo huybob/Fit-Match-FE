@@ -1730,7 +1730,13 @@
     "reviewNumber": "Đánh giá #{id}",
     "publicTitle": "Đánh giá từ khách hàng",
     "publicEmptyHint": "Hãy là người đầu tiên đánh giá sau khi hoàn thành buổi tập.",
-    "showMore": "Xem thêm {count} đánh giá"
+    "showMore": "Xem thêm {count} đánh giá",
+    "createGymTitle": "Đánh giá phòng gym",
+    "createPtTitle": "Đánh giá huấn luyện viên",
+    "createGymSubject": "Bạn đang đánh giá {name} sau khi dùng hết vé.",
+    "createPtSubject": "Bạn đang đánh giá HLV {name} cho buổi tập ngày {date}.",
+    "created": "Đã gửi đánh giá",
+    "submit": "Gửi đánh giá"
   },
   "auth": {
     "back": "← Quay lại",
@@ -2188,7 +2194,9 @@
       "closedTodayAt": "Chi nhánh đóng cửa lúc {time} nên hôm nay không đặt được nữa — chọn từ ngày mai.",
       "closedToday": "Chi nhánh nghỉ hôm nay — chọn từ ngày mai.",
       "intendedPtNoSlot": "HLV bạn chọn không có khung giờ nào trong kỳ này — lịch đang hiện khung của tất cả HLV. Thử lật sang tháng khác hoặc chọn HLV khác.",
-      "preferredPt": "HLV bạn chọn"
+      "preferredPt": "HLV bạn chọn",
+      "reviewPt": "Đánh giá HLV",
+      "ptReviewed": "Đã đánh giá HLV"
     },
     "myTickets": {
       "title": "Vé của tôi",
@@ -2197,7 +2205,10 @@
         "all": "Tất cả",
         "pendingPayment": "Chờ thanh toán",
         "active": "Đang dùng",
-        "usedUp": "Đã dùng hết"
+        "usedUp": "Đã dùng hết",
+        "expired": "Hết hạn",
+        "cancelled": "Đã huỷ",
+        "refunded": "Đã hoàn tiền"
       },
       "empty": "Chưa có vé nào",
       "emptyHint": "Mua vé ở trang phòng gym hoặc trang Gói tập để bắt đầu.",
@@ -2220,7 +2231,9 @@
         "openedHint": "Theo dõi và gửi bằng chứng ở mục Tranh chấp / Khiếu nại.",
         "daysLeft": "{days, plural, =0 {hôm nay là ngày cuối để mở tranh chấp} other {còn # ngày để mở tranh chấp}}",
         "windowClosed": "đã hết hạn mở tranh chấp ({date})"
-      }
+      },
+      "createdAt": "Tạo {date}",
+      "reviewed": "Đã đánh giá"
     }
   },
   "gymCalendar": {

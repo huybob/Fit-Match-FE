@@ -8,6 +8,14 @@ import {
   ReviewRequest,
 } from "@/services/review.service";
 import { reviewKeys } from "../query-keys";
+import { ticketService } from "@/services/ticket.service";
+import { ticketKeys } from "@/modules/ticket/query-keys";
+
+/** Đầu vào tạo đánh giá — kind quyết định endpoint và id đi kèm. */
+export type CreateReviewInput = { rating: number; comment?: string; mediaIds?: number[] } & (
+  | { kind: "gym"; ticketId: number }
+  | { kind: "pt"; sessionId: number }
+);
 
 const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
   c.invalidateQueries({ queryKey: reviewKeys.all });
@@ -33,6 +41,49 @@ export function useSaveReview() {
       reviewService.update(id, payload),
     onSuccess: refresh(c),
   });
+}
+
+/**
+ * Tạo đánh giá. Hai mốc mở khác nhau nên hai đường khác nhau (câu 17 + 36):
+ * phòng gym chấm theo VÉ khi đã dùng hết, HLV chấm theo BUỔI khi buổi đó xong.
+ * Đối tượng đi trong đường dẫn nên endpoint nằm ở ticketService.
+ *
+ * Invalidate cả `tickets`: nút "Đánh giá" trên vé và trên buổi tập ẩn đi dựa
+ * vào danh sách đánh giá của chính khách, không refresh thì nút vẫn mời lần hai
+ * rồi nhận 409 "đã được đánh giá".
+ */
+export function useCreateReview() {
+  const c = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateReviewInput) =>
+      input.kind === "gym"
+        ? ticketService.reviewGym(input.ticketId, input.rating, input.comment, input.mediaIds)
+        : ticketService.reviewPt(input.sessionId, input.rating, input.comment, input.mediaIds),
+    onSuccess: () => {
+      c.invalidateQueries({ queryKey: reviewKeys.all });
+      c.invalidateQueries({ queryKey: ticketKeys.all });
+    },
+  });
+}
+
+/**
+ * Vé / buổi tập đã đánh giá rồi — nguồn để ẩn nút mời đánh giá.
+ *
+ * BE chặn bằng existsByTicket_Id / existsBySession_Id nên mọi trạng thái đánh
+ * giá đều tính, kể cả cái đã bị kiểm duyệt gỡ; danh sách này lấy từ
+ * /reviews/me nên khớp đúng luật đó. Xin size lớn vì số đánh giá của một khách
+ * bị chặn trên bởi số vé và số buổi họ đã tập.
+ */
+export function useMyReviewedTargets() {
+  const query = useQuery({
+    queryKey: reviewKeys.list("customer-reviewed"),
+    queryFn: () => reviewService.getMine({ size: 200 }),
+  });
+  const items = query.data?.content ?? [];
+  return {
+    ticketIds: new Set(items.filter((r) => r.ticketId != null).map((r) => r.ticketId!)),
+    sessionIds: new Set(items.filter((r) => r.sessionId != null).map((r) => r.sessionId!)),
+  };
 }
 
 export function useDeleteReview() {

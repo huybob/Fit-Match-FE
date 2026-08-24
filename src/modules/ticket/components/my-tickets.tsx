@@ -21,7 +21,10 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { cn } from "@/shared/utils/cn.util";
 import { daysUntil } from "../calendar-date.util";
 import { toErrorMessage } from "@/shared/utils/error.util";
+import { useFormatters } from "@/i18n/use-formatters";
 import { useMyDisputes } from "@/modules/dispute/hooks/use-dispute";
+import { ReviewCreateDialog } from "@/modules/review/components/review-create-dialog";
+import { useMyReviewedTargets } from "@/modules/review/hooks/use-review";
 import { useMyTickets, useOpenTicketDispute } from "../hooks/use-ticket";
 import type { Dispute } from "@/types/Dispute";
 import type { Ticket, TicketStatus } from "@/types/Ticket";
@@ -38,6 +41,11 @@ const FILTERS = [
   { value: "PENDING_PAYMENT", labelKey: "ticket.myTickets.filter.pendingPayment" },
   { value: "ACTIVE", labelKey: "ticket.myTickets.filter.active" },
   { value: "USED_UP", labelKey: "ticket.myTickets.filter.usedUp" },
+  // Ba trạng thái cuối vòng đời vé: trước đây chỉ tìm được qua "Tất cả", nên
+  // khách có mươi vé cũ phải cuộn cả danh sách để tìm một vé đã hoàn tiền.
+  { value: "EXPIRED", labelKey: "ticket.myTickets.filter.expired" },
+  { value: "CANCELLED", labelKey: "ticket.myTickets.filter.cancelled" },
+  { value: "REFUNDED", labelKey: "ticket.myTickets.filter.refunded" },
 ] as const satisfies ReadonlyArray<{ value: "" | TicketStatus; labelKey: string }>;
 
 /**
@@ -71,6 +79,13 @@ export function MyTicketsPage() {
    * lối vào tranh chấp đã có. Không có nó thì bấm lần hai chỉ nhận về lỗi 409
    * "Vé này đang có một tranh chấp chưa được giải quyết".
    */
+  /*
+   * Vé nào đã đánh giá rồi — nút "Đánh giá phòng gym" phải biến thành lối vào
+   * đánh giá đã có, chứ không mời lần hai rồi để BE trả 409 "Vé này đã được
+   * đánh giá".
+   */
+  const reviewed = useMyReviewedTargets();
+
   const disputes = useMyDisputes();
   const openByTicket = useMemo(() => {
     const map = new Map<number, Dispute>();
@@ -118,6 +133,7 @@ export function MyTicketsPage() {
               key={ticket.id}
               ticket={ticket}
               openDispute={openByTicket.get(ticket.id)}
+              reviewed={reviewed.ticketIds.has(ticket.id)}
             />
           ))}
         </ul>
@@ -126,11 +142,22 @@ export function MyTicketsPage() {
   );
 }
 
-function TicketRow({ ticket, openDispute }: { ticket: Ticket; openDispute?: Dispute }) {
+function TicketRow({
+  ticket,
+  openDispute,
+  reviewed,
+}: {
+  ticket: Ticket;
+  openDispute?: Dispute;
+  /** Vé này đã có đánh giá phòng gym (mọi trạng thái — BE chặn theo vé). */
+  reviewed: boolean;
+}) {
   const t = useTranslations("ticket.myTickets");
   const tStatus = useTranslations("common.ticketStatus");
   const tDispute = useTranslations("ticket.myTickets.dispute");
+  const fmt = useFormatters();
   const [disputeOpen, setDisputeOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   const scheduled = ticket.scheduledDays ?? 0;
   const needsScheduling = ticket.status === "ACTIVE" && scheduled < ticket.dayCount;
@@ -162,6 +189,14 @@ function TicketRow({ ticket, openDispute }: { ticket: Ticket; openDispute?: Disp
           {t("scheduledOf", { done: scheduled, total: ticket.dayCount })}
           {ticket.expiresAt ? ` · ${t("expiresAt", { date: ticket.expiresAt.slice(0, 10) })}` : ""}
         </p>
+        {/* Danh sách sắp theo ngày tạo (mới nhất trước) thì phải in ngày ra —
+            không có nó thì thứ tự trông như tuỳ hứng. Dùng createdAt chứ không
+            phải purchasedAt: vé chờ thanh toán chưa có purchasedAt. */}
+        {ticket.createdAt ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("createdAt", { date: fmt.dateTime(ticket.createdAt) })}
+          </p>
+        ) : null}
         {disputableStatus && daysLeftToDispute != null ? (
           <p className="mt-1 text-xs text-muted-foreground">
             {disputeWindowClosed
@@ -201,13 +236,24 @@ function TicketRow({ ticket, openDispute }: { ticket: Ticket; openDispute?: Disp
           </Button>
         ) : null}
 
+        {/* Câu 17: đánh giá phòng gym mở khi vé đã DÙNG HẾT. Trước đây nút này
+            chỉ dẫn sang /profile/reviews — trang đó chỉ SỬA đánh giá đã có, nên
+            khách không có đường nào tạo cái đầu tiên. Giờ mở form tại chỗ; đã
+            đánh giá rồi thì đổi thành lối vào xem lại. */}
         {ticket.status === "USED_UP" ? (
-          <Button asChild size="sm" variant="outline">
-            <Link href="/profile/reviews">
+          reviewed ? (
+            <Button asChild size="sm" variant="ghost">
+              <Link href="/profile/reviews">
+                <Star className="mr-1.5 size-3.5 fill-current text-warning" />
+                {t("reviewed")}
+              </Link>
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setReviewOpen(true)}>
               <Star className="mr-1.5 size-3.5" />
               {t("review")}
-            </Link>
-          </Button>
+            </Button>
+          )
         ) : null}
 
         {/* Vé đang tranh chấp thì không mời mở thêm — dẫn thẳng tới hồ sơ đang
@@ -226,6 +272,13 @@ function TicketRow({ ticket, openDispute }: { ticket: Ticket; openDispute?: Disp
           </Button>
         ) : null}
       </div>
+
+      {reviewOpen && (
+        <ReviewCreateDialog
+          target={{ kind: "gym", ticketId: ticket.id, name: ticket.gymName }}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
 
       {disputeOpen && (
         <OpenDisputeDialog ticket={ticket} onClose={() => setDisputeOpen(false)} />

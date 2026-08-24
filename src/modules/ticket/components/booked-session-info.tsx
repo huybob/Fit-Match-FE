@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Building2, CalendarDays, CalendarClock, CheckCircle2, Clock, Ticket as TicketIcon, UserRound } from "lucide-react";
+import { Building2, CalendarDays, CalendarClock, CheckCircle2, Clock, Star, Ticket as TicketIcon, UserRound } from "lucide-react";
 import { useFormatters } from "@/i18n/use-formatters";
 import { useToast } from "@/lib/toast-provider";
 import { Badge } from "@/shared/components/ui/badge";
@@ -13,6 +13,8 @@ import { Dialog } from "@/shared/components/ui/dialog";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/components/ui/popover";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { addDays, fromIsoDate, todayIso } from "../calendar-date.util";
+import { ReviewCreateDialog } from "@/modules/review/components/review-create-dialog";
+import { useMyReviewedTargets } from "@/modules/review/hooks/use-review";
 import { useBranchBookingWindow, useUpdateSessionDate } from "../hooks/use-ticket";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
 
@@ -188,6 +190,7 @@ export function SessionDetailDialog({
   const t = useTranslations("ticket.schedule");
   const tStatus = useTranslations("common.sessionStatus");
   const fmt = useFormatters();
+  const reviewed = useMyReviewedTargets();
 
   return (
     <Dialog open title={fmt.date(fromIsoDate(date))} onClose={onClose}>
@@ -253,6 +256,10 @@ export function SessionDetailDialog({
                   <Link href={`/gyms/${ticket.gymProfileId}`}>{t("openGym")}</Link>
                 </Button>
               ) : null}
+              <PtReviewAction
+                session={session}
+                reviewed={reviewed.sessionIds.has(session.id)}
+              />
             </div>
 
             <RescheduleSection session={session} ticket={ticket} onDone={onClose} />
@@ -260,6 +267,60 @@ export function SessionDetailDialog({
         ))}
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * Câu 36: đánh giá HLV mở ngay khi BUỔI đó xong — khác đánh giá phòng gym (mở
+ * khi dùng hết vé, một lần cho cả vé). Buổi tự tập không có ai để chấm.
+ *
+ * <p>Trước đây không có lối vào nào: endpoint và service đều có, nhưng không màn
+ * hình nào gọi, nên đánh giá PT tồn tại trên giấy. Nút nằm ngay trong chi tiết
+ * buổi vì đó là chỗ khách nhìn thấy đúng buổi mình vừa tập và tên HLV của nó.
+ */
+function PtReviewAction({
+  session,
+  reviewed,
+}: {
+  session: TrainingSession;
+  reviewed: boolean;
+}) {
+  const t = useTranslations("ticket.schedule");
+  const fmt = useFormatters();
+  const [open, setOpen] = useState(false);
+
+  if (session.status !== "DONE" || session.ptProfileId == null) return null;
+
+  if (reviewed) {
+    return (
+      <Button asChild size="sm" variant="ghost">
+        <Link href="/profile/reviews">
+          <Star className="mr-1.5 size-3.5 fill-current text-warning" />
+          {t("ptReviewed")}
+        </Link>
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Star className="mr-1.5 size-3.5" />
+        {t("reviewPt")}
+      </Button>
+      {open && (
+        <ReviewCreateDialog
+          target={{
+            kind: "pt",
+            sessionId: session.id,
+            name: session.ptName ?? "",
+            // Ngày hiển thị, không phải ISO thô: câu dẫn của form là câu đọc.
+            date: fmt.date(fromIsoDate(session.sessionDate)),
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
   );
 }
 

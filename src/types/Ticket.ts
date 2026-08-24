@@ -217,6 +217,11 @@ export interface Ticket {
   payableAmount: number;
   status: TicketStatus;
   statusReason?: string | null;
+  /**
+   * Ngày TẠO vé. Mốc duy nhất luôn có nên "Vé của tôi" sắp theo nó (mới nhất
+   * trước) và hiển thị nó; purchasedAt chỉ có sau khi thanh toán xong.
+   */
+  createdAt?: string | null;
   purchasedAt?: string | null;
   expiresAt?: string | null;
   startDate?: string | null;

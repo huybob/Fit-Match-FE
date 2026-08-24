@@ -1730,7 +1730,13 @@
     "reviewNumber": "Review #{id}",
     "publicTitle": "Customer reviews",
     "publicEmptyHint": "Be the first to review after completing a session.",
-    "showMore": "Show {count} more reviews"
+    "showMore": "Show {count} more reviews",
+    "createGymTitle": "Rate the gym",
+    "createPtTitle": "Rate the trainer",
+    "createGymSubject": "You are rating {name} after using up your ticket.",
+    "createPtSubject": "You are rating trainer {name} for the session on {date}.",
+    "created": "Review submitted",
+    "submit": "Submit review"
   },
   "auth": {
     "back": "← Back",
@@ -2188,7 +2194,9 @@
       "closedTodayAt": "The branch closes at {time}, so today is no longer bookable — pick tomorrow or later.",
       "closedToday": "The branch is closed today — pick tomorrow or later.",
       "intendedPtNoSlot": "Your chosen trainer has no slots in this period — the calendar is showing every trainer instead. Try another month or pick a different trainer.",
-      "preferredPt": "Your pick"
+      "preferredPt": "Your pick",
+      "reviewPt": "Rate trainer",
+      "ptReviewed": "Trainer rated"
     },
     "myTickets": {
       "title": "My tickets",
@@ -2197,7 +2205,10 @@
         "all": "All",
         "pendingPayment": "Awaiting payment",
         "active": "Active",
-        "usedUp": "Used up"
+        "usedUp": "Used up",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded"
       },
       "empty": "No tickets yet",
       "emptyHint": "Buy a ticket from a gym page or the Packages page to get started.",
@@ -2220,7 +2231,9 @@
         "openedHint": "Track it and submit evidence under Disputes / Complaints.",
         "daysLeft": "{days, plural, =0 {last day to open a dispute} =1 {1 day left to open a dispute} other {# days left to open a dispute}}",
         "windowClosed": "dispute window closed on {date}"
-      }
+      },
+      "createdAt": "Created {date}",
+      "reviewed": "Reviewed"
     }
   },
   "gymCalendar": {

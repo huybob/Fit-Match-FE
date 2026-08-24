@@ -29,7 +29,9 @@ export const reviewService = {
   // ---- Customer (UC-069/070) ----
   // Tạo đánh giá nằm ở ticketService.reviewGym / reviewPt vì đối tượng đánh giá
   // là vé hoặc buổi tập, đi trong đường dẫn. Ở đây chỉ còn sửa/xoá/tố cáo.
-  getMine: () => list("/reviews/me"),
+  // `params` để chỗ cần đối chiếu "vé/buổi nào đã đánh giá" xin được trang lớn
+  // hơn mặc định 20 — thiếu một bản ghi là mời khách đánh giá lần hai rồi nhận 409.
+  getMine: (params?: { page?: number; size?: number }) => list("/reviews/me", params),
   update: (id: number, payload: ReviewRequest) =>
     api.put<Review, ReviewRequest>(`/reviews/${id}`, payload),
   async remove(id: number) {
