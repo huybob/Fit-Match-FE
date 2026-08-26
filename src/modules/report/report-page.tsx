@@ -13,7 +13,7 @@ import { downloadCsv } from "@/shared/utils/csv.util";
 import { Download } from "lucide-react";
 import { DatePicker } from "@/shared/components/ui/date-picker";
 import { useTranslations } from "next-intl";
-import { ReportBarChart } from "./report-bar-chart";
+import { ReportBarChart } from "./report-charts";
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
