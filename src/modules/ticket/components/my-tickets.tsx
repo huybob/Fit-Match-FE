@@ -187,6 +187,7 @@ function TicketRow({
         <p className="mt-1 text-sm">
           {formatCurrency(ticket.payableAmount)} ·{" "}
           {t("scheduledOf", { done: scheduled, total: ticket.dayCount })}
+          {ticket.minutesPerDay ? ` · ${t("minutesPerSession", { minutes: ticket.minutesPerDay })}` : ""}
           {ticket.expiresAt ? ` · ${t("expiresAt", { date: ticket.expiresAt.slice(0, 10) })}` : ""}
         </p>
         {/* Danh sách sắp theo ngày tạo (mới nhất trước) thì phải in ngày ra —

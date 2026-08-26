@@ -652,6 +652,8 @@ export function TicketSchedulePage() {
           /* PT đang lọc (thường là PT khách đi từ trang cá nhân) lên đầu hộp
              thoại — đỡ phải tìm lại tên đó cho từng ngày của vé gói. */
           preferredPtId={Number(activePtFilter) || intendedPtId}
+          /* Vé quy định thời lượng buổi thì chỉ mời chọn khung đúng độ dài đó. */
+          requiredMinutes={bookingTicket.minutesPerDay}
           selected={dayPts[dayIndexOf.get(openDay) ?? 1] ?? null}
           onSelect={(sel) =>
             setDayPts((prev) => ({ ...prev, [dayIndexOf.get(openDay) ?? 1]: sel }))

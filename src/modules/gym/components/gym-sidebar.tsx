@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   LayoutDashboard, ShieldCheck, Building2, Dumbbell, GitBranch, Sparkles,
-  CalendarCheck2, CalendarClock, DollarSign, Banknote, Settings, LogOut, Users, Package, Images,
+  CalendarCheck2, CalendarClock, DollarSign, Banknote, Settings, LogOut, Users, Package, Images, Star,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +29,9 @@ const gymLinks = [
   // Mô hình vé không còn "booking": lịch đặt của gym nằm ở /gym/calendar.
   // Href cũ /gym/bookings không có trang nào và cho 404.
   { href: "/gym/calendar", navKey: "bookings", icon: CalendarCheck2 },
+  // Trang /gym/reviews đã có từ lâu nhưng không có lối vào nào trong menu — gym
+  // chỉ tới được bằng cách gõ tay URL, tức là coi như không có.
+  { href: "/gym/reviews", navKey: "reviews", icon: Star },
   { href: "/gym/revenue", navKey: "revenue", icon: DollarSign },
   { href: "/gym/wallet", navKey: "wallet", icon: Banknote },
   { href: "/gym/settings", navKey: "settings", icon: Settings },

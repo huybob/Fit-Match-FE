@@ -12,6 +12,15 @@ import type { PtGridSelection } from "./pt-availability-grid";
 
 type Direction = "byPt" | "byTime";
 
+/** Độ dài một khung giờ, tính bằng phút. Chuỗi giờ dạng "HH:mm:ss" của BE. */
+function minutesBetween(start: string, end: string) {
+  const toMinutes = (v: string) => {
+    const [h, m] = v.split(":").map(Number);
+    return h * 60 + m;
+  };
+  return toMinutes(end) - toMinutes(start);
+}
+
 interface DayComposerProps {
   branchId: number;
   date: string;
@@ -27,6 +36,12 @@ interface DayComposerProps {
    * người thay thế ngay tại đây, chứ không phải một hộp thoại trống.
    */
   preferredPtId?: number;
+  /**
+   * V93: độ dài buổi mà VÉ quy định (phút). Có giá trị thì chỉ hiện khung giờ
+   * dài đúng ngần này — BE sẽ từ chối những khung khác, hiện ra chỉ để khách bấm
+   * vào rồi nhận 409.
+   */
+  requiredMinutes?: number | null;
 }
 
 /**
@@ -48,13 +63,23 @@ export function DayComposer({
   onClear,
   onClose,
   preferredPtId = 0,
+  requiredMinutes,
 }: DayComposerProps) {
   const t = useTranslations("ticket.schedule");
   const [direction, setDirection] = useState<Direction>("byPt");
   const [pickedTime, setPickedTime] = useState<string>("");
 
   const { data: cells, isLoading } = usePtSlotGrid(branchId, date, date);
-  const free = useMemo(() => (cells ?? []).filter((c) => !c.taken), [cells]);
+  const free = useMemo(
+    () =>
+      (cells ?? [])
+        .filter((c) => !c.taken)
+        // Lọc theo thời lượng vé quy định. Ca của gym có thể dài ngắn khác nhau
+        // trong cùng một ngày (ca sáng 60 phút, ca tối 90 phút), nên không thể
+        // suy ra một độ dài chung cho cả lưới.
+        .filter((c) => requiredMinutes == null || minutesBetween(c.startTime, c.endTime) === requiredMinutes),
+    [cells, requiredMinutes],
+  );
 
   /** Khung giờ có thật trong ngày — cột giờ cố định sẽ bỏ sót khung lẻ như 18:30. */
   const times = useMemo(
@@ -134,7 +159,9 @@ export function DayComposer({
         {isLoading ? (
           <p className="py-6 text-center text-sm text-muted-foreground">{t("loadingSlots")}</p>
         ) : !free.length ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{t("noSlots")}</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {requiredMinutes ? t("noSlotsOfLength", { minutes: requiredMinutes }) : t("noSlots")}
+          </p>
         ) : direction === "byPt" ? (
           <ul className="space-y-2">
             {byPt.map((pt) => (

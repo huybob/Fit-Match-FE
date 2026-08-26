@@ -20,16 +20,26 @@ export type CreateReviewInput = { rating: number; comment?: string; mediaIds?: n
 const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
   c.invalidateQueries({ queryKey: reviewKeys.all });
 
-/** scope customer -> /reviews/me; pt -> public /reviews/pt/{id}; gym -> operator's own (mọi trạng thái). */
-export function useReviews(scope: "customer" | "pt" | "gym", id = 0) {
+/**
+ * scope customer -> /reviews/me; pt -> public /reviews/pt/{id}; gym -> operator's
+ * own (mọi trạng thái). `targetType` chỉ có nghĩa với scope gym: tách đánh giá
+ * phòng gym khỏi đánh giá huấn luyện viên.
+ */
+export function useReviews(
+  scope: "customer" | "pt" | "gym",
+  id = 0,
+  targetType?: "GYM" | "PT",
+) {
   return useQuery({
-    queryKey: reviewKeys.list(scope, id),
+    // targetType nằm trong key: đổi tab mà dùng lại cache của tab kia thì danh
+    // sách hiện sai loại đúng một nhịp.
+    queryKey: [...reviewKeys.list(scope, id), targetType ?? "all"],
     queryFn: () =>
       scope === "customer"
         ? reviewService.getMine()
         : scope === "pt"
           ? reviewService.getPt(id)
-          : reviewService.getGymOwn(),
+          : reviewService.getGymOwn({ targetType }),
     enabled: scope === "customer" || scope === "gym" || id > 0,
   });
 }

@@ -44,6 +44,13 @@ export interface TicketType {
   description?: string | null;
   kind: TicketKind;
   dayCount: number;
+  /**
+   * V93: độ dài MỖI BUỔI tập, tính bằng phút. Null = không ràng buộc — nhận mọi
+   * ca, độ dài do ca của gym quyết. Có giá trị thì lúc xếp lịch chỉ chọn được
+   * khung giờ dài đúng ngần này.
+   */
+  minutesPerDay?: number | null;
+
   price: number;
   ptSurchargePerDay?: number | null;
   /** BE tính sẵn = price + ptSurchargePerDay * dayCount. Không nhân lại ở FE. */
@@ -64,6 +71,13 @@ export interface MarketplaceTicketType {
   description?: string | null;
   kind: TicketKind;
   dayCount: number;
+  /**
+   * V93: độ dài MỖI BUỔI tập, tính bằng phút. Null = không ràng buộc — nhận mọi
+   * ca, độ dài do ca của gym quyết. Có giá trị thì lúc xếp lịch chỉ chọn được
+   * khung giờ dài đúng ngần này.
+   */
+  minutesPerDay?: number | null;
+
   price: number;
   ptSurchargePerDay?: number | null;
   priceWithPt: number;
@@ -94,6 +108,8 @@ export interface TicketTypeRequest {
   description?: string;
   kind: TicketKind;
   dayCount?: number;
+  /** Độ dài mỗi buổi (phút). Bỏ trống = không ràng buộc. */
+  minutesPerDay?: number;
   price: number;
   ptSurchargePerDay?: number;
   branchIds: number[];
@@ -142,6 +158,8 @@ export interface TicketQuoteServiceLine {
 export interface TicketQuote {
   ticketTypeName: string;
   dayCount: number;
+  /** Độ dài mỗi buổi (phút) — hiện ở bảng kê để khách biết trước khi trả tiền. */
+  minutesPerDay?: number | null;
   withPt: boolean;
   /** = baseAmount + ptSurchargeAmount + servicesAmount, chưa trừ giảm giá. */
   totalAmount: number;
@@ -208,6 +226,12 @@ export interface Ticket {
   gymBranchName: string;
   kind: TicketKind;
   dayCount: number;
+  /**
+   * V93: độ dài MỖI BUỔI tập, tính bằng phút. Null = không ràng buộc — nhận mọi
+   * ca, độ dài do ca của gym quyết. Có giá trị thì lúc xếp lịch chỉ chọn được
+   * khung giờ dài đúng ngần này.
+   */
+  minutesPerDay?: number | null;
   withPt: boolean;
   unitPrice: number;
   ptSurchargePerDay?: number | null;

@@ -13,7 +13,7 @@ import { downloadCsv } from "@/shared/utils/csv.util";
 import { Download } from "lucide-react";
 import { DatePicker } from "@/shared/components/ui/date-picker";
 import { useTranslations } from "next-intl";
-import { Table, TableBody, TableCell, TableRow } from "@/shared/components/ui/table";
+import { ReportBarChart } from "./report-bar-chart";
 
 // F-28: dùng formatter chung — hết copy-paste Intl.NumberFormat.
 const money = (v?: number) => formatCurrency(v ?? 0);
@@ -133,8 +133,40 @@ function ReportBody({ report: r, showWallet }: { report: OperationalReport; show
         </div>
       )}
 
-      <BreakdownTable title={t("reportPage.bookingsByStatus")} data={r.bookingsByStatus} labelPrefix="common.ticketStatus." />
-      <BreakdownTable title={t("reportPage.disputesByStatus")} data={r.disputesByStatus} />
+      {/*
+        Chart cho màn báo cáo: bảng số cho biết giá trị, nhưng không cho biết
+        TƯƠNG QUAN — nhìn cột mới thấy ngay vé huỷ đang chiếm bao nhiêu so với vé
+        dùng hết, hay hoa hồng nhỏ thế nào bên cạnh tiền đã thu. Vẫn in số nguyên
+        bên phải mỗi cột nên không mất gì so với bảng cũ.
+      */}
+      <ReportBarChart
+        title={t("reportPage.cashFlow")}
+        format={money}
+        data={[
+          { key: "grossHeld", label: t("reportPage.collected"), value: r.grossHeld ?? 0 },
+          { key: "releasedNet", label: t("reportPage.released"), value: r.releasedNet ?? 0 },
+          { key: "commission", label: t("reportPage.commission"), value: r.commission ?? 0 },
+          { key: "refunded", label: t("reportPage.refunded"), value: r.refunded ?? 0 },
+        ]}
+      />
+
+      <ReportBarChart
+        title={t("reportPage.bookingsByStatus")}
+        data={Object.entries(r.bookingsByStatus ?? {}).map(([key, value]) => ({
+          key,
+          label: t(`common.ticketStatus.${key}` as never),
+          value,
+        }))}
+      />
+
+      <ReportBarChart
+        title={t("reportPage.disputesByStatus")}
+        data={Object.entries(r.disputesByStatus ?? {}).map(([key, value]) => ({
+          key,
+          label: key,
+          value,
+        }))}
+      />
     </div>
   );
 }
@@ -144,27 +176,6 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-border bg-card p-4">
       <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 text-xl font-black">{value}</p>
-    </div>
-  );
-}
-
-function BreakdownTable({ title, data, labelPrefix }: { title: string; data: Record<string, number>; labelPrefix?: "common.ticketStatus." | "dispute.status." }) {
-  const t = useTranslations();
-  const entries = Object.entries(data ?? {});
-  if (!entries.length) return null;
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5">
-      <h3 className="mb-3 text-sm font-black">{title}</h3>
-      <Table>
-        <TableBody>
-          {entries.map(([k, v]) => (
-            <TableRow key={k}>
-              <TableCell className="py-2 text-muted-foreground">{labelPrefix ? t(`${labelPrefix}${k}` as never) : k}</TableCell>
-              <TableCell className="py-2 text-right font-bold">{v}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
     </div>
   );
 }

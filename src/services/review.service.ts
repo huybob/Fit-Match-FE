@@ -52,7 +52,13 @@ export const reviewService = {
   getPtRating: (id: number) => api.get<RatingSummary>(`/reviews/pt/${id}/rating`),
 
   // ---- Gym (UC-023): chỉ đọc để theo dõi chất lượng ----
-  getGymOwn: (params?: { page?: number; size?: number }) => list("/gym/reviews", params),
+  /**
+   * Đánh giá của gym mình. `targetType` tách hai thứ vốn bị trộn chung: đánh giá
+   * PT cũng gắn gymProfile nên danh sách không lọc sẽ lẫn cả điểm của từng HLV
+   * vào điểm phòng gym, gym đọc không ra cái nào là cái nào.
+   */
+  getGymOwn: (params?: { page?: number; size?: number; targetType?: "GYM" | "PT" }) =>
+    list("/gym/reviews", params),
 
   // ---- Moderator/Admin (UC-071) ----
   getReports: (status?: ReportStatus, params?: { page?: number; size?: number }) =>

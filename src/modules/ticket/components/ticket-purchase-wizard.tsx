@@ -107,6 +107,13 @@ export function TypeStep({
                     ? t("ticket.checkout.dayTicket")
                     : t("ticket.checkout.packageTicket", { days: type.dayCount })}
                 </p>
+                {/* Thời lượng buổi quyết định khách đặt được ca nào — phải thấy
+                    lúc CHỌN vé, không phải lúc xếp lịch mới biết. */}
+                {type.minutesPerDay ? (
+                  <p className="mt-1 text-sm font-medium text-foreground">
+                    {t("ticket.checkout.minutesPerSession", { minutes: type.minutesPerDay })}
+                  </p>
+                ) : null}
                 {type.description ? (
                   <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                     {type.description}
@@ -356,6 +363,13 @@ export function ConfirmStep({
   return (
     <dl className="space-y-2 rounded-xl border p-4 text-sm">
       <SummaryRow label={quote.ticketTypeName} value={formatCurrency(ticketAmount)} />
+      {quote.minutesPerDay ? (
+        <SummaryRow
+          label={t("ticket.checkout.sessionLength")}
+          value={t("ticket.checkout.minutesValue", { minutes: quote.minutesPerDay })}
+          muted
+        />
+      ) : null}
       {/* Phụ phí PT tính theo NGÀY (câu 6) nên vé gói đội lên nhiều so với giá
           niêm yết — ghi rõ nhân bao nhiêu ngày thay vì để khách tự đoán. */}
       {ptSurcharge > 0 ? (

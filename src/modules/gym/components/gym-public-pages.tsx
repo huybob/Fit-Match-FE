@@ -747,9 +747,16 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
     branchIds.map((branchId, index) => [branchId, ticketTypeQueries[index]?.data ?? []]),
   );
   const branchTicketTypes = ticketTypeQueries.flatMap((query) => query.data ?? []);
+  /*
+   * PT lọc theo CHI NHÁNH: vé gắn chi nhánh và PT chỉ dạy ở chi nhánh mình được
+   * phân công, nên "gym này có HLV nào" là câu hỏi thiếu vế — khách cần biết HLV
+   * nào ở chi nhánh mình định tới. 0 = xem tất cả.
+   */
+  const [ptBranchId, setPtBranchId] = useState(0);
   const pts = useQuery({
-    queryKey: ["marketplace", "gym", gymId, "pts"],
-    queryFn: () => marketplaceService.getGymPts(gymId),
+    queryKey: ["marketplace", "gym", gymId, "pts", ptBranchId],
+    queryFn: () =>
+      marketplaceService.getGymPts(gymId, ptBranchId ? { branchId: ptBranchId } : {}),
     enabled: !!gym.data,
   });
   // UC-047: cơ sở vật chất gym tự khai — trước đây gym nhập và tải ảnh lên nhưng
@@ -1013,13 +1020,34 @@ export function GymPublicDetailPage({ gymId }: { gymId: number }) {
           )}
         </section>
 
-        {/* B-25: PT của gym */}
+        {/* B-25: PT của gym, lọc theo chi nhánh */}
         <section className="mt-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg font-bold text-foreground"><Users className="size-5 text-primary" /> {t("marketplace.trainers")}</h2>
+          {/* Gym một chi nhánh thì bộ lọc chỉ có một dòng, không nói thêm gì. */}
+          {(branches.data ?? []).length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {[{ id: 0, name: t("marketplace.allBranches") }, ...(branches.data ?? [])].map((b) => (
+                <button
+                  key={b.id ?? 0}
+                  type="button"
+                  onClick={() => setPtBranchId(b.id ?? 0)}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    ptBranchId === (b.id ?? 0)
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          )}
           {pts.isLoading ? (
             <div className="mt-3"><LoadingSkeleton /></div>
           ) : !(pts.data?.content ?? []).length ? (
-            <p className="mt-3 text-sm text-muted-foreground">{t("marketplace.noTrainers")}</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {ptBranchId ? t("marketplace.noTrainersAtBranch") : t("marketplace.noTrainers")}
+            </p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(pts.data?.content ?? []).map((pt) => (

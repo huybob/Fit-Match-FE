@@ -657,7 +657,8 @@
       "revenue": "Doanh thu",
       "wallet": "Ví",
       "settings": "Cài đặt",
-      "shifts": "Lịch HLV"
+      "shifts": "Lịch HLV",
+      "reviews": "Đánh giá"
     },
     "services": {
       "title": "Dịch vụ kèm vé",
@@ -725,7 +726,11 @@
       "priceRequired": "Vui lòng nhập giá vé (≥ 0)",
       "surchargeInvalid": "Phụ phí PT phải ≥ 0",
       "dayCountInvalid": "Vé gói phải có ít nhất 2 ngày",
-      "branchRequired": "Chọn ít nhất một chi nhánh được bán vé này"
+      "branchRequired": "Chọn ít nhất một chi nhánh được bán vé này",
+      "minutesPerDayLabel": "Thời lượng mỗi buổi",
+      "minutesSuffix": "phút",
+      "minutesPerDayHint": "Bỏ trống = nhận mọi ca của phòng gym. Điền số thì khách chỉ đặt được ca dài đúng ngần đó — nhớ khai ca khớp ở màn Lịch HLV.",
+      "minutesInvalid": "Thời lượng mỗi buổi phải từ 15 đến 480 phút."
     },
     "suspendedTitle": "Phòng tập đang bị đình chỉ",
     "suspendedBody": "Nội dung đã bị ẩn khỏi marketplace. Xem lý do tại trang Xác minh.",
@@ -1171,7 +1176,9 @@
     "applyFilters": "Áp dụng bộ lọc",
     "facilities": "Cơ sở vật chất",
     "trainsAt": "Dạy tại",
-    "trainerNotBookable": "HLV này hiện chưa nhận lịch ở chi nhánh nào đang hoạt động."
+    "trainerNotBookable": "HLV này hiện chưa nhận lịch ở chi nhánh nào đang hoạt động.",
+    "allBranches": "Tất cả chi nhánh",
+    "noTrainersAtBranch": "Chi nhánh này chưa có huấn luyện viên nào."
   },
   "trainer": {
     "nav": {
@@ -1602,7 +1609,8 @@
     "frozen": "Đóng băng",
     "bookingsByStatus": "Booking theo trạng thái",
     "disputesByStatus": "Tranh chấp theo trạng thái",
-    "bookingPrefix": "Booking {status}"
+    "bookingPrefix": "Booking {status}",
+    "cashFlow": "Dòng tiền"
   },
   "dispute": {
     "status": {
@@ -1736,7 +1744,9 @@
     "createGymSubject": "Bạn đang đánh giá {name} sau khi dùng hết vé.",
     "createPtSubject": "Bạn đang đánh giá HLV {name} cho buổi tập ngày {date}.",
     "created": "Đã gửi đánh giá",
-    "submit": "Gửi đánh giá"
+    "submit": "Gửi đánh giá",
+    "tabGym": "Về phòng gym",
+    "tabPt": "Về huấn luyện viên"
   },
   "auth": {
     "back": "← Quay lại",
@@ -2111,7 +2121,10 @@
       },
       "pickBranchHint": "Chọn chi nhánh bạn muốn tập — vé luôn gắn với một chi nhánh cụ thể.",
       "pickBranchOfPtHint": "Chọn chi nhánh — chỉ hiện những chi nhánh {name} phụ trách, vì vé gắn với một chi nhánh cụ thể.",
-      "ptNoSlotWarning": "{name} chưa có khung giờ nào trong {days} ngày tới ở chi nhánh này. Mua vé có PT bây giờ thì bạn sẽ phải chọn HLV khác ở bước xếp lịch."
+      "ptNoSlotWarning": "{name} chưa có khung giờ nào trong {days} ngày tới ở chi nhánh này. Mua vé có PT bây giờ thì bạn sẽ phải chọn HLV khác ở bước xếp lịch.",
+      "minutesPerSession": "Mỗi buổi {minutes} phút",
+      "sessionLength": "Thời lượng mỗi buổi",
+      "minutesValue": "{minutes} phút"
     },
     "schedule": {
       "title": "Chọn ngày tập",
@@ -2196,7 +2209,8 @@
       "intendedPtNoSlot": "HLV bạn chọn không có khung giờ nào trong kỳ này — lịch đang hiện khung của tất cả HLV. Thử lật sang tháng khác hoặc chọn HLV khác.",
       "preferredPt": "HLV bạn chọn",
       "reviewPt": "Đánh giá HLV",
-      "ptReviewed": "Đã đánh giá HLV"
+      "ptReviewed": "Đã đánh giá HLV",
+      "noSlotsOfLength": "Ngày này không có khung giờ nào dài {minutes} phút — đúng thời lượng vé của bạn."
     },
     "myTickets": {
       "title": "Vé của tôi",
@@ -2233,7 +2247,8 @@
         "windowClosed": "đã hết hạn mở tranh chấp ({date})"
       },
       "createdAt": "Tạo {date}",
-      "reviewed": "Đã đánh giá"
+      "reviewed": "Đã đánh giá",
+      "minutesPerSession": "{minutes} phút/buổi"
     }
   },
   "gymCalendar": {

@@ -59,9 +59,43 @@ export function TrainerReviewsPage() {
   return <ReviewPage scope="pt" targetId={q.data.id} />;
 }
 
+/**
+ * Đánh giá của gym mình, TÁCH hai loại. Đánh giá PT cũng lưu gymProfile (để hiện
+ * đúng ngữ cảnh phòng tập) nên danh sách cũ trộn chung: gym mở trang ra thấy lẫn
+ * lộn điểm chấm phòng tập với điểm chấm từng huấn luyện viên, không phân biệt
+ * được cái nào nói về mình. Hai tab là hai câu hỏi khác nhau: "khách nghĩ gì về
+ * phòng gym" và "khách nghĩ gì về HLV của tôi".
+ *
+ * getGymOwn trả review của mọi gym thuộc operator (mọi trạng thái) — không cần chọn gym.
+ */
 export function GymReviewsPage() {
-  // getGymOwn trả review của mọi gym thuộc operator (mọi trạng thái) — không cần chọn gym.
-  return <ReviewPage scope="gym" />;
+  const t = useTranslations();
+  const [targetType, setTargetType] = useState<"GYM" | "PT">("GYM");
+
+  return (
+    <ReviewPage
+      scope="gym"
+      targetType={targetType}
+      tabs={
+        <div className="mt-4 flex gap-1.5">
+          {(["GYM", "PT"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setTargetType(type)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                targetType === type
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t(type === "GYM" ? "review.tabGym" : "review.tabPt")}
+            </button>
+          ))}
+        </div>
+      }
+    />
+  );
 }
 
 /* Nhãn trạng thái review ở review.status.* */
@@ -71,16 +105,22 @@ export function GymReviewsPage() {
 function ReviewPage({
   scope,
   targetId = 0,
+  targetType,
+  tabs,
 }: {
   scope: "customer" | "pt" | "gym";
   targetId?: number;
+  /** Chỉ dùng cho scope gym: lọc đánh giá phòng gym hay đánh giá HLV. */
+  targetType?: "GYM" | "PT";
+  /** Bộ chuyển tab, hiện dưới tiêu đề. */
+  tabs?: React.ReactNode;
 }) {
   const t = useTranslations();
   // Chỉ còn SỬA đánh giá đã có. Tạo mới nằm ở trang vé (đánh giá phòng gym) và
   // trang buổi tập (đánh giá PT) vì đối tượng đánh giá đi trong đường dẫn.
   const [editing, setEditing] = useState<Review | null>(null);
   const [reporting, setReporting] = useState<Review | null>(null);
-  const query = useReviews(scope, targetId);
+  const query = useReviews(scope, targetId, targetType);
   const del = useDeleteReview();
   const { toast } = useToast();
   const items = query.data?.content ?? [];
@@ -94,6 +134,7 @@ function ReviewPage({
           <p className="mt-2 text-sm text-muted-foreground">
             {t(`review.${scope}Description`)}
           </p>
+          {tabs}
         </div>
       </section>
 

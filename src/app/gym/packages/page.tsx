@@ -50,6 +50,12 @@ export default function GymPackagesPage() {
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState<TicketKind>("PACKAGE");
   const [dayCount, setDayCount] = useState<number | null>(10);
+  /*
+   * V93: độ dài mỗi buổi (phút). null = không ràng buộc — khách đặt được mọi ca
+   * của gym, độ dài do ca quyết như trước. Có số thì lúc xếp lịch chỉ chọn được
+   * ca dài đúng ngần này, nên gym phải khai ca khớp thì mới bán được.
+   */
+  const [minutesPerDay, setMinutesPerDay] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [ptSurcharge, setPtSurcharge] = useState<number | null>(null);
   const [branchIds, setBranchIds] = useState<string[]>([]);
@@ -82,6 +88,7 @@ export default function GymPackagesPage() {
         kind,
         // Vé DAY luôn 1 ngày — BE tự chuẩn hoá, gửi kèm cho rõ ý định.
         dayCount: kind === "DAY" ? 1 : (dayCount ?? undefined),
+        minutesPerDay: minutesPerDay ?? undefined,
         price: price ?? 0,
         ptSurchargePerDay: ptSurcharge ?? undefined,
         branchIds: branchIds.map(Number),
@@ -130,6 +137,7 @@ export default function GymPackagesPage() {
     setDescription("");
     setKind("PACKAGE");
     setDayCount(10);
+    setMinutesPerDay(null);
     setPrice(null);
     setPtSurcharge(null);
     // Mặc định bán ở mọi chi nhánh đang hoạt động: vé không gắn chi nhánh nào thì
@@ -144,6 +152,7 @@ export default function GymPackagesPage() {
     setDescription(type.description ?? "");
     setKind(type.kind);
     setDayCount(type.dayCount);
+    setMinutesPerDay(type.minutesPerDay ?? null);
     setPrice(type.price);
     setPtSurcharge(type.ptSurchargePerDay ?? null);
     setBranchIds(type.branches.map((b) => String(b.id)));
@@ -167,6 +176,8 @@ export default function GymPackagesPage() {
     if (ptSurcharge != null && ptSurcharge < 0) return t("gym.packages.surchargeInvalid");
     if (kind === "PACKAGE" && (dayCount == null || dayCount < 2))
       return t("gym.packages.dayCountInvalid");
+    if (minutesPerDay != null && (minutesPerDay < 15 || minutesPerDay > 480))
+      return t("gym.packages.minutesInvalid");
     if (branchIds.length === 0) return t("gym.packages.branchRequired");
     return null;
   }
@@ -370,6 +381,26 @@ export default function GymPackagesPage() {
                 suffix={t("gym.packages.daysSuffix")}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              {t("gym.packages.minutesPerDayLabel")}
+            </label>
+            <NumberInput
+              value={minutesPerDay}
+              onValueChange={setMinutesPerDay}
+              min={15}
+              max={480}
+              step={15}
+              suffix={t("gym.packages.minutesSuffix")}
+            />
+            {/* Nói thẳng ràng buộc: bỏ trống thì bán được với mọi ca, điền số thì
+                khách chỉ đặt được ca dài đúng ngần đó — gym khai ca 60 phút mà bán
+                gói 90 phút thì không ai đặt được buổi nào. */}
+            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">
+              {t("gym.packages.minutesPerDayHint")}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
