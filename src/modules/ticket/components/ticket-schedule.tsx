@@ -152,6 +152,10 @@ export function TicketSchedulePage() {
     to,
     undefined,
     booking && Boolean(ticket?.withPt),
+    // Thời lượng vé quyết định khung nào BẮT ĐẦU được: buổi là một chuỗi slot
+    // liền nhau (có thể vắt qua hai ca), nên lưới phải hỏi đúng độ dài đó —
+    // không thì chip giờ ở ô lịch mời những khung mà server sẽ từ chối.
+    ticket?.minutesPerDay ?? undefined,
   );
 
   /*
@@ -335,11 +339,23 @@ export function TicketSchedulePage() {
   const assignedCount = Object.keys(dayPts).length;
   // Đếm theo những gì đang HIỆN trên lịch: lọc còn 3 buổi mà huy hiệu vẫn báo
   // 12 thì con số đó chỉ làm người xem nghi ngờ bộ lọc.
-  const bookedCount = [...entriesByDate.values()].reduce((total, list) => total + list.length, 0);
+  // Đếm buổi CÒN HIỆU LỰC. Buổi đã huỷ vẫn nằm trên lịch để khách thấy ngày đó
+  // đi đâu, nhưng gộp nó vào "buổi đã đặt trong kỳ" thì con số hứa nhiều hơn thực.
+  const bookedCount = [...entriesByDate.values()].reduce(
+    (total, list) =>
+      total + list.filter(({ session }) => session.status !== "CANCELLED_BY_CUSTOMER").length,
+    0,
+  );
 
-  function renderDay({ date }: CalendarDayContext) {
+  function renderDay({ date, disabled }: CalendarDayContext) {
     const index = booking ? dayIndexOf.get(date) : undefined;
-    const slots = slotsByDate.get(date);
+    /*
+     * Ngày không bấm được thì KHÔNG đổ khung rảnh của PT vào: ô đã mờ và không
+     * ăn click, nhưng vẫn đầy chip giờ xanh nên trông y như một ngày đặt được —
+     * đó là cả một dải ngày đã qua ở đầu lưới tháng mời gọi những cú bấm không
+     * dẫn tới đâu. Buổi ĐÃ ĐẶT thì vẫn hiện: quá khứ vẫn là lịch sử phải xem.
+     */
+    const slots = disabled ? undefined : slotsByDate.get(date);
     const entries = entriesByDate.get(date) ?? [];
     const chosen = index ? dayPts[index] : undefined;
 
@@ -351,21 +367,34 @@ export function TicketSchedulePage() {
           </span>
         ) : null}
 
-        {entries.map(({ session, ticket: sessionTicket }) => (
-          <span
-            key={session.id}
-            className="truncate rounded bg-primary/15 px-1 py-0.5 text-[10px] font-semibold text-primary"
-            title={
-              [sessionTicket?.ticketTypeName, sessionTicket?.gymBranchName, session.ptName]
-                .filter(Boolean)
-                .join(" · ") || undefined
-            }
-          >
-            {session.ptSlotStart
-              ? `${session.ptSlotStart.slice(0, 5)}${session.ptName ? ` · ${session.ptName}` : ""}`
-              : t("chipBooked")}
-          </span>
-        ))}
+        {entries.map(({ session, ticket: sessionTicket }) => {
+          // Buổi khách đã huỷ vẫn nằm trên lịch (ngày đó đã tiêu một ngày của
+          // vé), nhưng phải NHÌN RA ngay là đã huỷ — cùng một chip xanh thì ô
+          // đó nói dối rằng khách vẫn còn buổi tập hôm ấy.
+          const cancelled = session.status === "CANCELLED_BY_CUSTOMER";
+          return (
+            <span
+              key={session.id}
+              className={cn(
+                "truncate rounded px-1 py-0.5 text-[10px] font-semibold",
+                cancelled
+                  ? "bg-muted text-muted-foreground line-through"
+                  : "bg-primary/15 text-primary",
+              )}
+              title={
+                [sessionTicket?.ticketTypeName, sessionTicket?.gymBranchName, session.ptName]
+                  .filter(Boolean)
+                  .join(" · ") || undefined
+              }
+            >
+              {cancelled
+                ? t("chipCancelled")
+                : session.ptSlotStart
+                  ? `${session.ptSlotStart.slice(0, 5)}${session.ptName ? ` · ${session.ptName}` : ""}`
+                  : t("chipBooked")}
+            </span>
+          );
+        })}
 
         {chosen ? (
           <span className="truncate rounded bg-primary px-1 py-0.5 text-[10px] font-semibold text-primary-foreground">

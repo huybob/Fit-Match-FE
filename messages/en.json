@@ -272,7 +272,8 @@
     "sessionStatus": {
       "SCHEDULED": "Scheduled",
       "DONE": "Completed",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "CANCELLED_BY_CUSTOMER": "You cancelled"
     }
   },
   "admin": {
@@ -292,7 +293,8 @@
       "cms": "CMS",
       "notifications": "Notification templates",
       "masterData": "Master data",
-      "auditLogs": "Audit logs"
+      "auditLogs": "Audit logs",
+      "pendingCount": "{count} items waiting"
     },
     "auditLogs": {
       "title": "Audit logs",
@@ -807,7 +809,13 @@
       "visibilityHint": "Let customers find your gym",
       "visibilityLocked": "Available only after your profile is approved (and at least one branch is active).",
       "visibilityOn": "Turn on to appear publicly in search.",
-      "nameLockedHint": "The gym name is verified and can no longer be changed. Contact a platform admin if you need it updated."
+      "nameLockedHint": "The gym name is verified and can no longer be changed. Contact a platform admin if you need it updated.",
+      "cancelTiersTitle": "Refund tiers when a customer cancels a day",
+      "cancelTiersHint": "These are the numbers the system uses to compute refunds. The “Cancellation policy” box above is prose for customers only. Leave blank to keep the current values.",
+      "cancelFullHours": "Full refund if notice is at least (hours)",
+      "cancelPartialHours": "Partial refund if notice is at least (hours)",
+      "cancelPartialPercent": "Partial refund rate (%)",
+      "cancelTiersOrderError": "The full-refund threshold must be at least as early as the partial one."
     },
     "facilities": {
       "title": "Amenities & facilities",
@@ -1031,7 +1039,11 @@
       "docRequired": "Enter a document type and upload a file",
       "certAddFailed": "Couldn’t add certificate “{name}”",
       "assigned": "Trainer assigned",
-      "blockAdded": "Blocked time added"
+      "blockAdded": "Blocked time added",
+      "branchFilterLabel": "Branch:",
+      "emptyForBranch": "No trainer is assigned to this branch yet.",
+      "branchInactive": "{name} — branch is no longer active",
+      "noBranchAssigned": "No branch assigned"
     },
     "workspace": "Gym Operator Workspace"
   },
@@ -1254,7 +1266,8 @@
       "security": "Security",
       "wallet": "My wallet",
       "bankAccounts": "Bank accounts",
-      "tickets": "My tickets"
+      "tickets": "My tickets",
+      "reviews": "My reviews"
     },
     "sidebar": {
       "tagline": "Manage your fitness journey",
@@ -1746,7 +1759,17 @@
     "created": "Review submitted",
     "submit": "Submit review",
     "tabGym": "About the gym",
-    "tabPt": "About trainers"
+    "tabPt": "About trainers",
+    "unknownTarget": "Unknown target",
+    "pendingTitle": "Waiting for your review ({count})",
+    "pendingGymHint": "Gym reviews open once you have used up a ticket — one review per ticket.",
+    "pendingPtHint": "Trainer reviews open as soon as a session with a trainer finishes — one review per session. These are sessions from the last {days} days; older ones can still be reviewed from the session details on the Schedule page.",
+    "rateGym": "Review gym",
+    "ratePt": "Review trainer",
+    "emptyGym": "No gym reviews yet",
+    "emptyPt": "No trainer reviews yet",
+    "emptyGymHint": "Gym reviews open once you use up a ticket. Any ticket you finish will show up here to rate.",
+    "emptyPtHint": "Trainer reviews open after a session with a trainer finishes. Any session you complete will show up here to rate."
   },
   "auth": {
     "back": "← Back",
@@ -2210,7 +2233,24 @@
       "preferredPt": "Your pick",
       "reviewPt": "Rate trainer",
       "ptReviewed": "Trainer rated",
-      "noSlotsOfLength": "No {minutes}-minute slots on this day — that is the length your ticket requires."
+      "noSlotsOfLength": "No {minutes}-minute slots on this day — that is the length your ticket requires.",
+      "cancelSession": "Cancel session",
+      "cancelTitle": "Cancel this session?",
+      "cancelQuoteLoading": "Working out your refund…",
+      "cancelPolicy": "Gym policy: cancel {fullHours}h ahead for a 100% refund, {partialHours}h ahead for {partialPercent}%, later than that no refund.",
+      "cancelHoursAhead": "You are giving {hours}h notice.",
+      "cancelAlreadyStarted": "This session has already started.",
+      "cancelRefundLine": "Refund {amount} ({percent}% of one training day)",
+      "cancelNoRefundWarning": "Cancelling now earns no refund.",
+      "cancelDayNotReturned": "A cancelled day is not returned to the ticket — you are refunded for that day instead.",
+      "cancelReasonPlaceholder": "Reason (optional)",
+      "cancelConfirm": "Confirm cancellation",
+      "cancelled": "Session cancelled",
+      "cancelledRefundToast": "{amount} has been credited to your wallet.",
+      "cancelledWithRefund": "You cancelled this session. {amount} was refunded to your wallet.",
+      "cancelledNoRefund": "You cancelled this session. It was too late for a refund.",
+      "cancelFailed": "Could not cancel the session",
+      "chipCancelled": "Cancelled"
     },
     "myTickets": {
       "title": "My tickets",

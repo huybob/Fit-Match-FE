@@ -134,7 +134,8 @@ export const gymService = {
     api.get<{ id?: number; name?: string; description?: string }[]>("/gym/service-categories"),
 
   // ── Operator workspace: PT management (UC-019..021) ──
-  listPts: (params: PaginationParams = page) =>
+  /** `branchId` lọc về PT phụ trách đúng chi nhánh đó; bỏ trống = mọi chi nhánh. */
+  listPts: (params: PaginationParams & { branchId?: number } = page) =>
     api.get<GymPtPage>("/gym/pts", { params }),
   getPt: (id: number) => api.get<GymPtResponse>(`/gym/pts/${id}`),
   createPt: (payload: CreateGymPtInput) =>

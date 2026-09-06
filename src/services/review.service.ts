@@ -31,7 +31,13 @@ export const reviewService = {
   // là vé hoặc buổi tập, đi trong đường dẫn. Ở đây chỉ còn sửa/xoá/tố cáo.
   // `params` để chỗ cần đối chiếu "vé/buổi nào đã đánh giá" xin được trang lớn
   // hơn mặc định 20 — thiếu một bản ghi là mời khách đánh giá lần hai rồi nhận 409.
-  getMine: (params?: { page?: number; size?: number }) => list("/reviews/me", params),
+  /**
+   * `targetType` tách hai thứ vốn bị trộn chung: chấm PHÒNG TẬP và chấm từng
+   * HUẤN LUYỆN VIÊN. Bỏ trống = cả hai — bản không lọc vẫn cần cho việc đối
+   * chiếu "vé/buổi nào đã đánh giá" (useMyReviewedTargets).
+   */
+  getMine: (params?: { page?: number; size?: number; targetType?: "GYM" | "PT" }) =>
+    list("/reviews/me", params),
   update: (id: number, payload: ReviewRequest) =>
     api.put<Review, ReviewRequest>(`/reviews/${id}`, payload),
   async remove(id: number) {

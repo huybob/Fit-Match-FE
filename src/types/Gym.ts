@@ -346,6 +346,14 @@ export interface GymPolicy {
   cancellationPolicy?: string;
   noShowPolicy?: string;
   houseRules?: string;
+  /**
+   * V94 — mốc hoàn tiền khi khách huỷ một ngày tập, ở dạng máy tính được.
+   * `cancellationPolicy` phía trên vẫn là văn bản cho người đọc; ba trường này
+   * mới là thứ quyết định số tiền khách nhận lại.
+   */
+  cancelFullRefundHours?: number;
+  cancelPartialRefundHours?: number;
+  cancelPartialRefundPercent?: number;
 }
 
 export interface UpdateGymProfileInput {
@@ -391,6 +399,15 @@ export interface GymPtResponse {
   status?: GymPtStatus;
   suspensionReason?: string;
   gymProfileId?: number;
+  /** Chi nhánh PT được phân công (câu 24). Rỗng = chưa gán chi nhánh nào. */
+  branches?: GymPtBranchRef[];
+}
+
+/** Chi nhánh gọn trong danh sách PT — chỉ đủ để hiện tên và biết còn hoạt động. */
+export interface GymPtBranchRef {
+  id: number;
+  name: string;
+  active: boolean;
 }
 
 export type GymPtPage = PageResponse<GymPtResponse>;

@@ -9,6 +9,20 @@ export type UserRole =
   | "ROLE_MODERATOR"
   | "ROLE_FINANCE_ADMIN";
 
+/**
+ * Số việc tồn của từng khu vực quản trị — nguồn của chấm đỏ cạnh mỗi mục menu.
+ * Tên trường khớp `navKey` trong bảng `adminLinks` của sidebar, nên không cần
+ * một bảng ánh xạ riêng ở giữa.
+ */
+export interface AdminPendingCounts {
+  verification: number;
+  disputes: number;
+  reviews: number;
+  issueReports: number;
+  withdrawals: number;
+  reconciliation: number;
+}
+
 export interface AdminUserResponse {
   id?: number;
   username?: string;

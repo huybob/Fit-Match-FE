@@ -170,6 +170,10 @@ export function TicketCheckoutPage() {
     addDays(slotFrom, PT_SLOT_LOOKAHEAD_DAYS),
     intendedPtId,
     intendedPtId > 0 && branchId > 0 && withPtEffective,
+    // Hỏi đúng thời lượng loại vé đang chọn: buổi là một chuỗi slot liền nhau,
+    // nên "PT còn slot trống" và "PT ghép đủ 120 phút liền mạch" là hai câu khác
+    // nhau. Hỏi câu rộng hơn thì cảnh báo im lặng ở đúng ca cần cảnh báo nhất.
+    selectedType?.minutesPerDay ?? undefined,
   );
   /*
    * CHỈ kết luận khi truy vấn thành công: lỗi mạng hay 409 (PT không thuộc chi

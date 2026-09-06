@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import type { PageResponse } from "@/shared/types/api-response.type";
 import type {
+  AdminPendingCounts,
   AdminUserPage,
   AdminUserResponse,
   AssignRoleRequest,
@@ -43,6 +44,9 @@ export interface CommissionConfig {
 }
 
 export const adminService = {
+  /** Số việc tồn từng khu vực — chấm đỏ trên menu quản trị. */
+  getPendingCounts: () => api.get<AdminPendingCounts>("/admin/pending-counts"),
+
   searchUsers: (params: AdminUserSearchParams) =>
     api.get<AdminUserPage>("/admin/users", { params }),
 

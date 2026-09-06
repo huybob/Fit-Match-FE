@@ -12,15 +12,6 @@ import type { PtGridSelection } from "./pt-availability-grid";
 
 type Direction = "byPt" | "byTime";
 
-/** Độ dài một khung giờ, tính bằng phút. Chuỗi giờ dạng "HH:mm:ss" của BE. */
-function minutesBetween(start: string, end: string) {
-  const toMinutes = (v: string) => {
-    const [h, m] = v.split(":").map(Number);
-    return h * 60 + m;
-  };
-  return toMinutes(end) - toMinutes(start);
-}
-
 interface DayComposerProps {
   branchId: number;
   date: string;
@@ -38,8 +29,12 @@ interface DayComposerProps {
   preferredPtId?: number;
   /**
    * V93: độ dài buổi mà VÉ quy định (phút). Có giá trị thì chỉ hiện khung giờ
-   * dài đúng ngần này — BE sẽ từ chối những khung khác, hiện ra chỉ để khách bấm
-   * vào rồi nhận 409.
+   * ghép đủ ngần này phút — BE sẽ từ chối những khung khác, hiện ra chỉ để khách
+   * bấm vào rồi nhận 409.
+   *
+   * Truyền THẲNG xuống server: một buổi nay là chuỗi slot liền nhau, được phép
+   * vắt qua nhiều ca, nên chỉ server ghép được. `endTime` của ô trả về đã là
+   * điểm kết thúc của cả chuỗi.
    */
   requiredMinutes?: number | null;
 }
@@ -69,17 +64,17 @@ export function DayComposer({
   const [direction, setDirection] = useState<Direction>("byPt");
   const [pickedTime, setPickedTime] = useState<string>("");
 
-  const { data: cells, isLoading } = usePtSlotGrid(branchId, date, date);
-  const free = useMemo(
-    () =>
-      (cells ?? [])
-        .filter((c) => !c.taken)
-        // Lọc theo thời lượng vé quy định. Ca của gym có thể dài ngắn khác nhau
-        // trong cùng một ngày (ca sáng 60 phút, ca tối 90 phút), nên không thể
-        // suy ra một độ dài chung cho cả lưới.
-        .filter((c) => requiredMinutes == null || minutesBetween(c.startTime, c.endTime) === requiredMinutes),
-    [cells, requiredMinutes],
+  /*
+   * Thời lượng vé đẩy XUỐNG SERVER thay vì lọc ô ở đây. Từ khi một buổi được
+   * ghép từ nhiều slot liền nhau — kể cả vắt qua hai ca — thì "ô nào đặt được"
+   * không còn suy ra được từ độ dài của từng ô: một vé 120 phút hợp lệ ở khung
+   * 18:00 của ca slot-60 nếu 19:00 cũng còn trống, mà FE thì không biết lưới ca.
+   * Server trả sẵn khung bắt đầu được, kèm endTime của cả chuỗi.
+   */
+  const { data: cells, isLoading } = usePtSlotGrid(
+    branchId, date, date, undefined, true, requiredMinutes ?? undefined,
   );
+  const free = useMemo(() => (cells ?? []).filter((c) => !c.taken), [cells]);
 
   /** Khung giờ có thật trong ngày — cột giờ cố định sẽ bỏ sót khung lẻ như 18:30. */
   const times = useMemo(
@@ -108,6 +103,7 @@ export function DayComposer({
     date,
     pickedTime,
     direction === "byTime" && Boolean(pickedTime),
+    requiredMinutes ?? undefined,
   );
 
   function choose(cell: (typeof free)[number]) {

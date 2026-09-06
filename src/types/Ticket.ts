@@ -12,7 +12,12 @@ export type TicketStatus =
   | "REFUNDED";
 
 /** Không còn NO_SHOW: buổi tiêu theo ngày, bất kể khách có mặt hay không. */
-export type SessionStatus = "SCHEDULED" | "DONE" | "CANCELLED";
+/**
+ * `CANCELLED` = huỷ kéo theo khi vé bị hoàn tiền (vé chết).
+ * `CANCELLED_BY_CUSTOMER` = khách tự huỷ đúng ngày đó và đã nhận hoàn theo mốc
+ * báo trước (V94) — vé vẫn sống, nhưng ngày đó đã tiêu.
+ */
+export type SessionStatus = "SCHEDULED" | "DONE" | "CANCELLED" | "CANCELLED_BY_CUSTOMER";
 
 export type CatalogStatus = "PUBLISHED" | "HIDDEN" | "PAUSED" | "ARCHIVED";
 
@@ -208,6 +213,11 @@ export interface TrainingSession {
   ptConfirmedAt?: string | null;
   evidenceUrl?: string | null;
   /**
+   * Số tiền đã hoàn khi khách huỷ đúng buổi này. null = chưa huỷ; 0 = huỷ quá
+   * muộn nên không được hoàn — hai chuyện khác nhau.
+   */
+  cancelRefundAmount?: number | null;
+  /**
    * Chỉ có ở lịch dạy của PT (`/pt/sessions`). Buổi tập vốn chỉ mang ticketId,
    * mà PT nhìn "vé #123" thì không biết mình dạy ai.
    */
@@ -258,6 +268,26 @@ export interface Ticket {
   disputeDeadline?: string | null;
   scheduledDays?: number | null;
   sessions?: TrainingSession[] | null;
+}
+
+/**
+ * V94: huỷ buổi này ngay bây giờ thì được lại bao nhiêu. Hỏi TRƯỚC khi huỷ —
+ * số tiền phụ thuộc vào lúc bấm, nên hộp xác nhận phải nói ra con số đó.
+ */
+export interface SessionCancellationQuote {
+  sessionId: number;
+  cancellable: boolean;
+  /** Lý do không huỷ được; null khi cancellable. */
+  reason?: string | null;
+  /** Số giờ tới đầu buổi. Âm = buổi đã bắt đầu. */
+  hoursAhead: number;
+  refundPercent: number;
+  refundAmount: number;
+  /** Giá trị một ngày tập của vé — để giải thích con số hoàn. */
+  perDayValue: number;
+  fullRefundHours: number;
+  partialRefundHours: number;
+  partialRefundPercent: number;
 }
 
 export interface TicketPurchaseResult {

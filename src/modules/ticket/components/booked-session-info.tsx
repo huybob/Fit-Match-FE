@@ -3,19 +3,26 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Building2, CalendarDays, CalendarClock, CheckCircle2, Clock, Star, Ticket as TicketIcon, UserRound } from "lucide-react";
+import { Building2, CalendarDays, CalendarClock, CalendarX, CheckCircle2, Clock, Star, Ticket as TicketIcon, UserRound } from "lucide-react";
 import { useFormatters } from "@/i18n/use-formatters";
 import { useToast } from "@/lib/toast-provider";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { DatePicker } from "@/shared/components/ui/date-picker";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { Popover, PopoverAnchor, PopoverContent } from "@/shared/components/ui/popover";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { addDays, fromIsoDate, todayIso } from "../calendar-date.util";
 import { ReviewCreateDialog } from "@/modules/review/components/review-create-dialog";
 import { useMyReviewedTargets } from "@/modules/review/hooks/use-review";
-import { useBranchBookingWindow, useUpdateSessionDate } from "../hooks/use-ticket";
+import {
+  useBranchBookingWindow,
+  useCancelSession,
+  useCancelSessionQuote,
+  useUpdateSessionDate,
+} from "../hooks/use-ticket";
+import { formatCurrency } from "@/utils/format.util";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
 
 /**
@@ -263,6 +270,7 @@ export function SessionDetailDialog({
             </div>
 
             <RescheduleSection session={session} ticket={ticket} onDone={onClose} />
+            <CancelSection session={session} ticket={ticket} onDone={onClose} />
           </div>
         ))}
       </div>
@@ -326,8 +334,12 @@ function PtReviewAction({
 
 /**
  * Dời ngày tập — chỉ hiện khi BE thật sự nhận (luật ở SessionSchedulingValidator):
- * vé DAY còn dùng được, buổi chưa diễn ra, và chưa qua mốc 00:00 của ngày tập.
- * Vé gói không đổi lịch từng ngày được, nên hiện nút ở đó chỉ để nhận 409.
+ * vé còn dùng được, buổi chưa diễn ra, và chưa qua mốc 00:00 của ngày tập.
+ *
+ * <p>V94 bỏ điều kiện `kind === "DAY"`. Trước đây vé GÓI không có nút này (BE
+ * cũng chặn thẳng), nên người mua gói 10 ngày mở chi tiết buổi ra là không thấy
+ * gì để bấm — đúng mục "chưa lưu lịch khi dời lịch" trong bảng rà soát: thao tác
+ * không tồn tại chứ không phải lưu hỏng.
  *
  * Không tự đoán hộ phần PT: buổi có PT thì ngày mới phải còn đúng khung giờ đó,
  * điều kiện này chỉ server biết. FE nói trước bằng một dòng gợi ý rồi để lỗi
@@ -356,8 +368,7 @@ function RescheduleSection({
 
   const today = todayIso();
   const canReschedule =
-    ticket?.kind === "DAY" &&
-    ticket.status === "ACTIVE" &&
+    ticket?.status === "ACTIVE" &&
     session.status === "SCHEDULED" &&
     session.sessionDate > today;
 
@@ -423,6 +434,169 @@ function RescheduleSection({
         </Button>
         <Button size="sm" onClick={submit} disabled={!date || update.isPending}>
           {t("rescheduleConfirm")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * V94: khách huỷ MỘT ngày tập, hoàn theo mốc báo trước của phòng gym.
+ *
+ * <p>Trước đây khách chỉ có hai đường: dời ngày, hoặc xin hoàn CẢ vé qua hàng
+ * đợi Admin. Không có đường nào để bỏ đúng một hôm — mà đó là việc đời thường
+ * nhất ("chưa có hủy lịch" trong bảng rà soát).
+ *
+ * <p>Số tiền hỏi SERVER trước khi bấm, không tự tính ở FE: mốc hoàn là chính
+ * sách của từng gym và con số phụ thuộc vào đúng thời điểm bấm. Tự tính lại ở
+ * đây thì sớm muộn cũng có ngày FE hứa một đằng server trả một nẻo — với tiền
+ * thì đó là loại sai không được phép có.
+ */
+function CancelSection({
+  session,
+  ticket,
+  onDone,
+}: {
+  session: TrainingSession;
+  ticket?: Ticket;
+  onDone: () => void;
+}) {
+  const t = useTranslations("ticket.schedule");
+  const { toast } = useToast();
+  const cancel = useCancelSession();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  // Chỉ hỏi báo giá khi khách thật sự mở panel: mỗi ngày trên lịch là một buổi,
+  // hỏi sẵn cho tất cả là một loạt request cho những nút chưa ai bấm.
+  const quote = useCancelSessionQuote(session.id, open);
+
+  // Buổi đã huỷ rồi: không còn nút, chỉ còn con số. Không nói ra thì khách chỉ
+  // thấy một ngày mất đi mà không biết mình được lại bao nhiêu.
+  if (session.status === "CANCELLED_BY_CUSTOMER") {
+    return (
+      <p className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+        {session.cancelRefundAmount != null && session.cancelRefundAmount > 0
+          ? t("cancelledWithRefund", {
+              amount: formatCurrency(session.cancelRefundAmount),
+            })
+          : t("cancelledNoRefund")}
+      </p>
+    );
+  }
+
+  const eligible =
+    ticket?.status === "ACTIVE"
+    && session.status === "SCHEDULED"
+    && session.sessionDate >= todayIso();
+  if (!eligible) return null;
+
+  async function submit() {
+    try {
+      const result = await cancel.mutateAsync({
+        sessionId: session.id,
+        reason: reason.trim() || undefined,
+      });
+      toast({
+        type: "success",
+        title: t("cancelled"),
+        description:
+          result.refundAmount > 0
+            ? t("cancelledRefundToast", { amount: formatCurrency(result.refundAmount) })
+            : t("cancelledNoRefund"),
+      });
+      onDone();
+    } catch (error) {
+      toast({ type: "error", title: t("cancelFailed"), description: toErrorMessage(error) });
+    }
+  }
+
+  if (!open) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="border-destructive/40 text-destructive hover:bg-destructive/10"
+        onClick={() => setOpen(true)}
+      >
+        <CalendarX className="mr-1.5 size-3.5" />
+        {t("cancelSession")}
+      </Button>
+    );
+  }
+
+  const data = quote.data;
+  return (
+    <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+      <p className="text-xs font-semibold text-destructive">{t("cancelTitle")}</p>
+
+      {quote.isLoading ? (
+        <p className="text-xs text-muted-foreground">{t("cancelQuoteLoading")}</p>
+      ) : quote.isError ? (
+        <p className="text-xs text-destructive">{toErrorMessage(quote.error)}</p>
+      ) : data ? (
+        <>
+          {/* Luật của gym in ra trước con số: khách phải hiểu VÌ SAO được từng
+              ấy, nếu không thì mọi mức dưới 100% đều trông như bị tính sai. */}
+          <p className="text-xs text-muted-foreground">
+            {t("cancelPolicy", {
+              fullHours: data.fullRefundHours,
+              partialHours: data.partialRefundHours,
+              partialPercent: data.partialRefundPercent,
+            })}
+          </p>
+          <div className="rounded-lg bg-card p-2.5">
+            <p className="text-xs text-muted-foreground">
+              {data.hoursAhead >= 0
+                ? t("cancelHoursAhead", { hours: data.hoursAhead })
+                : t("cancelAlreadyStarted")}
+            </p>
+            <p className="mt-1 text-sm font-bold">
+              {t("cancelRefundLine", {
+                amount: formatCurrency(data.refundAmount),
+                percent: data.refundPercent,
+              })}
+            </p>
+            {data.refundAmount === 0 ? (
+              <p className="mt-1 text-xs text-warning">{t("cancelNoRefundWarning")}</p>
+            ) : null}
+          </div>
+          {!data.cancellable && data.reason ? (
+            <p className="text-xs text-destructive">{data.reason}</p>
+          ) : null}
+          <Textarea
+            rows={2}
+            /* Khớp @Size(max = 300) của BE: lý do được ghép vào ghi chú lịch sử
+               nên trần thật là 300, không phải 500 như các ô lý do khác. */
+            maxLength={300}
+            placeholder={t("cancelReasonPlaceholder")}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+          {/* Ngày đã huỷ KHÔNG trả lại cho vé — phải nói trước, vì đây là điều
+              khách dễ hiểu ngược nhất và huỷ rồi thì không lùi được. */}
+          <p className="text-xs text-muted-foreground">{t("cancelDayNotReturned")}</p>
+        </>
+      ) : null}
+
+      <div className="flex justify-end gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setOpen(false);
+            setReason("");
+          }}
+          disabled={cancel.isPending}
+        >
+          {t("rescheduleCancel")}
+        </Button>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={submit}
+          disabled={cancel.isPending || quote.isLoading || !data?.cancellable}
+        >
+          {t("cancelConfirm")}
         </Button>
       </div>
     </div>

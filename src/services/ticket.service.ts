@@ -7,6 +7,7 @@ import type {
   MarketplaceTicketTypePage,
   PaymentOrder,
   PtSlotCell,
+  SessionCancellationQuote,
   SessionPtCancellation,
   ScheduleTicketRequest,
   Ticket,
@@ -139,17 +140,38 @@ export const ticketService = {
 
   checkIn: (sessionId: number) => api.post<TrainingSession>(`/sessions/${sessionId}/check-in`),
 
+  /** V94: hỏi trước — huỷ buổi này bây giờ thì hoàn bao nhiêu. */
+  cancelSessionQuote: (sessionId: number) =>
+    api.get<SessionCancellationQuote>(`/sessions/${sessionId}/cancel-quote`),
+
+  cancelSession: (sessionId: number, reason?: string) =>
+    api.post<SessionCancellationQuote, { reason?: string }>(
+      `/sessions/${sessionId}/cancel`,
+      { reason },
+    ),
+
   // ---------------- Tìm PT (hai chiều) ----------------
   /** Chọn giờ trước: PT nào của chi nhánh rảnh đúng khung này. */
-  searchPtSlots: (branchId: number, date: string, startTime: string) =>
+  searchPtSlots: (branchId: number, date: string, startTime: string, minutes?: number) =>
     api.get<PtSlotCell[]>("/pt-availability/search", {
-      params: { branchId, date, startTime },
+      params: { branchId, date, startTime, ...(minutes ? { minutes } : {}) },
     }),
 
-  /** Chọn PT trước (ptId) hoặc lưới gộp toàn chi nhánh (bỏ ptId). */
-  ptSlotGrid: (branchId: number, from: string, to: string, ptId?: number) =>
+  /**
+   * Chọn PT trước (ptId) hoặc lưới gộp toàn chi nhánh (bỏ ptId).
+   *
+   * `minutes` = thời lượng buổi ghi trên vé. Có nó thì mỗi ô KHÔNG còn là một
+   * slot của ca, mà là một khung có thể BẮT ĐẦU buổi dài ngần ấy phút — chuỗi
+   * slot phía sau được phép vắt qua nhiều ca liền nhau, và `endTime` là điểm
+   * kết thúc của cả chuỗi. Việc ghép do BE làm vì chỉ BE biết lưới ca.
+   */
+  ptSlotGrid: (branchId: number, from: string, to: string, ptId?: number, minutes?: number) =>
     api.get<PtSlotCell[]>("/pt-availability/grid", {
-      params: { branchId, from, to, ...(ptId ? { ptId } : {}) },
+      params: {
+        branchId, from, to,
+        ...(ptId ? { ptId } : {}),
+        ...(minutes ? { minutes } : {}),
+      },
     }),
 
   // ---------------- Hậu mãi ----------------

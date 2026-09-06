@@ -9,6 +9,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Heart, User, Shield, Bell, LogOut, TrendingUp, Wallet, CreditCard,
+  Star,
 } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { Button } from "@/shared/components/ui/button";
@@ -17,6 +18,10 @@ import { useTranslations } from "next-intl";
 const links = [
   { href: "/", navKey: "dashboard", icon: LayoutDashboard },
   { href: "/profile/tickets", navKey: "tickets", icon: Calendar },
+  // Trang /profile/reviews có từ lâu nhưng không có mục nào trong menu — khách
+  // chỉ tới được bằng link trong thông báo hoặc nút "Đã đánh giá" trên thẻ vé,
+  // tức là coi như không có. Đúng lỗi đã sửa cho /gym/reviews ở đợt rà trước.
+  { href: "/profile/reviews", navKey: "reviews", icon: Star },
   { href: "/profile/measurements", navKey: "progress", icon: TrendingUp },
   { href: "/profile/favorites", navKey: "favorites", icon: Heart },
   // V61: tiền hoàn từ refund/tranh chấp về ví thay vì chờ chuyển khoản tay.
