@@ -22,8 +22,9 @@ const refresh = (c: ReturnType<typeof useQueryClient>) => () =>
 
 /**
  * scope customer -> /reviews/me; pt -> public /reviews/pt/{id}; gym -> operator's
- * own (mọi trạng thái). `targetType` chỉ có nghĩa với scope gym: tách đánh giá
- * phòng gym khỏi đánh giá huấn luyện viên.
+ * own (mọi trạng thái). `targetType` tách đánh giá phòng gym khỏi đánh giá huấn
+ * luyện viên — có nghĩa với CẢ scope gym lẫn scope customer (khách cũng chấm hai
+ * đối tượng khác hẳn nhau và cần đọc riêng từng loại).
  */
 export function useReviews(
   scope: "customer" | "pt" | "gym",
@@ -36,7 +37,7 @@ export function useReviews(
     queryKey: [...reviewKeys.list(scope, id), targetType ?? "all"],
     queryFn: () =>
       scope === "customer"
-        ? reviewService.getMine()
+        ? reviewService.getMine({ targetType })
         : scope === "pt"
           ? reviewService.getPt(id)
           : reviewService.getGymOwn({ targetType }),

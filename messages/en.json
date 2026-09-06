@@ -1266,7 +1266,8 @@
       "security": "Security",
       "wallet": "My wallet",
       "bankAccounts": "Bank accounts",
-      "tickets": "My tickets"
+      "tickets": "My tickets",
+      "reviews": "My reviews"
     },
     "sidebar": {
       "tagline": "Manage your fitness journey",
@@ -1758,7 +1759,17 @@
     "created": "Review submitted",
     "submit": "Submit review",
     "tabGym": "About the gym",
-    "tabPt": "About trainers"
+    "tabPt": "About trainers",
+    "unknownTarget": "Unknown target",
+    "pendingTitle": "Waiting for your review ({count})",
+    "pendingGymHint": "Gym reviews open once you have used up a ticket — one review per ticket.",
+    "pendingPtHint": "Trainer reviews open as soon as a session with a trainer finishes — one review per session. These are sessions from the last {days} days; older ones can still be reviewed from the session details on the Schedule page.",
+    "rateGym": "Review gym",
+    "ratePt": "Review trainer",
+    "emptyGym": "No gym reviews yet",
+    "emptyPt": "No trainer reviews yet",
+    "emptyGymHint": "Gym reviews open once you use up a ticket. Any ticket you finish will show up here to rate.",
+    "emptyPtHint": "Trainer reviews open after a session with a trainer finishes. Any session you complete will show up here to rate."
   },
   "auth": {
     "back": "← Back",

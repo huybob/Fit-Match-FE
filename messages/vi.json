@@ -1266,7 +1266,8 @@
       "security": "Bảo mật",
       "wallet": "Ví của tôi",
       "bankAccounts": "Tài khoản ngân hàng",
-      "tickets": "Vé của tôi"
+      "tickets": "Vé của tôi",
+      "reviews": "Đánh giá của tôi"
     },
     "sidebar": {
       "tagline": "Quản lý hành trình thể hình",
@@ -1758,7 +1759,17 @@
     "created": "Đã gửi đánh giá",
     "submit": "Gửi đánh giá",
     "tabGym": "Về phòng gym",
-    "tabPt": "Về huấn luyện viên"
+    "tabPt": "Về huấn luyện viên",
+    "unknownTarget": "Không rõ đối tượng",
+    "pendingTitle": "Đang chờ bạn đánh giá ({count})",
+    "pendingGymHint": "Đánh giá phòng gym mở khi bạn đã dùng hết một tấm vé — mỗi vé chấm một lần.",
+    "pendingPtHint": "Đánh giá huấn luyện viên mở ngay khi buổi tập có HLV kết thúc — mỗi buổi chấm một lần. Đây là các buổi trong {days} ngày gần nhất; buổi cũ hơn vẫn chấm được từ chi tiết buổi trên trang Lịch tập.",
+    "rateGym": "Đánh giá phòng gym",
+    "ratePt": "Đánh giá HLV",
+    "emptyGym": "Chưa đánh giá phòng gym nào",
+    "emptyPt": "Chưa đánh giá huấn luyện viên nào",
+    "emptyGymHint": "Đánh giá phòng gym mở khi bạn dùng hết một tấm vé. Dùng hết vé nào thì vé đó sẽ hiện ở đây để chấm điểm.",
+    "emptyPtHint": "Đánh giá huấn luyện viên mở sau khi một buổi tập CÓ HLV kết thúc. Tập xong buổi nào thì buổi đó sẽ hiện ở đây để chấm điểm."
   },
   "auth": {
     "back": "← Quay lại",

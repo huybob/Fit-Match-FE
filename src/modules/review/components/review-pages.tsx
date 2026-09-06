@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, Star } from "lucide-react";
 import { ConfirmDialog } from "@/shared/components/common/confirm-dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/lib/toast-provider";
@@ -13,6 +13,11 @@ import type { Review } from "@/services/review.service";
 import type { Media } from "@/types/Media";
 import { ImageGallery } from "@/shared/components/media/image-gallery";
 import { StarRatingInput } from "./star-rating-input";
+import { ReviewCreateDialog } from "./review-create-dialog";
+import { useFormatters } from "@/i18n/use-formatters";
+import { useMySessions, useMyTickets } from "@/modules/ticket/hooks/use-ticket";
+import { addDays, fromIsoDate, todayIso } from "@/modules/ticket/calendar-date.util";
+import type { Ticket, TrainingSession } from "@/types/Ticket";
 import { ImageUploader } from "@/shared/components/media/image-uploader";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
@@ -22,6 +27,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import {
   useDeleteReview,
+  useMyReviewedTargets,
   useReportReview,
   useReviews,
   useSaveReview,
@@ -29,8 +35,54 @@ import {
 import { useReviewSchemas } from "../use-review-schemas";
 import { useTranslations } from "next-intl";
 
+/**
+ * Đánh giá của chính khách, TÁCH hai loại — cùng lý do với {@link GymReviewsPage}.
+ *
+ * <p>Trước đây là một danh sách phẳng, và mỗi thẻ chỉ in tên người đánh giá —
+ * tức là tên của CHÍNH người đang xem. Khách mở trang ra thấy tên mình lặp lại
+ * mười lần mà không có chỗ nào nói mình đã chấm phòng gym nào hay huấn luyện
+ * viên nào. Hai tab trả lời hai câu khác nhau, và thẻ giờ in ĐỐI TƯỢNG được
+ * chấm thay cho cái tên vô nghĩa kia.
+ */
 export function CustomerReviewsPage() {
-  return <ReviewPage scope="customer" />;
+  const [targetType, setTargetType] = useState<"GYM" | "PT">("GYM");
+
+  return (
+    <ReviewPage
+      scope="customer"
+      targetType={targetType}
+      tabs={<ReviewTypeTabs value={targetType} onChange={setTargetType} />}
+    />
+  );
+}
+
+/** Dải chip GYM / PT — dùng chung cho trang của khách và trang của phòng gym. */
+function ReviewTypeTabs({
+  value,
+  onChange,
+}: {
+  value: "GYM" | "PT";
+  onChange: (next: "GYM" | "PT") => void;
+}) {
+  const t = useTranslations();
+  return (
+    <div className="mt-4 flex gap-1.5">
+      {(["GYM", "PT"] as const).map((type) => (
+        <button
+          key={type}
+          type="button"
+          onClick={() => onChange(type)}
+          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+            value === type
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t(type === "GYM" ? "review.tabGym" : "review.tabPt")}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function TrainerReviewsPage() {
@@ -69,34 +121,162 @@ export function TrainerReviewsPage() {
  * getGymOwn trả review của mọi gym thuộc operator (mọi trạng thái) — không cần chọn gym.
  */
 export function GymReviewsPage() {
-  const t = useTranslations();
   const [targetType, setTargetType] = useState<"GYM" | "PT">("GYM");
 
   return (
     <ReviewPage
       scope="gym"
       targetType={targetType}
-      tabs={
-        <div className="mt-4 flex gap-1.5">
-          {(["GYM", "PT"] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setTargetType(type)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-                targetType === type
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t(type === "GYM" ? "review.tabGym" : "review.tabPt")}
-            </button>
-          ))}
-        </div>
-      }
+      tabs={<ReviewTypeTabs value={targetType} onChange={setTargetType} />}
     />
   );
 }
+
+/**
+ * Những thứ ĐANG CHỜ khách chấm điểm, ngay trên danh sách đã chấm.
+ *
+ * <p>Hai tab trước đây chỉ ĐỌC: khách mở tab "Về huấn luyện viên" mà chưa chấm
+ * ai thì nhận đúng một dòng "Chưa có đánh giá" và hết đường đi. Lối tạo đánh giá
+ * có tồn tại nhưng nằm rải ở nơi khác — trong thẻ vé đã dùng hết, và trong hộp
+ * chi tiết một buổi tập trên lịch — nên muốn chấm điểm thì phải nhớ ra buổi nào,
+ * vé nào, rồi tự đi tìm. Ở đây gom lại đúng hai câu mà mỗi tab đang hỏi.
+ *
+ * <p>Điều kiện mở khớp từng chữ với BE (ReviewServiceImpl):
+ * phòng gym chấm theo VÉ khi vé đã USED_UP; HLV chấm theo BUỔI khi buổi đã DONE
+ * và buổi đó có HLV. Lệch một điều kiện là mời khách bấm vào rồi nhận 409.
+ */
+function PendingReviews({
+  targetType,
+  reviewed,
+}: {
+  targetType: "GYM" | "PT";
+  reviewed: ReturnType<typeof useMyReviewedTargets>;
+}) {
+  const t = useTranslations();
+  const [gymTarget, setGymTarget] = useState<Ticket | null>(null);
+  const [ptTarget, setPtTarget] = useState<TrainingSession | null>(null);
+  const fmt = useFormatters();
+
+  /*
+   * Vé đã dùng hết — lọc status ở SERVER: vé đã dùng hết là số ít so với toàn bộ
+   * vé của khách, kéo hết về rồi lọc ở client là tải thừa cả một lịch sử mua vé.
+   */
+  const usedUp = useMyTickets({ status: "USED_UP", size: 100 });
+
+  /*
+   * Buổi đã tập xong. `/sessions/my` nhận khoảng ngày nên phải chọn một cửa sổ:
+   * BE KHÔNG giới hạn thời gian được đánh giá, nên cửa sổ này chỉ là phạm vi
+   * NHẮC — buổi cũ hơn vẫn chấm được qua hộp chi tiết buổi trên lịch. Nói rõ
+   * phạm vi trong phần mô tả thay vì im lặng cắt bớt.
+   */
+  const from = addDays(todayIso(), -PENDING_PT_LOOKBACK_DAYS);
+  const doneSessions = useMySessions(from, todayIso(), targetType === "PT");
+  // Buổi chỉ mang ticketId; tên phòng gym nằm ở vé. Ghép ở client bằng một Map
+  // thay vì gọi thêm API cho từng buổi — cùng cách lịch đặt vẫn làm.
+  const allTickets = useMyTickets({ size: 100 });
+  const ticketById = useMemo(
+    () => new Map((allTickets.data?.content ?? []).map((item) => [item.id, item])),
+    [allTickets.data],
+  );
+
+  const pendingGym = useMemo(
+    () =>
+      (usedUp.data?.content ?? []).filter((ticket) => !reviewed.ticketIds.has(ticket.id)),
+    [usedUp.data, reviewed.ticketIds],
+  );
+  const pendingPt = useMemo(
+    () =>
+      (doneSessions.data ?? []).filter(
+        (session) =>
+          session.status === "DONE"
+          && session.ptProfileId != null
+          && !reviewed.sessionIds.has(session.id),
+      ),
+    [doneSessions.data, reviewed.sessionIds],
+  );
+
+  const items = targetType === "GYM" ? pendingGym : pendingPt;
+  if (!items.length) return null;
+
+  return (
+    <section className="mb-6 rounded-2xl border border-primary/30 bg-primary/5 p-5">
+      <h2 className="text-sm font-black text-foreground">
+        {t("review.pendingTitle", { count: items.length })}
+      </h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t(targetType === "GYM" ? "review.pendingGymHint" : "review.pendingPtHint", {
+          days: PENDING_PT_LOOKBACK_DAYS,
+        })}
+      </p>
+
+      <ul className="mt-3 space-y-2">
+        {targetType === "GYM"
+          ? pendingGym.map((ticket) => (
+              <li
+                key={ticket.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-card p-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">{ticket.gymName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {ticket.ticketTypeName} · {ticket.gymBranchName}
+                  </p>
+                </div>
+                <Button size="sm" onClick={() => setGymTarget(ticket)}>
+                  <Star className="mr-1.5 size-3.5" />
+                  {t("review.rateGym")}
+                </Button>
+              </li>
+            ))
+          : pendingPt.map((session) => (
+              <li
+                key={session.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-card p-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold">{session.ptName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {fmt.date(fromIsoDate(session.sessionDate))}
+                    {ticketById.get(session.ticketId)?.gymName
+                      ? ` · ${ticketById.get(session.ticketId)?.gymName}`
+                      : ""}
+                  </p>
+                </div>
+                <Button size="sm" onClick={() => setPtTarget(session)}>
+                  <Star className="mr-1.5 size-3.5" />
+                  {t("review.ratePt")}
+                </Button>
+              </li>
+            ))}
+      </ul>
+
+      {gymTarget && (
+        <ReviewCreateDialog
+          target={{ kind: "gym", ticketId: gymTarget.id, name: gymTarget.gymName }}
+          onClose={() => setGymTarget(null)}
+        />
+      )}
+      {ptTarget && (
+        <ReviewCreateDialog
+          target={{
+            kind: "pt",
+            sessionId: ptTarget.id,
+            name: ptTarget.ptName ?? "",
+            // Ngày hiển thị, không phải ISO thô: câu dẫn của form là câu đọc.
+            date: fmt.date(fromIsoDate(ptTarget.sessionDate)),
+          }}
+          onClose={() => setPtTarget(null)}
+        />
+      )}
+    </section>
+  );
+}
+
+/**
+ * Phạm vi NHẮC đánh giá HLV. Không phải hạn chót — BE không giới hạn thời gian,
+ * buổi cũ hơn vẫn chấm được từ hộp chi tiết buổi trên lịch.
+ */
+const PENDING_PT_LOOKBACK_DAYS = 180;
 
 /* Nhãn trạng thái review ở review.status.* */
 
@@ -116,13 +296,15 @@ function ReviewPage({
   tabs?: React.ReactNode;
 }) {
   const t = useTranslations();
-  // Chỉ còn SỬA đánh giá đã có. Tạo mới nằm ở trang vé (đánh giá phòng gym) và
-  // trang buổi tập (đánh giá PT) vì đối tượng đánh giá đi trong đường dẫn.
+  // Danh sách này chỉ SỬA đánh giá đã có. Việc TẠO nằm ở PendingReviews ngay bên
+  // trên (và ở đúng chỗ phát sinh: thẻ vé, hộp chi tiết buổi tập) vì đối tượng
+  // đánh giá đi trong đường dẫn của API.
   const [editing, setEditing] = useState<Review | null>(null);
   const [reporting, setReporting] = useState<Review | null>(null);
   const query = useReviews(scope, targetId, targetType);
   const del = useDeleteReview();
   const { toast } = useToast();
+  const reviewed = useMyReviewedTargets();
   const items = query.data?.content ?? [];
 
   return (
@@ -138,6 +320,12 @@ function ReviewPage({
         </div>
       </section>
 
+      {/* Chờ chấm điểm lên TRƯỚC danh sách đã chấm: đó là việc còn phải làm,
+          còn danh sách dưới là việc đã xong. */}
+      {scope === "customer" && targetType ? (
+        <PendingReviews targetType={targetType} reviewed={reviewed} />
+      ) : null}
+
       {query.isLoading ? (
         <LoadingSkeleton />
       ) : query.isError ? (
@@ -146,9 +334,23 @@ function ReviewPage({
           description={toErrorMessage(query.error)}
         />
       ) : !items.length ? (
+        /*
+          Rỗng theo TỪNG TAB, và nói ra khi nào thì đánh giá mới mở — "Chưa có
+          đánh giá" trơn để khách đứng lại không biết phải làm gì mới được chấm.
+          Chỉ dùng câu này cho scope KHÁCH: với gym/PT thì tab rỗng nghĩa là chưa
+          ai chấm HỌ, nói "bạn chưa đánh giá..." là đổi hẳn chủ ngữ.
+        */
         <EmptyState
-          title={t("review.empty")}
-          description={t("review.emptyHint")}
+          title={
+            scope === "customer" && targetType
+              ? t(targetType === "PT" ? "review.emptyPt" : "review.emptyGym")
+              : t("review.empty")
+          }
+          description={
+            scope === "customer" && targetType
+              ? t(targetType === "PT" ? "review.emptyPtHint" : "review.emptyGymHint")
+              : t("review.emptyHint")
+          }
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -157,9 +359,25 @@ function ReviewPage({
               key={r.id}
               className="rounded-2xl border border-border bg-card p-5"
             >
-              <div className="flex justify-between">
-                <p className="font-black">{r.customerName}</p>
-                <span className="flex items-center gap-1 font-black text-accent">
+              <div className="flex justify-between gap-3">
+                {/*
+                  Ở trang của khách, `customerName` là tên của CHÍNH người đang
+                  xem — in ra không nói thêm được gì. Thứ họ cần là đối tượng đã
+                  chấm: huấn luyện viên nào, hay phòng gym nào.
+                */}
+                <div className="min-w-0">
+                  <p className="truncate font-black">
+                    {scope === "customer"
+                      ? (r.targetType === "PT" ? r.ptName : r.gymName) ?? t("review.unknownTarget")
+                      : r.customerName}
+                  </p>
+                  {/* Đánh giá HLV vẫn gắn phòng gym — nói ra chỗ tập thì khách
+                      mới nhớ ra buổi nào, nhất là khi họ tập ở nhiều nơi. */}
+                  {scope === "customer" && r.targetType === "PT" && r.gymName ? (
+                    <p className="truncate text-xs text-muted-foreground">{r.gymName}</p>
+                  ) : null}
+                </div>
+                <span className="flex shrink-0 items-center gap-1 font-black text-accent">
                   <Star className="size-4 fill-current" />
                   {r.rating}/5
                 </span>
