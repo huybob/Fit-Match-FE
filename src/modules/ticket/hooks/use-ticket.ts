@@ -236,6 +236,36 @@ export function useRemoveSessionPt() {
   });
 }
 
+/**
+ * V94: báo giá huỷ một buổi. `staleTime: 0` vì con số phụ thuộc vào ĐỒNG HỒ —
+ * mốc 24h/12h trôi qua trong lúc hộp thoại đang mở thì số cũ trong cache sẽ hứa
+ * với khách một khoản mà server không trả.
+ */
+export function useCancelSessionQuote(sessionId: number, enabled = true) {
+  return useQuery({
+    queryKey: sessionKeys.cancelQuote(sessionId),
+    queryFn: () => ticketService.cancelSessionQuote(sessionId),
+    enabled: enabled && sessionId > 0,
+    staleTime: 0,
+  });
+}
+
+export function useCancelSession() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, reason }: { sessionId: number; reason?: string }) =>
+      ticketService.cancelSession(sessionId, reason),
+    onSuccess: () => {
+      invalidateTickets(client)();
+      // Khung giờ của PT vừa được trả lại -> lưới chọn PT phải thấy nó trống.
+      client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
+      // Tiền hoàn về ví: số dư cũ trong cache là một con số sai ngay lập tức.
+      // ["wallet"] là tiền tố của cả walletKeys.wallet(owner) lẫn .transactions.
+      client.invalidateQueries({ queryKey: ["wallet"] });
+    },
+  });
+}
+
 export function useCheckInSession() {
   const client = useQueryClient();
   return useMutation({

@@ -272,7 +272,8 @@
     "sessionStatus": {
       "SCHEDULED": "Đã đặt",
       "DONE": "Đã tập",
-      "CANCELLED": "Đã huỷ"
+      "CANCELLED": "Đã huỷ",
+      "CANCELLED_BY_CUSTOMER": "Bạn đã huỷ"
     }
   },
   "admin": {
@@ -292,7 +293,8 @@
       "cms": "Nội dung",
       "notifications": "Mẫu thông báo",
       "masterData": "Dữ liệu nền",
-      "auditLogs": "Nhật ký hệ thống"
+      "auditLogs": "Nhật ký hệ thống",
+      "pendingCount": "{count} việc đang chờ xử lý"
     },
     "auditLogs": {
       "title": "Nhật ký kiểm toán",
@@ -807,7 +809,13 @@
       "visibilityHint": "Cho phép khách hàng tìm thấy phòng gym",
       "visibilityLocked": "Chỉ khả dụng sau khi hồ sơ được duyệt (và có ít nhất 1 chi nhánh hoạt động).",
       "visibilityOn": "Bật để hồ sơ hiển thị công khai trên trang tìm kiếm.",
-      "nameLockedHint": "Tên phòng gym đã được xác minh nên không đổi được. Liên hệ quản trị viên nếu cần đổi tên."
+      "nameLockedHint": "Tên phòng gym đã được xác minh nên không đổi được. Liên hệ quản trị viên nếu cần đổi tên.",
+      "cancelTiersTitle": "Mốc hoàn tiền khi khách huỷ ngày tập",
+      "cancelTiersHint": "Đây là con số hệ thống dùng để tính tiền hoàn. Ô “Chính sách hủy” ở trên chỉ là văn bản cho khách đọc. Để trống = giữ nguyên mức đang áp dụng.",
+      "cancelFullHours": "Hoàn 100% nếu báo trước (giờ)",
+      "cancelPartialHours": "Hoàn một phần nếu báo trước (giờ)",
+      "cancelPartialPercent": "Tỉ lệ hoàn một phần (%)",
+      "cancelTiersOrderError": "Mốc hoàn 100% phải sớm hơn hoặc bằng mốc hoàn một phần."
     },
     "facilities": {
       "title": "Tiện ích & Cơ sở vật chất",
@@ -1031,7 +1039,11 @@
       "docRequired": "Nhập loại tài liệu và tải tệp lên",
       "certAddFailed": "Không thêm được chứng chỉ “{name}”",
       "assigned": "Đã phân công PT",
-      "blockAdded": "Đã thêm khoảng chặn"
+      "blockAdded": "Đã thêm khoảng chặn",
+      "branchFilterLabel": "Chi nhánh:",
+      "emptyForBranch": "Chi nhánh này chưa có huấn luyện viên nào được phân công.",
+      "branchInactive": "{name} — chi nhánh đã ngừng hoạt động",
+      "noBranchAssigned": "Chưa gán chi nhánh"
     },
     "workspace": "Không gian Chủ phòng gym"
   },
@@ -2210,7 +2222,24 @@
       "preferredPt": "HLV bạn chọn",
       "reviewPt": "Đánh giá HLV",
       "ptReviewed": "Đã đánh giá HLV",
-      "noSlotsOfLength": "Ngày này không có khung giờ nào dài {minutes} phút — đúng thời lượng vé của bạn."
+      "noSlotsOfLength": "Ngày này không có khung giờ nào dài {minutes} phút — đúng thời lượng vé của bạn.",
+      "cancelSession": "Huỷ buổi tập",
+      "cancelTitle": "Huỷ buổi tập này?",
+      "cancelQuoteLoading": "Đang tính số tiền hoàn…",
+      "cancelPolicy": "Chính sách của phòng gym: huỷ trước {fullHours} giờ hoàn 100%, trước {partialHours} giờ hoàn {partialPercent}%, muộn hơn không hoàn.",
+      "cancelHoursAhead": "Bạn đang báo trước {hours} giờ.",
+      "cancelAlreadyStarted": "Buổi tập đã bắt đầu.",
+      "cancelRefundLine": "Hoàn lại {amount} ({percent}% giá trị một ngày tập)",
+      "cancelNoRefundWarning": "Huỷ lúc này không được hoàn đồng nào.",
+      "cancelDayNotReturned": "Ngày đã huỷ không được trả lại cho vé — bạn đã nhận tiền hoàn của chính ngày đó.",
+      "cancelReasonPlaceholder": "Lý do huỷ (không bắt buộc)",
+      "cancelConfirm": "Xác nhận huỷ",
+      "cancelled": "Đã huỷ buổi tập",
+      "cancelledRefundToast": "{amount} đã vào ví của bạn.",
+      "cancelledWithRefund": "Bạn đã huỷ buổi này. Đã hoàn {amount} vào ví.",
+      "cancelledNoRefund": "Bạn đã huỷ buổi này. Huỷ quá muộn nên không được hoàn tiền.",
+      "cancelFailed": "Không huỷ được buổi tập",
+      "chipCancelled": "Đã huỷ"
     },
     "myTickets": {
       "title": "Vé của tôi",

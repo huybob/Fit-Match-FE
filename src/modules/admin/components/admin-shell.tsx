@@ -11,6 +11,8 @@ import {
   ShieldAlert, Star, Banknote, Percent, Flag, BellRing,
   Landmark,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { adminService } from "@/services/admin.service";
 import { NotificationBell } from "@/modules/notification/components/notification-bell";
 import { ResponsiveSidebar } from "@/shared/components/common/responsive-sidebar";
 import { useAuthStore } from "@/modules/auth/auth.store";
@@ -93,10 +95,41 @@ function AdminForbidden() {
   );
 }
 
+/**
+ * Chấm đỏ cạnh mục menu = khu vực đó đang có việc chờ xử lý.
+ *
+ * <p>Trước đây admin phải mở lần lượt từng trang mới biết chỗ nào có việc — mà
+ * phần lớn các lần mở ra là trống. Poll một phút một lần: việc tồn của cả sàn
+ * không đổi theo từng giây, mà đây lại là request chạy suốt phiên làm việc.
+ *
+ * <p>`navKey` của mỗi mục chính là tên trường trong phản hồi, nên không có bảng
+ * ánh xạ nào ở giữa để lệch. Mục không có hàng đợi (Voucher, CMS, Nhật ký…)
+ * không có trường tương ứng và tự nhiên không bao giờ có chấm.
+ */
+const PENDING_POLL_MS = 60_000;
+
+function usePendingCounts() {
+  const { user } = useAuthStore();
+  const { data } = useQuery({
+    queryKey: ["admin", "pending-counts"],
+    queryFn: () => adminService.getPendingCounts(),
+    // Chỉ hỏi khi thật sự là người trong khu quản trị: AdminShell còn được
+    // render trong lúc AuthGuard chưa xác định xong người dùng.
+    enabled: ALL_ADMIN_ROLES.includes(
+      (user?.role ?? "") as (typeof ALL_ADMIN_ROLES)[number],
+    ),
+    refetchInterval: PENDING_POLL_MS,
+    // Quay lại tab sau một lúc thì con số phải đúng ngay, không đợi hết nhịp poll.
+    refetchOnWindowFocus: true,
+  });
+  return data;
+}
+
 function AdminSidebar({ onLogout }: { onLogout: () => void }) {
   const t = useTranslations();
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const pending = usePendingCounts();
   const visibleLinks = adminLinks.filter(({ roles }) =>
     (roles as readonly string[]).includes(user?.role ?? ""),
   );
@@ -109,6 +142,7 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5 overflow-y-auto">
         {visibleLinks.map(({ href, navKey, icon: Icon }) => {
           const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
+          const count = pending?.[navKey as keyof typeof pending] ?? 0;
           return (
             <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -116,7 +150,25 @@ function AdminSidebar({ onLogout }: { onLogout: () => void }) {
               }`}
             >
               <Icon className="size-4 shrink-0" />
-              {t(`admin.nav.${navKey}`)}
+              <span className="min-w-0 flex-1 truncate">{t(`admin.nav.${navKey}`)}</span>
+              {/*
+                Con số chứ không phải một chấm trơn: "có việc" và "có 47 việc" là
+                hai mức khẩn khác hẳn nhau, mà chỗ này thừa sức in ra con số.
+                aria-label đọc thành câu vì một số đứng lẻ trong menu thì trình
+                đọc màn hình không nói được nó đếm cái gì.
+              */}
+              {count > 0 ? (
+                <span
+                  aria-label={t("admin.nav.pendingCount", { count })}
+                  className={`ml-auto inline-flex min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                    active
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-destructive text-destructive-foreground"
+                  }`}
+                >
+                  {count > 99 ? "99+" : count}
+                </span>
+              ) : null}
             </Link>
           );
         })}

@@ -263,17 +263,29 @@ export default function GymPtsPage() {
    */
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  // Đổi số dòng mỗi trang thì chỉ số trang cũ không còn tương ứng — về trang đầu
-  // ngay trong lúc render để không bắn thừa một request cho cặp size mới/trang cũ.
-  const [lastPageSize, setLastPageSize] = useState(pageSize);
-  if (pageSize !== lastPageSize) {
-    setLastPageSize(pageSize);
+  /**
+   * Lọc theo chi nhánh — 0 = mọi chi nhánh. Lọc ở SERVER chứ không ở client:
+   * bảng đã phân trang server-side, lọc sau khi phân trang chỉ lọc được đúng
+   * trang đang xem và tổng số dòng sẽ nói dối.
+   */
+  const [branchFilter, setBranchFilter] = useState(0);
+  // Đổi số dòng mỗi trang hoặc đổi chi nhánh thì chỉ số trang cũ không còn tương
+  // ứng — về trang đầu ngay trong lúc render để không bắn thừa một request cho
+  // cặp (bộ lọc mới, trang cũ).
+  const [lastPageArgs, setLastPageArgs] = useState({ pageSize, branchFilter });
+  if (pageSize !== lastPageArgs.pageSize || branchFilter !== lastPageArgs.branchFilter) {
+    setLastPageArgs({ pageSize, branchFilter });
     setPage(0);
   }
 
   const ptsQuery = useQuery({
-    queryKey: ["gym-pts", page, pageSize],
-    queryFn: () => gymService.listPts({ page, size: pageSize }),
+    queryKey: ["gym-pts", page, pageSize, branchFilter],
+    queryFn: () =>
+      gymService.listPts({
+        page,
+        size: pageSize,
+        ...(branchFilter ? { branchId: branchFilter } : {}),
+      }),
     // Giữ bảng cũ trong lúc tải trang mới thay vì nháy skeleton.
     placeholderData: keepPreviousData,
   });
@@ -402,17 +414,51 @@ export default function GymPtsPage() {
         </div>
 
         <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
+          {/*
+            Lọc PT theo chi nhánh. Gym nhiều cơ sở thì "gym có ai" là câu hỏi
+            thiếu vế — người xếp ca cần biết AI ĐANG Ở CHI NHÁNH NÀO. Gym một
+            chi nhánh thì dải chip chỉ có một lựa chọn nên không hiện.
+            Dùng CHI NHÁNH ĐANG HOẠT ĐỘNG làm nguồn lọc, nhưng cột bên dưới vẫn
+            in cả chi nhánh đã tắt: PT còn dính ở chi nhánh tắt là việc gym phải
+            thấy, không phải thứ nên giấu đi.
+          */}
+          {activeBranches.length > 1 && (
+            <div className="mb-4 flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-xs font-semibold text-muted-foreground">
+                {t("gym.trainers.branchFilterLabel")}
+              </span>
+              {[{ id: 0, name: t("marketplace.allBranches") }, ...activeBranches].map((b) => (
+                <button
+                  key={b.id ?? 0}
+                  type="button"
+                  onClick={() => setBranchFilter(b.id ?? 0)}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    branchFilter === (b.id ?? 0)
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {b.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* DataTable đã có sẵn loading / lỗi / rỗng. Hai nhánh viết tay trước đây
               nuốt mất nhánh LỖI: API hỏng cũng ra "chưa có huấn luyện viên nào". */}
             <DataTable
-              minWidth="35rem"
+              minWidth="46rem"
               rows={pts}
               rowKey={(pt) => String(pt.id)}
               loading={ptsQuery.isLoading}
               error={ptsQuery.isError}
               errorDescription={ptsQuery.error ? toErrorMessage(ptsQuery.error) : undefined}
               onRetry={() => ptsQuery.refetch()}
-              emptyTitle={t("gym.trainers.empty")}
+              /* Lọc ra rỗng khác với "gym chưa có PT nào": câu sau bảo người ta
+                 đi tạo PT mới trong khi việc cần làm chỉ là bỏ lọc. */
+              emptyTitle={
+                branchFilter ? t("gym.trainers.emptyForBranch") : t("gym.trainers.empty")
+              }
               columns={[
                 {
                   key: "trainer",
@@ -434,6 +480,38 @@ export default function GymPtsPage() {
                       </div>
                     </div>
                   ),
+                },
+                {
+                  key: "branches",
+                  header: t("gym.trainers.branchesLabel"),
+                  cell: (pt) =>
+                    pt.branches?.length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {pt.branches.map((b) => (
+                          <span
+                            key={b.id}
+                            /* Chi nhánh đã tắt vẫn in ra nhưng ở dạng mờ + gạch
+                               ngang: PT còn treo ở một cơ sở không còn chạy là
+                               việc cần xử lý, giấu đi thì không ai biết. */
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                              b.active
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted text-muted-foreground line-through"
+                            }`}
+                            title={b.active ? b.name : t("gym.trainers.branchInactive", { name: b.name })}
+                          >
+                            {b.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      /* BE bắt buộc >=1 chi nhánh khi TẠO, nhưng phân công gỡ được
+                         về sau — PT không chi nhánh nào thì không nhận được lịch,
+                         phải nói ra chứ không để một ô gạch ngang. */
+                      <span className="text-[11px] font-semibold text-warning">
+                        {t("gym.trainers.noBranchAssigned")}
+                      </span>
+                    ),
                 },
                 {
                   key: "specialization",

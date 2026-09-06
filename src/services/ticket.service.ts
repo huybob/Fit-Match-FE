@@ -7,6 +7,7 @@ import type {
   MarketplaceTicketTypePage,
   PaymentOrder,
   PtSlotCell,
+  SessionCancellationQuote,
   SessionPtCancellation,
   ScheduleTicketRequest,
   Ticket,
@@ -138,6 +139,16 @@ export const ticketService = {
     api.delete<TrainingSession>(`/sessions/${sessionId}/pt`),
 
   checkIn: (sessionId: number) => api.post<TrainingSession>(`/sessions/${sessionId}/check-in`),
+
+  /** V94: hỏi trước — huỷ buổi này bây giờ thì hoàn bao nhiêu. */
+  cancelSessionQuote: (sessionId: number) =>
+    api.get<SessionCancellationQuote>(`/sessions/${sessionId}/cancel-quote`),
+
+  cancelSession: (sessionId: number, reason?: string) =>
+    api.post<SessionCancellationQuote, { reason?: string }>(
+      `/sessions/${sessionId}/cancel`,
+      { reason },
+    ),
 
   // ---------------- Tìm PT (hai chiều) ----------------
   /** Chọn giờ trước: PT nào của chi nhánh rảnh đúng khung này. */

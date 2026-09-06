@@ -41,6 +41,11 @@ function PoliciesSection() {
         cancellationPolicy: policy.cancellationPolicy?.trim() || undefined,
         noShowPolicy: policy.noShowPolicy?.trim() || undefined,
         houseRules: policy.houseRules?.trim() || undefined,
+        // V94: ba mốc huỷ. Gửi undefined khi ô trống — BE hiểu là "không đổi",
+        // chứ 0 ở đây sẽ thành một chính sách "không bao giờ hoàn" đặt ra do sơ ý.
+        cancelFullRefundHours: policy.cancelFullRefundHours ?? undefined,
+        cancelPartialRefundHours: policy.cancelPartialRefundHours ?? undefined,
+        cancelPartialRefundPercent: policy.cancelPartialRefundPercent ?? undefined,
       }),
     onSuccess: () => toast({ type: "success", title: t("gym.settings.policySaved") }),
     onError: (e) => toast({ type: "error", title: t("common.states.error"), description: toErrorMessage(e) }),
@@ -76,6 +81,75 @@ function PoliciesSection() {
               />
             </FieldShell>
           ))}
+          {/*
+            V94: luật huỷ ở dạng SỐ. Ô "Chính sách hủy" bên trên là văn bản cho
+            khách đọc — không có gì để máy tính tiền theo, nên trước đây mọi
+            chính sách huỷ đều chỉ là lời hứa. Ba ô này mới là thứ quyết định
+            khách nhận lại bao nhiêu khi bỏ một ngày tập.
+          */}
+          <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <p className="text-xs font-bold text-foreground">
+              {t("gym.settings.cancelTiersTitle")}
+            </p>
+            <p className="mt-0.5 mb-3 text-xs text-muted-foreground">
+              {t("gym.settings.cancelTiersHint")}
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <FieldShell label={t("gym.settings.cancelFullHours")}>
+                <Input
+                  type="number"
+                  min={0}
+                  max={720}
+                  value={policy.cancelFullRefundHours ?? ""}
+                  onChange={(e) =>
+                    setPolicy((prev) => ({
+                      ...prev,
+                      cancelFullRefundHours: e.target.value === "" ? undefined : Number(e.target.value),
+                    }))
+                  }
+                />
+              </FieldShell>
+              <FieldShell label={t("gym.settings.cancelPartialHours")}>
+                <Input
+                  type="number"
+                  min={0}
+                  max={720}
+                  value={policy.cancelPartialRefundHours ?? ""}
+                  onChange={(e) =>
+                    setPolicy((prev) => ({
+                      ...prev,
+                      cancelPartialRefundHours: e.target.value === "" ? undefined : Number(e.target.value),
+                    }))
+                  }
+                />
+              </FieldShell>
+              <FieldShell label={t("gym.settings.cancelPartialPercent")}>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={policy.cancelPartialRefundPercent ?? ""}
+                  onChange={(e) =>
+                    setPolicy((prev) => ({
+                      ...prev,
+                      cancelPartialRefundPercent:
+                        e.target.value === "" ? undefined : Number(e.target.value),
+                    }))
+                  }
+                />
+              </FieldShell>
+            </div>
+            {/* Đảo mốc thì bậc "hoàn một phần" không bao giờ với tới được — BE
+                từ chối, nói trước ở đây để khỏi phải nhận lỗi sau khi bấm Lưu. */}
+            {policy.cancelFullRefundHours != null
+              && policy.cancelPartialRefundHours != null
+              && policy.cancelFullRefundHours < policy.cancelPartialRefundHours ? (
+              <p className="mt-2 text-xs font-semibold text-destructive">
+                {t("gym.settings.cancelTiersOrderError")}
+              </p>
+            ) : null}
+          </div>
+
           <div className="flex justify-end">
             <Button onClick={() => save.mutate()} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
               {save.isPending && <Loader2 className="size-4 animate-spin" />} {t("gym.settings.savePolicies")}

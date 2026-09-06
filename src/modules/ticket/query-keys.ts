@@ -18,6 +18,8 @@ export const sessionKeys = {
   all: ["sessions"] as const,
   mine: (from: string, to: string) => [...sessionKeys.all, "mine", from, to] as const,
   pt: (from: string, to: string) => [...sessionKeys.all, "pt", from, to] as const,
+  /** V94: báo giá huỷ một buổi — nằm dưới `all` để mọi thao tác lịch đều làm mới nó. */
+  cancelQuote: (sessionId: number) => [...sessionKeys.all, "cancel-quote", sessionId] as const,
 };
 
 /**

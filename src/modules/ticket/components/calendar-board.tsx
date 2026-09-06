@@ -28,6 +28,12 @@ export interface CalendarDayContext {
    */
   inMonth: boolean;
   isToday: boolean;
+  /**
+   * Ô không bấm được (ngày đã qua, chi nhánh đã đóng cửa hôm nay, ngoài phạm vi
+   * gói). Nằm trong ctx để `renderDay` khỏi đổ chip khung giờ lên một ngày
+   * không chọn được — mời gọi một cú bấm không dẫn tới đâu.
+   */
+  disabled: boolean;
 }
 
 interface CalendarBoardProps {
@@ -85,8 +91,8 @@ export function CalendarBoard({
 
   return (
     <div className="rounded-2xl border border-border bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-3">
-        <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border p-3">
+        <div className="flex min-w-0 items-center gap-1">
           <Button
             variant="outline"
             size="icon"
@@ -95,7 +101,9 @@ export function CalendarBoard({
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="min-w-44 text-center text-base font-bold capitalize">
+          {/* Nhãn kỳ co được: `min-w-44` cứng đẩy cụm tuần/tháng xuống dòng ở
+              màn hẹp, để lại một hàng công cụ gãy đôi giữa hai nút mũi tên. */}
+          <span className="min-w-0 flex-1 truncate px-1 text-center text-sm font-bold capitalize sm:min-w-40 sm:text-base">
             {periodLabel}
           </span>
           <Button
@@ -115,7 +123,7 @@ export function CalendarBoard({
             lưới là ngày của tháng khác — không nói rõ thì rất dễ bấm vào 31/7
             khi đang xem tháng 8. */}
         {hasOtherMonth ? (
-          <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
+          <div className="order-last flex w-full items-center gap-3 text-[11px] font-medium text-muted-foreground lg:order-none lg:w-auto">
             <span className="flex items-center gap-1.5">
               <span aria-hidden className="size-3 rounded-sm border border-border bg-card" />
               {t("ticket.schedule.legendThisMonth")}
@@ -146,6 +154,15 @@ export function CalendarBoard({
         </div>
       </div>
 
+      {/*
+        Bảy cột là bảy cột — ép chúng vào bề ngang điện thoại thì mỗi ô còn ~45px,
+        chip "07:00 · Tên PT" bên trong bị băm nhỏ đến mức không đọc được (đúng
+        cảnh ở ảnh chụp màn hẹp). Cho cả hàng thứ và lưới ngày cuộn NGANG cùng
+        nhau dưới một bề rộng tối thiểu: thà kéo ngang còn hơn nhìn một lưới
+        không đọc nổi. Trên desktop khung rộng hơn ngưỡng này nên không có gì đổi.
+      */}
+      <div className="overflow-x-auto">
+      <div className="min-w-[42rem]">
       <div className="grid grid-cols-7 border-b border-border">
         {WEEKDAY_ORDER.map((day) => (
           <div
@@ -160,13 +177,14 @@ export function CalendarBoard({
       <div className="grid grid-cols-7">
         {days.map((date) => {
           const inMonth = isSameMonth(date, monthAnchor);
+          const disabled = isDayDisabled?.(date) ?? false;
           const ctx: CalendarDayContext = {
             date,
             inPeriod: view === "week" || inMonth,
             inMonth,
             isToday: date === today,
+            disabled,
           };
-          const disabled = isDayDisabled?.(date) ?? false;
           const parsed = fromIsoDate(date);
 
           return (
@@ -205,6 +223,8 @@ export function CalendarBoard({
             </button>
           );
         })}
+      </div>
+      </div>
       </div>
     </div>
   );
