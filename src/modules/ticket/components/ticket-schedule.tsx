@@ -152,6 +152,10 @@ export function TicketSchedulePage() {
     to,
     undefined,
     booking && Boolean(ticket?.withPt),
+    // Thời lượng vé quyết định khung nào BẮT ĐẦU được: buổi là một chuỗi slot
+    // liền nhau (có thể vắt qua hai ca), nên lưới phải hỏi đúng độ dài đó —
+    // không thì chip giờ ở ô lịch mời những khung mà server sẽ từ chối.
+    ticket?.minutesPerDay ?? undefined,
   );
 
   /*

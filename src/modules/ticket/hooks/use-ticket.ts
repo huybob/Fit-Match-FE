@@ -285,10 +285,11 @@ export function usePtSlotGrid(
   to: string,
   ptId?: number,
   enabled = true,
+  minutes?: number,
 ) {
   return useQuery({
-    queryKey: ptAvailabilityKeys.grid(branchId, from, to, ptId),
-    queryFn: () => ticketService.ptSlotGrid(branchId, from, to, ptId),
+    queryKey: ptAvailabilityKeys.grid(branchId, from, to, ptId, minutes),
+    queryFn: () => ticketService.ptSlotGrid(branchId, from, to, ptId, minutes),
     enabled: enabled && branchId > 0 && Boolean(from && to),
   });
 }
@@ -299,10 +300,11 @@ export function usePtSlotSearch(
   date: string,
   startTime: string,
   enabled = true,
+  minutes?: number,
 ) {
   return useQuery({
-    queryKey: ptAvailabilityKeys.search(branchId, date, startTime),
-    queryFn: () => ticketService.searchPtSlots(branchId, date, startTime),
+    queryKey: ptAvailabilityKeys.search(branchId, date, startTime, minutes),
+    queryFn: () => ticketService.searchPtSlots(branchId, date, startTime, minutes),
     enabled: enabled && branchId > 0 && Boolean(date && startTime),
   });
 }

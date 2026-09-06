@@ -29,10 +29,16 @@ export const sessionKeys = {
  */
 export const ptAvailabilityKeys = {
   all: ["pt-availability"] as const,
-  grid: (branchId: number, from: string, to: string, ptId?: number) =>
-    [...ptAvailabilityKeys.all, "grid", branchId, from, to, ptId ?? null] as const,
-  search: (branchId: number, date: string, startTime: string) =>
-    [...ptAvailabilityKeys.all, "search", branchId, date, startTime] as const,
+  /**
+   * `minutes` nằm trong key: cùng một chi nhánh và khoảng ngày nhưng vé 60 phút
+   * và vé 120 phút cho ra hai lưới khác hẳn nhau (khung bắt đầu khác, endTime
+   * khác). Thiếu nó thì đổi vé giữa chừng sẽ dùng lại lưới của vé trước.
+   */
+  grid: (branchId: number, from: string, to: string, ptId?: number, minutes?: number) =>
+    [...ptAvailabilityKeys.all, "grid", branchId, from, to, ptId ?? null,
+      minutes ?? null] as const,
+  search: (branchId: number, date: string, startTime: string, minutes?: number) =>
+    [...ptAvailabilityKeys.all, "search", branchId, date, startTime, minutes ?? null] as const,
 };
 
 /** Buổi tập mất PT, đang chờ khách quyết (BE §4.1). */
