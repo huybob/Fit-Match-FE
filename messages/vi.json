@@ -2250,7 +2250,13 @@
       "cancelledNoRefund": "Bạn đã huỷ buổi này. Huỷ quá muộn nên không được hoàn tiền.",
       "cancelFailed": "Không huỷ được buổi tập",
       "chipCancelled": "Đã huỷ",
-      "clashMoreDates": "và {count} ngày nữa"
+      "clashMoreDates": "và {count} ngày nữa",
+      "changeSlot": "Đổi khung giờ",
+      "packageSameDayOnly": "Vé nhiều ngày chỉ đổi được khung giờ trong ngày, không dời sang ngày khác.",
+      "slotNew": "Khung mới: {pt} · {from}–{to}",
+      "slotConfirm": "Xác nhận đổi giờ",
+      "slotChanged": "Đã đổi khung giờ",
+      "slotChangeFailed": "Không đổi được khung giờ"
     },
     "myTickets": {
       "title": "Vé của tôi",

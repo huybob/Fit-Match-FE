@@ -2250,7 +2250,13 @@
       "cancelledNoRefund": "You cancelled this session. It was too late for a refund.",
       "cancelFailed": "Could not cancel the session",
       "chipCancelled": "Cancelled",
-      "clashMoreDates": "and {count} more"
+      "clashMoreDates": "and {count} more",
+      "changeSlot": "Change time slot",
+      "packageSameDayOnly": "Multi-day tickets can only change the time slot within the same day, not move to another date.",
+      "slotNew": "New slot: {pt} · {from}–{to}",
+      "slotConfirm": "Confirm new slot",
+      "slotChanged": "Time slot changed",
+      "slotChangeFailed": "Could not change the time slot"
     },
     "myTickets": {
       "title": "My tickets",

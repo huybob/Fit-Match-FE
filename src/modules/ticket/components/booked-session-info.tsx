@@ -20,8 +20,11 @@ import {
   useBranchBookingWindow,
   useCancelSession,
   useCancelSessionQuote,
+  useSetSessionPt,
   useUpdateSessionDate,
 } from "../hooks/use-ticket";
+import { DayComposer } from "./day-composer";
+import type { PtGridSelection } from "./pt-availability-grid";
 import { formatCurrency } from "@/utils/format.util";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
 
@@ -333,17 +336,18 @@ function PtReviewAction({
 }
 
 /**
- * Dời ngày tập — chỉ hiện khi BE thật sự nhận (luật ở SessionSchedulingValidator):
- * vé còn dùng được, buổi chưa diễn ra, và chưa qua mốc 00:00 của ngày tập.
+ * Dời lịch — HAI luật khác nhau tuỳ loại vé (sheet 7 mục 2):
  *
- * <p>V94 bỏ điều kiện `kind === "DAY"`. Trước đây vé GÓI không có nút này (BE
- * cũng chặn thẳng), nên người mua gói 10 ngày mở chi tiết buổi ra là không thấy
- * gì để bấm — đúng mục "chưa lưu lịch khi dời lịch" trong bảng rà soát: thao tác
- * không tồn tại chứ không phải lưu hỏng.
+ * <ul>
+ *   <li><b>Vé ngày</b> — đổi sang NGÀY khác. Vé một ngày thì "ngày nào" chính là
+ *       toàn bộ nội dung của nó.</li>
+ *   <li><b>Vé nhiều ngày / vé tháng</b> — chỉ đổi KHUNG GIỜ trong chính ngày đó.
+ *       Cho đổi ngày tự do thì một gói 10 ngày bị rải khắp hai tháng và không
+ *       còn là một gói theo nghĩa nào nữa.</li>
+ * </ul>
  *
- * Không tự đoán hộ phần PT: buổi có PT thì ngày mới phải còn đúng khung giờ đó,
- * điều kiện này chỉ server biết. FE nói trước bằng một dòng gợi ý rồi để lỗi
- * thật của server hiện nguyên văn nếu PT bận.
+ * <p>Điều kiện chung (luật ở SessionSchedulingValidator): vé còn dùng được, buổi
+ * chưa diễn ra, và chưa qua mốc 00:00 của ngày tập.
  */
 function RescheduleSection({
   session,
@@ -354,26 +358,143 @@ function RescheduleSection({
   ticket?: Ticket;
   onDone: () => void;
 }) {
+  const editable =
+    ticket?.status === "ACTIVE"
+    && session.status === "SCHEDULED"
+    && session.sessionDate > todayIso();
+  if (!editable) return null;
+
+  return ticket.kind === "DAY"
+    ? <RescheduleDateSection session={session} ticket={ticket} onDone={onDone} />
+    : <RescheduleSlotSection session={session} ticket={ticket} onDone={onDone} />;
+}
+
+/**
+ * Vé nhiều ngày: đổi khung giờ trong ĐÚNG ngày của buổi.
+ *
+ * <p>Dùng lại {@link DayComposer} — cùng lưới chọn PT với lúc đặt, nên khách
+ * không phải học một giao diện thứ hai cho cùng một việc. Chọn xong KHÔNG gửi
+ * ngay mà quay về đây xác nhận: đây là thao tác sửa một buổi đã đặt, không phải
+ * đang dựng lịch mới, nên một cú bấm nhầm trong lưới không được phép là quyết định.
+ */
+function RescheduleSlotSection({
+  session,
+  ticket,
+  onDone,
+}: {
+  session: TrainingSession;
+  ticket: Ticket;
+  onDone: () => void;
+}) {
+  const t = useTranslations("ticket.schedule");
+  const { toast } = useToast();
+  const setPt = useSetSessionPt();
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<PtGridSelection | null>(null);
+
+  // Vé không kèm PT thì không có khung giờ nào để đổi — buổi dùng cả ngày.
+  if (!ticket.withPt) return null;
+
+  async function submit() {
+    if (!picked) return;
+    try {
+      await setPt.mutateAsync({
+        sessionId: session.id,
+        ptId: picked.ptProfileId,
+        slotStart: picked.startTime,
+      });
+      toast({ type: "success", title: t("slotChanged") });
+      onDone();
+    } catch (error) {
+      toast({ type: "error", title: t("slotChangeFailed"), description: toErrorMessage(error) });
+    }
+  }
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Button size="sm" variant="outline" onClick={() => setPicking(true)}>
+          <CalendarClock className="mr-1.5 size-3.5" />
+          {t("changeSlot")}
+        </Button>
+        {/* Nói thẳng vì sao không có nút đổi ngày — im lặng thì khách tưởng hỏng. */}
+        <p className="text-xs text-muted-foreground">{t("packageSameDayOnly")}</p>
+
+        {picked ? (
+          <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-xs font-semibold">
+              {t("slotNew", {
+                pt: picked.ptName ?? "",
+                from: picked.startTime.slice(0, 5),
+                to: picked.endTime.slice(0, 5),
+              })}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setPicked(null)}
+                disabled={setPt.isPending}
+              >
+                {t("rescheduleCancel")}
+              </Button>
+              <Button size="sm" onClick={submit} disabled={setPt.isPending}>
+                {t("slotConfirm")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {picking ? (
+        <DayComposer
+          branchId={ticket.gymBranchId}
+          date={session.sessionDate}
+          dayIndex={session.dayIndex}
+          preferredPtId={session.ptProfileId ?? 0}
+          requiredMinutes={ticket.minutesPerDay}
+          selected={picked}
+          onSelect={(selection) => {
+            setPicked(selection);
+            setPicking(false);
+          }}
+          onClear={() => setPicked(null)}
+          onClose={() => setPicking(false)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * Vé ngày: đổi sang ngày khác.
+ *
+ * Không tự đoán hộ phần PT: buổi có PT thì ngày mới phải còn đúng khung giờ đó,
+ * điều kiện này chỉ server biết. FE nói trước bằng một dòng gợi ý rồi để lỗi
+ * thật của server hiện nguyên văn nếu PT bận.
+ */
+function RescheduleDateSection({
+  session,
+  ticket,
+  onDone,
+}: {
+  session: TrainingSession;
+  ticket: Ticket;
+  onDone: () => void;
+}) {
   const t = useTranslations("ticket.schedule");
   const { toast } = useToast();
   const update = useUpdateSessionDate();
   // Cùng luật với lịch đặt: chi nhánh đóng cửa rồi thì hôm nay không còn là
   // đích dời hợp lệ nữa, nên sớm nhất là ngày mai.
   const { bookableToday, closeTime } = useBranchBookingWindow(
-    ticket?.gymProfileId,
-    ticket?.gymBranchId,
+    ticket.gymProfileId,
+    ticket.gymBranchId,
   );
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState("");
 
   const today = todayIso();
-  const canReschedule =
-    ticket?.status === "ACTIVE" &&
-    session.status === "SCHEDULED" &&
-    session.sessionDate > today;
-
-  if (!canReschedule) return null;
-
   const expiry = ticket.expiresAt ? ticket.expiresAt.slice(0, 10) : undefined;
 
   async function submit() {
