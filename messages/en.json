@@ -2181,9 +2181,8 @@
       "pickDate": "Training day",
       "pickStartDate": "Start date",
       "packagePreview": "{days}-day package: {from} to {to} (consecutive, holidays included)",
-      "clashTitle": "You already have a session on this day",
-      "clashItem": "session from ticket #{ticket}",
-      "clashHint": "You can still book — this is only a heads-up.",
+      "clashTitle": "{count} days clash with existing sessions",
+      "clashHint": "You can still book — this is only a reminder.",
       "pickPt": "Choose PT time slots",
       "pickPtOptional": "Leave a day empty if you are undecided — you can add a PT later.",
       "dayLabel": "Day {index} — {date}",
@@ -2250,7 +2249,8 @@
       "cancelledWithRefund": "You cancelled this session. {amount} was refunded to your wallet.",
       "cancelledNoRefund": "You cancelled this session. It was too late for a refund.",
       "cancelFailed": "Could not cancel the session",
-      "chipCancelled": "Cancelled"
+      "chipCancelled": "Cancelled",
+      "clashMoreDates": "and {count} more"
     },
     "myTickets": {
       "title": "My tickets",

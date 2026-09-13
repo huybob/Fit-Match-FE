@@ -2181,8 +2181,7 @@
       "pickDate": "Ngày tập",
       "pickStartDate": "Ngày bắt đầu",
       "packagePreview": "Vé gói {days} ngày: từ {from} đến {to} (liên tiếp, không nhảy ngày nghỉ)",
-      "clashTitle": "Ngày này bạn đã có buổi tập khác",
-      "clashItem": "đã có buổi thuộc vé #{ticket}",
+      "clashTitle": "Trùng lịch {count} ngày",
       "clashHint": "Vẫn đặt được — chỉ nhắc để bạn khỏi trùng lịch.",
       "pickPt": "Chọn khung giờ PT",
       "pickPtOptional": "Có thể để trống ngày nào chưa quyết — bổ sung PT sau vẫn được.",
@@ -2250,7 +2249,8 @@
       "cancelledWithRefund": "Bạn đã huỷ buổi này. Đã hoàn {amount} vào ví.",
       "cancelledNoRefund": "Bạn đã huỷ buổi này. Huỷ quá muộn nên không được hoàn tiền.",
       "cancelFailed": "Không huỷ được buổi tập",
-      "chipCancelled": "Đã huỷ"
+      "chipCancelled": "Đã huỷ",
+      "clashMoreDates": "và {count} ngày nữa"
     },
     "myTickets": {
       "title": "Vé của tôi",

@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
-  AlertTriangle,
   CalendarCheck,
   CalendarDays,
   CalendarPlus,
@@ -13,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/lib/toast-provider";
+import { useFormatters } from "@/i18n/use-formatters";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
@@ -33,7 +33,7 @@ import {
   usePtSlotGrid,
   useScheduleTicket,
 } from "../hooks/use-ticket";
-import { periodRange, plannedDays, todayIso } from "../calendar-date.util";
+import { fromIsoDate, periodRange, plannedDays, todayIso } from "../calendar-date.util";
 import { CalendarBoard, type CalendarDayContext, type CalendarView } from "./calendar-board";
 import { DayComposer } from "./day-composer";
 import { PtCancellationBanner } from "./pt-cancellation-banner";
@@ -44,6 +44,9 @@ import {
 } from "./booked-session-info";
 import type { PtGridSelection } from "./pt-availability-grid";
 import type { ScheduleDayPt, Ticket } from "@/types/Ticket";
+
+/** Số ngày trùng in thẳng trong toast trước khi gom phần còn lại thành "+N". */
+const CLASH_TOAST_MAX_DATES = 4;
 
 /** Không có PT nào được lọc — hằng số riêng vì Select không nhận value rỗng. */
 const NO_PT = "0";
@@ -78,6 +81,7 @@ export function TicketSchedulePage() {
   const t = useTranslations("ticket.schedule");
   const params = useSearchParams();
   const { toast } = useToast();
+  const fmt = useFormatters();
 
   const preselected = Number(params.get("ticketId") ?? 0);
   // Nút "Đặt lịch" ở /profile/tickets và bước cuối của luồng mua vé gắn thêm
@@ -259,11 +263,52 @@ export function TicketSchedulePage() {
     return map;
   }, [days]);
 
-  // Câu 29: cảnh báo trùng nhưng VẪN cho đặt.
-  const clashes = useMemo(
-    () => (sessions ?? []).filter((session) => days.includes(session.sessionDate)),
+  /*
+   * Câu 29: cảnh báo trùng nhưng VẪN cho đặt.
+   *
+   * Gom theo NGÀY, không liệt kê từng buổi. Khách đặt gói 10 ngày mà đã có 3 vé
+   * khác chạy song song thì bản cũ in ra 24 dòng "2026-09-11 — đã có buổi thuộc
+   * vé #71", lặp cùng một ngày ba lần — một khối vàng dài hơn cả cái lịch nó
+   * đang cảnh báo. Thứ khách cần biết là NGÀY NÀO bị trùng, còn trùng với vé nào
+   * thì mở ngày đó ra xem.
+   */
+  const clashDates = useMemo(
+    () => [...new Set((sessions ?? [])
+      .filter((session) => days.includes(session.sessionDate))
+      .map((session) => session.sessionDate))].sort(),
     [sessions, days],
   );
+
+  /*
+   * Báo bằng TOAST thay vì khối cố định trên trang: đây là lời nhắc một lần ngay
+   * sau khi khách chốt ngày bắt đầu, không phải trạng thái phải nhìn suốt buổi
+   * thao tác. Khối cũ đứng giữa thanh công cụ và lịch nên đẩy chính cái lịch
+   * xuống dưới màn hình — cảnh báo che mất thứ nó bảo người ta đi kiểm tra.
+   *
+   * Khoá theo danh sách ngày: chỉ bắn lại khi TẬP NGÀY trùng đổi, không bắn theo
+   * từng lần render.
+   */
+  const clashKey = clashDates.join(",");
+  const lastClashKey = useRef("");
+  useEffect(() => {
+    if (!booking || !clashKey || clashKey === lastClashKey.current) {
+      lastClashKey.current = booking ? clashKey : "";
+      return;
+    }
+    lastClashKey.current = clashKey;
+    const shown = clashDates.slice(0, CLASH_TOAST_MAX_DATES);
+    const rest = clashDates.length - shown.length;
+    toast({
+      type: "warning",
+      title: t("clashTitle", { count: clashDates.length }),
+      description: [
+        shown.map((date) => fmt.date(fromIsoDate(date))).join(", "),
+        rest > 0 ? t("clashMoreDates", { count: rest }) : "",
+        t("clashHint"),
+      ].filter(Boolean).join(" · "),
+      duration: 7000,
+    });
+  }, [booking, clashKey, clashDates, toast, t, fmt]);
 
   if (isLoading) return <LoadingSkeleton />;
   if (!tickets.length) {
@@ -594,23 +639,6 @@ export function TicketSchedulePage() {
         )}
       </div>
 
-      {booking && clashes.length > 0 ? (
-        <div className="flex gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <div>
-            <p className="font-medium">{t("clashTitle")}</p>
-            <ul className="mt-1 list-disc pl-4">
-              {clashes.map((session) => (
-                <li key={session.id}>
-                  {session.sessionDate} — {t("clashItem", { ticket: session.ticketId })}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-1">{t("clashHint")}</p>
-          </div>
-        </div>
-      ) : null}
-
       <CalendarBoard
         view={view}
         onViewChange={setView}
@@ -647,8 +675,11 @@ export function TicketSchedulePage() {
               <Badge variant="outline" className="gap-1">
                 <CalendarDays className="size-3" />
                 {bookingTicket.kind === "DAY"
-                  ? startDate
-                  : t("packageRange", { from: days[0], to: days[days.length - 1] })}
+                  ? fmt.date(fromIsoDate(startDate))
+                  : t("packageRange", {
+                      from: fmt.date(fromIsoDate(days[0])),
+                      to: fmt.date(fromIsoDate(days[days.length - 1])),
+                    })}
               </Badge>
               {bookingTicket.withPt ? (
                 <span className="text-sm text-muted-foreground">

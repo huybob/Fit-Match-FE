@@ -8,6 +8,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { cn } from "@/shared/utils/cn.util";
 import { usePtSlotGrid, usePtSlotSearch } from "../hooks/use-ticket";
+import { fromIsoDate } from "../calendar-date.util";
+import { useFormatters } from "@/i18n/use-formatters";
 import type { PtGridSelection } from "./pt-availability-grid";
 
 type Direction = "byPt" | "byTime";
@@ -61,6 +63,7 @@ export function DayComposer({
   requiredMinutes,
 }: DayComposerProps) {
   const t = useTranslations("ticket.schedule");
+  const fmt = useFormatters();
   const [direction, setDirection] = useState<Direction>("byPt");
   const [pickedTime, setPickedTime] = useState<string>("");
 
@@ -118,7 +121,11 @@ export function DayComposer({
   }
 
   return (
-    <Dialog open onClose={onClose} title={t("dayDialogTitle", { index: dayIndex, date })}>
+    <Dialog
+      open
+      onClose={onClose}
+      title={t("dayDialogTitle", { index: dayIndex, date: fmt.date(fromIsoDate(date)) })}
+    >
       <div className="space-y-4">
         {selected ? (
           <div className="flex items-center justify-between gap-3 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
