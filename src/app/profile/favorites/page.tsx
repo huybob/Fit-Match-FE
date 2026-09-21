@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { favoritesService } from "@/services/favorites.service";
 import { CompareGymsDialog, ComparePtsDialog } from "@/modules/favorite/compare-dialog";
 import { ProfileSidebar } from "@/modules/layout/profile-sidebar";
+import { SmartImage } from "@/shared/components/media/smart-image";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
@@ -193,9 +194,15 @@ export default function ProfileFavoritesPage() {
                     />
                   )}
                   <div className="flex items-center gap-3">
-                    <div className="grid size-12 place-items-center rounded-full bg-gradient-to-br from-primary to-primary text-primary-foreground">
-                      <UserRound className="size-6" />
-                    </div>
+                    {/* Cùng nguồn ảnh với card marketplace (avatarUrl = media TRAINER/AVATAR);
+                        chưa có ảnh thì giữ khối gradient + icon như trước. */}
+                    <SmartImage
+                      src={pt.avatarUrl}
+                      alt={pt.displayName ?? ""}
+                      className="size-12 shrink-0 rounded-full object-cover"
+                      fallbackClassName="size-12 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary text-primary-foreground"
+                      fallback={<UserRound className="size-6" />}
+                    />
                     <div className="min-w-0">
                       <h2 className="truncate text-lg font-bold text-foreground">{pt.displayName}</h2>
                       {pt.specialization && <p className="truncate text-sm text-primary font-medium">{pt.specialization}</p>}
