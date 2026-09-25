@@ -1701,6 +1701,8 @@
     "deleteBody": "Đánh giá sẽ bị gỡ vĩnh viễn. Bạn có thể viết lại sau.",
     "deleted": "Đã xóa đánh giá",
     "reportViolation": "Báo cáo vi phạm",
+    "reported": "Đã báo cáo",
+    "reportedHint": "Bạn đã báo cáo đánh giá này, đang chờ kiểm duyệt viên xử lý.",
     "reportTitle": "Báo cáo đánh giá của {name}",
     "reportHint": "Đánh giá sẽ được kiểm duyệt viên xem xét (ẩn/gỡ nếu vi phạm). Mỗi đánh giá chỉ báo cáo một lần khi đang mở.",
     "reportPlaceholder": "Lý do báo cáo (spam, xúc phạm, sai sự thật...)",

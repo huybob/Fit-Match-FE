@@ -1701,6 +1701,8 @@
     "deleteBody": "The review is permanently removed. You can write a new one later.",
     "deleted": "Review deleted",
     "reportViolation": "Report a violation",
+    "reported": "Reported",
+    "reportedHint": "You already reported this review; it is waiting for a moderator.",
     "reportTitle": "Report {name}’s review",
     "reportHint": "A moderator will review it (hidden/removed if it violates policy). Each review can be reported once while open.",
     "reportPlaceholder": "Reason (spam, abuse, false information…)",

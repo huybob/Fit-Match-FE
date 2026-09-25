@@ -410,8 +410,13 @@ function ReviewPage({
                 ) : (
                   /* Review một chiều: gym/PT chỉ đọc, không phản hồi —
                      lối duy nhất tác động là báo cáo vi phạm (UC-070). */
-                  <Button variant="outline" onClick={() => setReporting(r)}>
-                    {t("review.reportViolation")}
+                  <Button
+                    variant="outline"
+                    disabled={r.reportedByMe}
+                    title={r.reportedByMe ? t("review.reportedHint") : undefined}
+                    onClick={() => setReporting(r)}
+                  >
+                    {r.reportedByMe ? t("review.reported") : t("review.reportViolation")}
                   </Button>
                 )}
               </div>

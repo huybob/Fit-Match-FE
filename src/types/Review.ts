@@ -22,6 +22,8 @@ export interface Review {
   /** Ảnh khách đính kèm (BE V64) — lưu trên GCS, BE trả về URL đã giải sẵn. */
   images?: Media[];
   createdAt?: string;
+  /** Người đang xem đã có báo cáo chờ xử lý cho review này — BE chặn gửi thêm (409). */
+  reportedByMe?: boolean;
 }
 
 /**

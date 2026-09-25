@@ -130,9 +130,12 @@ export function useRatingSummary(scope: "gym" | "pt", id: number) {
 
 /** UC-070: báo cáo review công khai có vấn đề. */
 export function useReportReview() {
+  const c = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) =>
       reviewService.report(id, reason),
+    // Nạp lại danh sách để cờ reportedByMe đổi nút thành "Đã báo cáo".
+    onSuccess: refresh(c),
   });
 }
 
