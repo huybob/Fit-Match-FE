@@ -43,8 +43,12 @@ export const reviewService = {
   async remove(id: number) {
     await api.deleteRaw(`/reviews/${id}`);
   },
-  report: (id: number, reason: string) =>
-    api.post<void, { reason: string }>(`/reviews/${id}/report`, { reason }),
+  // postRaw: BE trả 201 kèm data=null, mà ApiResponse bỏ trường null
+  // (@JsonInclude NON_NULL) — api.post sẽ coi thiếu `data` là lỗi và báo
+  // "Báo cáo thất bại" dù báo cáo đã được lưu.
+  async report(id: number, reason: string) {
+    await api.postRaw(`/reviews/${id}/report`, { reason });
+  },
 
   // ---- Public (UC-009): chỉ review VISIBLE, dùng cho trang gym/PT công khai ----
   getPt: (id: number, params?: { page?: number; size?: number }) =>

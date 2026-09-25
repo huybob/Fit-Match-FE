@@ -8,6 +8,7 @@ import {
   ReviewRequest,
 } from "@/services/review.service";
 import { reviewKeys } from "../query-keys";
+import { getErrorStatus } from "@/shared/utils/error.util";
 import { ticketService } from "@/services/ticket.service";
 import { ticketKeys } from "@/modules/ticket/query-keys";
 
@@ -134,8 +135,12 @@ export function useReportReview() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) =>
       reviewService.report(id, reason),
-    // Nạp lại danh sách để cờ reportedByMe đổi nút thành "Đã báo cáo".
+    // Nạp lại danh sách để cờ reportedByMe đổi nút thành "Đã báo cáo". Cả khi
+    // BE trả 409 (đã có báo cáo chờ xử lý): danh sách đang hiển thị là bản cũ.
     onSuccess: refresh(c),
+    onError: (e) => {
+      if (getErrorStatus(e) === 409) void refresh(c)();
+    },
   });
 }
 

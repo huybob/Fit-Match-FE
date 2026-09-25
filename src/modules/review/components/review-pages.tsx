@@ -24,7 +24,7 @@ import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { toErrorMessage } from "@/shared/utils/error.util";
+import { getErrorStatus, toErrorMessage } from "@/shared/utils/error.util";
 import {
   useDeleteReview,
   useMyReviewedTargets,
@@ -469,6 +469,13 @@ function ReportReviewDialog({ review, onClose }: { review: Review; onClose: () =
               toast({ type: "success", title: t("review.reportSent"), description: t("review.reportSentDesc") });
               onClose();
             } catch (e) {
+              // 409 = đã có báo cáo đang chờ xử lý: không phải lỗi, báo đúng tình
+              // trạng bằng tiếng Việt thay vì câu tiếng Anh thô của BE.
+              if (getErrorStatus(e) === 409) {
+                toast({ type: "warning", title: t("review.reported"), description: t("review.reportedHint") });
+                onClose();
+                return;
+              }
               toast({ type: "error", title: t("review.reportFailed"), description: toErrorMessage(e) });
             }
           }}
