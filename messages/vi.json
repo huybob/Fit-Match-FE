@@ -1,4 +1,14 @@
 {
+  "ptAddon": {
+    "title": "Bổ sung PT cho buổi tập", "change": "Đổi PT / khung giờ", "loading": "Đang kiểm tra yêu cầu PT…",
+    "holdLeft": "Giữ chỗ còn {minutes}:{seconds}", "holdExpired": "Đã hết thời gian giữ PT. Hãy đóng yêu cầu và chọn lại.",
+    "reference": "Nội dung chuyển khoản: {ref}", "qrAlt": "Mã QR thanh toán PT bổ sung",
+    "hint": "PT chỉ được gán khi thanh toán thành công. Buổi tập ban đầu vẫn giữ nguyên.",
+    "close": "Đóng yêu cầu PT", "pick": "Chọn PT và giờ tập", "quoting": "Đang báo giá…",
+    "quote": "Phụ phí buổi này: {amount}", "confirm": "Xác nhận đổi PT", "reserve": "Giữ PT và thanh toán",
+    "policy": "Bổ sung trước 00:00 ngày tập (giờ Việt Nam). Chỉ trả phí PT cho buổi này.", "retry": "Thử lại",
+    "review": "Khoản chuyển cho yêu cầu #{id} ({ref}) đang chờ đối soát hoặc hoàn tiền. PT chưa được gán; buổi tập ban đầu giữ nguyên."
+  },
   "ptSchedule": {
     "title": "Lịch làm việc PT", "timezone": "Giờ Việt Nam (UTC+7)",
     "branch": "Chi nhánh PT làm việc", "previous": "Tuần trước", "next": "Tuần sau", "today": "Hôm nay",

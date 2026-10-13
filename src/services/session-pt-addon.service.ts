@@ -8,6 +8,7 @@ export interface PtAddon {
   amount: number;
   refundedAmount: number;
   holdExpiresAt: string;
+  paymentNeedsReview?: boolean;
   paymentOrder?: PaymentOrder;
 }
 export interface PtAddonQuote { amount: number; cutoff: string; holdMinutes: number }

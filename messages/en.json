@@ -1,4 +1,14 @@
 {
+  "ptAddon": {
+    "title": "Add a trainer to this session", "change": "Change trainer / time", "loading": "Checking trainer requests…",
+    "holdLeft": "Reservation expires in {minutes}:{seconds}", "holdExpired": "The trainer reservation has expired. Close this request and select again.",
+    "reference": "Transfer reference: {ref}", "qrAlt": "QR code for the trainer add-on",
+    "hint": "The trainer is assigned after payment confirmation. Your original session remains booked.",
+    "close": "Close trainer request", "pick": "Select trainer and time", "quoting": "Getting price…",
+    "quote": "Trainer fee for this session: {amount}", "confirm": "Confirm trainer change", "reserve": "Reserve trainer and pay",
+    "policy": "Add a trainer before 00:00 on the session date (Vietnam time). Pay only for this session.", "retry": "Retry",
+    "review": "The transfer for request #{id} ({ref}) needs reconciliation or a refund. No trainer has been assigned; your original session remains booked."
+  },
   "ptSchedule": {
     "title": "Trainer schedule", "timezone": "Vietnam time (UTC+7)",
     "branch": "Training branch", "previous": "Previous week", "next": "Next week", "today": "Today",

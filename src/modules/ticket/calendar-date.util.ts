@@ -9,6 +9,9 @@
  */
 
 /** Ngày ISO (YYYY-MM-DD) theo lịch địa phương. */
+import { vietnamClock } from "@/utils/format.util";
+export { vietnamClock } from "@/utils/format.util";
+
 export function toIsoDate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -39,16 +42,6 @@ export function addMonths(iso: string, amount: number): string {
 
 export function todayIso(): string {
   return vietnamClock().date;
-}
-
-/** Business clock is independent of the browser zone; date-picker values stay civil dates. */
-export function vietnamClock(now = new Date()): { date: string; time: string } {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
-  }).formatToParts(now);
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)!.value;
-  return { date: `${part("year")}-${part("month")}-${part("day")}`, time: `${part("hour")}:${part("minute")}:${part("second")}` };
 }
 
 /**
