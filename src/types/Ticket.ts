@@ -200,6 +200,7 @@ export interface PaymentOrder {
 }
 
 export interface TrainingSession {
+  ptAddonPaid?: boolean;
   id: number;
   ticketId: number;
   dayIndex: number;

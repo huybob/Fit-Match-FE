@@ -19,8 +19,10 @@ import {
 
 function invalidateTickets(client: ReturnType<typeof useQueryClient>) {
   return () => {
-    client.invalidateQueries({ queryKey: ticketKeys.all });
-    client.invalidateQueries({ queryKey: sessionKeys.all });
+    return Promise.all([
+      client.invalidateQueries({ queryKey: ticketKeys.all }),
+      client.invalidateQueries({ queryKey: sessionKeys.all }),
+    ]);
   };
 }
 
@@ -136,9 +138,9 @@ export function useScheduleTicket() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: ScheduleTicketRequest }) =>
       ticketService.schedule(id, payload),
-    onSuccess: () => {
-      invalidateTickets(client)();
-      client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
+    onSuccess: async () => {
+      await invalidateTickets(client)();
+      await client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
     },
   });
 }

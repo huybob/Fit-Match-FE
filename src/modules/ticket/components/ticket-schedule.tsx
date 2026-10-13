@@ -376,6 +376,7 @@ export function TicketSchedulePage() {
       // Đặt xong là vé hết ngày để xếp -> trả về chế độ xem để khách thấy ngay
       // kết quả vừa đặt thay vì đứng lại trong một form không còn việc gì làm.
       exitBooking();
+      if (!ticket.withPt) setDetailDate(startDate);
     } catch (error) {
       toast({ type: "error", title: toErrorMessage(error) });
     }

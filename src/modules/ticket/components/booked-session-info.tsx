@@ -24,6 +24,7 @@ import {
   useUpdateSessionDate,
 } from "../hooks/use-ticket";
 import { DayComposer } from "./day-composer";
+import { SessionPtAddon } from "./session-pt-addon";
 import type { PtGridSelection } from "./pt-availability-grid";
 import { formatCurrency } from "@/utils/format.util";
 import type { Ticket, TrainingSession } from "@/types/Ticket";
@@ -273,6 +274,7 @@ export function SessionDetailDialog({
             </div>
 
             <RescheduleSection session={session} ticket={ticket} onDone={onClose} />
+            {ticket ? <SessionPtAddon session={session} ticket={ticket} /> : null}
             <CancelSection session={session} ticket={ticket} onDone={onClose} />
           </div>
         ))}
