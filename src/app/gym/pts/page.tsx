@@ -6,6 +6,7 @@ import {
   Plus, Pencil, Loader2, Award, FileText, Trash2, X, CalendarClock
 } from "lucide-react";
 import { PtOpsDialog } from "@/modules/gym/components/pt-ops-dialog";
+import { PtScheduleCalendar } from "@/modules/trainer/components/pt-schedule-calendar";
 import { gymService } from "@/services/gym.service";
 import type {
   GymPtResponse, GymPtStatus, CreateGymPtInput, UpdateGymPtInput,
@@ -126,6 +127,7 @@ function PtCredentialsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =
   return (
     <Dialog open title={t("gym.trainers.certsDialogTitle", { name: pt.displayName ?? pt.username ?? "" })} onClose={onClose}>
       <div className="space-y-6">
+        {pt.id ? <PtScheduleCalendar ptId={pt.id} source="gym" compact /> : null}
         {/* Certifications */}
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -621,6 +623,7 @@ export default function GymPtsPage() {
       {/* Create / edit dialog */}
       <Dialog open={formOpen} title={editing ? t("gym.trainers.editTitle") : t("gym.trainers.addTitle")} onClose={closeForm}>
         <div className="space-y-4">
+          {editing?.id ? <PtScheduleCalendar ptId={editing.id} source="gym" compact /> : null}
           {!editing && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">

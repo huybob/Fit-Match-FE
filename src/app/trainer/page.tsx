@@ -11,6 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { PtScheduleCalendar } from "@/modules/trainer/components/pt-schedule-calendar";
 import { EmptyState } from "@/shared/components/common/empty-state";
 import { ImageUploader } from "@/shared/components/media/image-uploader";
 import { SmartImage } from "@/shared/components/media/smart-image";
@@ -206,6 +207,7 @@ export default function TrainerSelfServicePage() {
             </div>
           </div>
         )}
+        {profile?.id ? <div className="mt-6"><PtScheduleCalendar ptId={profile.id} source="self" /></div> : null}
       </div>
 
       <Dialog open={open} title={t("trainer.profile.editTitle")} onClose={() => setOpen(false)}>

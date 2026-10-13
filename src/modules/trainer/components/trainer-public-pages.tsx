@@ -6,6 +6,7 @@ import { FormEvent, useRef, useState } from "react";
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReportIssueButton } from "@/modules/report/report-issue-button";
 import { SiteLayout } from "@/modules/layout/site-layout";
+import { PtScheduleCalendar } from "./pt-schedule-calendar";
 import { marketplaceService, type PtPublicProfile } from "@/services/marketplace.service";
 import { favoritesService } from "@/services/favorites.service";
 import { useAuthStore } from "@/modules/auth/auth.store";
@@ -369,10 +370,7 @@ function TrainerCard({
   );
 }
 
-// Mục "thời gian biểu tuần" của PT đã gỡ: câu 26 bỏ lịch lặp theo thứ, PT khai
-// theo NGÀY cụ thể. Lưới ngày x giờ cần branchId và phải đăng nhập, mà trang
-// công khai này không có ngữ cảnh chi nhánh — nên lịch rảnh hiển thị ở bước xếp
-// lịch (/schedule), nơi khách đã chọn chi nhánh.
+// Work, leave and occupied slots are projected from the same dated shift model as booking.
 
 export function TrainerPublicDetailPage({ userId }: { userId: number }) {
   const t = useTranslations();
@@ -490,6 +488,7 @@ export function TrainerPublicDetailPage({ userId }: { userId: number }) {
           ))}
         </div>
 
+        {pt.id != null ? <div className="mt-5"><PtScheduleCalendar ptId={pt.id} /></div> : null}
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           {/* About */}
           <section className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:col-span-2">

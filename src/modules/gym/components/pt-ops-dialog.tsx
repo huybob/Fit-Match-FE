@@ -12,6 +12,7 @@ import { useToast } from "@/lib/toast-provider";
 import { toErrorMessage } from "@/shared/utils/error.util";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog } from "@/shared/components/ui/dialog";
+import { PtScheduleCalendar } from "@/modules/trainer/components/pt-schedule-calendar";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,7 @@ export function PtOpsDialog({ pt, onClose }: { pt: GymPtResponse; onClose: () =>
       </div>
       {tab === "assignments" && <AssignmentsTab ptId={ptId} />}
       {tab === "performance" && <PerformanceTab ptId={ptId} />}
+      <div className="mt-4"><PtScheduleCalendar ptId={ptId} source="gym" compact /></div>
     </Dialog>
   );
 }
@@ -75,7 +77,10 @@ function AssignmentsTab({ ptId }: { ptId: number }) {
   });
   const branches = useQuery({ queryKey: ["gym-branches"], queryFn: gymService.listOwnBranches });
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["gym-pt", ptId, "assignments"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["pt-schedule"] });
+    return qc.invalidateQueries({ queryKey: ["gym-pt", ptId, "assignments"] });
+  };
 
   const add = useMutation({
     mutationFn: () => {

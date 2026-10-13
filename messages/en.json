@@ -1,4 +1,12 @@
 {
+  "ptSchedule": {
+    "title": "Trainer schedule", "timezone": "Vietnam time (UTC+7)",
+    "branch": "Training branch", "previous": "Previous week", "next": "Next week", "today": "Today",
+    "refresh": "Refresh schedule", "retry": "Retry", "noBranch": "This trainer has no active branch.",
+    "FREE": "Available", "BUSY": "Booked", "HELD": "Reserved", "LEAVE": "On leave", "UNAVAILABLE": "Unavailable",
+    "work": "Shift: {hours}", "dayOff": "Day off", "noSchedule": "No assigned shift", "outside": "Outside shifts: unavailable",
+    "updated": "Updated {time} · Availability is checked again when booking."
+  },
   "common": {
     "actions": {
       "save": "Save",

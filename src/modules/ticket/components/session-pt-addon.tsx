@@ -27,6 +27,7 @@ export function SessionPtAddon({ session, ticket }: { session: TrainingSession; 
     client.invalidateQueries({ queryKey: ticketKeys.all });
     client.invalidateQueries({ queryKey: sessionKeys.all });
     client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
+    client.invalidateQueries({ queryKey: ["pt-schedule"] });
   };
   const query = useQuery({
     queryKey: ["pt-addons", session.id], queryFn: () => ptAddonService.list(session.id),

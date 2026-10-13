@@ -22,6 +22,7 @@ function invalidateTickets(client: ReturnType<typeof useQueryClient>) {
     return Promise.all([
       client.invalidateQueries({ queryKey: ticketKeys.all }),
       client.invalidateQueries({ queryKey: sessionKeys.all }),
+      client.invalidateQueries({ queryKey: ["pt-schedule"] }),
     ]);
   };
 }

@@ -1,4 +1,12 @@
 {
+  "ptSchedule": {
+    "title": "Lịch làm việc PT", "timezone": "Giờ Việt Nam (UTC+7)",
+    "branch": "Chi nhánh PT làm việc", "previous": "Tuần trước", "next": "Tuần sau", "today": "Hôm nay",
+    "refresh": "Làm mới lịch", "retry": "Thử lại", "noBranch": "PT chưa có chi nhánh đang hoạt động.",
+    "FREE": "Còn trống", "BUSY": "Đã đặt", "HELD": "Đang giữ chỗ", "LEAVE": "Nghỉ", "UNAVAILABLE": "Không khả dụng",
+    "work": "Ca: {hours}", "dayOff": "Ngày nghỉ", "noSchedule": "Chưa được phân ca", "outside": "Ngoài ca: không khả dụng",
+    "updated": "Cập nhật {time} · Lịch được kiểm tra lại khi đặt PT."
+  },
   "common": {
     "actions": {
       "save": "Lưu",
