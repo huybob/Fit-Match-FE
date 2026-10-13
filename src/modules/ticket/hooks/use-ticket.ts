@@ -202,7 +202,10 @@ export function useUpdateSessionDate() {
   return useMutation({
     mutationFn: ({ sessionId, date }: { sessionId: number; date: string }) =>
       ticketService.updateSessionDate(sessionId, date),
-    onSuccess: invalidateTickets(client),
+    onSuccess: () => {
+      invalidateTickets(client)();
+      client.invalidateQueries({ queryKey: ptAvailabilityKeys.all });
+    },
   });
 }
 

@@ -274,7 +274,7 @@ export function TicketSchedulePage() {
    */
   const clashDates = useMemo(
     () => [...new Set((sessions ?? [])
-      .filter((session) => days.includes(session.sessionDate))
+      .filter((session) => session.status !== "CANCELLED_BY_CUSTOMER" && days.includes(session.sessionDate))
       .map((session) => session.sessionDate))].sort(),
     [sessions, days],
   );
