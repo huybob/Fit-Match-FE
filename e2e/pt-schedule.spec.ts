@@ -42,3 +42,13 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
     await calendar.screenshot({ path: `node_modules/.cache/pt-schedule-${viewport.width}.png` });
   });
 }
+
+test.describe("business timezone", () => {
+  test.use({ timezoneId: "America/Los_Angeles" });
+  test("Vietnam Monday uses the current week even when the browser is still Sunday", async ({ page }) => {
+    await page.clock.setFixedTime(new Date("2026-10-18T18:30:00Z"));
+    const request = page.waitForRequest(r => r.url().includes("/schedule?"));
+    await page.goto("/trainers/11");
+    expect(new URL((await request).url()).searchParams.get("from")).toBe("2026-10-19");
+  });
+});

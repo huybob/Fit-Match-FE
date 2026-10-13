@@ -8,6 +8,7 @@ import {
   type TicketQuoteRequest,
 } from "@/services/ticket.service";
 import { marketplaceService } from "@/services/marketplace.service";
+import { isoWeekday, vietnamClock } from "../calendar-date.util";
 import { loyaltyKeys } from "@/modules/loyalty/hooks/use-loyalty";
 import { disputeKeys } from "@/modules/dispute/hooks/use-dispute";
 import {
@@ -172,9 +173,8 @@ export function useBranchBookingWindow(gymProfileId?: number, gymBranchId?: numb
     return { bookableToday: true, closeTime: undefined as string | undefined };
   }
 
-  const now = new Date();
-  // JS: 0 = Chủ nhật; BE dùng ISO-8601: 1 = Thứ hai ... 7 = Chủ nhật.
-  const isoDay = now.getDay() === 0 ? 7 : now.getDay();
+  const now = vietnamClock();
+  const isoDay = isoWeekday(now.date);
   const today = hours.find((hour) => hour.dayOfWeek === isoDay);
   if (!today || today.closed) {
     return { bookableToday: false, closeTime: undefined };
@@ -182,9 +182,7 @@ export function useBranchBookingWindow(gymProfileId?: number, gymBranchId?: numb
   if (!today.closeTime) {
     return { bookableToday: true, closeTime: undefined };
   }
-  const nowTime = [now.getHours(), now.getMinutes(), now.getSeconds()]
-    .map((part) => String(part).padStart(2, "0"))
-    .join(":");
+  const nowTime = now.time;
   return {
     bookableToday: nowTime < today.closeTime,
     closeTime: today.closeTime.slice(0, 5),
