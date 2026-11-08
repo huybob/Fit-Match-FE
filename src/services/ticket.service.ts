@@ -48,6 +48,11 @@ export type TicketListParams = Partial<PaginationParams> & {
  */
 export const ticketService = {
   // ---------------- Catalog (Gym) ----------------
+  getPricingLimits: () => api.get<{
+    maxTicketPrice: number;
+    maxPtSurchargePerDay: number;
+  }>("/gym/pricing-limits"),
+
   listTicketTypes: () => api.get<TicketType[]>("/gym/ticket-types"),
 
   createTicketType: (body: TicketTypeRequest) =>

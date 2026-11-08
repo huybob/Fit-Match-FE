@@ -63,6 +63,12 @@ export default function GymPackagesPage() {
 
   const typesQuery = useQuery({ queryKey: QUERY_KEY, queryFn: ticketService.listTicketTypes });
   const types = typesQuery.data ?? [];
+  const pricingQuery = useQuery({
+    queryKey: ["gym-pricing-limits"],
+    queryFn: ticketService.getPricingLimits,
+    enabled: formOpen,
+  });
+  const pricingLimits = pricingQuery.data;
 
   const { data: branches = [] } = useQuery({
     queryKey: ["gym-branches"],
@@ -174,6 +180,11 @@ export default function GymPackagesPage() {
     if (description.trim().length > 1000) return t("gym.packages.descTooLong");
     if (price == null || price < 0) return t("gym.packages.priceRequired");
     if (ptSurcharge != null && ptSurcharge < 0) return t("gym.packages.surchargeInvalid");
+    if (!pricingLimits) return t("gym.packages.pricingLimitsUnavailable");
+    if (price > pricingLimits.maxTicketPrice)
+      return t("gym.packages.priceOverLimit", { max: formatCurrency(pricingLimits.maxTicketPrice) });
+    if (ptSurcharge != null && ptSurcharge > pricingLimits.maxPtSurchargePerDay)
+      return t("gym.packages.ptOverLimit", { max: formatCurrency(pricingLimits.maxPtSurchargePerDay) });
     if (kind === "PACKAGE" && (dayCount == null || dayCount < 2))
       return t("gym.packages.dayCountInvalid");
     if (minutesPerDay != null && (minutesPerDay < 15 || minutesPerDay > 480))
@@ -405,10 +416,11 @@ export default function GymPackagesPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              <label htmlFor="ticket-type-price" className="block text-xs font-semibold text-muted-foreground mb-1.5">
                 {t("gym.packages.priceLabel")} <span className="text-destructive">*</span>
               </label>
               <NumberInput
+                id="ticket-type-price"
                 value={price}
                 onValueChange={setPrice}
                 min={0}
@@ -416,12 +428,14 @@ export default function GymPackagesPage() {
                 hideStepper
                 suffix="đ"
               />
+              {pricingLimits && <p className="mt-1 text-xs text-muted-foreground">{t("gym.packages.ticketPriceLimit", { max: formatCurrency(pricingLimits.maxTicketPrice) })}</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+              <label htmlFor="ticket-type-pt-surcharge" className="block text-xs font-semibold text-muted-foreground mb-1.5">
                 {t("gym.packages.surchargeLabel")}
               </label>
               <NumberInput
+                id="ticket-type-pt-surcharge"
                 value={ptSurcharge}
                 onValueChange={setPtSurcharge}
                 min={0}
@@ -429,8 +443,16 @@ export default function GymPackagesPage() {
                 hideStepper
                 suffix="đ"
               />
+              {pricingLimits && <p className="mt-1 text-xs text-muted-foreground">{t("gym.packages.ptPriceLimit", { max: formatCurrency(pricingLimits.maxPtSurchargePerDay) })}</p>}
             </div>
           </div>
+
+          {pricingQuery.isError && (
+            <div role="alert" className="text-xs text-destructive">
+              <p>{t("gym.packages.pricingLimitsUnavailable")}</p>
+              <Button variant="link" size="inline" onClick={() => pricingQuery.refetch()}>{t("common.actions.retry")}</Button>
+            </div>
+          )}
 
           {/* Phụ phí PT tính theo NGÀY, nên tổng tiền vé kèm PT không hiển nhiên —
               cho xem trước đúng công thức BE dùng để chốt giá. */}
@@ -475,7 +497,7 @@ export default function GymPackagesPage() {
             </Button>
             <Button
               onClick={save}
-              disabled={saveMut.isPending}
+              disabled={saveMut.isPending || pricingQuery.isFetching || !pricingLimits}
               className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {saveMut.isPending && <Loader2 className="size-4 animate-spin" />}{" "}

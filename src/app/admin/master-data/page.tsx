@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Loader2, Tag, SlidersHorizontal } from "lucide-react";
 import { adminService } from "@/services/admin.service";
-import { systemConfigService, type SystemConfig } from "@/services/system-config.service";
+import { systemConfigService, isPricingConfigKey, MAX_GYM_PRICE, PRICING_CONFIG_KEYS, type SystemConfig } from "@/services/system-config.service";
+import { formatCurrency } from "@/utils/format.util";
 import type {
   ServiceCategoryResponse, ServiceCategoryRequest,
 } from "@/types/Admin";
@@ -153,6 +154,14 @@ function SystemConfigs() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<SystemConfig | null>(null);
   const [value, setValue] = useState("");
+  const isPrice = isPricingConfigKey(editing?.key);
+  const maxValue = isPrice ? MAX_GYM_PRICE : 3650;
+  const validValue = /^\d+$/.test(value.trim()) && Number(value) >= 1 && Number(value) <= maxValue;
+  const configLabel = (config: SystemConfig) => {
+    if (config.key === PRICING_CONFIG_KEYS.ticket) return t("admin.masterData.maxTicketPrice");
+    if (config.key === PRICING_CONFIG_KEYS.pt) return t("admin.masterData.maxPtSurcharge");
+    return config.key ?? "";
+  };
 
   const { data: configs = [], isLoading } = useQuery({
     queryKey: ["admin", "system-configs"],
@@ -163,6 +172,7 @@ function SystemConfigs() {
     mutationFn: () => systemConfigService.update(editing!.key!, value.trim()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin", "system-configs"] });
+      qc.invalidateQueries({ queryKey: ["gym-pricing-limits"] });
       setEditing(null);
       toast({ type: "success", title: t("admin.masterData.configSaved") });
     },
@@ -176,6 +186,7 @@ function SystemConfigs() {
           <SlidersHorizontal className="size-4 text-primary" /> {t("admin.masterData.configsTitle")}
         </h2>
       </div>
+      <p className="text-xs text-muted-foreground mb-4">{t("admin.masterData.pricingLimitsHint")}</p>
       {isLoading ? (
         <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
       ) : configs.length === 0 ? (
@@ -190,13 +201,13 @@ function SystemConfigs() {
               key: "key",
               header: t("admin.masterData.colKey"),
               cellClassName: "font-mono text-xs font-semibold text-foreground",
-              cell: (c) => c.key,
+              cell: (c) => configLabel(c),
             },
             {
               key: "value",
               header: t("common.table.value"),
               cellClassName: "font-bold text-foreground",
-              cell: (c) => c.value,
+              cell: (c) => isPricingConfigKey(c.key) ? formatCurrency(Number(c.value)) : c.value,
             },
             {
               key: "description",
@@ -226,16 +237,17 @@ function SystemConfigs() {
         />
       )}
 
-      <Dialog open={!!editing} title={t("admin.masterData.updateConfigTitle", { key: editing?.key ?? "" })} onClose={() => setEditing(null)}>
+      <Dialog open={!!editing} title={t("admin.masterData.updateConfigTitle", { key: editing ? configLabel(editing) : "" })} onClose={() => setEditing(null)}>
         <div className="space-y-4">
           {editing?.description && <p className="text-xs text-muted-foreground">{editing.description}</p>}
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{t("admin.masterData.valuePositiveInt")}</label>
-            <Input type="number" min={1} value={value} onChange={(e) => setValue(e.target.value)} />
+            <label htmlFor="system-config-value" className="block text-xs font-semibold text-muted-foreground mb-1.5">{isPrice ? t("admin.masterData.priceLimitVnd") : t("admin.masterData.valuePositiveInt")}</label>
+            <Input id="system-config-value" type="number" min={1} max={maxValue} step={1} value={value} onChange={(e) => setValue(e.target.value)} />
+            <p className="mt-1 text-xs text-muted-foreground">{t("admin.masterData.configRange", { max: maxValue.toLocaleString() })}</p>
           </div>
           <div className="flex justify-end gap-2">
             <Button onClick={() => setEditing(null)} className="bg-card border border-border text-muted-foreground hover:bg-muted/40 shadow-none">{t("common.actions.cancel")}</Button>
-            <Button onClick={() => save.mutate()} disabled={save.isPending} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button onClick={() => validValue && save.mutate()} disabled={save.isPending || !validValue} className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
               {save.isPending && <Loader2 className="size-4 animate-spin" />} {t("common.actions.save")}
             </Button>
           </div>
