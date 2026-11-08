@@ -43,12 +43,12 @@ export function StepIndicator({
   const t = useTranslations();
   const index = steps.indexOf(current);
   return (
-    <ol className="mb-5 flex items-center gap-1.5">
+    <ol className="mb-5 flex items-start gap-2">
       {steps.map((step, i) => {
         const done = i < index;
         const active = i === index;
         return (
-          <li key={step} className="flex flex-1 items-center gap-1.5">
+          <li key={step} aria-current={active ? "step" : undefined} className="relative flex min-w-0 flex-1 flex-col items-center gap-2 text-center">
             <span
               className={cn(
                 "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold transition-colors",
@@ -61,13 +61,13 @@ export function StepIndicator({
             </span>
             <span
               className={cn(
-                "hidden truncate text-[11px] font-semibold sm:block",
+                "w-full break-words text-[10px] font-semibold leading-4 sm:text-[11px]",
                 active ? "text-foreground" : "text-muted-foreground",
               )}
             >
               {t(`ticket.wizard.step.${step}`)}
             </span>
-            {i < steps.length - 1 && <span className="h-px flex-1 bg-border" />}
+            {i < steps.length - 1 && <span aria-hidden className="absolute left-[calc(50%+1rem)] top-3 h-px w-[calc(100%-1.5rem)] bg-border" />}
           </li>
         );
       })}
@@ -86,7 +86,7 @@ export function TypeStep({
 }) {
   const t = useTranslations();
   return (
-    <div className="grid max-h-[45vh] gap-2.5 overflow-y-auto pr-1">
+    <div className="grid min-w-0 max-h-[45vh] gap-2.5 overflow-y-auto pr-1">
       {types.map((type) => {
         const selected = type.id === value;
         return (
@@ -95,13 +95,13 @@ export function TypeStep({
             type="button"
             onClick={() => onChange(type)}
             className={cn(
-              "rounded-xl border p-4 text-left transition",
+              "min-w-0 rounded-xl border p-4 text-left transition",
               selected ? "border-primary bg-primary/5" : "hover:border-primary/50",
             )}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <p className="font-semibold">{type.name}</p>
+                <p className="break-words font-semibold">{type.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {type.kind === "DAY"
                     ? t("ticket.checkout.dayTicket")
@@ -120,10 +120,10 @@ export function TypeStep({
                   </p>
                 ) : null}
               </div>
-              <div className="shrink-0 text-right">
-                <p className="font-bold tabular-nums">{formatCurrency(type.price)}</p>
+              <div className="shrink-0 sm:text-right">
+                <p className="whitespace-nowrap font-bold tabular-nums">{formatCurrency(type.price)}</p>
                 {type.ptSurchargePerDay ? (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="whitespace-nowrap text-xs text-muted-foreground">
                     {t("ticket.checkout.withPtPrice", {
                       price: formatCurrency(type.priceWithPt),
                     })}
@@ -151,7 +151,7 @@ export function PtStep({
   return (
     <div className="space-y-3 rounded-xl border p-4">
       <label className="flex items-center justify-between gap-4">
-        <span>
+        <span className="min-w-0">
           <span className="block font-semibold">{t("ticket.checkout.withPt")}</span>
           <span className="block text-sm text-muted-foreground">
             {t("ticket.checkout.withPtHint", {
@@ -160,7 +160,7 @@ export function PtStep({
             })}
           </span>
         </span>
-        <Switch checked={withPt} onCheckedChange={onChange} />
+        <Switch checked={withPt} onCheckedChange={onChange} className="shrink-0" />
       </label>
     </div>
   );
@@ -179,7 +179,7 @@ export function ServicesStep({
   return (
     <div className="space-y-2.5">
       <p className="text-sm text-muted-foreground">{t("ticket.wizard.servicesHint")}</p>
-      <div className="grid max-h-[45vh] gap-2.5 overflow-y-auto pr-1">
+      <div className="grid min-w-0 max-h-[45vh] gap-2.5 overflow-y-auto pr-1">
         {services.map((service) => {
           const checked = selected.includes(service.id);
           return (
@@ -188,7 +188,7 @@ export function ServicesStep({
               type="button"
               onClick={() => onToggle(service.id)}
               className={cn(
-                "flex items-start gap-3 rounded-xl border p-4 text-left transition",
+                "grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3 gap-y-2 rounded-xl border p-4 text-left transition sm:grid-cols-[1.25rem_minmax(0,1fr)_auto]",
                 checked ? "border-primary bg-primary/5" : "hover:border-primary/50",
               )}
             >
@@ -202,9 +202,9 @@ export function ServicesStep({
                 {checked ? <Check className="size-3.5" /> : null}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5 font-semibold">
-                  <Sparkles className="size-3.5 text-primary" />
-                  {service.name}
+                <span className="flex items-start gap-1.5 font-semibold">
+                  <Sparkles className="mt-1 size-3.5 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">{service.name}</span>
                 </span>
                 {service.description ? (
                   <span className="mt-0.5 block line-clamp-2 text-sm text-muted-foreground">
@@ -212,7 +212,7 @@ export function ServicesStep({
                   </span>
                 ) : null}
               </span>
-              <span className="shrink-0 font-bold tabular-nums">
+              <span className="col-start-2 whitespace-nowrap font-bold tabular-nums sm:col-start-3 sm:row-start-1 sm:text-right">
                 {formatCurrency(service.price)}
               </span>
             </button>
@@ -266,11 +266,12 @@ export function PromoStep({
         <label className="text-sm font-semibold">{t("ticket.checkout.voucher")}</label>
         <div className="flex gap-2">
           <Input
+            className="min-w-0 flex-1"
             value={voucherInput}
             onChange={(event) => onVoucherInput(event.target.value)}
             placeholder={t("ticket.checkout.voucherPlaceholder")}
           />
-          <Button type="button" variant="outline" onClick={onApplyVoucher}>
+          <Button type="button" variant="outline" className="shrink-0" onClick={onApplyVoucher}>
             {t("ticket.checkout.applyVoucher")}
           </Button>
         </div>
@@ -300,6 +301,7 @@ export function PromoStep({
             </span>
           </span>
           <Switch
+            className="shrink-0"
             checked={useLoyaltyPoints}
             onCheckedChange={onUseLoyaltyPoints}
             disabled={balance === 0}
@@ -442,13 +444,13 @@ function SummaryRow({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <dt className={cn("text-muted-foreground", emphasis && "font-semibold text-foreground")}>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1">
+      <dt className={cn("min-w-0 break-words text-muted-foreground", emphasis && "font-semibold text-foreground")}>
         {label}
       </dt>
       <dd
         className={cn(
-          "tabular-nums",
+          "whitespace-nowrap text-right tabular-nums",
           emphasis ? "text-base font-bold" : muted ? "text-muted-foreground" : "font-semibold",
         )}
       >
@@ -477,7 +479,7 @@ export function WizardFooter({
 }) {
   const t = useTranslations();
   return (
-    <div className="mt-5 flex items-center justify-between gap-2 border-t pt-4">
+    <div className="sticky bottom-0 z-10 mt-5 flex items-center justify-between gap-2 border-t bg-card pt-4">
       <Button
         type="button"
         variant="outline"

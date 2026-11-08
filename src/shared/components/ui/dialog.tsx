@@ -125,11 +125,15 @@ function Dialog({
   title,
   children,
   onClose,
+  className,
+  bodyClassName,
 }: {
   open: boolean;
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  className?: string;
+  bodyClassName?: string;
 }) {
   return (
     <DialogRoot
@@ -138,11 +142,11 @@ function Dialog({
         if (!next) onClose();
       }}
     >
-      <DialogContent>
+      <DialogContent className={className}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="mt-1">{children}</div>
+        <div className={cn("mt-1", bodyClassName)}>{children}</div>
       </DialogContent>
     </DialogRoot>
   );

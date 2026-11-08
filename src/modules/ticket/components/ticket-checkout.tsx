@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, Loader2, QrCode } from "lucide-react";
@@ -12,7 +12,7 @@ import { EmptyState } from "@/shared/components/common/empty-state";
 import { LoadingSkeleton } from "@/shared/components/common/loading-skeleton";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { Dialog } from "@/shared/components/ui/dialog";
+import { Dialog as BaseDialog } from "@/shared/components/ui/dialog";
 import { useLoyaltyBalance } from "@/modules/loyalty/hooks/use-loyalty";
 import { useQuery } from "@tanstack/react-query";
 import { marketplaceService } from "@/services/marketplace.service";
@@ -43,6 +43,16 @@ import type { TicketQuoteRequest, TicketType } from "@/types/Ticket";
  * oan vì gym mới xếp ca cho vài tuần tới.
  */
 const PT_SLOT_LOOKAHEAD_DAYS = 30;
+
+function Dialog(props: ComponentProps<typeof BaseDialog>) {
+  return (
+    <BaseDialog
+      {...props}
+      className="flex w-[calc(100%-2rem)] max-w-2xl min-w-0 flex-col overflow-hidden p-4 sm:p-6 [&>div]:min-w-0"
+      bodyClassName="min-h-0 overflow-y-auto overscroll-contain"
+    />
+  );
+}
 
 /**
  * Đường sang trang xếp lịch sau khi vé đã dùng được. `ptId` chỉ đi kèm khi khách
@@ -456,9 +466,9 @@ function TicketPaymentPanel({ ticketId, ptId = 0 }: { ticketId: number; ptId?: n
         <QrCode className="mx-auto size-24 text-muted-foreground" />
       )}
 
-      <div className="rounded-xl bg-muted/40 p-3 text-sm">
+      <div className="min-w-0 rounded-xl bg-muted/40 p-3 text-sm">
         <p className="text-muted-foreground">
-          {t("refCode")}: <span className="font-mono font-semibold text-foreground">{order.refCode}</span>
+          {t("refCode")}: <span className="break-all font-mono font-semibold text-foreground">{order.refCode}</span>
         </p>
         {order.expiresAt ? (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -467,9 +477,9 @@ function TicketPaymentPanel({ ticketId, ptId = 0 }: { ticketId: number; ptId?: n
         ) : null}
       </div>
 
-      <p className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        {t("pollingHint")}
+      <p className="flex items-start justify-center gap-1.5 text-sm text-muted-foreground">
+        <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin" />
+        <span className="min-w-0">{t("pollingHint")}</span>
       </p>
     </div>
   );
